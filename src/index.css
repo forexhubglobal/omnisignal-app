@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+:root {
+  --theme-dark: #0a080f;
+  --theme-card: rgba(20, 15, 30, 0.6);
+  --theme-gold: #d4af37;
+  --theme-neon: #00f3ff;
+  --theme-text: #e5e7eb;
+}
+
+[data-theme="gold"] {
+  --theme-dark: #12100b;
+  --theme-card: rgba(30, 25, 15, 0.8);
+  --theme-gold: #ffd700;
+  --theme-neon: #ffaa00; /* Use orange/gold instead of cyan */
+  --theme-text: #fef08a;
+}
+
+[data-theme="light"] {
+  --theme-dark: #f3f4f6;
+  --theme-card: rgba(255, 255, 255, 0.8);
+  --theme-gold: #b48608;
+  --theme-neon: #2563eb; /* Use blue instead of cyan for visibility */
+  --theme-text: #1f2937;
+}
+
+@theme {
+  --color-omni-dark: var(--theme-dark);
+  --color-omni-card: var(--theme-card);
+  --color-omni-gold: var(--theme-gold);
+  --color-omni-neon: var(--theme-neon);
+  --color-omni-text: var(--theme-text);
+  --color-omni-red: #ff2a2a;
+  --color-omni-green: #00ff66;
+
+  --animate-blob: blob 7s infinite;
+  --animate-scanline: scanline 4s linear infinite;
+  --animate-pulse-fast: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-omni-dark text-omni-text antialiased font-sans relative min-h-screen overflow-x-hidden transition-colors duration-500;
+  }
+  
+  /* Cyber Grid Background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-image: 
+      linear-gradient(to right, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: -2;
+    pointer-events: none;
+    perspective: 1000px;
+    transform: rotateX(60deg) scale(2.5) translateY(-20%);
+    animation: gridMove 20s linear infinite;
+  }
+
+  @keyframes gridMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 40px; }
+  }
+}
+
+.glass-panel {
+  @apply bg-omni-card backdrop-blur-xl border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)] rounded-xl relative overflow-hidden transition-colors duration-500;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,0.5), transparent);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #f9d976 0%, #e9b646 50%, #c19220 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(212,175,55,0.4));
+}
+
+.neon-text {
+  text-shadow: 0 0 10px rgba(0, 243, 255, 0.7), 0 0 20px rgba(0, 243, 255, 0.5);
+}
+
+.cyber-button {
+  @apply relative overflow-hidden bg-black/10 border border-white/20 text-omni-text font-bold py-2 px-6 rounded-lg transition-all duration-300;
+}
+.cyber-button:hover {
+  @apply border-omni-neon shadow-[0_0_15px_rgba(0,243,255,0.5)] text-omni-neon bg-omni-neon/10;
+}
+
+/* Custom Scrollbar for cyber feel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a080f;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00f3ff;
+}
