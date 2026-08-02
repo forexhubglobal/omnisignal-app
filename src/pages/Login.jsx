@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, ArrowRight } from 'lucide-react';
+import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from '../firebase';
 
 export default function Login({ onLogin }) {
   const navigate = useNavigate();
@@ -16,22 +17,21 @@ export default function Login({ onLogin }) {
     setIsLoading(true);
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${API_URL}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      
-      const data = await res.json();
-      if (data.success) {
-        onLogin();
-        navigate('/');
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
       } else {
-        setError(data.message || 'Login failed');
+        await createUserWithEmailAndPassword(auth, email, password);
       }
+      onLogin();
+      navigate('/');
     } catch (err) {
-      setError('Server connection error. Please try again.');
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+         setError('Emel atau kata laluan salah.');
+      } else if (err.code === 'auth/email-already-in-use') {
+         setError('Emel ini telah didaftarkan.');
+      } else {
+         setError(err.message);
+      }
     } finally {
       setIsLoading(false);
     }

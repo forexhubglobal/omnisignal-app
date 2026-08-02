@@ -18,10 +18,28 @@ import WhaleTracker from './pages/WhaleTracker';
 import StrengthMatrix from './pages/StrengthMatrix';
 import XRay from './pages/XRay';
 import Chatbot from './components/Chatbot';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { auth, onAuthStateChanged } from './firebase';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Auth is now required
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-omni-dark text-omni-gold">
+        <div className="animate-pulse font-bold text-xl">MENGAKSES OMNI TERMINAL...</div>
+      </div>
+    );
+  }
 
   return (
     <Router>

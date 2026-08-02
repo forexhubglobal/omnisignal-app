@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OmniSignalApp</string>
+    <string name="title_activity_main">OmniSignalApp</string>
+    <string name="package_name">com.omnisignal.app</string>
+    <string name="custom_url_scheme">com.omnisignal.app</string>
+</resources>
