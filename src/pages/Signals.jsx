@@ -24,7 +24,6 @@ export default function Signals() {
     socket.on('disconnect', () => setIsConnected(false));
     
     // Listen for new incoming signals in real-time
-    // Listen for new incoming signals in real-time
     socket.on('new_signal', (newSignal) => {
       setSignals(prevSignals => [newSignal, ...prevSignals]);
       
@@ -44,6 +43,17 @@ export default function Signals() {
 
       // Play a small notification sound or trigger a vibration
       if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    });
+
+    socket.on('signal_updated', (updatedData) => {
+      setSignals(prevSignals => {
+        const newSignals = [...prevSignals];
+        const index = newSignals.findIndex(s => s.pair === updatedData.pair && s.status === 'live');
+        if (index !== -1) {
+          newSignals[index] = { ...newSignals[index], status: updatedData.status };
+        }
+        return newSignals;
+      });
     });
 
     return () => socket.disconnect();
@@ -73,6 +83,7 @@ export default function Signals() {
               key={signal.id} 
               className={`glass-panel p-5 border-l-4 transition-all duration-300 hover:scale-[1.02] cursor-pointer group ${
                 signal.status === 'live' ? 'border-l-omni-green shadow-[0_0_30px_rgba(0,255,102,0.15)] hover:shadow-[0_0_40px_rgba(0,255,102,0.3)]' :
+                signal.status === 'completed' ? 'border-l-gray-400 bg-gray-900/50 opacity-80' :
                 signal.status === 'standby' ? 'border-l-omni-gold shadow-[0_0_20px_rgba(212,175,55,0.1)] hover:shadow-[0_0_30px_rgba(212,175,55,0.2)]' :
                 signal.status === 'active' ? 'border-l-omni-red shadow-[0_0_20px_rgba(255,42,42,0.1)] hover:shadow-[0_0_30px_rgba(255,42,42,0.2)]' :
                 'border-l-gray-500 opacity-60'
@@ -88,6 +99,7 @@ export default function Signals() {
                   <div>
                     <h3 className="text-xl font-bold text-white">{signal.pair}</h3>
                     <div className={`text-xs font-bold px-2 py-0.5 rounded uppercase inline-block mt-1 ${
+                      signal.status === 'completed' ? 'bg-gray-500/20 text-gray-400' :
                       signal.type.includes('BUY') ? 'bg-green-500/20 text-green-400' :
                       signal.type.includes('SELL') ? 'bg-red-500/20 text-red-400' :
                       signal.type.includes('STANDBY') ? 'bg-yellow-500/20 text-yellow-400' :
@@ -123,6 +135,10 @@ export default function Signals() {
                     <button className="cyber-button text-xs py-1.5">
                       INITIATE
                     </button>
+                  ) : signal.status === 'completed' ? (
+                    <div className="text-omni-neon text-xs font-bold px-3 py-1.5 border border-omni-neon/50 rounded bg-omni-neon/10">
+                      COMPLETED ✅
+                    </div>
                   ) : null}
                 </div>
 

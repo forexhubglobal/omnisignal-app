@@ -48,6 +48,22 @@ app.post('/api/webhook', (req, res) => {
     return res.status(400).json({ error: 'Invalid signal format' });
   }
 
+  // If this is a COMPLETED signal, update the latest live signal for this pair
+  if (type === 'COMPLETED') {
+    const updateSql = `UPDATE signals SET status = 'completed' WHERE pair = ? AND status = 'live' AND id = (SELECT id FROM signals WHERE pair = ? AND status = 'live' ORDER BY id DESC LIMIT 1)`;
+    db.run(updateSql, [pair, pair], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      if (this.changes > 0) {
+        // Emit update event to clients
+        io.emit('signal_updated', { pair, status: 'completed' });
+        return res.status(200).json({ message: 'Signal marked as completed' });
+      } else {
+        return res.status(404).json({ message: 'No live signal found to complete for this pair' });
+      }
+    });
+    return;
+  }
+
   // Format time (e.g. 'Just now', '10:45 AM')
   const now = new Date();
   const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
