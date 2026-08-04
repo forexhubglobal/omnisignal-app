@@ -7,6 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      filename: 'manifest.json',
       manifest: {
         name: 'Omni Signal App',
         short_name: 'OmniApp',
