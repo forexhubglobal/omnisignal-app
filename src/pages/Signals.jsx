@@ -6,7 +6,7 @@ export default function Signals() {
   const [signals, setSignals] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://omnisignal-app.onrender.com';
 
   useEffect(() => {
     // Fetch historical signals
