@@ -15,7 +15,7 @@ const io = new Server(server, {
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ type: ['application/json', 'text/plain'] }));
 
 // Setup SQLite Database
 const db = new sqlite3.Database('./signals.db', (err) => {
