@@ -128,6 +128,8 @@ function toast(msg) {
 const AppState = {
   db: null,
   activeSignal: null,
+  lastResolvedSignal: null,
+  signals: [],
   stats: null,
   analysis: null,
   screener: null,
@@ -138,6 +140,8 @@ const AppState = {
       const res = await fetch('/api/data');
       this.db = await res.json();
       this.activeSignal = this.db.activeSignal;
+      this.lastResolvedSignal = this.db.lastResolvedSignal || null;
+      this.signals = this.db.signals || [];
       this.stats = this.db.stats;
       this.analysis = this.db.analysis;
       this.screener = this.db.screener;
@@ -154,6 +158,8 @@ const AppState = {
       s.addEventListener('initial_sync', e => {
         const d = JSON.parse(e.data);
         this.activeSignal = d.activeSignal;
+        this.lastResolvedSignal = d.lastResolvedSignal || null;
+        this.signals = d.signals || [];
         this.stats = d.stats;
         this.analysis = d.analysis;
         this.screener = d.screener;
@@ -169,9 +175,19 @@ const AppState = {
         toast(`⚡ AMATERASU SIGNAL: ${this.activeSignal.type} ${this.activeSignal.symbol}!`);
         if (typeof route === 'function') route();
       });
+      s.addEventListener('signal_update', e => {
+        const d = JSON.parse(e.data);
+        if (d.activeSignal) this.activeSignal = d.activeSignal;
+        toast(d.message || `🎯 Target 1 Disahkan! Alih SL ke Break-Even (BE)!`);
+        if (typeof route === 'function') route();
+      });
       s.addEventListener('signal_resolved', e => {
         const d = JSON.parse(e.data);
         this.activeSignal = d.activeSignal;
+        this.lastResolvedSignal = d.item;
+        if (d.item) {
+          this.signals = [d.item, ...(this.signals || [])];
+        }
         this.stats = d.stats;
         toast(`🎯 Signal ${d.item.status}: ${d.item.pips > 0 ? '+' : ''}${d.item.pips} pip!`);
         if (typeof route === 'function') route();

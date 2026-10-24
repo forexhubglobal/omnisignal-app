@@ -275,15 +275,18 @@ function renderSignals() {
       </div>
     `;
   } else {
+    const isTp1 = sig.status === 'TP1_HIT';
     box.innerHTML = `
-      <div style="background:rgba(255,109,0,0.08); border:1px solid rgba(255,109,0,0.3); padding:14px; border-radius:8px;">
+      <div style="background:${isTp1 ? 'rgba(0,230,118,0.09)' : 'rgba(255,109,0,0.08)'}; border:1px solid ${isTp1 ? '#00e676' : 'rgba(255,109,0,0.3)'}; padding:14px; border-radius:8px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <b style="font-size:15px; color:#fff;">Active: ${sig.type} ${sig.symbol} @ ${num(sig.entry)}</b>
-          <span class="badge-live">BROADCASTED</span>
+          <b style="font-size:15px; color:#fff;">Active: ${sig.type} ${sig.symbol} @ ${num(sig.entry)} ${isTp1 ? '<span style="color:#00e676; margin-left:6px;">(🎯 TP1 HIT · BE LOCKED)</span>' : ''}</b>
+          <span class="badge-live">${isTp1 ? 'TP1 SECURED' : 'BROADCASTED'}</span>
         </div>
-        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">Trigger instant outcome notification across all devices:</p>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+          ${isTp1 ? 'Trade kini dalam status Sifar Risiko (BE). Klik bila sasaran TP2 tercapai atau trade ditutup:' : 'Trigger instant outcome notification across all devices:'}
+        </p>
         <div class="resolution-actions">
-          <button class="btn btn-success" data-act="TP1">🎯 Hit TP1 (+40p)</button>
+          ${!isTp1 ? '<button class="btn btn-success" data-act="TP1">🎯 Hit TP1 (+40p)</button>' : ''}
           <button class="btn btn-success" data-act="TP2">🎯 Hit TP2 (+95p)</button>
           <button class="btn btn-danger" data-act="SL">🛑 Hit SL (-50p)</button>
           <button class="btn btn-ghost" data-act="CLOSED">Manual Close</button>
@@ -308,9 +311,14 @@ function renderSignals() {
           });
           const d = await res.json();
           if (d.success) {
-            state.activeSignal = { status: 'WAITING' };
+            if (act === 'TP1') {
+              state.activeSignal = d.activeSignal || { ...sig, status: 'TP1_HIT', beLocked: true };
+              toast(`🎯 Target 1 Disahkan (+${pips}p)! SL dikunci ke Breakeven pada semua peranti client!`);
+            } else {
+              state.activeSignal = { status: 'WAITING' };
+              toast(`Signal selesai sebagai ${act}!`);
+            }
             loadData();
-            toast(`Signal resolved as ${act}!`);
           }
         } catch (err) {
           alert('Failed to resolve signal');

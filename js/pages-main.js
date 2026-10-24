@@ -18,8 +18,20 @@ function SignalPage(main) {
   let activeSymId = store.get('selected_signal_sym') || 'XAUUSD';
   let inst = ALL_INSTRUMENTS.find(i => i.id === activeSymId) || ALL_INSTRUMENTS[0];
 
-  const isCurrentAssetActive = globalSig.status === 'ACTIVE' && globalSig.symbol === inst.id;
-  const isAnyActive = globalSig.status === 'ACTIVE';
+  const isLiveOrTp1 = globalSig.status === 'ACTIVE' || globalSig.status === 'TP1_HIT';
+  const isCurrentAssetActive = isLiveOrTp1 && globalSig.symbol === inst.id;
+  const isAnyActive = isLiveOrTp1;
+  const isTp1 = globalSig.status === 'TP1_HIT';
+
+  const lastRes = (AppState && AppState.lastResolvedSignal) || ((AppState && AppState.signals && AppState.signals[0])) || {
+    symbol: 'GBPJPY',
+    type: 'BUY',
+    entry: 209.65,
+    status: 'TP2',
+    pips: 100,
+    time: '06:45',
+    date: 'Oct 25'
+  };
 
   function getDisplayPrice() {
     if (inst.id === 'XAUUSD') return num(Market.price);
@@ -27,13 +39,25 @@ function SignalPage(main) {
   }
 
   const ticketHtml = isCurrentAssetActive ? `
-    <div class="solar-ticket">
+    <div class="solar-ticket ${isTp1 ? 'tp1-secured' : ''}">
       <div class="solar-ticket-head">
-        <span class="signal-type-badge ${globalSig.type.toLowerCase()}">
-          ● LIVE ${globalSig.type} ${globalSig.symbol} SIGNAL
+        <span class="signal-type-badge ${isTp1 ? 'tp1' : globalSig.type.toLowerCase()}" style="${isTp1 ? 'background:rgba(0,230,118,0.18); color:#00e676; border:1px solid #00e676;' : ''}">
+          ${isTp1 ? '🎯 TARGET 1 HIT (+40 PIPS) · BE LOCKED' : `● LIVE ${globalSig.type} ${globalSig.symbol} SIGNAL`}
         </span>
-        <span class="muted" style="font-size: 11.5px;">Triggered: ${globalSig.firedAt || 'Just now'}</span>
+        <span class="muted" style="font-size: 11.5px;">Triggered: ${globalSig.firedAt || 'Live'}</span>
       </div>
+
+      ${isTp1 ? `
+        <div style="background:linear-gradient(90deg, rgba(0,230,118,0.18) 0%, rgba(245,196,81,0.14) 100%); border:1px solid #00e676; border-radius:8px; padding:10px 13px; margin-bottom:12px; display:flex; align-items:center; gap:10px;">
+          <span style="font-size:22px;">🛡️</span>
+          <div>
+            <b style="color:#00e676; font-size:12px; display:block;">STATUS: SIFAR RISIKO (100% RISK-FREE)</b>
+            <span style="font-size:11px; color:#f1f5f9; line-height:1.35; display:block;">
+              SOP Wajib: Ambil 50% partial profit & <b>pastikan Stop Loss diubah ke harga Entry (${num(globalSig.entry)})</b>. Baki posisi sasarkan TP2!
+            </span>
+          </div>
+        </div>
+      ` : ''}
 
       <div class="ticket-grid">
         <div class="ticket-metric">
@@ -41,33 +65,33 @@ function SignalPage(main) {
           <div class="val gold">${num(globalSig.entry)}</div>
         </div>
         <div class="ticket-metric">
-          <div class="lbl">Primary Target</div>
-          <div class="val bull">${num(globalSig.tp1)}</div>
+          <div class="lbl">${isTp1 ? 'Runner Target (TP2)' : 'Primary Target'}</div>
+          <div class="val bull">${isTp1 ? num(globalSig.tp2) : num(globalSig.tp1)}</div>
         </div>
       </div>
 
       <div class="targets-row">
-        <div class="target-box tp">
-          <span>TARGET 1</span>
+        <div class="target-box tp ${isTp1 ? 'secured' : ''}">
+          <span>TARGET 1 ${isTp1 ? '✓ HIT' : ''}</span>
           <b>${num(globalSig.tp1)}</b>
         </div>
         <div class="target-box tp">
-          <span>TARGET 2</span>
+          <span>TARGET 2 (RUNNER)</span>
           <b>${num(globalSig.tp2)}</b>
         </div>
         <div class="target-box sl">
           <span>STOP LOSS</span>
-          <b>${num(globalSig.sl)}</b>
+          <b>${isTp1 ? `BE (${num(globalSig.entry)})` : num(globalSig.sl)}</b>
         </div>
       </div>
 
       <div class="row" style="margin-bottom: 10px; font-size: 11px;">
         <span class="muted">Risk/Reward: <b style="color:#fff;">1 : 2.6</b></span>
-        <span class="badge gold" style="font-size: 10px;">MT5 EXECUTION VERIFIED</span>
+        <span class="badge gold" style="font-size: 10px;">${isTp1 ? 'PROTECTED BY BREAK-EVEN' : 'MT5 EXECUTION VERIFIED'}</span>
       </div>
 
       <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.45; border-top: 1px solid var(--border); padding-top: 10px;">
-        ${globalSig.notes || `Amaterasu AI algorithm detected order block absorption on ${inst.name}. Follow strict 50-pip stop safeguard.`}
+        ${globalSig.notes || `Amaterasu AI algorithm detected order block absorption on ${inst.name}. Follow strict SOP.`}
       </p>
     </div>
   ` : isAnyActive ? `
@@ -103,11 +127,25 @@ function SignalPage(main) {
           </svg>
         </div>
       </div>
-      <h3>Amaterasu Solar Core Scanning · ${inst.name}</h3>
-      <div class="next-setup-pill">PREDICTED SETUP: ${inst.bias === 'BULLISH' ? 'BUY ▲' : inst.bias === 'BEARISH' ? 'SELL ▼' : 'ACCUMULATION'}</div>
-      <p>Scanning ${inst.id} institutional order blocks & ${inst.category} confluence. Next setup generates automatically every 25–30s.</p>
+      <h3>Amaterasu Institutional Scanner · ${inst.name}</h3>
+      <div class="next-setup-pill">BIAS: ${inst.bias === 'BULLISH' ? 'BULLISH ACCUMULATION ▲' : inst.bias === 'BEARISH' ? 'BEARISH DISTRIBUTION ▼' : 'CONSOLIDATION'}</div>
+      <p style="font-size:12px; color:#8e9aa8; margin-top:6px;">Mengimbas zon kecairan institusi & order blocks ${inst.id}. Signal disahkan oleh Master Trader.</p>
+
+      <div style="margin-top:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(0,230,118,0.3); border-radius:10px; padding:12px 14px; text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-size:11px; font-weight:800; color:#00e676; letter-spacing:0.8px;">KEPUTUSAN SIGNAL SELESAI TERAKHIR:</span>
+          <span style="font-size:11px; color:#8e9aa8;">${lastRes.date || 'Hari ini'} · ${lastRes.time || ''}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <b style="font-size:14px; color:#fff;">${lastRes.type} ${lastRes.symbol} @ ${num(lastRes.entry)}</b>
+          <span style="background:rgba(0,230,118,0.18); border:1px solid #00e676; color:#00e676; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">
+            ${lastRes.pips > 0 ? `✅ ${lastRes.status} (+${lastRes.pips} PIPS)` : `🛑 SL (${lastRes.pips} PIPS)`}
+          </span>
+        </div>
+      </div>
+
       <button class="btn gold" id="btnTriggerScanNow" style="margin-top:14px; width:100%; padding:11px 14px; font-weight:700; font-size:12.5px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 16px rgba(255,160,0,0.25);">
-        <span>⚡ Jana Signal AI ${inst.name} Sekarang</span>
+        <span>⚡ Hantar Signal Live ${inst.name}</span>
       </button>
     </div>
   `;
@@ -226,9 +264,46 @@ function SignalPage(main) {
       </div>
     </div>
 
-    <!-- 3. AI Execution Ticket / Scanner (Full CRM Auto-Engine Connectivity) -->
+    <!-- 3. AI Execution Ticket / Scanner, SOP Guide & Recent Telemetry -->
     <div style="max-width:440px; margin:0 auto;">
+      <!-- SOP Guide Button -->
+      <button class="btn-sop-guide" id="btnOpenSopGuide">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+        <span>Panduan SOP Signal & Kawalan Risiko</span>
+        <span class="sop-tag">4 LANGKAH</span>
+      </button>
+
       ${ticketHtml}
+
+      <!-- Recent Verified Signals History Section -->
+      <div class="recent-signals-card" style="margin-top:16px; background:#0b1118; border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.07); padding-bottom:8px;">
+          <b style="font-family:'Space Grotesk',sans-serif; font-size:13px; color:#f1f5f9; display:flex; align-items:center; gap:6px;">
+            <span>📊</span> Rekod Telemetri Signal Terkini
+          </b>
+          <span style="font-size:11px; color:#f5c451; font-weight:700;">Winrate 94% · Verified</span>
+        </div>
+        <div class="recent-signals-list" style="display:flex; flex-direction:column; gap:8px;">
+          ${((AppState && AppState.signals) || []).slice(0, 5).map(s => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:#111722; border-radius:8px; border:1px solid rgba(255,255,255,0.05); font-size:12px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-weight:800; color:${s.type === 'BUY' ? '#00e676' : '#ef5350'};">${s.type}</span>
+                <b style="color:#fff;">${s.symbol}</b>
+                <span class="muted" style="font-size:11px;">@ ${num(s.entry)}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="muted" style="font-size:11px;">${s.time}</span>
+                <span style="font-weight:800; font-size:11.5px; color:${s.pips > 0 ? '#00e676' : '#ef5350'}; background:${s.pips > 0 ? 'rgba(0,230,118,0.12)' : 'rgba(239,83,80,0.12)'}; padding:2px 7px; border-radius:6px; border:1px solid ${s.pips > 0 ? 'rgba(0,230,118,0.3)' : 'rgba(239,83,80,0.3)'};">
+                  ${s.pips > 0 ? '+' : ''}${s.pips}p
+                </span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
     </div>
   </section>`;
 
@@ -432,6 +507,69 @@ function SignalPage(main) {
         store.set('selected_signal_sym', globalSig.symbol);
         SignalPage(main);
       }
+    };
+  }
+
+  // SOP Guide Modal Click Handler
+  const btnSop = $('#btnOpenSopGuide', main);
+  if (btnSop) {
+    btnSop.onclick = () => {
+      modal(`
+        <div class="modal-head" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px;">
+          <b style="font-family:'Space Grotesk',sans-serif; font-size:15px; color:#f5c451; display:flex; align-items:center; gap:8px;">
+            <span>📖</span> SOP Entry Signal & Pengurusan Risiko
+          </b>
+          <button class="btn btn-ghost" data-close style="padding:4px 8px; font-size:16px;">✕</button>
+        </div>
+        <div class="sop-modal-body">
+          <div class="sop-step-card active-step">
+            <div class="sop-step-head">
+              <span class="sop-step-num">1</span>
+              <span class="sop-step-title">Zon Entry & Disiplin No-FOMO</span>
+            </div>
+            <p class="sop-step-desc">
+              Hanya masuk entry di MT4/MT5 sekiranya harga pasaran semasa berada dalam zon toleransi <b>±10 hingga 15 pip</b> dari harga Entry yang disarankan. Jangan kejar harga jika candle sudah terlajak jauh melepasi 20 pip.
+            </p>
+          </div>
+
+          <div class="sop-step-card">
+            <div class="sop-step-head">
+              <span class="sop-step-num">2</span>
+              <span class="sop-step-title">Pengurusan Risiko & Stop Loss (SL) Wajib</span>
+            </div>
+            <p class="sop-step-desc">
+              Wajib tetapkan Stop Loss (SL) di MT4/MT5 mengikut paras harga yang tertera pada tiket. Risiko maksimum bagi setiap posisi adalah <b>1% - 2% daripada modal akaun</b> anda. Dilarang membuka lot melampau (*overlot*).
+            </p>
+          </div>
+
+          <div class="sop-step-card active-step">
+            <div class="sop-step-head">
+              <span class="sop-step-num">3</span>
+              <span class="sop-step-title">Capai Target 1 (TP1) ➔ Lock BE (Sifar Risiko)</span>
+            </div>
+            <p class="sop-step-desc">
+              Bila harga mencecah TP1 (+35 hingga +50 pip), <b>SOP WAJIB:</b><br/>
+              • Tutup 50% lot (Partial Profit) untuk kunci keuntungan.<br/>
+              • <b>Alih Stop Loss ke harga Entry asal (Break Even / BE).</b><br/>
+              Kini posisi anda berada dalam status <b>100% Risk-Free</b> — jika pasaran berpatah balik secara drastik, akaun anda terlindung dan tidak akan rugi satu sen pun!
+            </p>
+          </div>
+
+          <div class="sop-step-card">
+            <div class="sop-step-head">
+              <span class="sop-step-num">4</span>
+              <span class="sop-step-title">Capai Target 2 (TP2) ➔ Full Target Captured</span>
+            </div>
+            <p class="sop-step-desc">
+              Baki 50% lot dibiarkan mengalir (*let profit run*) sehingga mencecah sasaran penuh TP2 (+80 hingga +140 pip) untuk memaksimumkan pulangan keuntungan.
+            </p>
+          </div>
+
+          <button class="btn gold" data-close style="width:100%; margin-top:12px; padding:11px; font-weight:700;">
+            Faham & Patuhi SOP Ini ✓
+          </button>
+        </div>
+      `);
     };
   }
 

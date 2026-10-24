@@ -237,6 +237,8 @@ const server = http.createServer(async (req, res) => {
     const db = getDB();
     res.write(`event: initial_sync\ndata: ${JSON.stringify({
       activeSignal: db.activeSignal,
+      lastResolvedSignal: db.lastResolvedSignal,
+      signals: (db.signals || []).slice(0, 15),
       stats: db.stats,
       analysis: db.analysis,
       screener: db.screener,
@@ -318,10 +320,31 @@ const server = http.createServer(async (req, res) => {
     try {
       const payload = await parseJsonBody(req); // { status: 'TP1' | 'TP2' | 'SL' | 'CLOSED', pips: 44 }
       const db = getDB();
-      const current = db.activeSignal;
+      const current = db.activeSignal || {};
       const pips = Number(payload.pips) || 0;
 
-      // Add to signals history
+      // Special case: TP1 does NOT close the trade! It locks BE and keeps trade running to TP2!
+      if (payload.status === 'TP1') {
+        db.activeSignal.status = 'TP1_HIT';
+        db.activeSignal.beLocked = true;
+        db.activeSignal.tp1HitAt = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+        db.activeSignal.tp1Pips = pips || 40;
+        db.stats.tp1Hit = (db.stats.tp1Hit || 0) + 1;
+        db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + (pips || 40);
+        saveDB(db);
+        broadcastEvent('signal_update', {
+          type: 'TP1_HIT',
+          symbol: db.activeSignal.symbol,
+          pips: pips || 40,
+          activeSignal: db.activeSignal,
+          message: `🎯 Target 1 Tercapai (+${pips || 40} pips)! Alih SL ke Break-Even (BE) sekarang!`
+        });
+        broadcastEvent('signal_fired', db.activeSignal);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, activeSignal: db.activeSignal, stats: db.stats }));
+      }
+
+      // Outcome is TP2, SL, or CLOSED -> Finalize and archive to history
       const newHistoryItem = {
         id: 'sig-' + Date.now(),
         time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
@@ -331,21 +354,21 @@ const server = http.createServer(async (req, res) => {
         entry: current.entry,
         status: payload.status,
         pips: pips,
-        tags: payload.status === 'TP1' ? ['TP1'] : payload.status === 'TP2' ? ['TP1', 'TP2'] : [],
+        tags: payload.status === 'TP2' ? ['TP1', 'TP2'] : payload.status === 'TP1' ? ['TP1'] : [],
         peak: Math.abs(pips) + 5
       };
 
       db.signals.unshift(newHistoryItem);
+      db.lastResolvedSignal = { ...newHistoryItem };
 
       // Update aggregate stats
-      db.stats.totalSignals += 1;
+      db.stats.totalSignals = (db.stats.totalSignals || 0) + 1;
       if (pips > 0) {
-        db.stats.totalProfitToday += pips;
-        if (payload.status === 'TP1') db.stats.tp1Hit += 1;
-        if (payload.status === 'TP2') { db.stats.tp1Hit += 1; db.stats.tp2Hit += 1; }
+        db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + pips;
+        if (payload.status === 'TP2') { db.stats.tp2Hit = (db.stats.tp2Hit || 0) + 1; }
       } else {
-        db.stats.slHit += 1;
-        db.stats.totalProfitToday += pips;
+        db.stats.slHit = (db.stats.slHit || 0) + 1;
+        db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + pips;
       }
       const wins = db.signals.filter(s => s.pips > 0).length;
       db.stats.winRate = Math.round((wins / db.signals.length) * 100);
@@ -353,7 +376,7 @@ const server = http.createServer(async (req, res) => {
       // Reset active signal to WAITING
       db.activeSignal = {
         status: 'WAITING',
-        symbol: 'XAUUSD',
+        symbol: current.symbol || 'XAUUSD',
         type: current.type === 'BUY' ? 'SELL' : 'BUY',
         timeframe: 'M15',
         entry: current.entry,
@@ -361,13 +384,13 @@ const server = http.createServer(async (req, res) => {
         tp2: 0,
         sl: 0,
         firedAt: null,
-        notes: `Scanning for the next ${current.type === 'BUY' ? 'SELL' : 'BUY'} setup...`
+        notes: `Amaterasu AI Neural Core scanning order book clusters for next high-probability setup...`
       };
 
       saveDB(db);
-      broadcastEvent('signal_resolved', { item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal });
+      broadcastEvent('signal_resolved', { item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal, lastResolvedSignal: db.lastResolvedSignal });
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, item: newHistoryItem, stats: db.stats }));
+      return res.end(JSON.stringify({ success: true, item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal }));
     } catch (e) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: e.message }));
@@ -585,9 +608,10 @@ const server = http.createServer(async (req, res) => {
 let currentMarketPrice = 4024.45;
 
 // ===== AMATERASU AI AUTONOMOUS SIGNAL ENGINE =====
+// REAL LIVE MODE: Rapid auto-test loop disabled so signals stay persistent and controlled.
 const AiEngine = {
-  enabled: true,
-  scanIntervalSec: 25, // Quick institutional scan interval (25 seconds)
+  enabled: false, // LIVE PRODUCTION MODE: false (signals are persistent and controlled)
+  scanIntervalSec: 1800, // 30 minutes if toggled by admin
   secondsInState: 0,
   activeTradeTicks: 0,
   tp1Triggered: false,

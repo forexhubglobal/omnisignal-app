@@ -2038,4 +2038,95 @@
   box-shadow: 0 0 12px rgba(245, 196, 81, 0.22);
 }
 
+/* SOP Guide & Real Deal Signals Styles */
+.btn-sop-guide {
+  width: 100%;
+  margin: 10px 0 14px;
+  padding: 11px 16px;
+  background: linear-gradient(90deg, #121822 0%, #1a2332 100%);
+  border: 1px solid rgba(245, 196, 81, 0.35);
+  border-radius: 10px;
+  color: #f5c451;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: all 0.18s ease;
+}
+.btn-sop-guide:hover {
+  border-color: #f5c451;
+  box-shadow: 0 4px 18px rgba(245, 196, 81, 0.25);
+  transform: translateY(-1px);
+}
+.sop-tag {
+  font-size: 9.5px;
+  background: rgba(245, 196, 81, 0.18);
+  color: #f5c451;
+  border: 1px solid rgba(245, 196, 81, 0.4);
+  padding: 2px 7px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+.target-box.tp.secured {
+  border-color: #00e676 !important;
+  background: rgba(0, 230, 118, 0.12) !important;
+}
+.target-box.tp.secured span {
+  color: #00e676 !important;
+  font-weight: 800;
+}
+.sop-modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.sop-step-card {
+  background: #0f151e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.sop-step-card.active-step {
+  border-color: rgba(245, 196, 81, 0.5);
+  background: linear-gradient(135deg, rgba(245, 196, 81, 0.08) 0%, #0f151e 100%);
+}
+.sop-step-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.sop-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--solar-gold);
+  color: #06070a;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.sop-step-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+.sop-step-desc {
+  font-size: 11.5px;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin: 0;
+}
+
 
