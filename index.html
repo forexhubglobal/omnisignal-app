@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#06070a" />
+  <title>Amaterasu AI · Solar Sovereign Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="pages.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Top Telemetry Status -->
+    <div class="telemetry-bar">
+      <div class="node"><i></i> Amaterasu Node · 12ms</div>
+      <div>MT5 Verified Engine</div>
+    </div>
+
+    <!-- Top Header -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon-wrap" id="brandCrest">
+          <!-- Amaterasu Solar Crest SVG -->
+          <svg viewBox="0 0 48 48" width="38" height="38" aria-hidden="true">
+            <defs>
+              <radialGradient id="solarCrestGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ff7a00"/>
+                <stop offset="60%" stop-color="#ff3b30"/>
+                <stop offset="100%" stop-color="#ff9100" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <!-- 8 Radiant Solar Rays -->
+            <g stroke="#ff9100" stroke-width="1.8" stroke-linecap="round">
+              <line x1="24" y1="3" x2="24" y2="8" />
+              <line x1="24" y1="40" x2="24" y2="45" />
+              <line x1="3" y1="24" x2="8" y2="24" />
+              <line x1="40" y1="24" x2="45" y2="24" />
+              <line x1="9.15" y1="9.15" x2="12.69" y2="12.69" />
+              <line x1="35.31" y1="35.31" x2="38.85" y2="38.85" />
+              <line x1="9.15" y1="38.85" x2="12.69" y2="35.31" />
+              <line x1="35.31" y1="12.69" x2="38.85" y2="9.15" />
+            </g>
+            <!-- Outer Solar Mirror Ring -->
+            <circle cx="24" cy="24" r="14.5" fill="none" stroke="#ffc107" stroke-width="1.6" stroke-dasharray="3 2" />
+            <!-- Inner Solar Flame Disc -->
+            <circle cx="24" cy="24" r="10" fill="url(#solarCrestGlow)" stroke="#ff6d00" stroke-width="1.2" />
+            <!-- Core Tomoe Flare -->
+            <path d="M24 18 C26.5 18 28 20.5 28 23 C28 26.5 24 29 20 28 C23 27 25 25 24 22 C23.5 20 22 19.5 24 18 Z" fill="#ffffff" />
+            <circle cx="24" cy="24" r="2.2" fill="#ffd000" />
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name" id="brandName">AMATERASU</div>
+          <div class="brand-tag" id="brandTag">SOLAR AI</div>
+        </div>
+      </div>
+
+      <div class="ticker">
+        <div id="price">4,024.45</div>
+        <div id="change" class="change up">+0.00%</div>
+      </div>
+    </header>
+
+    <!-- User Operator Bar -->
+    <div class="userbar">
+      <div class="user-pill">
+        <span></span> OPERATOR: <b id="user">kj35</b>
+      </div>
+      <a href="#" id="logout">Disconnect</a>
+    </div>
+
+    <!-- Main Content Container -->
+    <main id="main"></main>
+
+    <!-- Floating Amaterasu Solar Core (AI Assistant) -->
+    <button class="bot" id="bot" aria-label="Amaterasu Solar Core AI">
+      <svg viewBox="0 0 64 64" width="58" height="58">
+        <defs>
+          <radialGradient id="amaterasuOrbGlow" cx="45%" cy="40%" r="55%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="35%" stop-color="#ff9100"/>
+            <stop offset="75%" stop-color="#ff3b30"/>
+            <stop offset="100%" stop-color="#4a0e0e"/>
+          </radialGradient>
+          <filter id="solarBloom" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+        <!-- Solar Corona Outer Ring -->
+        <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255, 145, 0, 0.4)" stroke-width="1.5" stroke-dasharray="8 6" />
+        <circle cx="32" cy="32" r="21" fill="none" stroke="rgba(255, 193, 7, 0.6)" stroke-width="1.2" />
+        <!-- Sacred Mirror Geometric Hexagon -->
+        <polygon points="32,13 47,22 47,40 32,49 17,40 17,22" fill="none" stroke="#ff6d00" stroke-width="1" stroke-opacity="0.7" />
+        <!-- Glowing Core Orb -->
+        <circle cx="32" cy="32" r="14" fill="url(#amaterasuOrbGlow)" filter="url(#solarBloom)" />
+        <circle cx="28" cy="28" r="3" fill="#ffffff" opacity="0.85" />
+      </svg>
+    </button>
+
+    <!-- Floating Navigation Dock -->
+    <nav class="tabbar" id="tabbar"></nav>
+  </div>
+
+  <script src="js/core.js"></script>
+  <script src="js/blocks.js"></script>
+  <script src="js/pages-main.js"></script>
+  <script src="js/pages-more.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

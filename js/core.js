@@ -1,0 +1,1458 @@
+// ===== Amaterasu AI Core Engine =====
+const BRAND = {
+  name: 'Amaterasu AI',
+  short: 'AMA',
+  tagline: 'SOLAR SOVEREIGN INTELLIGENCE',
+  user: 'kj35'
+};
+
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = (n, d = 2) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const money = (n, sign = true) => (n < 0 ? '-' : sign ? '+' : '') + '$' + num(Math.abs(n));
+const shortMoney = n => {
+  const a = Math.abs(n);
+  const s = a >= 1000 ? (a / 1000).toFixed(a >= 10000 ? 0 : 1) + 'k' : a % 1 === 0 ? a.toFixed(0) : a.toFixed(2);
+  return (n < 0 ? '-' : '+') + '$' + s;
+};
+const pad2 = n => String(n).padStart(2, '0');
+const monthKey = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+const dateKey = d => `${monthKey(d)}-${pad2(d.getDate())}`;
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const flag = c => `<img class="flag" src="https://flagcdn.com/w40/${c}.png" alt="${c}" style="width:18px; height:13px; border-radius:2px; vertical-align:middle;">`;
+
+// Deterministic random generator
+function rng(seed) {
+  let h = 1779033703 ^ seed.length;
+  for (let i = 0; i < seed.length; i++) { h = Math.imul(h ^ seed.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+  let a = h >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ----- Icons -----
+const ICON = {
+  signal: '<path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6a6 6 0 1 0 6 6"/><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/>',
+  stat: '<path d="M3 20h18"/><path d="M7 16V10M12 16V6M17 16v-4"/>',
+  analysis: '<circle cx="12" cy="12" r="3.2"/><path d="M2 12s3.8-7 10-7 10 7 10 7-3.8 7-10 7-10-7-10-7z"/>',
+  screener: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  news: '<circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18"/>',
+  ainews: '<rect x="3" y="4" width="18" height="17" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="15" r="1.5" fill="currentColor" stroke="none"/>',
+  more: '<circle cx="5" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="2" fill="currentColor" stroke="none"/>',
+  bell: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
+  monitor: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+  speaker: '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  calc: '<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/>',
+  book: '<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20"/>',
+  pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  trophy: '<path d="M6 9H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"/><path d="M18 9h3a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-3"/><path d="M6 3h12v7a6 6 0 0 1-12 0V3z"/><path d="M12 16v3"/><path d="M8 21h8"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  diamond: '<path d="M6 3h12l4 6-10 13L2 9z"/><path d="M2 9h20M10 3l2 19M14 3l-2 19"/>',
+  arrow: '<line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/>',
+};
+const ic = (name, cls = '') => `<svg class="ico ${cls}" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name] || ''}</svg>`;
+
+// Amaterasu Solar Crest Logo
+const LOGO = `<svg viewBox="0 0 48 48" width="42" height="42" aria-hidden="true">
+  <defs>
+    <radialGradient id="solG" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff7a00"/>
+      <stop offset="65%" stop-color="#ff3b30"/>
+      <stop offset="100%" stop-color="#ff9100" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#ff9100" stroke-width="1.8" stroke-linecap="round">
+    <line x1="24" y1="3" x2="24" y2="8" /><line x1="24" y1="40" x2="24" y2="45" />
+    <line x1="3" y1="24" x2="8" y2="24" /><line x1="40" y1="24" x2="45" y2="24" />
+    <line x1="9.15" y1="9.15" x2="12.69" y2="12.69" /><line x1="35.31" y1="35.31" x2="38.85" y2="38.85" />
+    <line x1="9.15" y1="38.85" x2="12.69" y2="35.31" /><line x1="35.31" y1="12.69" x2="38.85" y2="9.15" />
+  </g>
+  <circle cx="24" cy="24" r="14.5" fill="none" stroke="#ffc107" stroke-width="1.6" stroke-dasharray="3 2" />
+  <circle cx="24" cy="24" r="10" fill="url(#solG)" stroke="#ff6d00" stroke-width="1.2" />
+  <path d="M24 18 C26.5 18 28 20.5 28 23 C28 26.5 24 29 20 28 C23 27 25 25 24 22 C23.5 20 22 19.5 24 18 Z" fill="#ffffff" />
+  <circle cx="24" cy="24" r="2.2" fill="#ffd000" />
+</svg>`;
+
+// Solar background glow
+function solarGlow() {
+  return `<div class="solar-bg-glow"></div>`;
+}
+
+const pageHead = (title, sub, back = false) =>
+  `${solarGlow()}${back ? '<a class="back" href="#more">← Back to Command</a>' : ''}<h1 class="title">${title}</h1><p class="sub">${sub}</p><div class="rule"></div>`;
+
+// Pixel art helper for game icons
+const PAL = { g: '#00e676', r: '#ff1744', y: '#ffb300', b: '#8b5a2b', w: '#f8fafc', k: '#06070a', p: '#d500f9', c: '#00e5ff' };
+function pixel(rows, size = 6) {
+  const h = rows.length, w = rows[0].length;
+  let r = '';
+  rows.forEach((row, y) => [...row].forEach((ch, x) => { if (PAL[ch]) r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${PAL[ch]}"/>`; }));
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w * size}" height="${h * size}" shape-rendering="crispEdges">${r}</svg>`;
+}
+
+// ----- Modal & toast -----
+function modal(html) {
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.innerHTML = `<div class="modal">${html}</div>`;
+  document.body.appendChild(bg);
+  const close = () => bg.remove();
+  bg.addEventListener('click', e => { if (e.target === bg || e.target.closest('[data-close]')) close(); });
+  return { el: bg, close };
+}
+function toast(msg) {
+  $$('.toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span style="color:var(--solar-gold)">☀️</span> ${msg}`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2400);
+}
+
+// ----- Global State & Real-Time Sync with Amaterasu CRM -----
+const AppState = {
+  db: null,
+  activeSignal: null,
+  stats: null,
+  analysis: null,
+  screener: null,
+  classes: null,
+  contests: null,
+  async sync() {
+    try {
+      const res = await fetch('/api/data');
+      this.db = await res.json();
+      this.activeSignal = this.db.activeSignal;
+      this.stats = this.db.stats;
+      this.analysis = this.db.analysis;
+      this.screener = this.db.screener;
+      this.classes = this.db.classes;
+      this.contests = this.db.contests;
+    } catch (e) {
+      console.warn('Running in offline/standalone mode', e);
+    }
+  },
+  initSSE() {
+    if (typeof EventSource === 'undefined') return;
+    try {
+      const s = new EventSource('/api/events');
+      s.addEventListener('initial_sync', e => {
+        const d = JSON.parse(e.data);
+        this.activeSignal = d.activeSignal;
+        this.stats = d.stats;
+        this.analysis = d.analysis;
+        this.screener = d.screener;
+        this.classes = d.classes;
+        this.contests = d.contests;
+        if (typeof route === 'function') route();
+      });
+      s.addEventListener('signal_fired', e => {
+        this.activeSignal = JSON.parse(e.data);
+        if (this.activeSignal && this.activeSignal.symbol) {
+          store.set('selected_signal_sym', this.activeSignal.symbol);
+        }
+        toast(`⚡ AMATERASU SIGNAL: ${this.activeSignal.type} ${this.activeSignal.symbol}!`);
+        if (typeof route === 'function') route();
+      });
+      s.addEventListener('signal_resolved', e => {
+        const d = JSON.parse(e.data);
+        this.activeSignal = d.activeSignal;
+        this.stats = d.stats;
+        toast(`🎯 Signal ${d.item.status}: ${d.item.pips > 0 ? '+' : ''}${d.item.pips} pip!`);
+        if (typeof route === 'function') route();
+      });
+      s.addEventListener('analysis_updated', e => {
+        this.analysis = JSON.parse(e.data);
+        toast('📝 Amaterasu Solar Intelligence Updated');
+        if (location.hash === '#analysis') route();
+      });
+      s.addEventListener('screener_updated', e => {
+        this.screener = JSON.parse(e.data);
+        if (location.hash === '#screener') route();
+      });
+      s.addEventListener('class_added', e => {
+        const item = JSON.parse(e.data);
+        if (this.classes) this.classes.unshift(item);
+        toast(`🎓 New Masterclass: ${item.title}`);
+      });
+      s.addEventListener('class_updated', e => {
+        const item = JSON.parse(e.data);
+        if (this.classes) {
+          const idx = this.classes.findIndex(c => c.id === item.id);
+          if (idx !== -1) this.classes[idx] = item;
+        }
+      });
+      s.addEventListener('contest_updated', e => {
+        const ct = JSON.parse(e.data);
+        if (this.contests) this.contests[0] = ct;
+        toast(`🏆 Championship: ${ct.status.toUpperCase()}`);
+        if (location.hash === '#contest') route();
+      });
+      s.addEventListener('feedback_replied', e => {
+        const fb = JSON.parse(e.data);
+        modal(`<h3>Amaterasu Desk Response</h3><p class="muted">Regarding: "${esc(fb.message)}"</p>
+          <div style="background: rgba(255,109,0,.1); border-left: 3px solid var(--solar-orange); padding: 12px; margin: 12px 0; border-radius: 6px; color: #fff;">
+            <b>Amaterasu Lead Desk:</b><br>${esc(fb.reply)}
+          </div>
+          <div class="modal-actions"><button class="btn gold" data-close>Acknowledge</button></div>`);
+      });
+      s.addEventListener('market_tick', e => {
+        const d = JSON.parse(e.data);
+        Market.price = d.price;
+        const pEl = $('#price');
+        if (pEl) pEl.textContent = num(d.price);
+        const c = $('#change');
+        if (c) {
+          c.textContent = (d.change >= 0 ? '+' : '') + d.change.toFixed(2) + '%';
+          c.className = 'change ' + (d.change >= 0 ? 'up' : 'down');
+        }
+        $$('[data-live]').forEach(el => (el.textContent = num(d.price)));
+      });
+    } catch (e) {
+      console.warn('SSE not connected');
+    }
+  }
+};
+
+// ----- Simulated market feed (XAUUSD) -----
+const Market = {
+  open: 4024.39,
+  price: 4024.39,
+  subs: new Set(),
+  tick() {
+    this.price += (Math.random() - 0.495) * 0.45;
+    const p = this.price, ch = ((p - this.open) / this.open) * 100;
+    const pEl = $('#price');
+    if (pEl) pEl.textContent = num(p);
+    const c = $('#change');
+    if (c) {
+      c.textContent = (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%';
+      c.className = 'change ' + (ch >= 0 ? 'up' : 'down');
+    }
+    $$('[data-live]').forEach(el => (el.textContent = num(p)));
+    this.subs.forEach(fn => fn(p));
+  },
+};
+
+// ----- EMA calculation -----
+function ema(vals, period) {
+  const k = 2 / (period + 1);
+  let prev = vals[0];
+  return vals.map((v, i) => {
+    if (i === 0) return v;
+    prev = v * k + prev * (1 - k);
+    return prev;
+  });
+}
+
+function niceStep(raw) {
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const frac = raw / p;
+  if (frac <= 1.5) return p;
+  if (frac <= 3.5) return 2 * p;
+  if (frac <= 7.5) return 5 * p;
+  return 10 * p;
+}
+
+// ----- Amaterasu Neo-Solar Canvas Chart -----
+function mountChart(el, timeframe = 'M15', tfMult = 1) {
+  el.innerHTML = '';
+  const cv = document.createElement('canvas');
+  el.appendChild(cv);
+  const ctx = cv.getContext('2d');
+
+  let data = [];
+  const n = 42;
+
+  function regen() {
+    const r = rng('amaterasu:' + timeframe + ':' + dateKey());
+    let p = Market.price - 8.5;
+    data = [];
+    const vol = 0.55 * tfMult;
+    for (let i = 0; i < 75; i++) {
+      const dir = (r() - 0.49) * 2;
+      const step = dir * vol * (0.8 + r() * 0.5);
+      const o = p;
+      p = Math.max(3980, p + step);
+      const h = Math.max(o, p) + r() * vol * 0.85;
+      const l = Math.min(o, p) - r() * vol * 0.85;
+      data.push({ o, h, l, c: p });
+    }
+    data[data.length - 1].c = Market.price;
+    draw();
+  }
+
+  function pill(x, y, text, col, pw) {
+    ctx.font = '600 10.5px Space Grotesk, sans-serif';
+    const m = ctx.measureText(text), w = m.width + 12;
+    const px = Math.min(pw - w - 4, Math.max(4, x - w / 2));
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(px, y - 9, w, 18, 4) : ctx.rect(px, y - 9, w, 18);
+    ctx.fill();
+    ctx.fillStyle = '#06070a';
+    ctx.fillText(text, px + 6, y + 0.5);
+  }
+
+  function draw() {
+    const W = el.clientWidth;
+    if (!W || !data.length) return;
+    const H = Math.round(Math.min(380, W * 0.85));
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const axisW = 68, pw = W - axisW;
+    const emaAll = ema(data.map(d => d.c), 12);
+    const off = data.length - n, vis = data.slice(off), ev = emaAll.slice(off);
+    const rawHi = Math.max(...vis.map(d => d.h)), rawLo = Math.min(...vis.map(d => d.l));
+    const hiI = vis.findIndex(d => d.h === rawHi), loI = vis.findIndex(d => d.l === rawLo);
+    const range = rawHi - rawLo, hi = rawHi + range * 0.16, lo = rawLo - range * 0.16;
+    const Y = v => ((hi - v) / (hi - lo)) * H;
+    const cw = pw / n, X = i => i * cw + cw / 2;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Grid + price axis
+    ctx.font = '10.5px Space Grotesk, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 1;
+    const step = niceStep((hi - lo) / 5);
+    for (let v = Math.ceil(lo / step) * step; v < hi; v += step) {
+      const y = Math.round(Y(v)) + 0.5;
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(pw, y); ctx.stroke();
+      ctx.fillStyle = '#64748b';
+      ctx.fillText(num(v), pw + 8, y);
+    }
+    for (let i = 0; i < n; i += Math.ceil(n / 5)) {
+      const x = Math.round(X(i)) + 0.5;
+      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.beginPath(); ctx.moveTo(pw + 0.5, 0); ctx.lineTo(pw + 0.5, H); ctx.stroke();
+
+    // Institutional Liquidity Zones (Solar Supply & Solar Demand)
+    const zone = (i, top, bot, rgb, label) => {
+      const x0 = Math.max(0, X(i) - cw / 2), y0 = Y(top), y1 = Y(bot);
+      ctx.fillStyle = `rgba(${rgb},0.12)`; ctx.fillRect(x0, y0, pw - x0, y1 - y0);
+      ctx.strokeStyle = `rgba(${rgb},0.55)`; ctx.strokeRect(x0 + 0.5, y0 + 0.5, pw - x0 - 1, y1 - y0);
+      ctx.fillStyle = `rgba(${rgb},0.95)`; ctx.font = '10px Outfit, sans-serif';
+      ctx.fillText(label, x0 + 5, y0 + 10);
+    };
+    zone(hiI, rawHi, rawHi - range * 0.08, '255,35,68', 'Solar Supply · Liquid');
+    zone(loI, rawLo + range * 0.07, rawLo, '0,230,118', 'Solar Demand · Absorbed');
+
+    // Candlesticks
+    const bw = Math.max(2, cw * 0.65);
+    vis.forEach((k, i) => {
+      const isUp = k.c >= k.o;
+      const col = isUp ? '#00e676' : '#ff1744';
+      const x = X(i);
+      ctx.strokeStyle = col; ctx.fillStyle = col;
+      ctx.beginPath(); ctx.moveTo(x, Y(k.h)); ctx.lineTo(x, Y(k.l)); ctx.stroke();
+      const yt = Y(Math.max(k.o, k.c)), yb = Y(Math.min(k.o, k.c));
+      ctx.fillRect(x - bw / 2, yt, bw, Math.max(1.5, yb - yt));
+    });
+
+    // EMA Ray (Gold above, Amber below)
+    ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+    for (let i = 1; i < n; i++) {
+      ctx.strokeStyle = ev[i] > vis[i].c ? '#ff3b30' : '#ffc107';
+      ctx.beginPath(); ctx.moveTo(X(i - 1), Y(ev[i - 1])); ctx.lineTo(X(i), Y(ev[i])); ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+
+    // High / Low Indicators
+    pill(X(hiI), Y(rawHi) - 18, `H: ${num(rawHi)}`, '#ff1744', pw);
+    pill(X(loI), Y(rawLo) + 18, `L: ${num(rawLo)}`, '#00e676', pw);
+
+    // Current Live Price Tracker
+    const last = vis[vis.length - 1], yp = Y(last.c);
+    ctx.setLineDash([3, 3]); ctx.strokeStyle = 'rgba(0, 229, 255, 0.7)';
+    ctx.beginPath(); ctx.moveTo(0, yp); ctx.lineTo(pw, yp); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#00e5ff'; ctx.fillRect(pw + 1, yp - 9, axisW - 1, 18);
+    ctx.fillStyle = '#06070a'; ctx.font = '700 10.5px Space Grotesk, sans-serif';
+    ctx.fillText(num(last.c), pw + 6, yp + 0.5);
+  }
+
+  const onTick = p => { const L = data[data.length - 1]; if (!L) return; L.c = p; L.h = Math.max(L.h, p); L.l = Math.min(L.l, p); draw(); };
+  const onResize = () => draw();
+  Market.subs.add(onTick);
+  window.addEventListener('resize', onResize);
+  regen();
+  return () => { Market.subs.delete(onTick); window.removeEventListener('resize', onResize); };
+}
+
+// ----- Amaterasu 100% SNR / Supply & Demand Canvas Chart (Multi-Asset Capable) -----
+const INSTRUMENT_SNR_CONFIGS = {
+  XAUUSD: {
+    symbol: 'XAUUSD', name: 'Gold', base: 4020.00, range: 32.0, decimals: 2, gridInterval: 2.50,
+    viewMin: 4004.50, viewMax: 4035.50,
+    refPrice: 4024.45, liveStart: 4023.87,
+    supplyTop: 4032.50, supplyBot: 4030.00, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 4027.80, supplyMidBot: 4026.00, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 4015.00, demandMidBot: 4013.50, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 4012.50, demand1Bot: 4011.00, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 4007.50, demandBotBot: 4005.80, demandBotLabel: 'Demand · Fresh',
+    high1: { val: 4030.88, label: 'High 4,030.88', dashToIdx: 21 },
+    high2: { val: 4021.79, label: 'High 4,021.79', dashToIdx: 7 },
+    lowLive: { val: 4020.62, label: 'Low 4,020.62 · live' },
+    low1: { val: 4011.48, label: 'Low 4,011.48' },
+    low2: { val: 4009.47, label: 'Low 4,009.47', dashToIdx: 15 }
+  },
+  EURUSD: {
+    symbol: 'EURUSD', name: 'Euro', base: 1.08500, range: 0.00800, decimals: 5, gridInterval: 0.00100,
+    viewMin: 1.08050, viewMax: 1.08900,
+    refPrice: 1.08610, liveStart: 1.08595,
+    supplyTop: 1.08850, supplyBot: 1.08720, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 1.08650, supplyMidBot: 1.08580, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 1.08320, demandMidBot: 1.08250, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 1.08220, demand1Bot: 1.08170, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 1.08120, demandBotBot: 1.08050, demandBotLabel: 'Demand · Fresh',
+    high1: { val: 1.08820, label: 'High 1.08820', dashToIdx: 21 },
+    high2: { val: 1.08610, label: 'High 1.08610', dashToIdx: 7 },
+    lowLive: { val: 1.08420, label: 'Low 1.08420 · live' },
+    low1: { val: 1.08220, label: 'Low 1.08220' },
+    low2: { val: 1.08110, label: 'Low 1.08110', dashToIdx: 15 }
+  },
+  GBPJPY: {
+    symbol: 'GBPJPY', name: 'Pound / Yen', base: 209.646, range: 2.40, decimals: 3, gridInterval: 0.30,
+    viewMin: 208.300, viewMax: 210.800,
+    refPrice: 209.980, liveStart: 209.930,
+    supplyTop: 210.650, supplyBot: 210.200, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 209.950, supplyMidBot: 209.750, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 209.150, demandMidBot: 208.850, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 208.800, demand1Bot: 208.650, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 208.550, demandBotBot: 208.380, demandBotLabel: 'Demand · Fresh',
+    high1: { val: 210.596, label: 'High 210.596', dashToIdx: 21 },
+    high2: { val: 209.926, label: 'High 209.926', dashToIdx: 7 },
+    lowLive: { val: 209.426, label: 'Low 209.426 · live' },
+    low1: { val: 208.796, label: 'Low 208.796' },
+    low2: { val: 208.446, label: 'Low 208.446', dashToIdx: 15 }
+  },
+  GBPUSD: {
+    symbol: 'GBPUSD', name: 'Cable', base: 1.29800, range: 0.01000, decimals: 5, gridInterval: 0.00120,
+    viewMin: 1.29250, viewMax: 1.30320,
+    refPrice: 1.29950, liveStart: 1.29920,
+    supplyTop: 1.30250, supplyBot: 1.30100, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 1.29980, supplyMidBot: 1.29900, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 1.29600, demandMidBot: 1.29500, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 1.29480, demand1Bot: 1.29400, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 1.29360, demandBotBot: 1.29280, demandBotLabel: 'Demand · Fresh',
+    high1: { val: 1.30190, label: 'High 1.30190', dashToIdx: 21 },
+    high2: { val: 1.29950, label: 'High 1.29950', dashToIdx: 7 },
+    lowLive: { val: 1.29690, label: 'Low 1.29690 · live' },
+    low1: { val: 1.29460, label: 'Low 1.29460' },
+    low2: { val: 1.29320, label: 'Low 1.29320', dashToIdx: 15 }
+  },
+  USDJPY: {
+    symbol: 'USDJPY', name: 'Dollar / Yen', base: 156.102, range: 2.20, decimals: 3, gridInterval: 0.25,
+    viewMin: 154.800, viewMax: 157.250,
+    refPrice: 156.450, liveStart: 156.410,
+    supplyTop: 157.100, supplyBot: 156.750, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 156.450, supplyMidBot: 156.250, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 155.650, demandMidBot: 155.400, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 155.350, demand1Bot: 155.150, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 155.050, demandBotBot: 154.880, demandBotLabel: 'Demand · Fresh',
+    high1: { val: 156.982, label: 'High 156.982', dashToIdx: 21 },
+    high2: { val: 156.422, label: 'High 156.422', dashToIdx: 7 },
+    lowLive: { val: 155.852, label: 'Low 155.852 · live' },
+    low1: { val: 155.282, label: 'Low 155.282' },
+    low2: { val: 154.952, label: 'Low 154.952', dashToIdx: 15 }
+  },
+  WTI: {
+    symbol: 'WTI', name: 'Crude Oil', base: 71.50, range: 3.60, decimals: 2, gridInterval: 0.50,
+    viewMin: 69.50, viewMax: 73.40,
+    refPrice: 72.05, liveStart: 71.98,
+    supplyTop: 73.10, supplyBot: 72.60, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 72.10, supplyMidBot: 71.85, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 70.80, demandMidBot: 70.40, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 70.35, demand1Bot: 70.10, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 69.95, demandBotBot: 69.70, demandBotLabel: 'Demand · Fresh',
+    high1: { val: 72.95, label: 'High 72.95', dashToIdx: 21 },
+    high2: { val: 71.98, label: 'High 71.98', dashToIdx: 7 },
+    lowLive: { val: 71.08, label: 'Low 71.08 · live' },
+    low1: { val: 70.25, label: 'Low 70.25' },
+    low2: { val: 69.85, label: 'Low 69.85', dashToIdx: 15 }
+  },
+  US30: {
+    symbol: 'US30', name: 'Dow Jones 30', base: 42850, range: 580, decimals: 0, gridInterval: 75,
+    viewMin: 42480, viewMax: 43160,
+    refPrice: 42930, liveStart: 42915,
+    supplyTop: 43120, supplyBot: 43020, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 42940, supplyMidBot: 42890, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 42720, demandMidBot: 42640, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 42620, demand1Bot: 42560, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 42540, demandBotBot: 42480, demandBotLabel: 'Demand · Fresh',
+    high1: { val: 43085, label: 'High 43,085', dashToIdx: 21 },
+    high2: { val: 42935, label: 'High 42,935', dashToIdx: 7 },
+    lowLive: { val: 42782, label: 'Low 42,782 · live' },
+    low1: { val: 42640, label: 'Low 42,640' },
+    low2: { val: 42530, label: 'Low 42,530', dashToIdx: 15 }
+  },
+  NAS100: {
+    symbol: 'NAS100', name: 'Nasdaq 100', base: 20380, range: 360, decimals: 0, gridInterval: 45,
+    viewMin: 20150, viewMax: 20580,
+    refPrice: 20435, liveStart: 20425,
+    supplyTop: 20540, supplyBot: 20480, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 20430, supplyMidBot: 20400, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 20290, demandMidBot: 20240, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 20230, demand1Bot: 20190, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 20180, demandBotBot: 20140, demandBotLabel: 'Demand · Fresh',
+    high1: { val: 20525, label: 'High 20,525', dashToIdx: 21 },
+    high2: { val: 20432, label: 'High 20,432', dashToIdx: 7 },
+    lowLive: { val: 20335, label: 'Low 20,335 · live' },
+    low1: { val: 20250, label: 'Low 20,250' },
+    low2: { val: 20185, label: 'Low 20,185', dashToIdx: 15 }
+  },
+  BTCUSD: {
+    symbol: 'BTCUSD', name: 'Bitcoin', base: 81700, range: 2200, decimals: 0, gridInterval: 280,
+    viewMin: 80300, viewMax: 82950,
+    refPrice: 82030, liveStart: 81980,
+    supplyTop: 82750, supplyBot: 82350, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 82050, supplyMidBot: 81850, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 81250, demandMidBot: 80950, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 80900, demand1Bot: 80650, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 80600, demandBotBot: 80350, demandBotLabel: 'Demand · Fresh',
+    high1: { val: 82650, label: 'High 82,650', dashToIdx: 21 },
+    high2: { val: 82020, label: 'High 82,020', dashToIdx: 7 },
+    lowLive: { val: 81420, label: 'Low 81,420 · live' },
+    low1: { val: 80850, label: 'Low 80,850' },
+    low2: { val: 80450, label: 'Low 80,450', dashToIdx: 15 }
+  }
+};
+
+// Multi-Timeframe Patterns for SNR Engine
+const TIMEFRAME_PATTERNS = {
+  M1: {
+    timeCols: [{ xPct: 0.18, label: '09:48' }, { xPct: 0.58, label: '09:58' }, { xPct: 0.96, label: '10:06' }],
+    candles: [
+      { o: 4022.2, h: 4023.2, l: 4021.8, c: 4022.8 },
+      { o: 4022.8, h: 4023.6, l: 4022.4, c: 4023.4 },
+      { o: 4023.4, h: 4024.90, l: 4023.1, c: 4024.5, isHigh2: true, dashToIdx: 6 },
+      { o: 4024.5, h: 4024.8, l: 4023.0, c: 4023.2 },
+      { o: 4023.2, h: 4023.5, l: 4021.5, c: 4021.8 },
+      { o: 4021.8, h: 4022.0, l: 4020.2, c: 4020.5 },
+      { o: 4020.5, h: 4021.0, l: 4019.45, c: 4019.8, isLow1: true },
+      { o: 4019.8, h: 4021.2, l: 4019.5, c: 4020.8 },
+      { o: 4020.8, h: 4021.5, l: 4018.80, c: 4019.2, isLow2: true, dashToIdx: 14 },
+      { o: 4019.2, h: 4021.5, l: 4019.0, c: 4021.0 },
+      { o: 4021.0, h: 4022.8, l: 4020.6, c: 4022.4 },
+      { o: 4022.4, h: 4023.8, l: 4022.0, c: 4023.5 },
+      { o: 4023.5, h: 4025.2, l: 4023.2, c: 4024.8 },
+      { o: 4024.8, h: 4026.85, l: 4024.5, c: 4026.2, isHigh1: true, dashToIdx: 21 },
+      { o: 4026.2, h: 4026.5, l: 4024.8, c: 4025.2 },
+      { o: 4025.2, h: 4025.5, l: 4023.8, c: 4024.0 },
+      { o: 4024.0, h: 4024.4, l: 4022.40, c: 4022.8, isLowLive: true },
+      { o: 4022.8, h: 4023.5, l: 4022.5, c: 4023.2 },
+      { o: 4023.2, h: 4024.0, l: 4022.8, c: 4023.87, isLive: true }
+    ]
+  },
+  M3: {
+    // Exact 28-candlestick trajectory from media_1792799162583.jpg (Gambar Pertama)
+    timeCols: [{ xPct: 0.20, label: '07:30' }, { xPct: 0.77, label: '09:00' }, { xPct: 0.96, label: '10:06' }],
+    candles: [
+      { o: 4016.2, h: 4016.9, l: 4014.2, c: 4014.8 },
+      { o: 4014.8, h: 4016.5, l: 4014.5, c: 4016.0 },
+      { o: 4016.0, h: 4016.8, l: 4014.6, c: 4015.2 },
+      { o: 4015.2, h: 4017.0, l: 4014.8, c: 4016.6 },
+      { o: 4016.6, h: 4018.2, l: 4016.0, c: 4017.8 },
+      { o: 4017.8, h: 4021.79, l: 4017.2, c: 4020.2, isHigh2: true, dashToIdx: 10 },
+      { o: 4020.2, h: 4020.5, l: 4017.5, c: 4018.0 },
+      { o: 4018.0, h: 4018.5, l: 4015.2, c: 4015.8 },
+      { o: 4015.8, h: 4016.2, l: 4013.6, c: 4014.0 },
+      { o: 4014.0, h: 4016.0, l: 4013.8, c: 4015.5 },
+      { o: 4015.5, h: 4015.8, l: 4012.8, c: 4013.2 },
+      { o: 4013.2, h: 4013.5, l: 4011.48, c: 4011.8, isLow1: true },
+      { o: 4011.8, h: 4013.8, l: 4011.5, c: 4013.2 },
+      { o: 4013.2, h: 4013.5, l: 4009.47, c: 4010.2, isLow2: true, dashToIdx: 19 },
+      { o: 4010.2, h: 4013.8, l: 4010.0, c: 4013.2 },
+      { o: 4013.2, h: 4016.8, l: 4012.9, c: 4016.2 },
+      { o: 4016.2, h: 4016.8, l: 4014.8, c: 4015.5 },
+      { o: 4015.5, h: 4021.2, l: 4015.2, c: 4020.8 },
+      { o: 4020.8, h: 4024.5, l: 4020.4, c: 4024.0 },
+      { o: 4024.0, h: 4027.5, l: 4023.6, c: 4027.0 },
+      { o: 4027.0, h: 4029.8, l: 4026.5, c: 4029.2 },
+      { o: 4029.2, h: 4030.88, l: 4027.8, c: 4028.6, isHigh1: true, dashToIdx: 26 },
+      { o: 4028.6, h: 4028.9, l: 4025.8, c: 4026.2 },
+      { o: 4026.2, h: 4026.6, l: 4024.0, c: 4024.5 },
+      { o: 4024.5, h: 4024.8, l: 4022.6, c: 4023.0 },
+      { o: 4023.0, h: 4023.4, l: 4020.62, c: 4021.5, isLowLive: true },
+      { o: 4021.5, h: 4023.2, l: 4021.2, c: 4022.8 },
+      { o: 4022.8, h: 4024.1, l: 4022.4, c: 4023.87, isLive: true }
+    ]
+  },
+  M5: {
+    timeCols: [{ xPct: 0.22, label: '08:00' }, { xPct: 0.62, label: '09:00' }, { xPct: 0.96, label: '10:05' }],
+    candles: [
+      { o: 4018.0, h: 4020.5, l: 4016.8, c: 4019.5 },
+      { o: 4019.5, h: 4023.2, l: 4019.0, c: 4022.5 },
+      { o: 4022.5, h: 4026.50, l: 4022.0, c: 4025.8, isHigh2: true, dashToIdx: 7 },
+      { o: 4025.8, h: 4026.0, l: 4021.2, c: 4021.8 },
+      { o: 4021.8, h: 4022.5, l: 4017.5, c: 4018.0 },
+      { o: 4018.0, h: 4018.8, l: 4013.80, c: 4014.5, isLow1: true },
+      { o: 4014.5, h: 4016.2, l: 4010.20, c: 4011.0, isLow2: true, dashToIdx: 13 },
+      { o: 4011.0, h: 4015.5, l: 4010.5, c: 4015.0 },
+      { o: 4015.0, h: 4019.8, l: 4014.5, c: 4019.2 },
+      { o: 4019.2, h: 4025.0, l: 4018.8, c: 4024.5 },
+      { o: 4024.5, h: 4029.5, l: 4024.0, c: 4029.0 },
+      { o: 4029.0, h: 4034.20, l: 4028.5, c: 4032.5, isHigh1: true, dashToIdx: 17 },
+      { o: 4032.5, h: 4033.0, l: 4026.5, c: 4027.0 },
+      { o: 4027.0, h: 4027.8, l: 4022.2, c: 4023.0 },
+      { o: 4023.0, h: 4023.5, l: 4018.90, c: 4019.8, isLowLive: true },
+      { o: 4019.8, h: 4022.5, l: 4019.5, c: 4022.0 },
+      { o: 4022.0, h: 4024.2, l: 4021.6, c: 4023.87, isLive: true }
+    ]
+  },
+  M15: {
+    timeCols: [{ xPct: 0.20, label: '04:00' }, { xPct: 0.60, label: '07:00' }, { xPct: 0.96, label: '10:00' }],
+    candles: [
+      { o: 4012.0, h: 4018.5, l: 4010.0, c: 4017.0 },
+      { o: 4017.0, h: 4025.0, l: 4016.2, c: 4024.2 },
+      { o: 4024.2, h: 4031.20, l: 4023.5, c: 4029.5, isHigh2: true, dashToIdx: 6 },
+      { o: 4029.5, h: 4030.0, l: 4018.5, c: 4019.2 },
+      { o: 4019.2, h: 4020.5, l: 4005.50, c: 4006.8, isLow1: true },
+      { o: 4006.8, h: 4012.0, l: 3998.20, c: 4002.5, isLow2: true, dashToIdx: 10 },
+      { o: 4002.5, h: 4016.5, l: 4001.0, c: 4015.0 },
+      { o: 4015.0, h: 4028.0, l: 4014.2, c: 4026.5 },
+      { o: 4026.5, h: 4036.0, l: 4025.5, c: 4034.8 },
+      { o: 4034.8, h: 4042.50, l: 4033.5, c: 4039.0, isHigh1: true, dashToIdx: 13 },
+      { o: 4039.0, h: 4040.0, l: 4025.0, c: 4026.5 },
+      { o: 4026.5, h: 4027.5, l: 4016.40, c: 4018.0, isLowLive: true },
+      { o: 4018.0, h: 4024.5, l: 4017.5, c: 4023.87, isLive: true }
+    ]
+  },
+  M30: {
+    timeCols: [{ xPct: 0.20, label: '20:00' }, { xPct: 0.58, label: '03:00' }, { xPct: 0.96, label: '09:30' }],
+    candles: [
+      { o: 4005.0, h: 4020.0, l: 4002.0, c: 4018.0 },
+      { o: 4018.0, h: 4035.00, l: 4016.0, c: 4032.0, isHigh2: true },
+      { o: 4032.0, h: 4033.0, l: 4008.0, c: 4010.0 },
+      { o: 4010.0, h: 4012.0, l: 3986.00, c: 3992.0, isLow1: true, dashToIdx: 6 },
+      { o: 3992.0, h: 4018.0, l: 3990.0, c: 4015.0 },
+      { o: 4015.0, h: 4032.0, l: 4012.0, c: 4030.0 },
+      { o: 4030.0, h: 4048.00, l: 4028.0, c: 4044.0, isHigh1: true, dashToIdx: 9 },
+      { o: 4044.0, h: 4045.0, l: 4020.0, c: 4022.0 },
+      { o: 4022.0, h: 4023.0, l: 4014.50, c: 4016.5, isLowLive: true },
+      { o: 4016.5, h: 4025.0, l: 4015.5, c: 4023.87, isLive: true }
+    ]
+  },
+  H1: {
+    timeCols: [{ xPct: 0.20, label: '22 Oct' }, { xPct: 0.58, label: '23 Oct' }, { xPct: 0.96, label: '24 Oct' }],
+    candles: [
+      { o: 3995.0, h: 4025.0, l: 3990.0, c: 4020.0 },
+      { o: 4020.0, h: 4046.00, l: 4018.0, c: 4040.0, isHigh2: true },
+      { o: 4040.0, h: 4042.0, l: 3998.0, c: 4002.0 },
+      { o: 4002.0, h: 4005.0, l: 3960.00, c: 3975.0, isLow1: true, dashToIdx: 6 },
+      { o: 3975.0, h: 4015.0, l: 3972.0, c: 4010.0 },
+      { o: 4010.0, h: 4038.0, l: 4008.0, c: 4035.0 },
+      { o: 4035.0, h: 4062.00, l: 4030.0, c: 4055.0, isHigh1: true, dashToIdx: 9 },
+      { o: 4055.0, h: 4056.0, l: 4018.0, c: 4022.0 },
+      { o: 4022.0, h: 4024.0, l: 4012.00, c: 4016.0, isLowLive: true },
+      { o: 4016.0, h: 4026.0, l: 4015.0, c: 4023.87, isLive: true }
+    ]
+  },
+  H4: {
+    timeCols: [{ xPct: 0.20, label: '16 Oct' }, { xPct: 0.58, label: '20 Oct' }, { xPct: 0.96, label: '24 Oct' }],
+    candles: [
+      { o: 3960.0, h: 4030.0, l: 3950.0, c: 4022.0 },
+      { o: 4022.0, h: 4055.00, l: 4015.0, c: 4048.0, isHigh2: true },
+      { o: 4048.0, h: 4050.0, l: 3935.0, c: 3945.0 },
+      { o: 3945.0, h: 3950.0, l: 3920.00, c: 3930.0, isLow1: true, dashToIdx: 6 },
+      { o: 3930.0, h: 4020.0, l: 3925.0, c: 4010.0 },
+      { o: 4010.0, h: 4088.00, l: 4005.0, c: 4075.0, isHigh1: true, dashToIdx: 7 },
+      { o: 4075.0, h: 4078.0, l: 4015.0, c: 4020.0 },
+      { o: 4020.0, h: 4025.0, l: 4005.00, c: 4023.87, isLive: true }
+    ]
+  },
+  D1: {
+    timeCols: [{ xPct: 0.20, label: 'Aug' }, { xPct: 0.58, label: 'Sep' }, { xPct: 0.96, label: 'Oct' }],
+    candles: [
+      { o: 3920.0, h: 4040.0, l: 3900.0, c: 4025.0 },
+      { o: 4025.0, h: 4075.00, l: 4010.0, c: 4060.0, isHigh2: true },
+      { o: 4060.0, h: 4065.0, l: 3860.0, c: 3875.0 },
+      { o: 3875.0, h: 3880.0, l: 3850.00, c: 3865.0, isLow1: true, dashToIdx: 5 },
+      { o: 3865.0, h: 4030.0, l: 3860.0, c: 4015.0 },
+      { o: 4015.0, h: 4120.00, l: 4010.0, c: 4100.0, isHigh1: true, dashToIdx: 7 },
+      { o: 4100.0, h: 4105.0, l: 4010.0, c: 4018.0 },
+      { o: 4018.0, h: 4028.0, l: 3995.00, c: 4023.87, isLive: true }
+    ]
+  }
+};
+
+function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
+  container.innerHTML = '';
+  const cv = document.createElement('canvas');
+  cv.style.touchAction = 'none';
+  container.appendChild(cv);
+  const ctx = cv.getContext('2d');
+
+  let currentSymbol = initSymbol || 'XAUUSD';
+  let cfg = INSTRUMENT_SNR_CONFIGS[currentSymbol] || INSTRUMENT_SNR_CONFIGS.XAUUSD;
+  let currentTf = defaultTf || 'M3';
+  let zoomX = 1.0;
+  let panX = 0;
+  let zoomY = 1.0;
+  let panY = 0;
+  let rawCandles = [];
+
+  // Helper for thousands formatting
+  function fmtPrice(val, dec) {
+    return Number(val).toLocaleString('en-US', {
+      minimumFractionDigits: dec,
+      maximumFractionDigits: dec
+    });
+  }
+
+  let historyCount = 0;
+  let baseCount = 28;
+
+  function generateHistoricalCandles(count, firstCandleOpen, curTf, symbolCfg) {
+    const base = symbolCfg.base || 4020.0;
+    const amp = symbolCfg.range * 0.26;
+    let curOpen = firstCandleOpen;
+    const hist = [];
+
+    for (let k = 1; k <= count; k++) {
+      // Harmonic market waves simulating realistic historical swings
+      const wave = Math.sin(k * 0.14) * (amp * 0.65) + Math.cos(k * 0.05) * (amp * 0.35);
+      const microNoise = Math.sin(k * 2.7) * (amp * 0.12);
+      const targetO = base + wave + microNoise;
+
+      const c = curOpen;
+      const o = targetO;
+      const bMax = Math.max(o, c);
+      const bMin = Math.min(o, c);
+      const wickTop = Math.abs(Math.sin(k * 3.1)) * (amp * 0.1) + (amp * 0.02);
+      const wickBot = Math.abs(Math.cos(k * 3.9)) * (amp * 0.1) + (amp * 0.02);
+      const h = bMax + wickTop;
+      const l = bMin - wickBot;
+
+      hist.unshift({
+        o: Number(o.toFixed(symbolCfg.decimals)),
+        h: Number(h.toFixed(symbolCfg.decimals)),
+        l: Number(l.toFixed(symbolCfg.decimals)),
+        c: Number(c.toFixed(symbolCfg.decimals))
+      });
+
+      curOpen = o;
+    }
+
+    return hist;
+  }
+
+  // Generate dynamic candles according to selected timeframe and symbol with deep historical backward data
+  function generateBaseCandles() {
+    const tfData = TIMEFRAME_PATTERNS[currentTf] || TIMEFRAME_PATTERNS.M3;
+    const basePat = tfData.candles;
+    baseCount = basePat.length;
+
+    const histCountByTf = {
+      M1: 120, M3: 120, M5: 120, M15: 100, M30: 80, H1: 60, H4: 45, D1: 35
+    };
+    const desiredHistCount = histCountByTf[currentTf] || 100;
+
+    const mapVal = p => {
+      if (currentSymbol === 'XAUUSD') return p;
+      const ratio = (p - 4020.00) / 32.0;
+      return cfg.base + ratio * cfg.range;
+    };
+
+    const firstOpen = Number(mapVal(basePat[0].o).toFixed(cfg.decimals));
+    const histCandles = generateHistoricalCandles(desiredHistCount, firstOpen, currentTf, cfg);
+    historyCount = histCandles.length;
+
+    const mappedBase = [];
+    basePat.forEach(p => {
+      let closeVal = mapVal(p.c);
+      if (p.isLive) {
+        if (currentSymbol === 'XAUUSD') {
+          closeVal = Market.price || 4023.87;
+        } else {
+          closeVal = cfg.liveStart || cfg.base;
+        }
+      }
+      mappedBase.push({
+        o: Number(mapVal(p.o).toFixed(cfg.decimals)),
+        h: Number(mapVal(p.h).toFixed(cfg.decimals)),
+        l: Number(mapVal(p.l).toFixed(cfg.decimals)),
+        c: Number(closeVal.toFixed(cfg.decimals)),
+        isHigh1: p.isHigh1,
+        isHigh2: p.isHigh2,
+        isLow1: p.isLow1,
+        isLow2: p.isLow2,
+        isLowLive: p.isLowLive,
+        isLive: p.isLive,
+        dashToIdx: p.dashToIdx
+      });
+    });
+
+    const all = [...histCandles, ...mappedBase];
+
+    // Compute realistic continuous timestamps for every candle
+    const tfMins = {
+      M1: 1, M3: 3, M5: 5, M15: 15, M30: 30, H1: 60, H4: 240, D1: 1440
+    }[currentTf] || 3;
+
+    const baseTimeMs = Date.parse('2026-10-24T10:06:00') || Date.now();
+    const total = all.length;
+
+    all.forEach((k, idx) => {
+      const diffMins = (total - 1 - idx) * tfMins;
+      const d = new Date(baseTimeMs - diffMins * 60 * 1000);
+      k.timestamp = d;
+
+      const pad = n => String(n).padStart(2, '0');
+      const hh = pad(d.getHours());
+      const mm = pad(d.getMinutes());
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const day = pad(d.getDate());
+      const mon = months[d.getMonth()];
+
+      if (currentTf === 'D1') {
+        k.timeStr = `${day} ${mon}`;
+      } else if (currentTf === 'H1' || currentTf === 'H4') {
+        k.timeStr = `${day} ${mon} ${hh}:${mm}`;
+      } else {
+        k.timeStr = `${hh}:${mm}`;
+      }
+    });
+
+    return all;
+  }
+
+  rawCandles = generateBaseCandles();
+
+  function draw() {
+    const isFs = container.classList.contains('fullscreen') || container.id === 'fsCanvasWrap';
+    const W = isFs ? (container.clientWidth || window.innerWidth) : Math.min(440, container.clientWidth || 380);
+    const H = isFs ? Math.max(380, (container.clientHeight || (window.innerHeight - 110))) : 460;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = W * dpr;
+    cv.height = H * dpr;
+    cv.style.width = W + 'px';
+    cv.style.height = H + 'px';
+    cv.style.display = 'block';
+    cv.style.margin = '0 auto';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const axisW = cfg.decimals >= 4 ? 76 : 64;
+    const pw = W - axisW;
+    const axisH = 26;
+    const ph = H - axisH;
+
+    // Horizontal candle positioning (Initial view frames the flagship base pattern, drag backward reveals historical candles)
+    const baseCw = pw / baseCount;
+    const cw = baseCw * zoomX;
+    const X = i => (i - historyCount) * cw + cw / 2 + panX;
+
+    // Dynamically calculate view boundaries based on the currently visible candles on screen
+    let minCandleL = Infinity, maxCandleH = -Infinity;
+    let visibleCount = 0;
+    rawCandles.forEach((k, i) => {
+      const x = X(i);
+      if (x >= -cw && x <= pw + cw) {
+        if (k.l < minCandleL) minCandleL = k.l;
+        if (k.h > maxCandleH) maxCandleH = k.h;
+        visibleCount++;
+      }
+    });
+
+    if (visibleCount === 0 || minCandleL === Infinity) {
+      minCandleL = cfg.viewMin;
+      maxCandleH = cfg.viewMax;
+    }
+
+    let vMin, vMax;
+    if (currentTf === 'M3' && currentSymbol === 'XAUUSD' && panX === 0 && zoomX === 1.0 && zoomY === 1.0) {
+      vMin = cfg.viewMin;
+      vMax = cfg.viewMax;
+    } else {
+      const pad = (maxCandleH - minCandleL) * 0.18;
+      vMin = minCandleL - pad;
+      vMax = maxCandleH + pad;
+    }
+
+    const span = (vMax - vMin) * zoomY;
+    const mid = (vMax + vMin) / 2 + panY;
+    const hi = mid + span / 2;
+    const lo = mid - span / 2;
+    const Y = v => ph - ((v - lo) / (hi - lo)) * ph;
+
+    // Background matching Gambar Pertama dark slate navy
+    ctx.fillStyle = '#0d141e';
+    ctx.fillRect(0, 0, W, H);
+
+    // Save and clip plot area [0, 0, pw, ph] so zoomed/panned candles never spill onto price axis
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, pw, ph);
+    ctx.clip();
+
+    // Exact faint watermark from Gambar Pertama: WHA · kj35
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.045)';
+    ctx.font = '700 24px "Space Grotesk", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('WHA · kj35', pw / 2, ph / 2);
+    ctx.restore();
+
+    // TradingView Logo Watermark at bottom left
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+    const tvX = 14, tvY = ph - 28;
+    ctx.fillRect(tvX, tvY, 6, 16);
+    ctx.beginPath();
+    ctx.moveTo(tvX + 8, tvY);
+    ctx.lineTo(tvX + 14, tvY);
+    ctx.lineTo(tvX + 19, tvY + 16);
+    ctx.lineTo(tvX + 14, tvY + 16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(tvX + 20, tvY);
+    ctx.lineTo(tvX + 26, tvY);
+    ctx.lineTo(tvX + 19, tvY + 16);
+    ctx.lineTo(tvX + 14, tvY + 16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Prices for Dual Badges & Tracker Lines
+    let pGreen = cfg.refPrice;
+    if (!(currentTf === 'M3' && currentSymbol === 'XAUUSD')) {
+      if (pGreen < lo || pGreen > hi) {
+        pGreen = rawCandles[Math.floor(rawCandles.length * 0.75)].c;
+      }
+    }
+    const pLive = rawCandles[rawCandles.length - 1].c;
+    const yG = Y(pGreen);
+    const yLive = Y(pLive);
+
+    // ----------------------------------------------------
+    // Institutional SNR (5 Supply & Demand Zones)
+    // ----------------------------------------------------
+    const drawZone = (topP, botP, type, label, alignRight = false, xStart = 0, xEnd = pw) => {
+      if (topP === undefined || botP === undefined) return;
+      const y0 = Math.max(0, Y(topP)), y1 = Math.min(ph, Y(botP));
+      if (y1 <= 0 || y0 >= ph) return;
+      const isSupply = type === 'supply';
+      const fillCol = isSupply ? 'rgba(239, 83, 80, 0.12)' : 'rgba(38, 166, 154, 0.12)';
+      const lineCol = isSupply ? 'rgba(239, 83, 80, 0.55)' : 'rgba(38, 166, 154, 0.55)';
+      const textCol = isSupply ? '#ef5350' : '#26a69a';
+
+      ctx.fillStyle = fillCol;
+      ctx.fillRect(xStart, y0, xEnd - xStart, y1 - y0);
+
+      ctx.strokeStyle = lineCol;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(xStart, y0 + 0.5); ctx.lineTo(xEnd, y0 + 0.5);
+      ctx.moveTo(xStart, y1 + 0.5); ctx.lineTo(xEnd, y1 + 0.5);
+      ctx.stroke();
+
+      ctx.fillStyle = textCol;
+      ctx.font = '700 9.5px "Space Grotesk", sans-serif';
+      if (alignRight) {
+        ctx.textAlign = 'right';
+        ctx.fillText(label, xEnd - 8, y0 + 11);
+        ctx.textAlign = 'left';
+      } else {
+        ctx.fillText(label, xStart + 6, y0 + 11);
+      }
+    };
+
+    // Render exact 5 zones
+    let zSupplyTop = cfg.supplyTop, zSupplyBot = cfg.supplyBot, zSupplyLabel = cfg.supplyLabel;
+    let zSupplyMidTop = cfg.supplyMidTop, zSupplyMidBot = cfg.supplyMidBot, zSupplyMidLabel = cfg.supplyMidLabel;
+    let zDemandMidTop = cfg.demandMidTop, zDemandMidBot = cfg.demandMidBot, zDemandMidLabel = cfg.demandMidLabel;
+    let zDemand1Top = cfg.demand1Top, zDemand1Bot = cfg.demand1Bot, zDemand1Label = cfg.demand1Label;
+    let zDemandBotTop = cfg.demandBotTop, zDemandBotBot = cfg.demandBotBot, zDemandBotLabel = cfg.demandBotLabel;
+
+    if (!(currentTf === 'M3' && currentSymbol === 'XAUUSD')) {
+      const rng = maxCandleH - minCandleL;
+      zSupplyTop = maxCandleH + rng * 0.05;
+      zSupplyBot = maxCandleH - rng * 0.05;
+      zSupplyLabel = `Supply (${currentTf}) · Fresh`;
+
+      zSupplyMidTop = maxCandleH - rng * 0.18;
+      zSupplyMidBot = maxCandleH - rng * 0.26;
+      zSupplyMidLabel = `Supply · Tested 1×`;
+
+      zDemandMidTop = minCandleL + rng * 0.38;
+      zDemandMidBot = minCandleL + rng * 0.30;
+      zDemandMidLabel = `Demand · Tested 2×`;
+
+      zDemand1Top = minCandleL + rng * 0.16;
+      zDemand1Bot = minCandleL + rng * 0.08;
+      zDemand1Label = `Demand · Tested 1×`;
+
+      zDemandBotTop = minCandleL + rng * 0.02;
+      zDemandBotBot = minCandleL - rng * 0.06;
+      zDemandBotLabel = `Demand (${currentTf}) · Major`;
+    }
+
+    drawZone(zSupplyTop, zSupplyBot, 'supply', zSupplyLabel, false, 0, pw);
+    drawZone(zSupplyMidTop, zSupplyMidBot, 'supply', zSupplyMidLabel, true, X(historyCount + Math.floor(baseCount * 0.7)), pw);
+    drawZone(zDemandMidTop, zDemandMidBot, 'demand', zDemandMidLabel, false, 0, pw);
+    drawZone(zDemand1Top, zDemand1Bot, 'demand', zDemand1Label, false, 0, pw);
+    drawZone(zDemandBotTop, zDemandBotBot, 'demand', zDemandBotLabel, false, 0, pw);
+
+    // ----------------------------------------------------
+    // Candlesticks (Crisp 1px wicks & accurate bodies)
+    // ----------------------------------------------------
+    const bw = Math.max(3.5, cw * 0.65);
+
+    rawCandles.forEach((k, i) => {
+      const x = Math.round(X(i)) + 0.5;
+      if (x < -bw || x > pw + bw) return;
+
+      const isUp = k.c >= k.o;
+      const col = isUp ? '#26a69a' : '#ef5350';
+
+      // Wick
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(x, Math.round(Y(k.h)));
+      ctx.lineTo(x, Math.round(Y(k.l)));
+      ctx.stroke();
+
+      // Body
+      const yt = Math.round(Y(Math.max(k.o, k.c)));
+      const yb = Math.round(Y(Math.min(k.o, k.c)));
+      ctx.fillStyle = col;
+      ctx.fillRect(Math.round(x - bw / 2), yt, Math.round(bw), Math.max(2, yb - yt));
+    });
+
+    // ----------------------------------------------------
+    // Dynamic Multi-Color EMA Line across full history
+    // ----------------------------------------------------
+    const emaVals = ema(rawCandles.map(c => c.c), Math.min(8, Math.floor(rawCandles.length / 5)));
+    ctx.lineWidth = 2.6;
+    ctx.lineCap = 'round';
+    for (let i = 1; i < rawCandles.length; i++) {
+      const xPrev = X(i - 1);
+      const xCur = X(i);
+      if (xCur < -20 || xPrev > pw + 20) continue;
+
+      let strokeCol = '#f5c451';
+      if (currentTf === 'M3' && i >= historyCount) {
+        const flagIdx = i - historyCount;
+        if (flagIdx >= 6 && flagIdx <= 13) strokeCol = '#ef5350';
+        else if (flagIdx === 14) strokeCol = '#f5c451';
+        else if (flagIdx >= 15 && flagIdx <= 21) strokeCol = '#26a69a';
+        else if (flagIdx === 22) strokeCol = '#f5c451';
+        else if (flagIdx >= 23 && flagIdx <= 25) strokeCol = '#ef5350';
+        else if (flagIdx >= 26) strokeCol = '#26a69a';
+      } else {
+        if (rawCandles[i].c >= emaVals[i]) strokeCol = '#26a69a';
+        else strokeCol = '#ef5350';
+      }
+
+      ctx.strokeStyle = strokeCol;
+      ctx.beginPath();
+      ctx.moveTo(xPrev, Y(emaVals[i - 1]));
+      ctx.lineTo(xCur, Y(emaVals[i]));
+      ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+
+    // ----------------------------------------------------
+    // High / Low Pill Badges, Wick Dots & Extension Dashed Lines
+    // ----------------------------------------------------
+    const drawHighLowPill = (x, yWick, text, type, dashToIdx, pillAlignLeft = false) => {
+      const isHigh = type === 'high';
+      const dotCol = isHigh ? '#ef5350' : '#26a69a';
+      const pillBg = isHigh ? '#dc3545' : '#22c55e';
+
+      // Wick tip circle dot
+      ctx.fillStyle = dotCol;
+      ctx.beginPath();
+      ctx.arc(x, yWick, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Extension dashed line extending to specified candle
+      if (dashToIdx !== undefined && dashToIdx > 0) {
+        const xEnd = Math.min(pw - 2, X(dashToIdx));
+        ctx.save();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = isHigh ? 'rgba(239, 83, 80, 0.8)' : 'rgba(38, 166, 154, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x + 4, yWick);
+        ctx.lineTo(xEnd, yWick);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Pill label badge
+      ctx.font = '700 9.5px "Space Grotesk", sans-serif';
+      const m = ctx.measureText(text);
+      const w = m.width + 12;
+      const h = 18;
+      const pillY = isHigh ? yWick - 19 : yWick + 6;
+      let pillX = pillAlignLeft ? (x - w - 6) : (x - w / 2);
+      pillX = Math.min(pw - w - 4, Math.max(4, pillX));
+
+      ctx.fillStyle = pillBg;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(pillX, pillY, w, h, 4);
+      else ctx.rect(pillX, pillY, w, h);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, pillX + 6, pillY + h / 2 + 0.5);
+    };
+
+    rawCandles.forEach((k, i) => {
+      const x = X(i);
+      if (x < -60 || x > pw + 60) return;
+
+      const isM3Flagship = currentTf === 'M3' && currentSymbol === 'XAUUSD' && i >= historyCount;
+      const targetDashIdx = k.dashToIdx !== undefined ? (historyCount + k.dashToIdx) : undefined;
+
+      if (k.isHigh1) {
+        const lbl = isM3Flagship ? cfg.high1.label : `High ${fmtPrice(k.h, cfg.decimals)}`;
+        drawHighLowPill(x, Y(k.h), lbl, 'high', targetDashIdx, false);
+      }
+      if (k.isHigh2) {
+        const lbl = isM3Flagship ? cfg.high2.label : `High ${fmtPrice(k.h, cfg.decimals)}`;
+        drawHighLowPill(x, Y(k.h), lbl, 'high', targetDashIdx, true);
+      }
+      if (k.isLowLive) {
+        const lbl = isM3Flagship ? cfg.lowLive.label : `Low ${fmtPrice(k.l, cfg.decimals)} · live`;
+        drawHighLowPill(x, Y(k.l), lbl, 'low', undefined, false);
+      }
+      if (k.isLow1) {
+        const lbl = isM3Flagship ? cfg.low1.label : `Low ${fmtPrice(k.l, cfg.decimals)}`;
+        drawHighLowPill(x, Y(k.l), lbl, 'low', undefined, false);
+      }
+      if (k.isLow2) {
+        const lbl = isM3Flagship ? cfg.low2.label : `Low ${fmtPrice(k.l, cfg.decimals)}`;
+        drawHighLowPill(x, Y(k.l), lbl, 'low', targetDashIdx, false);
+      }
+    });
+
+    // ----------------------------------------------------
+    // Right Axis Price Badges & Dashed Trackers
+    // ----------------------------------------------------
+    // 1. Static/Reference Green Dashed Line
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = '#26a69a';
+    ctx.beginPath();
+    ctx.moveTo(0, yG);
+    ctx.lineTo(pw, yG);
+    ctx.stroke();
+
+    // 2. Live Dynamic Yellow Dashed Line
+    ctx.strokeStyle = '#f5c451';
+    ctx.beginPath();
+    ctx.moveTo(Math.max(0, X(rawCandles.length - 1)), yLive);
+    ctx.lineTo(pw, yLive);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Restore plot clip area
+    ctx.restore();
+
+    // Dynamic grid intervals based on range
+    let effectiveInterval;
+    if (currentTf === 'M3' && currentSymbol === 'XAUUSD' && panX === 0 && zoomY === 1.0) {
+      effectiveInterval = cfg.gridInterval;
+    } else {
+      const rawInt = (hi - lo) / 8;
+      if (cfg.decimals >= 4) {
+        effectiveInterval = 0.002;
+      } else if (rawInt >= 100) {
+        effectiveInterval = Math.round(rawInt / 50) * 50 || 50;
+      } else if (rawInt >= 20) {
+        effectiveInterval = Math.round(rawInt / 10) * 10 || 10;
+      } else if (rawInt >= 4) {
+        effectiveInterval = Math.round(rawInt / 2) * 2 || 2;
+      } else {
+        effectiveInterval = 1;
+      }
+    }
+
+    // Horizontal Price Grid Lines & Axis Labels
+    ctx.font = '10.5px "Space Grotesk", sans-serif';
+    ctx.textBaseline = 'middle';
+    const startP = Math.floor(lo / effectiveInterval) * effectiveInterval;
+    for (let p = startP; p <= hi + effectiveInterval; p += effectiveInterval) {
+      const y = Math.round(Y(p)) + 0.5;
+      if (y > 4 && y < ph) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(pw, y);
+        ctx.stroke();
+
+        if (Math.abs(y - yG) > 9 && Math.abs(y - yLive) > 9) {
+          ctx.fillStyle = '#607286';
+          ctx.fillText(fmtPrice(p, cfg.decimals), pw + 6, y);
+        }
+      }
+    }
+
+    // Vertical Time Grid Lines according to visible candles (seamless forward & backward scrolling)
+    let lastLabelX = -250;
+    const minTimeSpacing = Math.max(72, 60 * zoomX);
+
+    for (let i = 0; i < rawCandles.length; i++) {
+      const x = Math.round(X(i)) + 0.5;
+      if (x >= 28 && x <= pw - 28) {
+        if (x - lastLabelX >= minTimeSpacing) {
+          const k = rawCandles[i];
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, ph);
+          ctx.stroke();
+
+          ctx.fillStyle = '#607286';
+          ctx.textAlign = 'center';
+          ctx.fillText(k.timeStr || '', x, ph + 13);
+          lastLabelX = x;
+        }
+      }
+    }
+    ctx.textAlign = 'left';
+
+    // Right Axis Border
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.beginPath();
+    ctx.moveTo(pw + 0.5, 0);
+    ctx.lineTo(pw + 0.5, H);
+    ctx.stroke();
+
+    // Stacking of badges
+    const badgeH = 17;
+    const badgeYG = Math.round(yG - badgeH / 2);
+    const badgeYLive = badgeYG + badgeH;
+
+    // Green Reference Badge
+    ctx.fillStyle = '#26a69a';
+    ctx.fillRect(pw + 1, badgeYG, axisW - 2, badgeH);
+    ctx.fillStyle = '#06070a';
+    ctx.font = '700 10px "Space Grotesk", sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(fmtPrice(pGreen, cfg.decimals), pw + 5, badgeYG + badgeH / 2 + 0.5);
+
+    // Yellow Live Badge
+    ctx.fillStyle = '#f5c451';
+    ctx.fillRect(pw + 1, badgeYLive, axisW - 2, badgeH);
+    ctx.fillStyle = '#06070a';
+    ctx.font = '700 10px "Space Grotesk", sans-serif';
+    ctx.fillText(fmtPrice(pLive, cfg.decimals), pw + 5, badgeYLive + badgeH / 2 + 0.5);
+  }
+
+  // Drag-to-Pan, Mouse Wheel, Touch Pinch Handlers
+  let isDragging = false;
+  let dragStartX = 0, dragStartY = 0;
+  let startPanX = 0, startPanY = 0;
+  let initialPinchDist = 0;
+  let initialPinchZoomX = 1.0;
+  let initialPinchZoomY = 1.0;
+
+  cv.style.cursor = 'grab';
+
+  const onMouseDown = e => {
+    isDragging = true;
+    cv.style.cursor = 'grabbing';
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    startPanX = panX;
+    startPanY = panY;
+  };
+
+  const onMouseMove = e => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    const cw = (380 / baseCount) * zoomX;
+    const maxPanX = historyCount * cw + 180;
+    const minPanX = -180;
+    panX = Math.max(minPanX, Math.min(maxPanX, startPanX + dx));
+    const vSpan = (cfg.viewMax - cfg.viewMin) * zoomY;
+    const pricePerPx = vSpan / 434;
+    panY = startPanY + (dy * pricePerPx);
+    draw();
+  };
+
+  const onMouseUp = () => {
+    if (isDragging) {
+      isDragging = false;
+      cv.style.cursor = 'grab';
+    }
+  };
+
+  const onWheel = e => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.15 : 0.87;
+    zoomX = Math.min(5.0, Math.max(0.45, zoomX * factor));
+    zoomY = Math.min(4.0, Math.max(0.35, zoomY / factor));
+    draw();
+  };
+
+  const onTouchStart = e => {
+    if (e.touches.length === 1) {
+      isDragging = true;
+      dragStartX = e.touches[0].clientX;
+      dragStartY = e.touches[0].clientY;
+      startPanX = panX;
+      startPanY = panY;
+      if (e.cancelable) e.preventDefault();
+    } else if (e.touches.length === 2) {
+      isDragging = false;
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      initialPinchDist = Math.hypot(dx, dy);
+      initialPinchZoomX = zoomX;
+      initialPinchZoomY = zoomY;
+      if (e.cancelable) e.preventDefault();
+    }
+  };
+
+  const onTouchMove = e => {
+    if (e.touches.length === 1 && isDragging) {
+      if (e.cancelable) e.preventDefault();
+      const dx = e.touches[0].clientX - dragStartX;
+      const dy = e.touches[0].clientY - dragStartY;
+      const cw = (380 / baseCount) * zoomX;
+      const maxPanX = historyCount * cw + 180;
+      const minPanX = -180;
+      panX = Math.max(minPanX, Math.min(maxPanX, startPanX + dx));
+      const vSpan = (cfg.viewMax - cfg.viewMin) * zoomY;
+      const pricePerPx = vSpan / 434;
+      panY = startPanY + (dy * pricePerPx);
+      draw();
+    } else if (e.touches.length === 2 && initialPinchDist > 0) {
+      if (e.cancelable) e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const scale = dist / initialPinchDist;
+      zoomX = Math.min(5.0, Math.max(0.45, initialPinchZoomX * scale));
+      zoomY = Math.min(4.0, Math.max(0.35, initialPinchZoomY / scale));
+      draw();
+    }
+  };
+
+  const onTouchEnd = () => {
+    isDragging = false;
+    initialPinchDist = 0;
+  };
+
+  const onDblClick = () => {
+    zoomX = 1.0;
+    panX = 0;
+    zoomY = 1.0;
+    panY = 0;
+    draw();
+  };
+
+  cv.addEventListener('mousedown', onMouseDown);
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mouseup', onMouseUp);
+  cv.addEventListener('wheel', onWheel, { passive: false });
+  cv.addEventListener('touchstart', onTouchStart, { passive: false });
+  window.addEventListener('touchmove', onTouchMove, { passive: false });
+  window.addEventListener('touchend', onTouchEnd);
+  cv.addEventListener('dblclick', onDblClick);
+
+  // Ticking handler
+  const onTick = p => {
+    const last = rawCandles[rawCandles.length - 1];
+    if (last) {
+      if (currentSymbol === 'XAUUSD') {
+        last.c = p;
+      } else {
+        last.c = Number((last.c + (Math.random() - 0.495) * (cfg.range * 0.005)).toFixed(cfg.decimals));
+      }
+      last.h = Math.max(last.h, last.c);
+      last.l = Math.min(last.l, last.c);
+      draw();
+    }
+  };
+
+  const onResize = () => draw();
+  Market.subs.add(onTick);
+  window.addEventListener('resize', onResize);
+
+  // Initial draw
+  draw();
+
+  return {
+    setTf(tf) {
+      currentTf = tf || 'M3';
+      rawCandles = generateBaseCandles();
+      draw();
+    },
+    setSymbol(newSymbol) {
+      currentSymbol = newSymbol || 'XAUUSD';
+      cfg = INSTRUMENT_SNR_CONFIGS[currentSymbol] || INSTRUMENT_SNR_CONFIGS.XAUUSD;
+      zoomX = 1.0;
+      panX = 0;
+      zoomY = 1.0;
+      panY = 0;
+      rawCandles = generateBaseCandles();
+      draw();
+    },
+    zoomIn() {
+      zoomX = Math.min(5.0, zoomX * 1.25);
+      zoomY = Math.max(0.35, zoomY * 0.85);
+      draw();
+    },
+    zoomOut() {
+      zoomX = Math.max(0.45, zoomX * 0.8);
+      zoomY = Math.min(4.0, zoomY * 1.18);
+      draw();
+    },
+    reset() {
+      zoomX = 1.0;
+      panX = 0;
+      zoomY = 1.0;
+      panY = 0;
+      currentTf = defaultTf || 'M3';
+      rawCandles = generateBaseCandles();
+      draw();
+    },
+    redraw() {
+      draw();
+    },
+    destroy() {
+      Market.subs.delete(onTick);
+      window.removeEventListener('resize', onResize);
+      cv.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      cv.removeEventListener('wheel', onWheel);
+      cv.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      cv.removeEventListener('dblclick', onDblClick);
+    }
+  };
+}
+
