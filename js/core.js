@@ -698,6 +698,152 @@ const TIMEFRAME_PATTERNS = {
   }
 };
 
+// Authentic Dedicated Candlestick Trajectories for Every Single Pair (No Two Pairs Look Alike)
+const INSTRUMENT_BASE_PATTERNS = {
+  XAUUSD: TIMEFRAME_PATTERNS.M3.candles,
+  EURUSD: [
+    { o: 1.08580, h: 1.08630, l: 1.08550, c: 1.08610 },
+    { o: 1.08610, h: 1.08650, l: 1.08590, c: 1.08640 },
+    { o: 1.08640, h: 1.08710, l: 1.08620, c: 1.08690, isHigh2: true, dashToIdx: 8 },
+    { o: 1.08690, h: 1.08700, l: 1.08630, c: 1.08640 },
+    { o: 1.08640, h: 1.08660, l: 1.08570, c: 1.08590 },
+    { o: 1.08590, h: 1.08610, l: 1.08510, c: 1.08530 },
+    { o: 1.08530, h: 1.08560, l: 1.08470, c: 1.08490 },
+    { o: 1.08490, h: 1.08520, l: 1.08430, c: 1.08440 },
+    { o: 1.08440, h: 1.08480, l: 1.08380, c: 1.08400, isLow1: true, dashToIdx: 14 },
+    { o: 1.08400, h: 1.08460, l: 1.08390, c: 1.08450 },
+    { o: 1.08450, h: 1.08520, l: 1.08430, c: 1.08500 },
+    { o: 1.08500, h: 1.08580, l: 1.08490, c: 1.08560 },
+    { o: 1.08560, h: 1.08630, l: 1.08550, c: 1.08610 },
+    { o: 1.08610, h: 1.08670, l: 1.08590, c: 1.08650 },
+    { o: 1.08650, h: 1.08750, l: 1.08630, c: 1.08720, isHigh1: true, dashToIdx: 19 },
+    { o: 1.08720, h: 1.08730, l: 1.08650, c: 1.08660 },
+    { o: 1.08660, h: 1.08680, l: 1.08580, c: 1.08600 },
+    { o: 1.08600, h: 1.08620, l: 1.08520, c: 1.08540 },
+    { o: 1.08540, h: 1.08560, l: 1.08450, c: 1.08470, isLow2: true },
+    { o: 1.08470, h: 1.08510, l: 1.08460, c: 1.08490 },
+    { o: 1.08490, h: 1.08540, l: 1.08480, c: 1.08520 },
+    { o: 1.08520, h: 1.08540, l: 1.08480, c: 1.08500, isLive: true }
+  ],
+  GBPJPY: [
+    { o: 209.100, h: 209.350, l: 208.950, c: 209.250 },
+    { o: 209.250, h: 209.600, l: 209.150, c: 209.500 },
+    { o: 209.500, h: 209.950, l: 209.400, c: 209.850 },
+    { o: 209.850, h: 210.450, l: 209.750, c: 210.350, isHigh1: true, dashToIdx: 10 },
+    { o: 210.350, h: 210.400, l: 209.800, c: 209.900 },
+    { o: 209.900, h: 210.050, l: 209.450, c: 209.500 },
+    { o: 209.500, h: 209.650, l: 209.100, c: 209.200 },
+    { o: 209.200, h: 209.300, l: 208.750, c: 208.850, isLow1: true, dashToIdx: 14 },
+    { o: 208.850, h: 209.250, l: 208.800, c: 209.150 },
+    { o: 209.150, h: 209.550, l: 209.050, c: 209.450 },
+    { o: 209.450, h: 209.900, l: 209.350, c: 209.800 },
+    { o: 209.800, h: 210.150, l: 209.700, c: 209.950, isHigh2: true },
+    { o: 209.950, h: 210.000, l: 209.500, c: 209.550 },
+    { o: 209.550, h: 209.750, l: 209.350, c: 209.400 },
+    { o: 209.400, h: 209.500, l: 209.150, c: 209.250, isLow2: true },
+    { o: 209.250, h: 209.700, l: 209.200, c: 209.600 },
+    { o: 209.600, h: 209.850, l: 209.500, c: 209.646, isLive: true }
+  ],
+  GBPUSD: [
+    { o: 1.29350, h: 1.29420, l: 1.29310, c: 1.29390 },
+    { o: 1.29390, h: 1.29480, l: 1.29360, c: 1.29450 },
+    { o: 1.29450, h: 1.29550, l: 1.29420, c: 1.29520 },
+    { o: 1.29520, h: 1.29620, l: 1.29480, c: 1.29580 },
+    { o: 1.29580, h: 1.29600, l: 1.29450, c: 1.29490, isLow1: true },
+    { o: 1.29490, h: 1.29680, l: 1.29470, c: 1.29650 },
+    { o: 1.29650, h: 1.29780, l: 1.29620, c: 1.29750 },
+    { o: 1.29750, h: 1.29880, l: 1.29720, c: 1.29840 },
+    { o: 1.29840, h: 1.29950, l: 1.29800, c: 1.29910, isHigh2: true },
+    { o: 1.29910, h: 1.29930, l: 1.29780, c: 1.29800 },
+    { o: 1.29800, h: 1.29850, l: 1.29680, c: 1.29720, isLow2: true, dashToIdx: 14 },
+    { o: 1.29720, h: 1.29890, l: 1.29700, c: 1.29860 },
+    { o: 1.29860, h: 1.29980, l: 1.29820, c: 1.29950 },
+    { o: 1.29950, h: 1.30080, l: 1.29920, c: 1.30050, isHigh1: true, dashToIdx: 17 },
+    { o: 1.30050, h: 1.30060, l: 1.29900, c: 1.29920 },
+    { o: 1.29920, h: 1.29950, l: 1.29820, c: 1.29850 },
+    { o: 1.29850, h: 1.29880, l: 1.29760, c: 1.29800, isLive: true }
+  ],
+  USDJPY: [
+    { o: 156.950, h: 157.180, l: 156.900, c: 157.120, isHigh1: true },
+    { o: 157.120, h: 157.150, l: 156.750, c: 156.800 },
+    { o: 156.800, h: 156.950, l: 156.550, c: 156.620 },
+    { o: 156.620, h: 156.750, l: 156.350, c: 156.400 },
+    { o: 156.400, h: 156.580, l: 156.250, c: 156.320 },
+    { o: 156.320, h: 156.650, l: 156.300, c: 156.550, isHigh2: true },
+    { o: 156.550, h: 156.600, l: 156.100, c: 156.150 },
+    { o: 156.150, h: 156.250, l: 155.820, c: 155.880, isLow1: true, dashToIdx: 11 },
+    { o: 155.880, h: 156.150, l: 155.850, c: 156.080 },
+    { o: 156.080, h: 156.320, l: 156.020, c: 156.250 },
+    { o: 156.250, h: 156.350, l: 155.950, c: 156.000 },
+    { o: 156.000, h: 156.150, l: 155.880, c: 155.920, isLow2: true },
+    { o: 155.920, h: 156.180, l: 155.900, c: 156.120 },
+    { o: 156.120, h: 156.220, l: 156.050, c: 156.102, isLive: true }
+  ],
+  WTI: [
+    { o: 71.85, h: 72.10, l: 71.60, c: 71.70 },
+    { o: 71.70, h: 71.80, l: 71.10, c: 71.25 },
+    { o: 71.25, h: 71.40, l: 70.65, c: 70.80 },
+    { o: 70.80, h: 70.95, l: 70.18, c: 70.25, isLow1: true, dashToIdx: 7 },
+    { o: 70.25, h: 70.85, l: 70.20, c: 70.75 },
+    { o: 70.75, h: 71.15, l: 70.65, c: 71.05 },
+    { o: 71.05, h: 71.10, l: 70.50, c: 70.60 },
+    { o: 70.60, h: 70.70, l: 70.15, c: 70.22, isLow2: true },
+    { o: 70.22, h: 70.90, l: 70.20, c: 70.85 },
+    { o: 70.85, h: 71.45, l: 70.75, c: 71.35 },
+    { o: 71.35, h: 71.95, l: 71.25, c: 71.80 },
+    { o: 71.80, h: 72.55, l: 71.70, c: 72.40, isHigh1: true, dashToIdx: 15 },
+    { o: 72.40, h: 72.45, l: 71.85, c: 71.95 },
+    { o: 71.95, h: 72.10, l: 71.60, c: 71.70 },
+    { o: 71.70, h: 71.85, l: 71.35, c: 71.45 },
+    { o: 71.45, h: 71.65, l: 71.40, c: 71.50, isLive: true }
+  ],
+  US30: [
+    { o: 42780, h: 42840, l: 42740, c: 42810 },
+    { o: 42810, h: 42860, l: 42790, c: 42830 },
+    { o: 42830, h: 42850, l: 42720, c: 42740 },
+    { o: 42740, h: 42760, l: 42615, c: 42640, isLow1: true, dashToIdx: 8 },
+    { o: 42640, h: 42720, l: 42630, c: 42700 },
+    { o: 42700, h: 42790, l: 42680, c: 42770 },
+    { o: 42770, h: 42850, l: 42750, c: 42840 },
+    { o: 42840, h: 42920, l: 42820, c: 42910 },
+    { o: 42910, h: 42985, l: 42890, c: 42960, isHigh1: true, dashToIdx: 13 },
+    { o: 42960, h: 42970, l: 42890, c: 42910 },
+    { o: 42910, h: 42930, l: 42840, c: 42860 },
+    { o: 42860, h: 42890, l: 42810, c: 42830, isLow2: true },
+    { o: 42830, h: 42880, l: 42820, c: 42865 },
+    { o: 42865, h: 42880, l: 42830, c: 42850, isLive: true }
+  ],
+  NAS100: [
+    { o: 20260, h: 20310, l: 20240, c: 20290 },
+    { o: 20290, h: 20320, l: 20220, c: 20240 },
+    { o: 20240, h: 20260, l: 20170, c: 20185, isLow1: true, dashToIdx: 7 },
+    { o: 20185, h: 20250, l: 20180, c: 20240 },
+    { o: 20240, h: 20310, l: 20230, c: 20300 },
+    { o: 20300, h: 20370, l: 20290, c: 20360 },
+    { o: 20360, h: 20430, l: 20350, c: 20420 },
+    { o: 20420, h: 20475, l: 20410, c: 20460, isHigh1: true, dashToIdx: 12 },
+    { o: 20460, h: 20465, l: 20400, c: 20415 },
+    { o: 20415, h: 20430, l: 20360, c: 20375 },
+    { o: 20375, h: 20400, l: 20350, c: 20360, isLow2: true },
+    { o: 20360, h: 20410, l: 20355, c: 20395 },
+    { o: 20395, h: 20410, l: 20365, c: 20380, isLive: true }
+  ],
+  BTCUSD: [
+    { o: 81150, h: 81400, l: 80900, c: 81250 },
+    { o: 81250, h: 81350, l: 80600, c: 80750 },
+    { o: 80750, h: 80950, l: 80380, c: 80450, isLow1: true, dashToIdx: 6 },
+    { o: 80450, h: 81200, l: 80400, c: 81100 },
+    { o: 81100, h: 81850, l: 81000, c: 81750 },
+    { o: 81750, h: 82350, l: 81650, c: 82250 },
+    { o: 82250, h: 82750, l: 82150, c: 82650, isHigh1: true, dashToIdx: 12 },
+    { o: 82650, h: 82700, l: 82100, c: 82200 },
+    { o: 82200, h: 82400, l: 81750, c: 81850 },
+    { o: 81850, h: 82000, l: 81450, c: 81550, isLow2: true },
+    { o: 81550, h: 81950, l: 81500, c: 81850 },
+    { o: 81850, h: 81920, l: 81620, c: 81700, isLive: true }
+  ]
+};
+
 function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
   container.innerHTML = '';
   const cv = document.createElement('canvas');
@@ -725,24 +871,36 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
   let historyCount = 0;
   let baseCount = 28;
 
-  function generateHistoricalCandles(count, firstCandleOpen, curTf, symbolCfg) {
+  function generateHistoricalCandles(count, firstCandleOpen, curTf, symbolCfg, symbol) {
     const base = symbolCfg.base || 4020.0;
-    const amp = symbolCfg.range * 0.26;
+    const amp = symbolCfg.range * 0.28;
     let curOpen = firstCandleOpen;
     const hist = [];
 
+    // Unique harmonic market characteristics per instrument
+    const symSeed = {
+      XAUUSD: { f1: 0.14, f2: 0.05, f3: 2.7, w1: 0.65, w2: 0.35, noise: 0.12, wick: 0.10 },
+      EURUSD: { f1: 0.28, f2: 0.11, f3: 1.8, w1: 0.50, w2: 0.50, noise: 0.06, wick: 0.05 },
+      GBPJPY: { f1: 0.19, f2: 0.07, f3: 3.5, w1: 0.75, w2: 0.25, noise: 0.18, wick: 0.16 },
+      GBPUSD: { f1: 0.22, f2: 0.09, f3: 2.1, w1: 0.55, w2: 0.45, noise: 0.07, wick: 0.06 },
+      USDJPY: { f1: 0.16, f2: 0.04, f3: 2.4, w1: 0.70, w2: 0.30, noise: 0.09, wick: 0.08 },
+      WTI:    { f1: 0.24, f2: 0.08, f3: 2.9, w1: 0.60, w2: 0.40, noise: 0.14, wick: 0.12 },
+      US30:   { f1: 0.12, f2: 0.03, f3: 3.1, w1: 0.80, w2: 0.20, noise: 0.15, wick: 0.11 },
+      NAS100: { f1: 0.15, f2: 0.04, f3: 2.8, w1: 0.78, w2: 0.22, noise: 0.14, wick: 0.10 },
+      BTCUSD: { f1: 0.10, f2: 0.03, f3: 4.2, w1: 0.85, w2: 0.15, noise: 0.25, wick: 0.22 }
+    }[symbol] || { f1: 0.14, f2: 0.05, f3: 2.7, w1: 0.65, w2: 0.35, noise: 0.12, wick: 0.10 };
+
     for (let k = 1; k <= count; k++) {
-      // Harmonic market waves simulating realistic historical swings
-      const wave = Math.sin(k * 0.14) * (amp * 0.65) + Math.cos(k * 0.05) * (amp * 0.35);
-      const microNoise = Math.sin(k * 2.7) * (amp * 0.12);
+      const wave = Math.sin(k * symSeed.f1) * (amp * symSeed.w1) + Math.cos(k * symSeed.f2) * (amp * symSeed.w2);
+      const microNoise = Math.sin(k * symSeed.f3) * (amp * symSeed.noise);
       const targetO = base + wave + microNoise;
 
       const c = curOpen;
       const o = targetO;
       const bMax = Math.max(o, c);
       const bMin = Math.min(o, c);
-      const wickTop = Math.abs(Math.sin(k * 3.1)) * (amp * 0.1) + (amp * 0.02);
-      const wickBot = Math.abs(Math.cos(k * 3.9)) * (amp * 0.1) + (amp * 0.02);
+      const wickTop = Math.abs(Math.sin(k * (symSeed.f3 + 0.4))) * (amp * symSeed.wick) + (amp * 0.02);
+      const wickBot = Math.abs(Math.cos(k * (symSeed.f3 + 1.2))) * (amp * symSeed.wick) + (amp * 0.02);
       const h = bMax + wickTop;
       const l = bMin - wickBot;
 
@@ -761,8 +919,13 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
 
   // Generate dynamic candles according to selected timeframe and symbol with deep historical backward data
   function generateBaseCandles() {
-    const tfData = TIMEFRAME_PATTERNS[currentTf] || TIMEFRAME_PATTERNS.M3;
-    const basePat = tfData.candles;
+    let basePat;
+    if (currentSymbol === 'XAUUSD') {
+      const tfData = TIMEFRAME_PATTERNS[currentTf] || TIMEFRAME_PATTERNS.M3;
+      basePat = tfData.candles;
+    } else {
+      basePat = INSTRUMENT_BASE_PATTERNS[currentSymbol] || TIMEFRAME_PATTERNS.M3.candles;
+    }
     baseCount = basePat.length;
 
     const histCountByTf = {
@@ -770,30 +933,23 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
     };
     const desiredHistCount = histCountByTf[currentTf] || 100;
 
-    const mapVal = p => {
-      if (currentSymbol === 'XAUUSD') return p;
-      const ratio = (p - 4020.00) / 32.0;
-      return cfg.base + ratio * cfg.range;
-    };
-
-    const firstOpen = Number(mapVal(basePat[0].o).toFixed(cfg.decimals));
-    const histCandles = generateHistoricalCandles(desiredHistCount, firstOpen, currentTf, cfg);
+    const firstOpen = Number(basePat[0].o.toFixed(cfg.decimals));
+    const histCandles = generateHistoricalCandles(desiredHistCount, firstOpen, currentTf, cfg, currentSymbol);
     historyCount = histCandles.length;
 
-    const mappedBase = [];
-    basePat.forEach(p => {
-      let closeVal = mapVal(p.c);
+    const mappedBase = basePat.map(p => {
+      let closeVal = p.c;
       if (p.isLive) {
         if (currentSymbol === 'XAUUSD') {
           closeVal = Market.price || 4023.87;
         } else {
-          closeVal = cfg.liveStart || cfg.base;
+          closeVal = cfg.liveStart || p.c;
         }
       }
-      mappedBase.push({
-        o: Number(mapVal(p.o).toFixed(cfg.decimals)),
-        h: Number(mapVal(p.h).toFixed(cfg.decimals)),
-        l: Number(mapVal(p.l).toFixed(cfg.decimals)),
+      return {
+        o: Number(p.o.toFixed(cfg.decimals)),
+        h: Number(p.h.toFixed(cfg.decimals)),
+        l: Number(p.l.toFixed(cfg.decimals)),
         c: Number(closeVal.toFixed(cfg.decimals)),
         isHigh1: p.isHigh1,
         isHigh2: p.isHigh2,
@@ -802,7 +958,7 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
         isLowLive: p.isLowLive,
         isLive: p.isLive,
         dashToIdx: p.dashToIdx
-      });
+      };
     });
 
     const all = [...histCandles, ...mappedBase];
@@ -988,7 +1144,23 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
     let zDemand1Top = cfg.demand1Top, zDemand1Bot = cfg.demand1Bot, zDemand1Label = cfg.demand1Label;
     let zDemandBotTop = cfg.demandBotTop, zDemandBotBot = cfg.demandBotBot, zDemandBotLabel = cfg.demandBotLabel;
 
-    if (!(currentTf === 'M3' && currentSymbol === 'XAUUSD')) {
+    if (currentTf === 'M3') {
+      zSupplyTop = cfg.supplyTop;
+      zSupplyBot = cfg.supplyBot;
+      zSupplyLabel = cfg.supplyLabel;
+      zSupplyMidTop = cfg.supplyMidTop;
+      zSupplyMidBot = cfg.supplyMidBot;
+      zSupplyMidLabel = cfg.supplyMidLabel;
+      zDemandMidTop = cfg.demandMidTop;
+      zDemandMidBot = cfg.demandMidBot;
+      zDemandMidLabel = cfg.demandMidLabel;
+      zDemand1Top = cfg.demand1Top;
+      zDemand1Bot = cfg.demand1Bot;
+      zDemand1Label = cfg.demand1Label;
+      zDemandBotTop = cfg.demandBotTop;
+      zDemandBotBot = cfg.demandBotBot;
+      zDemandBotLabel = cfg.demandBotLabel;
+    } else {
       const rng = maxCandleH - minCandleL;
       zSupplyTop = maxCandleH + rng * 0.05;
       zSupplyBot = maxCandleH - rng * 0.05;

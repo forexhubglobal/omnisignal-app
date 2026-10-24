@@ -177,7 +177,14 @@ function SignalPage(main) {
         </div>
       </div>
 
+      <!-- Chart Engine View Mode Selector (Amaterasu SNR AI vs TradingView Live Real-Time) -->
+      <div style="display:flex; justify-content:center; gap:8px; margin: 6px 0 10px;">
+        <button class="snr-mode-toggle active" id="btnModeSnr">⚡ Amaterasu SNR AI</button>
+        <button class="snr-mode-toggle" id="btnModeTv">📊 TradingView Live Feed</button>
+      </div>
+
       <div class="snr-canvas-wrap" id="snrCanvasWrap"></div>
+      <div class="tv-live-embed-wrap" id="tvLiveEmbedWrap" style="display:none; width:100%; height:460px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); background:#06070a; margin-bottom:10px;"></div>
 
       <div class="snr-disclaimer">
         For educational purposes only. Not financial advice.
@@ -229,6 +236,57 @@ function SignalPage(main) {
   let currentActiveTf = 'M3';
   const wrap = $('#snrCanvasWrap', main);
   const chartInstance = mountSNRChart(wrap, currentActiveTf, inst.id);
+
+  // Mode Switcher: Amaterasu SNR AI vs TradingView Live Real-Time
+  const btnModeSnr = $('#btnModeSnr', main);
+  const btnModeTv = $('#btnModeTv', main);
+  const canvasWrap = $('#snrCanvasWrap', main);
+  const tvEmbedWrap = $('#tvLiveEmbedWrap', main);
+  const tvBtnPills = $('#snrTfPills', main);
+  const tvTools = $('.snr-tools', main);
+
+  const tvSymbols = {
+    XAUUSD: 'OANDA:XAUUSD',
+    EURUSD: 'FX:EURUSD',
+    GBPJPY: 'FX:GBPJPY',
+    GBPUSD: 'FX:GBPUSD',
+    USDJPY: 'FX:USDJPY',
+    WTI: 'TVC:USOIL',
+    US30: 'BLACKBULL:US30',
+    NAS100: 'PEPPERSTONE:NAS100',
+    BTCUSD: 'BINANCE:BTCUSDT'
+  };
+
+  if (btnModeSnr && btnModeTv) {
+    btnModeSnr.onclick = () => {
+      btnModeSnr.classList.add('active');
+      btnModeTv.classList.remove('active');
+      if (tvEmbedWrap) { tvEmbedWrap.style.display = 'none'; tvEmbedWrap.innerHTML = ''; }
+      if (canvasWrap) canvasWrap.style.display = 'block';
+      if (tvBtnPills) tvBtnPills.style.opacity = '1';
+      if (tvTools) tvTools.style.opacity = '1';
+      if (chartInstance && chartInstance.redraw) chartInstance.redraw();
+    };
+
+    btnModeTv.onclick = () => {
+      btnModeTv.classList.add('active');
+      btnModeSnr.classList.remove('active');
+      if (canvasWrap) canvasWrap.style.display = 'none';
+      if (tvBtnPills) tvBtnPills.style.opacity = '0.35';
+      if (tvTools) tvTools.style.opacity = '0.35';
+      if (tvEmbedWrap) {
+        tvEmbedWrap.style.display = 'block';
+        const sym = tvSymbols[inst.id] || 'OANDA:XAUUSD';
+        tvEmbedWrap.innerHTML = `
+          <iframe 
+            src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(sym)}&interval=15&theme=dark&style=1&timezone=Asia%2FKuala_Lumpur&hide_top_toolbar=0&studies=[]&hide_side_toolbar=1" 
+            style="width:100%; height:100%; border:none; display:block;"
+            loading="lazy">
+          </iframe>
+        `;
+      }
+    };
+  }
 
   // Timeframe Pills Interactions
   const pills = $$('#snrTfPills .snr-pill:not(.tf-dropdown)', main);
