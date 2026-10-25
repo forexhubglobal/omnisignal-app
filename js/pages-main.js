@@ -1325,6 +1325,8 @@ function NewsPage(main) {
 // ---------- 6. AI News (White House Academy & Katana AI 100% Match) ----------
 function AiNewsPage(main) {
   const goldPrice = Market.getLivePrice('XAUUSD') || 3995.81;
+  const nwStats = (AppState && AppState.aiNewsStats) || { totalNewsSignals: 0, winRate: 0, tpHit: 0, slHit: 0, totalPips: 0 };
+  const nwHistory = (AppState && Array.isArray(AppState.aiNewsHistory)) ? AppState.aiNewsHistory : [];
 
   main.innerHTML = `<section class="page">
     ${pageHead('AI News', 'High-impact news + AI directional bias (bullish/bearish)')}
@@ -1339,6 +1341,95 @@ function AiNewsPage(main) {
         <span>📈</span>
         <span>Gold Analysis</span>
       </a>
+    </div>
+
+    <!-- DEDICATED AI NEWS PERFORMANCE STATS SECTION -->
+    <div class="card" style="margin-bottom:16px; padding:18px 16px; border:1px solid rgba(255,160,0,0.35); background:linear-gradient(180deg, rgba(255,160,0,0.07) 0%, rgba(13,20,30,0.95) 100%); box-shadow:0 4px 20px rgba(0,0,0,0.35);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <span style="font-size:10.5px; font-weight:800; color:var(--solar-gold); letter-spacing:1px; text-transform:uppercase;">PRESTASI KHAS AI NEWS</span>
+          <h3 style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:800; color:#fff; margin:2px 0;">
+            Rekod Prestasi Sepanjang AI News
+          </h3>
+        </div>
+        <span class="badge" style="background:rgba(0,230,118,0.18); border:1px solid #00e676; color:#00e676; font-size:10px; font-weight:800;">
+          LIVE TRACKER
+        </span>
+      </div>
+
+      <!-- Big Profit Box -->
+      <div style="background:#050609; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px; text-align:center; margin-bottom:12px;">
+        <span style="font-size:10.5px; color:#94a3b8; text-transform:uppercase; letter-spacing:0.8px; display:block;">JUMLAH KEUNTUNGAN SEPANJANG AI NEWS</span>
+        <b style="font-family:'Space Grotesk',sans-serif; font-size:26px; color:#00e676; display:block; margin-top:3px;">
+          ${(nwStats.totalPips >= 0 ? '+' : '') + (nwStats.totalPips || 0)} pip
+        </b>
+      </div>
+
+      <!-- 4-Metrics Grid -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); padding:10px 12px; border-radius:8px;">
+          <span style="font-size:10px; color:#8e9aa8; display:block;">NEWS WIN RATE</span>
+          <b style="font-family:'Space Grotesk',sans-serif; font-size:18px; color:var(--solar-gold);">
+            ${nwStats.totalNewsSignals === 0 ? '0%' : (nwStats.winRate || 0) + '%'}
+          </b>
+        </div>
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); padding:10px 12px; border-radius:8px;">
+          <span style="font-size:10px; color:#8e9aa8; display:block;">EVENTS TRADED</span>
+          <b style="font-family:'Space Grotesk',sans-serif; font-size:18px; color:#fff;">
+            ${nwStats.totalNewsSignals || 0}
+          </b>
+        </div>
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); padding:10px 12px; border-radius:8px;">
+          <span style="font-size:10px; color:#8e9aa8; display:block;">NEWS TP HIT</span>
+          <b style="font-family:'Space Grotesk',sans-serif; font-size:18px; color:#00e676;">
+            ${nwStats.tpHit || 0}
+          </b>
+        </div>
+        <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); padding:10px 12px; border-radius:8px;">
+          <span style="font-size:10px; color:#8e9aa8; display:block;">NEWS SL HIT</span>
+          <b style="font-family:'Space Grotesk',sans-serif; font-size:18px; color:#ef5350;">
+            ${nwStats.slHit || 0}
+          </b>
+        </div>
+      </div>
+
+      <!-- AI News History Feed -->
+      <h4 style="font-size:12px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text-muted); margin:12px 0 8px;">
+        Sejarah Signal Pelepasan Berita
+      </h4>
+
+      <div class="ainews-history-list" style="display:flex; flex-direction:column; gap:8px;">
+        ${nwHistory.length === 0 ? `
+          <div style="text-align:center; padding:22px 12px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">
+            <span style="font-size:24px; display:block; margin-bottom:4px;">📊</span>
+            <b style="font-size:12.5px; color:var(--solar-gold); display:block;">Rekod Prestasi AI News Bermula Dari 0</b>
+            <span style="font-size:11px; color:#8e9aa8; display:block; margin-top:2px;">
+              Setiap kali pelepasan berita berimpak tinggi selesai, keputusan unjuran dan pips keuntungan akan dicatatkan di sini secara automatik.
+            </span>
+          </div>
+        ` : nwHistory.map(h => `
+          <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:3px;">
+                <span style="font-size:11px; color:#8e9aa8;">${h.date} · ${h.time}</span>
+                <span class="badge" style="font-size:9.5px; padding:1px 5px; background:${h.bias === 'BULLISH' ? 'rgba(0,230,118,0.15)' : 'rgba(239,83,80,0.15)'}; color:${h.bias === 'BULLISH' ? '#00e676' : '#ef5350'};">
+                  ${h.bias}
+                </span>
+              </div>
+              <b style="font-size:13px; color:#fff; display:block;">${h.event}</b>
+              <span style="font-size:10.5px; color:#94a3b8;">${h.symbol} @ ${num(h.entry)}</span>
+            </div>
+            <div style="text-align:right;">
+              <span style="font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:800; color:${h.pips > 0 ? '#00e676' : '#ef5350'}; display:block;">
+                ${h.pips > 0 ? '+' : ''}${h.pips} pip
+              </span>
+              <span class="badge" style="font-size:9.5px; padding:1px 5px; background:rgba(0,230,118,0.15); color:#00e676;">
+                ${h.status}
+              </span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
     </div>
 
     <!-- Watching for the Next Big Release Card -->

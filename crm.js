@@ -326,6 +326,49 @@ if (btnReset) {
   };
 }
 
+const nwsForm = $('#aiNewsRecordForm');
+if (nwsForm) {
+  nwsForm.onsubmit = async e => {
+    e.preventDefault();
+    const eventName = $('#nwsEvent').value;
+    const symbol = $('#nwsSymbol').value;
+    const bias = $('#nwsBias').value;
+    const status = $('#nwsStatus').value;
+    let pips = Number($('#nwsPips').value) || 0;
+    if (status === 'SL' && pips > 0) {
+      pips = -Math.abs(pips);
+    }
+    const defaultEntries = {
+      'XAUUSD': 3995.80,
+      'EURUSD': 1.08450,
+      'GBPJPY': 209.650,
+      'GBPUSD': 1.29800,
+      'US30': 43850.0
+    };
+    try {
+      const res = await fetch('/api/ainews/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: eventName,
+          symbol,
+          bias,
+          status,
+          pips,
+          entry: defaultEntries[symbol] || 3995.80
+        })
+      });
+      const d = await res.json();
+      if (d.success) {
+        toast(`📰 Rekod AI News (${eventName} ${pips > 0 ? '+' : ''}${pips}p) berjaya disimpan!`);
+      }
+    } catch(err) {
+      toast('Gagal mencatatkan rekod AI News');
+    }
+  };
+}
+
+
 function renderSignals() {
   const box = $('#resolutionBox');
   const sig = state.activeSignal || {};

@@ -42,6 +42,14 @@ const defaultDB = {
     notes: 'Amaterasu AI (WHA 3rd Eye + Katana SMC Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi...'
   },
   signals: [],
+  aiNewsStats: {
+    totalNewsSignals: 0,
+    winRate: 0,
+    tpHit: 0,
+    slHit: 0,
+    totalPips: 0
+  },
+  aiNewsHistory: [],
   analysis: {
     symbol: 'XAUUSD',
     date: '17 October 2026, 18:00',
@@ -340,6 +348,8 @@ const server = http.createServer(async (req, res) => {
       signals: (db.signals || []).slice(0, 15),
       marketQuotes: liveMarketQuotes,
       stats: db.stats,
+      aiNewsStats: db.aiNewsStats || { totalNewsSignals: 0, winRate: 0, tpHit: 0, slHit: 0, totalPips: 0 },
+      aiNewsHistory: db.aiNewsHistory || [],
       analysis: db.analysis,
       screener: db.screener,
       classes: db.classes,
@@ -525,6 +535,14 @@ const server = http.createServer(async (req, res) => {
       };
       db.signals = [];
       db.lastResolvedSignal = null;
+      db.aiNewsStats = {
+        totalNewsSignals: 0,
+        winRate: 0,
+        tpHit: 0,
+        slHit: 0,
+        totalPips: 0
+      };
+      db.aiNewsHistory = [];
       db.activeSignal = {
         status: 'WAITING',
         symbol: 'XAUUSD',
@@ -541,10 +559,55 @@ const server = http.createServer(async (req, res) => {
       AiEngine.activeTradeTicks = 0;
       AiEngine.tp1Triggered = false;
       saveDB(db);
-      broadcastEvent('stats_reset', { stats: db.stats, signals: db.signals, activeSignal: db.activeSignal });
+      broadcastEvent('stats_reset', { stats: db.stats, signals: db.signals, activeSignal: db.activeSignal, aiNewsStats: db.aiNewsStats, aiNewsHistory: db.aiNewsHistory });
+      broadcastEvent('ainews_updated', { stats: db.aiNewsStats, history: db.aiNewsHistory });
       broadcastEvent('signal_fired', db.activeSignal);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, stats: db.stats, signals: db.signals, activeSignal: db.activeSignal }));
+      return res.end(JSON.stringify({ success: true, stats: db.stats, signals: db.signals, activeSignal: db.activeSignal, aiNewsStats: db.aiNewsStats, aiNewsHistory: db.aiNewsHistory }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // 3c. POST /api/ainews/record (Record an executed high-impact AI news signal)
+  if (pathname === '/api/ainews/record' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      if (!db.aiNewsStats) {
+        db.aiNewsStats = { totalNewsSignals: 0, winRate: 0, tpHit: 0, slHit: 0, totalPips: 0 };
+      }
+      if (!db.aiNewsHistory) db.aiNewsHistory = [];
+
+      const pips = Number(payload.pips) || 0;
+      const isWin = payload.status === 'TP' || payload.status === 'TP_HIT' || pips > 0;
+      const record = {
+        id: 'nws-' + Date.now(),
+        date: payload.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        time: payload.time || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+        event: payload.event || 'US High-Impact Event',
+        symbol: payload.symbol || 'XAUUSD',
+        bias: payload.bias || (pips >= 0 ? 'BULLISH' : 'BEARISH'),
+        entry: Number(payload.entry) || 3995.80,
+        status: isWin ? 'TP_HIT' : 'SL_HIT',
+        pips: pips
+      };
+
+      db.aiNewsHistory.unshift(record);
+      db.aiNewsStats.totalNewsSignals = (db.aiNewsStats.totalNewsSignals || 0) + 1;
+      if (isWin) {
+        db.aiNewsStats.tpHit = (db.aiNewsStats.tpHit || 0) + 1;
+      } else {
+        db.aiNewsStats.slHit = (db.aiNewsStats.slHit || 0) + 1;
+      }
+      db.aiNewsStats.totalPips = (db.aiNewsStats.totalPips || 0) + pips;
+      db.aiNewsStats.winRate = Math.round((db.aiNewsStats.tpHit / db.aiNewsStats.totalNewsSignals) * 100);
+
+      saveDB(db);
+      broadcastEvent('ainews_updated', { stats: db.aiNewsStats, history: db.aiNewsHistory });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, stats: db.aiNewsStats, history: db.aiNewsHistory }));
     } catch (e) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: e.message }));

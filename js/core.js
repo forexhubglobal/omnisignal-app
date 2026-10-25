@@ -197,6 +197,8 @@ const AppState = {
           Market.updateQuotes(d.marketQuotes);
         }
         this.stats = d.stats;
+        this.aiNewsStats = d.aiNewsStats || { totalNewsSignals: 0, winRate: 0, tpHit: 0, slHit: 0, totalPips: 0 };
+        this.aiNewsHistory = d.aiNewsHistory || [];
         this.analysis = d.analysis;
         this.screener = d.screener;
         this.classes = d.classes;
@@ -236,10 +238,19 @@ const AppState = {
         const d = JSON.parse(e.data);
         this.stats = d.stats;
         this.signals = d.signals || [];
+        this.aiNewsStats = d.aiNewsStats || { totalNewsSignals: 0, winRate: 0, tpHit: 0, slHit: 0, totalPips: 0 };
+        this.aiNewsHistory = d.aiNewsHistory || [];
         this.activeSignal = d.activeSignal;
         this.lastResolvedSignal = null;
         toast('🔄 Statistik dan rekod signal telah dimulakan semula');
         if (typeof route === 'function') route();
+      });
+      s.addEventListener('ainews_updated', e => {
+        const d = JSON.parse(e.data);
+        this.aiNewsStats = d.stats;
+        this.aiNewsHistory = d.history || [];
+        toast('📰 Rekod prestasi AI News dikemas kini');
+        if (location.hash === '#ainews') route();
       });
       s.addEventListener('analysis_updated', e => {
         this.analysis = JSON.parse(e.data);

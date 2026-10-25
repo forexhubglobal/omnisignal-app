@@ -285,6 +285,61 @@
             </button>
           </form>
         </div>
+
+        <!-- AI News Release Outcome Logger -->
+        <div class="card" style="margin-top:20px;">
+          <div class="card-head">
+            <div>
+              <h3>📰 AI News Outcome Logger & Stat Updater</h3>
+              <small class="muted">Record completed high-impact news trades (NFP, CPI, FOMC, PMI) directly to the AI News tab</small>
+            </div>
+            <span class="badge" style="background:rgba(255,160,0,0.18); color:var(--solar-gold); border:1px solid var(--solar-gold);">AI NEWS DESK</span>
+          </div>
+          <form id="aiNewsRecordForm">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-bottom:12px;">
+              <div class="form-group" style="margin:0;">
+                <label>Economic Event</label>
+                <select id="nwsEvent" required>
+                  <option value="US Non-Farm Payrolls (NFP)">US Non-Farm Payrolls (NFP)</option>
+                  <option value="US CPI Inflation Rate">US CPI Inflation Rate</option>
+                  <option value="FOMC Fed Rate Decision">FOMC Fed Rate Decision</option>
+                  <option value="US ISM Manufacturing PMI">US ISM Manufacturing PMI</option>
+                  <option value="US Initial Jobless Claims">US Initial Jobless Claims</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Asset</label>
+                <select id="nwsSymbol">
+                  <option value="XAUUSD">XAUUSD (Gold)</option>
+                  <option value="EURUSD">EURUSD</option>
+                  <option value="GBPUSD">GBPUSD</option>
+                  <option value="US30">US30</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>AI Direction Bias</label>
+                <select id="nwsBias">
+                  <option value="BULLISH">BULLISH ▲</option>
+                  <option value="BEARISH">BEARISH ▼</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Outcome</label>
+                <select id="nwsStatus">
+                  <option value="TP">🎯 TP HIT (Win)</option>
+                  <option value="SL">🛑 SL HIT (Loss)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Realized Pips</label>
+                <input type="number" id="nwsPips" value="85" required />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; font-weight:700;">
+              📰 Catatkan Rekod ke Tab AI News
+            </button>
+          </form>
+        </div>
       </section>
 
       <!-- 3. MARKET ANALYSIS CMS TAB -->
