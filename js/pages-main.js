@@ -1322,8 +1322,10 @@ function NewsPage(main) {
   </section>`;
 }
 
-// ---------- 6. AI News (White House Academy 100% Match) ----------
+// ---------- 6. AI News (White House Academy & Katana AI 100% Match) ----------
 function AiNewsPage(main) {
+  const goldPrice = Market.getLivePrice('XAUUSD') || 3995.81;
+
   main.innerHTML = `<section class="page">
     ${pageHead('AI News', 'High-impact news + AI directional bias (bullish/bearish)')}
 
@@ -1331,7 +1333,7 @@ function AiNewsPage(main) {
     <div class="ainews-chips-row">
       <a class="ainews-chip" href="#screener">
         <span>📊</span>
-        <span>Screener XAUUSD <b>4,024.90</b></span>
+        <span>Screener XAUUSD <b>${num(goldPrice)}</b></span>
       </a>
       <a class="ainews-chip" href="#analysis">
         <span>📈</span>
@@ -1340,7 +1342,7 @@ function AiNewsPage(main) {
     </div>
 
     <!-- Watching for the Next Big Release Card -->
-    <div class="ainews-card-watch">
+    <div class="ainews-card-watch" style="margin-bottom:16px;">
       <div class="ainews-mandala">
         <svg viewBox="0 0 48 48" width="56" height="56">
           <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(255,193,7,0.3)" stroke-width="1.2" stroke-dasharray="3 2" />
@@ -1370,6 +1372,80 @@ function AiNewsPage(main) {
         <span class="ainews-tag">Fed speeches</span>
       </div>
     </div>
+
+    <!-- SOP Jadual Bila Signal AI News Keluar -->
+    <div class="card" style="margin-bottom:16px; padding:18px 16px;">
+      <div class="card-head" style="margin-bottom:12px; padding-bottom:6px;">
+        <h4 style="font-size:13.5px; font-weight:700; color:var(--solar-gold); margin:0;">
+          ⏱️ SOP: BILA SIGNAL AI NEWS AKAN KELUAR?
+        </h4>
+        <span class="badge" style="font-size:10px; background:rgba(0,230,118,0.15); color:#00e676;">SOP WHA & KATANA</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <span style="background:rgba(255,160,0,0.15); border:1px solid var(--solar-gold); color:var(--solar-gold); font-size:11px; font-weight:800; padding:4px 8px; border-radius:6px; white-space:nowrap;">T-8 JAM</span>
+          <div>
+            <b style="color:#fff; font-size:13px; display:block;">1. Unjuran Awal (Early Projection)</b>
+            <span style="font-size:12px; color:#94a3b8; line-height:1.45;">8 jam sebelum news, AI mula menganalisis jangkaan data ekonomi (Forecast vs Previous) dan mengeluarkan arah awal Gold & DXY.</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <span style="background:rgba(0,230,118,0.15); border:1px solid #00e676; color:#00e676; font-size:11px; font-weight:800; padding:4px 8px; border-radius:6px; white-space:nowrap;">T-4 JAM</span>
+          <div>
+            <b style="color:#fff; font-size:13px; display:block;">2. Pengesahan Semula (Confirmation Call)</b>
+            <span style="font-size:12px; color:#94a3b8; line-height:1.45;">4 jam sebelum release, AI menyemak semula posisi Order Block dan kecairan institusi pasaran semasa bagi mengesahkan arah.</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start;">
+          <span style="background:rgba(239,83,80,0.15); border:1px solid #ef5350; color:#ef5350; font-size:11px; font-weight:800; padding:4px 8px; border-radius:6px; white-space:nowrap;">T-15 MINIT</span>
+          <div>
+            <b style="color:#fff; font-size:13px; display:block;">3. Signal Eksekusi Live News (Execution Setup)</b>
+            <span style="font-size:12px; color:#94a3b8; line-height:1.45;">15-30 minit sebelum data diumumkan, signal kemasukan dikeluarkan lengkap dengan paras Entry, TP pantas (+50 ke +100 pips), dan SL perlindungan.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming High-Impact Release Live Card -->
+    <div class="card" style="padding:18px 16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <span style="font-size:11px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.8px;">BERITA BERIMPAK TINGGI TERDEKAT</span>
+          <h4 style="font-size:16px; font-weight:700; color:#fff; margin:2px 0;">US ISM Manufacturing PMI & JOLTS</h4>
+        </div>
+        <span class="badge" style="background:rgba(239,83,80,0.2); border:1px solid #ef5350; color:#ef5350; font-weight:800;">🔴 HIGH IMPACT</span>
+      </div>
+
+      <div style="background:#07090e; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 14px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:12px; color:#cbd5e1;">Masa Pelepasan Rasmi:</span>
+          <b style="font-family:'Space Grotesk',sans-serif; color:var(--solar-gold); font-size:13px;">23:00 MYT (US Session)</b>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:12px; color:#cbd5e1;">Unjuran Bias AI (Gold):</span>
+          <b style="color:#00e676; font-size:13px;">BULLISH ACCUMULATION ▲</b>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:12px; color:#cbd5e1;">Sasaran Lonjakan News:</span>
+          <b style="color:#fff; font-size:13px;">+60 ke +110 pips</b>
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:#8e9aa8; line-height:1.45; margin-bottom:14px;">
+        Enjin AI sentiasa menyaring data kalendar berimpak 3-bintang. Di luar waktu berita berimpak tinggi, sistem menumpukan signal teknikal Order Block di tab <a href="#signal" style="color:var(--solar-gold); font-weight:700;">Signal</a>.
+      </p>
+
+      <button class="btn gold" id="btnCheckAiNewsNow" style="width:100%; padding:11px; font-weight:700; font-size:13px; border-radius:8px;">
+        ⚡ Semak Unjuran Terkini AI Directional Bias
+      </button>
+    </div>
   </section>`;
+
+  const btnCheck = $('#btnCheckAiNewsNow', main);
+  if (btnCheck) {
+    btnCheck.onclick = () => {
+      toast('⚡ AI News Directional Bias disahkan: XAUUSD Bullish Bias disokong oleh aliran Order Block M15.');
+    };
+  }
 }
 
