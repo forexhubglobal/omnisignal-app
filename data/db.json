@@ -34,16 +34,16 @@
     ]
   },
   "activeSignal": {
-    "status": "WAITING",
-    "symbol": "XAUUSD",
-    "type": "BUY",
+    "status": "ACTIVE",
+    "symbol": "GBPJPY",
+    "type": "SELL",
     "timeframe": "M15",
-    "entry": 0,
-    "tp1": 0,
-    "tp2": 0,
-    "sl": 0,
-    "firedAt": null,
-    "notes": "Amaterasu AI (WHA 3rd Eye + Katana SMC Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi..."
+    "entry": 209.721,
+    "tp1": 209.371,
+    "tp2": 208.871,
+    "sl": 210.121,
+    "firedAt": "21:41",
+    "notes": "[WHA 3rd Eye & Katana AI] M15 Bearish Order Block + Asian High Liquidity Sweep at 209.721. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai."
   },
   "signals": [],
   "analysis": {

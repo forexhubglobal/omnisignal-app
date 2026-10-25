@@ -26,15 +26,7 @@ function SignalPage(main) {
   const isAnyActive = isLiveOrTp1;
   const isTp1 = globalSig.status === 'TP1_HIT';
 
-  const lastRes = (AppState && AppState.lastResolvedSignal) || ((AppState && AppState.signals && AppState.signals[0])) || {
-    symbol: 'GBPJPY',
-    type: 'BUY',
-    entry: 209.65,
-    status: 'TP2',
-    pips: 100,
-    time: '06:45',
-    date: 'Oct 25'
-  };
+  const lastRes = (AppState && AppState.lastResolvedSignal) || ((AppState && AppState.signals && AppState.signals[0])) || null;
 
   function getDisplayPrice() {
     const liveP = Market.getLivePrice(inst.id);
@@ -136,18 +128,24 @@ function SignalPage(main) {
       <div class="next-setup-pill">BIAS: ${inst.bias === 'BULLISH' ? 'BULLISH ACCUMULATION ▲' : inst.bias === 'BEARISH' ? 'BEARISH DISTRIBUTION ▼' : 'CONSOLIDATION'}</div>
       <p style="font-size:12px; color:#8e9aa8; margin-top:6px;">Mengimbas zon kecairan institusi & order blocks ${inst.id}. Signal disahkan oleh Master Trader.</p>
 
-      <div style="margin-top:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(0,230,118,0.3); border-radius:10px; padding:12px 14px; text-align:left;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <span style="font-size:11px; font-weight:800; color:#00e676; letter-spacing:0.8px;">KEPUTUSAN SIGNAL SELESAI TERAKHIR:</span>
-          <span style="font-size:11px; color:#8e9aa8;">${lastRes.date || 'Hari ini'} · ${lastRes.time || ''}</span>
+      ${lastRes ? `
+        <div style="margin-top:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(0,230,118,0.3); border-radius:10px; padding:12px 14px; text-align:left;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:11px; font-weight:800; color:#00e676; letter-spacing:0.8px;">KEPUTUSAN SIGNAL SELESAI TERAKHIR:</span>
+            <span style="font-size:11px; color:#8e9aa8;">${lastRes.date || 'Hari ini'} · ${lastRes.time || ''}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b style="font-size:14px; color:#fff;">${lastRes.type} ${lastRes.symbol} @ ${num(lastRes.entry)}</b>
+            <span style="background:rgba(0,230,118,0.18); border:1px solid #00e676; color:#00e676; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">
+              ${lastRes.pips > 0 ? `✅ ${lastRes.status} (+${lastRes.pips} PIPS)` : lastRes.status === 'BE' ? '🛡️ BE (0 PIP)' : `🛑 SL (${lastRes.pips} PIPS)`}
+            </span>
+          </div>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <b style="font-size:14px; color:#fff;">${lastRes.type} ${lastRes.symbol} @ ${num(lastRes.entry)}</b>
-          <span style="background:rgba(0,230,118,0.18); border:1px solid #00e676; color:#00e676; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">
-            ${lastRes.pips > 0 ? `✅ ${lastRes.status} (+${lastRes.pips} PIPS)` : `🛑 SL (${lastRes.pips} PIPS)`}
-          </span>
+      ` : `
+        <div style="margin-top:16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:10px; padding:12px 14px; text-align:center;">
+          <span style="font-size:12px; color:var(--text-muted);">Enjin AI sedia mengimbas pasaran secara 100% automatik untuk setup berkebarangkalian tinggi.</span>
         </div>
-      </div>
+      `}
 
       <button class="btn gold" id="btnTriggerScanNow" style="margin-top:14px; width:100%; padding:11px 14px; font-weight:700; font-size:12.5px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 16px rgba(255,160,0,0.25);">
         <span>⚡ Hantar Signal Live ${inst.name}</span>
