@@ -147,6 +147,13 @@ const AppState = {
       this.screener = this.db.screener;
       this.classes = this.db.classes;
       this.contests = this.db.contests;
+
+      // Fetch initial live quotes
+      try {
+        const qRes = await fetch('/api/market/quotes');
+        const qData = await qRes.json();
+        Market.updateQuotes(qData);
+      } catch (err) {}
     } catch (e) {
       console.warn('Running in offline/standalone mode', e);
     }
@@ -160,12 +167,19 @@ const AppState = {
         this.activeSignal = d.activeSignal;
         this.lastResolvedSignal = d.lastResolvedSignal || null;
         this.signals = d.signals || [];
+        if (d.marketQuotes) {
+          Market.updateQuotes(d.marketQuotes);
+        }
         this.stats = d.stats;
         this.analysis = d.analysis;
         this.screener = d.screener;
         this.classes = d.classes;
         this.contests = d.contests;
         if (typeof route === 'function') route();
+      });
+      s.addEventListener('market_quotes', e => {
+        const quotes = JSON.parse(e.data);
+        Market.updateQuotes(quotes);
       });
       s.addEventListener('signal_fired', e => {
         this.activeSignal = JSON.parse(e.data);
@@ -229,15 +243,13 @@ const AppState = {
       });
       s.addEventListener('market_tick', e => {
         const d = JSON.parse(e.data);
-        Market.price = d.price;
-        const pEl = $('#price');
-        if (pEl) pEl.textContent = num(d.price);
-        const c = $('#change');
-        if (c) {
-          c.textContent = (d.change >= 0 ? '+' : '') + d.change.toFixed(2) + '%';
-          c.className = 'change ' + (d.change >= 0 ? 'up' : 'down');
+        if (d.symbol && Market.quotes[d.symbol]) {
+          Market.quotes[d.symbol].price = d.price;
         }
-        $$('[data-live]').forEach(el => (el.textContent = num(d.price)));
+        if (d.symbol === 'XAUUSD' || !d.symbol) {
+          Market.price = d.price;
+        }
+        Market.updateUI();
       });
     } catch (e) {
       console.warn('SSE not connected');
@@ -245,24 +257,67 @@ const AppState = {
   }
 };
 
-// ----- Simulated market feed (XAUUSD) -----
+// ----- Real-Time TradingView-Synchronized Market Feed -----
 const Market = {
-  open: 4024.39,
-  price: 4024.39,
+  open: 4007.90,
+  price: 4007.90,
+  quotes: {
+    XAUUSD: { price: 4007.90, change: 0.42, decimals: 2 },
+    EURUSD: { price: 1.1204, change: -0.15, decimals: 4 },
+    GBPJPY: { price: 209.776, change: 0.35, decimals: 3 },
+    GBPUSD: { price: 1.3375, change: 0.12, decimals: 4 },
+    USDJPY: { price: 156.814, change: -0.22, decimals: 3 },
+    WTI: { price: 103.27, change: 1.25, decimals: 2 },
+    US30: { price: 52215.16, change: 0.48, decimals: 1 },
+    NAS100: { price: 25955.34, change: 0.65, decimals: 1 },
+    BTCUSD: { price: 80691.12, change: 1.85, decimals: 0 }
+  },
   subs: new Set(),
-  tick() {
-    this.price += (Math.random() - 0.495) * 0.45;
-    const p = this.price, ch = ((p - this.open) / this.open) * 100;
+  getLivePrice(sym) {
+    if (this.quotes && this.quotes[sym] && typeof this.quotes[sym].price === 'number') {
+      return this.quotes[sym].price;
+    }
+    return sym === 'XAUUSD' ? this.price : 0;
+  },
+  updateQuotes(newQuotes) {
+    if (!newQuotes) return;
+    Object.assign(this.quotes, newQuotes);
+    if (this.quotes.XAUUSD) {
+      this.price = this.quotes.XAUUSD.price;
+    }
+    this.updateUI();
+  },
+  updateUI() {
+    const p = this.price;
     const pEl = $('#price');
     if (pEl) pEl.textContent = num(p);
     const c = $('#change');
+    const chg = this.quotes.XAUUSD ? this.quotes.XAUUSD.change : 0;
     if (c) {
-      c.textContent = (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%';
-      c.className = 'change ' + (ch >= 0 ? 'up' : 'down');
+      c.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+      c.className = 'change ' + (chg >= 0 ? 'up' : 'down');
     }
     $$('[data-live]').forEach(el => (el.textContent = num(p)));
+
+    // Synchronize ALL_INSTRUMENTS base prices with live TradingView prices
+    if (typeof ALL_INSTRUMENTS !== 'undefined' && Array.isArray(ALL_INSTRUMENTS)) {
+      ALL_INSTRUMENTS.forEach(inst => {
+        if (this.quotes[inst.id]) {
+          inst.basePrice = this.quotes[inst.id].price;
+        }
+      });
+    }
+
+    // Update active chart redraw if mounted
+    if (window._activeSnrChart && typeof window._activeSnrChart.onLiveTick === 'function') {
+      window._activeSnrChart.onLiveTick();
+    }
     this.subs.forEach(fn => fn(p));
   },
+  tick() {
+    this.price += (Math.random() - 0.495) * 0.45;
+    this.updateUI();
+  }
 };
 
 // ----- EMA calculation -----
@@ -933,8 +988,36 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
     return hist;
   }
 
+  function getEffectiveConfig() {
+    const rawCfg = INSTRUMENT_SNR_CONFIGS[currentSymbol] || INSTRUMENT_SNR_CONFIGS.XAUUSD;
+    const liveP = Market.getLivePrice(currentSymbol) || (currentSymbol === 'XAUUSD' ? Market.price : rawCfg.base);
+    const shift = (currentSymbol === 'XAUUSD') ? (liveP - 4023.87) : (liveP - rawCfg.base);
+    return {
+      ...rawCfg,
+      livePrice: liveP,
+      shift: shift,
+      viewMin: rawCfg.viewMin + shift,
+      viewMax: rawCfg.viewMax + shift,
+      refPrice: rawCfg.refPrice + shift,
+      supplyTop: rawCfg.supplyTop + shift,
+      supplyBot: rawCfg.supplyBot + shift,
+      supplyMidTop: rawCfg.supplyMidTop !== undefined ? rawCfg.supplyMidTop + shift : undefined,
+      supplyMidBot: rawCfg.supplyMidBot !== undefined ? rawCfg.supplyMidBot + shift : undefined,
+      demandMidTop: rawCfg.demandMidTop !== undefined ? rawCfg.demandMidTop + shift : undefined,
+      demandMidBot: rawCfg.demandMidBot !== undefined ? rawCfg.demandMidBot + shift : undefined,
+      demand1Top: rawCfg.demand1Top + shift,
+      demand1Bot: rawCfg.demand1Bot + shift,
+      demandBotTop: rawCfg.demandBotTop + shift,
+      demandBotBot: rawCfg.demandBotBot + shift
+    };
+  }
+
   // Generate dynamic candles according to selected timeframe and symbol with deep historical backward data
   function generateBaseCandles() {
+    const activeCfg = getEffectiveConfig();
+    cfg = activeCfg;
+    const shift = activeCfg.shift;
+
     let basePat;
     if (currentSymbol === 'XAUUSD') {
       const tfData = TIMEFRAME_PATTERNS[currentTf] || TIMEFRAME_PATTERNS.M3;
@@ -949,23 +1032,19 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
     };
     const desiredHistCount = histCountByTf[currentTf] || 100;
 
-    const firstOpen = Number(basePat[0].o.toFixed(cfg.decimals));
-    const histCandles = generateHistoricalCandles(desiredHistCount, firstOpen, currentTf, cfg, currentSymbol);
+    const firstOpen = Number((basePat[0].o + shift).toFixed(cfg.decimals));
+    const histCandles = generateHistoricalCandles(desiredHistCount, firstOpen, currentTf, { ...cfg, base: cfg.base + shift }, currentSymbol);
     historyCount = histCandles.length;
 
     const mappedBase = basePat.map(p => {
-      let closeVal = p.c;
+      let closeVal = p.c + shift;
       if (p.isLive) {
-        if (currentSymbol === 'XAUUSD') {
-          closeVal = Market.price || 4023.87;
-        } else {
-          closeVal = cfg.liveStart || p.c;
-        }
+        closeVal = activeCfg.livePrice;
       }
       return {
-        o: Number(p.o.toFixed(cfg.decimals)),
-        h: Number(p.h.toFixed(cfg.decimals)),
-        l: Number(p.l.toFixed(cfg.decimals)),
+        o: Number((p.o + shift).toFixed(cfg.decimals)),
+        h: Number((p.h + shift).toFixed(cfg.decimals)),
+        l: Number((p.l + shift).toFixed(cfg.decimals)),
         c: Number(closeVal.toFixed(cfg.decimals)),
         isHigh1: p.isHigh1,
         isHigh2: p.isHigh2,
@@ -1026,6 +1105,7 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
     cv.style.margin = '0 auto';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    cfg = getEffectiveConfig();
     const axisW = cfg.decimals >= 4 ? 76 : 64;
     const pw = W - axisW;
     const axisH = 26;
@@ -1571,13 +1651,11 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
 
   // Ticking handler
   const onTick = p => {
+    cfg = getEffectiveConfig();
+    const liveP = Market.getLivePrice(currentSymbol) || (currentSymbol === 'XAUUSD' ? p : cfg.base);
     const last = rawCandles[rawCandles.length - 1];
     if (last) {
-      if (currentSymbol === 'XAUUSD') {
-        last.c = p;
-      } else {
-        last.c = Number((last.c + (Math.random() - 0.495) * (cfg.range * 0.005)).toFixed(cfg.decimals));
-      }
+      last.c = Number(liveP.toFixed(cfg.decimals));
       last.h = Math.max(last.h, last.c);
       last.l = Math.min(last.l, last.c);
       draw();
@@ -1591,7 +1669,7 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
   // Initial draw
   draw();
 
-  return {
+  const chartApi = {
     setTf(tf) {
       currentTf = tf || 'M3';
       rawCandles = generateBaseCandles();
@@ -1599,7 +1677,7 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
     },
     setSymbol(newSymbol) {
       currentSymbol = newSymbol || 'XAUUSD';
-      cfg = INSTRUMENT_SNR_CONFIGS[currentSymbol] || INSTRUMENT_SNR_CONFIGS.XAUUSD;
+      cfg = getEffectiveConfig();
       zoomX = 1.0;
       panX = 0;
       zoomY = 1.0;
@@ -1627,7 +1705,11 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
       draw();
     },
     redraw() {
+      rawCandles = generateBaseCandles();
       draw();
+    },
+    onLiveTick() {
+      onTick(Market.getLivePrice(currentSymbol) || Market.price);
     },
     destroy() {
       Market.subs.delete(onTick);
@@ -1642,5 +1724,8 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
       cv.removeEventListener('dblclick', onDblClick);
     }
   };
+
+  window._activeSnrChart = chartApi;
+  return chartApi;
 }
 

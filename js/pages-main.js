@@ -1,20 +1,20 @@
 // ===== Amaterasu AI Pages: Signal, Stat, Analysis, Screener, News, AI News =====
 
 const ALL_INSTRUMENTS = [
-  { id: 'XAUUSD', name: 'XAUUSD', category: 'Metals', icon: '🥇', label: 'Gold', basePrice: 4024.45, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'SIDE' },
-  { id: 'EURUSD', name: 'EURUSD', category: 'Forex', icon: '💶', label: 'Euro', basePrice: 1.08500, bias: 'BEARISH', m1: 'DOWN', m5: 'SIDE', m15: 'DOWN' },
-  { id: 'GBPJPY', name: 'GBPJPY', category: 'Forex', icon: '💷', label: 'Pound / Yen', basePrice: 209.646, bias: 'NEUTRAL', m1: 'SIDE', m5: 'DOWN', m15: 'UP' },
-  { id: 'GBPUSD', name: 'GBPUSD', category: 'Forex', icon: '💷', label: 'Cable', basePrice: 1.29800, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'SIDE' },
-  { id: 'USDJPY', name: 'USDJPY', category: 'Forex', icon: '💴', label: 'Dollar / Yen', basePrice: 156.102, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'DOWN' },
-  { id: 'WTI', name: 'WTI', category: 'Commodities', icon: '🛢', label: 'Crude Oil', basePrice: 71.50, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'UP' },
-  { id: 'US30', name: 'US30', category: 'Indices', icon: '📈', label: 'Dow Jones 30', basePrice: 42850, bias: 'BULLISH', m1: 'UP', m5: 'SIDE', m15: 'UP' },
-  { id: 'NAS100', name: 'NAS100', category: 'Indices', icon: '💻', label: 'Nasdaq 100', basePrice: 20380, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'UP' },
-  { id: 'BTCUSD', name: 'BTCUSD', category: 'Crypto', icon: '₿', label: 'Bitcoin', basePrice: 81700, bias: 'BULLISH', m1: 'SIDE', m5: 'UP', m15: 'UP' }
+  { id: 'XAUUSD', name: 'XAUUSD', category: 'Metals', icon: '🥇', label: 'Gold', basePrice: 4007.90, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'SIDE' },
+  { id: 'EURUSD', name: 'EURUSD', category: 'Forex', icon: '💶', label: 'Euro', basePrice: 1.1204, bias: 'BEARISH', m1: 'DOWN', m5: 'SIDE', m15: 'DOWN' },
+  { id: 'GBPJPY', name: 'GBPJPY', category: 'Forex', icon: '💷', label: 'Pound / Yen', basePrice: 209.776, bias: 'NEUTRAL', m1: 'SIDE', m5: 'DOWN', m15: 'UP' },
+  { id: 'GBPUSD', name: 'GBPUSD', category: 'Forex', icon: '💷', label: 'Cable', basePrice: 1.3375, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'SIDE' },
+  { id: 'USDJPY', name: 'USDJPY', category: 'Forex', icon: '💴', label: 'Dollar / Yen', basePrice: 156.814, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'DOWN' },
+  { id: 'WTI', name: 'WTI', category: 'Commodities', icon: '🛢', label: 'Crude Oil', basePrice: 103.27, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'UP' },
+  { id: 'US30', name: 'US30', category: 'Indices', icon: '📈', label: 'Dow Jones 30', basePrice: 52215.16, bias: 'BULLISH', m1: 'UP', m5: 'SIDE', m15: 'UP' },
+  { id: 'NAS100', name: 'NAS100', category: 'Indices', icon: '💻', label: 'Nasdaq 100', basePrice: 25955.34, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'UP' },
+  { id: 'BTCUSD', name: 'BTCUSD', category: 'Crypto', icon: '₿', label: 'Bitcoin', basePrice: 80691.12, bias: 'BULLISH', m1: 'SIDE', m5: 'UP', m15: 'UP' }
 ];
 
 // ---------- 1. Signal ----------
 function SignalPage(main) {
-  const globalSig = (AppState && AppState.activeSignal) || { status: 'WAITING', type: 'BUY', symbol: 'XAUUSD', entry: 4024.45, tp1: 4028.50, tp2: 4034.00, sl: 4019.45 };
+  const globalSig = (AppState && AppState.activeSignal) || { status: 'WAITING', type: 'BUY', symbol: 'XAUUSD', entry: 4007.90, tp1: 4014.00, tp2: 4022.00, sl: 4001.90 };
   let activeSymId = store.get('selected_signal_sym') || 'XAUUSD';
   let inst = ALL_INSTRUMENTS.find(i => i.id === activeSymId) || ALL_INSTRUMENTS[0];
 
@@ -34,6 +34,8 @@ function SignalPage(main) {
   };
 
   function getDisplayPrice() {
+    const liveP = Market.getLivePrice(inst.id);
+    if (liveP) return num(liveP);
     if (inst.id === 'XAUUSD') return num(Market.price);
     return num(inst.basePrice);
   }
