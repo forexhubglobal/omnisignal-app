@@ -1,9 +1,10 @@
-// ===== Amaterasu AI Core Engine =====
+// ===== Amaterasu X Core Engine =====
 const BRAND = {
-  name: 'Amaterasu AI',
-  short: 'AMA',
-  tagline: 'SOLAR SOVEREIGN INTELLIGENCE',
-  user: 'kj35'
+  name: 'AMATERASU X',
+  short: 'AMATERASU X',
+  tagline: 'AI POWERED FOREX & CFD SIGNALS',
+  motto: 'Precision Signals. Smarter Decisions. Your Trading Edge.',
+  user: 'Tengku Khairi'
 };
 
 const $ = (s, el = document) => el.querySelector(s);

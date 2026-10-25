@@ -1,35 +1,37 @@
-/* ===== Amaterasu AI Command Center (CRM) CSS ===== */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+/* ===== AMATERASU X Command Center (CRM) CSS ===== */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg-deep: #050608;
-  --bg-side: #0a0d14;
-  --bg-main: #07090e;
-  --bg-card: #0e121c;
-  --bg-card-sub: #131826;
+  --bg-deep: #080D14;
+  --bg-side: #0F1722;
+  --bg-main: #080D14;
+  --bg-card: #111A28;
+  --bg-card-sub: #172132;
   --border: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(255, 109, 0, 0.35);
+  --border-active: rgba(239, 45, 61, 0.45);
 
-  --solar-red: #ff334b;
-  --solar-orange: #ff6d00;
-  --solar-amber: #ff9100;
-  --solar-gold: #ffc107;
-  --bull: #00e676;
-  --bear: #ff1744;
-  --cyan: #00e5ff;
+  --primary-accent: #EF2D3D;
+  --glow-accent: #FF2638;
+  --solar-red: #EF2D3D;
+  --solar-orange: #EF2D3D;
+  --solar-amber: #FF2638;
+  --solar-gold: #EF2D3D;
+  --bull: #00D68F;
+  --bear: #FF4D5A;
+  --cyan: #00D68F;
 
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-primary: #F5F7FA;
+  --text-secondary: #A0A6B4;
+  --text-muted: #64748B;
   --radius: 12px;
 }
 
 body {
   background: var(--bg-deep);
   color: var(--text-primary);
-  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }

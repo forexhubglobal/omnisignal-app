@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#06070a" />
-  <title>Amaterasu AI · Solar Sovereign Intelligence</title>
+  <meta name="theme-color" content="#080D14" />
+  <title>AMATERASU X · AI Powered Forex & CFD Signals</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="pages.css" />
 </head>
@@ -23,43 +23,51 @@
     <header class="topbar">
       <div class="brand">
         <div class="brand-icon-wrap" id="brandCrest">
-          <!-- Amaterasu Solar Crest SVG -->
-          <svg viewBox="0 0 48 48" width="38" height="38" aria-hidden="true">
+          <!-- Amaterasu X Mangekyo Sharingan Vector Crest -->
+          <svg viewBox="0 0 48 48" width="40" height="40" aria-hidden="true">
             <defs>
-              <radialGradient id="solarCrestGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#ff7a00"/>
-                <stop offset="60%" stop-color="#ff3b30"/>
-                <stop offset="100%" stop-color="#ff9100" stop-opacity="0"/>
+              <radialGradient id="amaterasuCrestGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#FF2638" stop-opacity="0.9"/>
+                <stop offset="65%" stop-color="#EF2D3D" stop-opacity="0.5"/>
+                <stop offset="100%" stop-color="#080D14" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="sharinganRed" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#FF4D5A"/>
+                <stop offset="55%" stop-color="#EF2D3D"/>
+                <stop offset="95%" stop-color="#9C0E1A"/>
               </radialGradient>
             </defs>
-            <!-- 8 Radiant Solar Rays -->
-            <g stroke="#ff9100" stroke-width="1.8" stroke-linecap="round">
-              <line x1="24" y1="3" x2="24" y2="8" />
-              <line x1="24" y1="40" x2="24" y2="45" />
-              <line x1="3" y1="24" x2="8" y2="24" />
-              <line x1="40" y1="24" x2="45" y2="24" />
-              <line x1="9.15" y1="9.15" x2="12.69" y2="12.69" />
-              <line x1="35.31" y1="35.31" x2="38.85" y2="38.85" />
-              <line x1="9.15" y1="38.85" x2="12.69" y2="35.31" />
-              <line x1="35.31" y1="12.69" x2="38.85" y2="9.15" />
+            <!-- Outer Glow Halo -->
+            <circle cx="24" cy="24" r="23" fill="url(#amaterasuCrestGlow)" />
+            <!-- Outer Eye Ring -->
+            <circle cx="24" cy="24" r="19" fill="url(#sharinganRed)" stroke="#FF2638" stroke-width="1.2" />
+            <circle cx="24" cy="24" r="19" fill="none" stroke="#000000" stroke-width="2.5" opacity="0.6"/>
+            <!-- Inner Ring -->
+            <circle cx="24" cy="24" r="14.5" fill="none" stroke="#2b0005" stroke-width="0.8" opacity="0.7"/>
+            <!-- Itachi Mangekyo 3-Blade Curved Pinwheel -->
+            <g fill="#05070B" stroke="#05070B" stroke-width="0.5">
+              <!-- Central Pupil -->
+              <circle cx="24" cy="24" r="4.2" fill="#05070B"/>
+              <!-- Blade 1 (Top) -->
+              <path d="M24 24 Q21 13 24 6 Q27 12 25.5 21 Z" />
+              <!-- Blade 2 (Bottom-Right ~120 deg) -->
+              <path d="M24 24 Q34 29 39.5 35 Q30 36 25 26.5 Z" />
+              <!-- Blade 3 (Bottom-Left ~240 deg) -->
+              <path d="M24 24 Q14 29 8.5 35 Q18 36 23 26.5 Z" />
             </g>
-            <!-- Outer Solar Mirror Ring -->
-            <circle cx="24" cy="24" r="14.5" fill="none" stroke="#ffc107" stroke-width="1.6" stroke-dasharray="3 2" />
-            <!-- Inner Solar Flame Disc -->
-            <circle cx="24" cy="24" r="10" fill="url(#solarCrestGlow)" stroke="#ff6d00" stroke-width="1.2" />
-            <!-- Core Tomoe Flare -->
-            <path d="M24 18 C26.5 18 28 20.5 28 23 C28 26.5 24 29 20 28 C23 27 25 25 24 22 C23.5 20 22 19.5 24 18 Z" fill="#ffffff" />
-            <circle cx="24" cy="24" r="2.2" fill="#ffd000" />
+            <!-- Core Pupil Glint -->
+            <circle cx="24" cy="24" r="1.8" fill="#FF2638"/>
+            <circle cx="23" cy="23" r="0.6" fill="#FFFFFF"/>
           </svg>
         </div>
         <div>
-          <div class="brand-name" id="brandName">AMATERASU</div>
-          <div class="brand-tag" id="brandTag">SOLAR AI</div>
+          <div class="brand-name" id="brandName">AMATERASU<span class="brand-x">X</span></div>
+          <div class="brand-tag" id="brandTag">AI POWERED SIGNALS</div>
         </div>
       </div>
 
       <div class="ticker">
-        <div style="font-size:10px; font-weight:800; color:#f5c451; text-align:right; letter-spacing:0.5px;" id="tickerSymbol">XAUUSD</div>
+        <div style="font-size:10px; font-weight:800; color:#EF2D3D; text-align:right; letter-spacing:0.5px;" id="tickerSymbol">XAUUSD</div>
         <div id="price" style="letter-spacing: -0.5px;">3,995.81</div>
         <div id="change" class="change down">-0.71%</div>
       </div>
@@ -68,7 +76,7 @@
     <!-- User Operator Bar -->
     <div class="userbar">
       <div class="user-pill">
-        <span></span> OPERATOR: <b id="user">kj35</b>
+        <span></span> OPERATOR: <b id="user">Tengku Khairi</b>
       </div>
       <a href="#" id="logout">Disconnect</a>
     </div>
@@ -82,23 +90,26 @@
         <defs>
           <radialGradient id="amaterasuOrbGlow" cx="45%" cy="40%" r="55%">
             <stop offset="0%" stop-color="#ffffff"/>
-            <stop offset="35%" stop-color="#ff9100"/>
-            <stop offset="75%" stop-color="#ff3b30"/>
-            <stop offset="100%" stop-color="#4a0e0e"/>
+            <stop offset="25%" stop-color="#FF4D5A"/>
+            <stop offset="65%" stop-color="#EF2D3D"/>
+            <stop offset="100%" stop-color="#3B050B"/>
           </radialGradient>
           <filter id="solarBloom" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
-        <!-- Solar Corona Outer Ring -->
-        <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255, 145, 0, 0.4)" stroke-width="1.5" stroke-dasharray="8 6" />
-        <circle cx="32" cy="32" r="21" fill="none" stroke="rgba(255, 193, 7, 0.6)" stroke-width="1.2" />
-        <!-- Sacred Mirror Geometric Hexagon -->
-        <polygon points="32,13 47,22 47,40 32,49 17,40 17,22" fill="none" stroke="#ff6d00" stroke-width="1" stroke-opacity="0.7" />
-        <!-- Glowing Core Orb -->
-        <circle cx="32" cy="32" r="14" fill="url(#amaterasuOrbGlow)" filter="url(#solarBloom)" />
-        <circle cx="28" cy="28" r="3" fill="#ffffff" opacity="0.85" />
+        <!-- Outer Aura -->
+        <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(239, 45, 61, 0.45)" stroke-width="1.5" stroke-dasharray="6 4" />
+        <circle cx="32" cy="32" r="23" fill="none" stroke="rgba(255, 38, 56, 0.6)" stroke-width="1.2" />
+        <!-- Core Sharingan Orb -->
+        <circle cx="32" cy="32" r="17" fill="url(#amaterasuOrbGlow)" filter="url(#solarBloom)" />
+        <!-- Pinwheel Silhouette -->
+        <circle cx="32" cy="32" r="4" fill="#080D14" />
+        <path d="M32 32 Q29 20 32 16 Q35 22 33.5 29 Z" fill="#080D14" />
+        <path d="M32 32 Q42 37 45 42 Q37 42 33 34 Z" fill="#080D14" />
+        <path d="M32 32 Q22 37 19 42 Q27 42 31 34 Z" fill="#080D14" />
+        <circle cx="30" cy="30" r="2.5" fill="#ffffff" opacity="0.8" />
       </svg>
     </button>
 
