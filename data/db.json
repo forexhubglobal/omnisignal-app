@@ -1,222 +1,51 @@
 {
   "stats": {
-    "totalSignals": 22,
-    "winRate": 75,
-    "tp1Hit": 19,
-    "tp2Hit": 17,
-    "slHit": 3,
-    "totalProfitToday": 1075,
+    "totalSignals": 0,
+    "winRate": 0,
+    "tp1Hit": 0,
+    "tp2Hit": 0,
+    "slHit": 0,
+    "totalProfitToday": 0,
     "last7Days": [
       {
         "day": "Mon",
-        "pips": 1605
+        "pips": 0
       },
       {
         "day": "Tue",
-        "pips": 1482
+        "pips": 0
       },
       {
         "day": "Wed",
-        "pips": 1669
+        "pips": 0
       },
       {
         "day": "Thu",
-        "pips": 1559
+        "pips": 0
       },
       {
         "day": "Fri",
-        "pips": 1420
+        "pips": 0
       },
       {
         "day": "Today",
-        "pips": 985
+        "pips": 0
       }
     ]
   },
   "activeSignal": {
-    "status": "ACTIVE",
+    "status": "WAITING",
     "symbol": "XAUUSD",
     "type": "BUY",
     "timeframe": "M15",
-    "entry": 3995.8,
-    "tp1": 4005,
-    "tp2": 4020,
-    "sl": 3985,
-    "firedAt": "21:02",
-    "notes": "Test Signal"
+    "entry": 0,
+    "tp1": 0,
+    "tp2": 0,
+    "sl": 0,
+    "firedAt": null,
+    "notes": "Amaterasu AI (WHA 3rd Eye + Katana SMC Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi..."
   },
-  "signals": [
-    {
-      "id": "sig-1792932277156",
-      "time": "20:44",
-      "date": "Oct 25",
-      "symbol": "XAUUSD",
-      "type": "BUY",
-      "entry": 4024.45,
-      "status": "SL",
-      "pips": -50,
-      "tags": [],
-      "peak": 55
-    },
-    {
-      "id": "sig-1792884826530",
-      "time": "07:33",
-      "date": "Oct 25",
-      "symbol": "XAUUSD",
-      "type": "BUY",
-      "entry": 4019.35,
-      "status": "SL",
-      "pips": -50,
-      "tags": [],
-      "peak": 56
-    },
-    {
-      "id": "sig-1792884746306",
-      "time": "07:32",
-      "date": "Oct 25",
-      "symbol": "XAUUSD",
-      "type": "SELL",
-      "entry": 4020.63,
-      "status": "TP2",
-      "pips": 95,
-      "tags": [
-        "TP1",
-        "TP2"
-      ],
-      "peak": 101
-    },
-    {
-      "id": "sig-1792884666081",
-      "time": "07:31",
-      "date": "Oct 25",
-      "symbol": "XAUUSD",
-      "type": "BUY",
-      "entry": 4024.45,
-      "status": "TP2",
-      "pips": 95,
-      "tags": [
-        "TP1",
-        "TP2"
-      ],
-      "peak": 101
-    },
-    {
-      "id": "sig-1",
-      "time": "06:45",
-      "date": "Oct 25",
-      "symbol": "GBPJPY",
-      "type": "BUY",
-      "entry": 209.65,
-      "status": "TP2",
-      "pips": 100,
-      "tags": [
-        "TP1",
-        "TP2"
-      ],
-      "peak": 106
-    },
-    {
-      "id": "sig-2",
-      "time": "05:20",
-      "date": "Oct 25",
-      "symbol": "EURUSD",
-      "type": "SELL",
-      "entry": 1.0855,
-      "status": "TP2",
-      "pips": 75,
-      "tags": [
-        "TP1",
-        "TP2"
-      ],
-      "peak": 82
-    },
-    {
-      "id": "sig-3",
-      "time": "03:10",
-      "date": "Oct 25",
-      "symbol": "US30",
-      "type": "BUY",
-      "entry": 42810,
-      "status": "TP2",
-      "pips": 140,
-      "tags": [
-        "TP1",
-        "TP2"
-      ],
-      "peak": 155
-    },
-    {
-      "id": "sig-4",
-      "time": "01:30",
-      "date": "Oct 25",
-      "symbol": "WTI",
-      "type": "BUY",
-      "entry": 70.8,
-      "status": "TP2",
-      "pips": 110,
-      "tags": [
-        "TP1",
-        "TP2"
-      ],
-      "peak": 118
-    },
-    {
-      "id": "sig-5",
-      "time": "22:45",
-      "date": "Oct 24",
-      "symbol": "XAUUSD",
-      "type": "SELL",
-      "entry": 4044.2,
-      "status": "TP2",
-      "pips": 95,
-      "tags": [
-        "TP1",
-        "TP2"
-      ],
-      "peak": 102
-    },
-    {
-      "id": "sig-6",
-      "time": "20:15",
-      "date": "Oct 24",
-      "symbol": "BTCUSD",
-      "type": "BUY",
-      "entry": 81200,
-      "status": "TP2",
-      "pips": 600,
-      "tags": [
-        "TP1",
-        "TP2"
-      ],
-      "peak": 650
-    },
-    {
-      "id": "sig-7",
-      "time": "18:00",
-      "date": "Oct 24",
-      "symbol": "GBPUSD",
-      "type": "BUY",
-      "entry": 1.2965,
-      "status": "TP1",
-      "pips": 35,
-      "tags": [
-        "TP1"
-      ],
-      "peak": 42
-    },
-    {
-      "id": "sig-8",
-      "time": "15:30",
-      "date": "Oct 24",
-      "symbol": "USDJPY",
-      "type": "SELL",
-      "entry": 156.4,
-      "status": "SL",
-      "pips": -50,
-      "tags": [],
-      "peak": 12
-    }
-  ],
+  "signals": [],
   "analysis": {
     "symbol": "XAUUSD",
     "date": "17 October 2026, 18:00",
@@ -595,16 +424,5 @@
       "month": "2026-10"
     }
   ],
-  "lastResolvedSignal": {
-    "id": "sig-1792932277156",
-    "time": "20:44",
-    "date": "Oct 25",
-    "symbol": "XAUUSD",
-    "type": "BUY",
-    "entry": 4024.45,
-    "status": "SL",
-    "pips": -50,
-    "tags": [],
-    "peak": 55
-  }
+  "lastResolvedSignal": null
 }

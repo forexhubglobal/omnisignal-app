@@ -134,6 +134,15 @@ function initSSE() {
       }
       if (btn) btn.textContent = d.enabled ? '⏸ Pause AI Engine' : '▶ Resume AI Engine';
     });
+    es.addEventListener('stats_reset', e => {
+      const d = JSON.parse(e.data);
+      state.stats = d.stats;
+      state.signals = d.signals || [];
+      state.activeSignal = d.activeSignal;
+      renderDashboard();
+      renderSignals();
+      toast('Statistik & Sejarah Signal telah dimulakan semula dari 0!');
+    });
   } catch (err) {
     console.warn('SSE failed in CRM', err);
   }
@@ -293,6 +302,27 @@ if (btnToggle) {
       const d = await res.json();
       toast(d.enabled ? 'Amaterasu AI Autonomous Engine Resumed' : 'Amaterasu AI Engine Paused');
     } catch(err) {}
+  };
+}
+
+const btnReset = $('#btnResetStats');
+if (btnReset) {
+  btnReset.onclick = async () => {
+    if (!confirm('Adakah anda pasti ingin mereset statistik winning rate dan sejarah signal kembali ke 0?')) return;
+    try {
+      const res = await fetch('/api/stats/reset', { method: 'POST' });
+      const d = await res.json();
+      if (d.success) {
+        state.stats = d.stats;
+        state.signals = d.signals;
+        state.activeSignal = d.activeSignal;
+        renderDashboard();
+        renderSignals();
+        toast('Semua statistik dan rekod signal telah dimulakan semula dari 0!');
+      }
+    } catch(err) {
+      toast('Gagal mereset statistik');
+    }
   };
 }
 

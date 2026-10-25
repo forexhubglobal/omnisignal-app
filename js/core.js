@@ -232,6 +232,15 @@ const AppState = {
         toast(`🎯 Signal ${d.item.status}: ${d.item.pips > 0 ? '+' : ''}${d.item.pips} pip!`);
         if (typeof route === 'function') route();
       });
+      s.addEventListener('stats_reset', e => {
+        const d = JSON.parse(e.data);
+        this.stats = d.stats;
+        this.signals = d.signals || [];
+        this.activeSignal = d.activeSignal;
+        this.lastResolvedSignal = null;
+        toast('🔄 Statistik dan rekod signal telah dimulakan semula');
+        if (typeof route === 'function') route();
+      });
       s.addEventListener('analysis_updated', e => {
         this.analysis = JSON.parse(e.data);
         toast('📝 Amaterasu Solar Intelligence Updated');

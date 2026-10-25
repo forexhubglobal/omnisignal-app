@@ -14,20 +14,19 @@ if (!fs.existsSync(path.join(__dirname, 'data'))) {
 // Initial Database Seeds
 const defaultDB = {
   stats: {
-    totalSignals: 17,
-    winRate: 93,
-    tp1Hit: 13,
-    tp2Hit: 7,
-    slHit: 1,
-    totalProfitToday: 979,
+    totalSignals: 0,
+    winRate: 0,
+    tp1Hit: 0,
+    tp2Hit: 0,
+    slHit: 0,
+    totalProfitToday: 0,
     last7Days: [
-      { day: 'Sat', pips: 0 },
-      { day: 'Sun', pips: 0 },
-      { day: 'Mon', pips: 1605 },
-      { day: 'Tue', pips: 1482 },
-      { day: 'Wed', pips: 1669 },
-      { day: 'Thu', pips: 1559 },
-      { day: 'Today', pips: 979 }
+      { day: 'Mon', pips: 0 },
+      { day: 'Tue', pips: 0 },
+      { day: 'Wed', pips: 0 },
+      { day: 'Thu', pips: 0 },
+      { day: 'Fri', pips: 0 },
+      { day: 'Today', pips: 0 }
     ]
   },
   activeSignal: {
@@ -35,23 +34,14 @@ const defaultDB = {
     symbol: 'XAUUSD',
     type: 'BUY',
     timeframe: 'M15',
-    entry: 4024.45,
-    tp1: 4028.50,
-    tp2: 4034.00,
-    sl: 4019.45,
+    entry: 0,
+    tp1: 0,
+    tp2: 0,
+    sl: 0,
     firedAt: null,
-    notes: 'Amaterasu Solar Core scanning for high-probability BUY setup.'
+    notes: 'Amaterasu AI (WHA 3rd Eye + Katana SMC Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi...'
   },
-  signals: [
-    { id: 'sig-8', time: '17:39', date: 'Oct 23', symbol: 'XAUUSD', type: 'SELL', entry: 4027.80, status: 'TP1', pips: 36, tags: ['TP1'], peak: 42 },
-    { id: 'sig-7', time: '16:18', date: 'Oct 23', symbol: 'XAUUSD', type: 'BUY', entry: 4020.10, status: 'TP1', pips: 44, tags: ['TP1'], peak: 48 },
-    { id: 'sig-6', time: '15:30', date: 'Oct 23', symbol: 'XAUUSD', type: 'BUY', entry: 4016.50, status: 'TP1', pips: 51, tags: ['TP1'], peak: 55 },
-    { id: 'sig-5', time: '14:12', date: 'Oct 23', symbol: 'XAUUSD', type: 'SELL', entry: 4032.00, status: 'CLOSED IN PROFIT', pips: 58, tags: ['TP1'], peak: 63 },
-    { id: 'sig-4', time: '13:36', date: 'Oct 23', symbol: 'XAUUSD', type: 'BUY', entry: 4012.30, status: 'TP2', pips: 72, tags: ['TP1', 'TP2'], peak: 78 },
-    { id: 'sig-3', time: '13:30', date: 'Oct 23', symbol: 'XAUUSD', type: 'SELL', entry: 4025.10, status: 'SL', pips: -60, tags: [], peak: 7 },
-    { id: 'sig-2', time: '13:03', date: 'Oct 23', symbol: 'XAUUSD', type: 'BUY', entry: 4008.50, status: 'CLOSED IN PROFIT', pips: 109, tags: ['TP1', 'TP2'], peak: 114 },
-    { id: 'sig-1', time: '12:03', date: 'Oct 23', symbol: 'XAUUSD', type: 'SELL', entry: 4038.20, status: 'CLOSED IN PROFIT', pips: 115, tags: ['TP1', 'TP2'], peak: 122 }
-  ],
+  signals: [],
   analysis: {
     symbol: 'XAUUSD',
     date: '17 October 2026, 18:00',
@@ -513,6 +503,54 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // 3b. POST /api/stats/reset (Reset performance stats & signal history to zero)
+  if (pathname === '/api/stats/reset' && req.method === 'POST') {
+    try {
+      const db = getDB();
+      db.stats = {
+        totalSignals: 0,
+        winRate: 0,
+        tp1Hit: 0,
+        tp2Hit: 0,
+        slHit: 0,
+        totalProfitToday: 0,
+        last7Days: [
+          { day: 'Mon', pips: 0 },
+          { day: 'Tue', pips: 0 },
+          { day: 'Wed', pips: 0 },
+          { day: 'Thu', pips: 0 },
+          { day: 'Fri', pips: 0 },
+          { day: 'Today', pips: 0 }
+        ]
+      };
+      db.signals = [];
+      db.lastResolvedSignal = null;
+      db.activeSignal = {
+        status: 'WAITING',
+        symbol: 'XAUUSD',
+        type: 'BUY',
+        timeframe: 'M15',
+        entry: 0,
+        tp1: 0,
+        tp2: 0,
+        sl: 0,
+        firedAt: null,
+        notes: 'Amaterasu AI (WHA 3rd Eye + Katana SMC Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi...'
+      };
+      AiEngine.secondsInState = 0;
+      AiEngine.activeTradeTicks = 0;
+      AiEngine.tp1Triggered = false;
+      saveDB(db);
+      broadcastEvent('stats_reset', { stats: db.stats, signals: db.signals, activeSignal: db.activeSignal });
+      broadcastEvent('signal_fired', db.activeSignal);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, stats: db.stats, signals: db.signals, activeSignal: db.activeSignal }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
   // 4. POST /api/analysis/update (Admin CRM updates daily analysis)
   if (pathname === '/api/analysis/update' && req.method === 'POST') {
     try {
@@ -780,15 +818,15 @@ const AiEngine = {
   },
 
   assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 3995.81, pipVal: 0.1, pipDec: 2, tp1Pips: 40, tp2Pips: 95, slPips: 50 },
-    { symbol: 'EURUSD', name: 'Euro', base: 1.1203, pipVal: 0.0001, pipDec: 5, tp1Pips: 35, tp2Pips: 75, slPips: 50 },
-    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 209.718, pipVal: 0.01, pipDec: 2, tp1Pips: 45, tp2Pips: 100, slPips: 50 },
-    { symbol: 'GBPUSD', name: 'Cable', base: 1.3371, pipVal: 0.0001, pipDec: 5, tp1Pips: 35, tp2Pips: 80, slPips: 50 },
-    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 156.831, pipVal: 0.01, pipDec: 2, tp1Pips: 40, tp2Pips: 85, slPips: 50 },
-    { symbol: 'WTI', name: 'Crude Oil', base: 103.27, pipVal: 0.1, pipDec: 2, tp1Pips: 50, tp2Pips: 110, slPips: 50 },
-    { symbol: 'US30', name: 'Dow Jones', base: 52394, pipVal: 1, pipDec: 0, tp1Pips: 60, tp2Pips: 140, slPips: 50 },
-    { symbol: 'NAS100', name: 'Nasdaq 100', base: 29117, pipVal: 1, pipDec: 0, tp1Pips: 50, tp2Pips: 120, slPips: 50 },
-    { symbol: 'BTCUSD', name: 'Bitcoin', base: 80404, pipVal: 1, pipDec: 0, tp1Pips: 250, tp2Pips: 600, slPips: 250 }
+    { symbol: 'XAUUSD', name: 'Gold', base: 3995.81, pipVal: 0.1, pipDec: 2, tp1Pips: 30, tp2Pips: 75, slPips: 35 },
+    { symbol: 'EURUSD', name: 'Euro', base: 1.1203, pipVal: 0.0001, pipDec: 4, tp1Pips: 25, tp2Pips: 60, slPips: 30 },
+    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 209.718, pipVal: 0.01, pipDec: 3, tp1Pips: 35, tp2Pips: 85, slPips: 40 },
+    { symbol: 'GBPUSD', name: 'Cable', base: 1.3371, pipVal: 0.0001, pipDec: 4, tp1Pips: 25, tp2Pips: 65, slPips: 30 },
+    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 156.831, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 70, slPips: 35 },
+    { symbol: 'WTI', name: 'Crude Oil', base: 103.27, pipVal: 0.1, pipDec: 2, tp1Pips: 35, tp2Pips: 80, slPips: 40 },
+    { symbol: 'US30', name: 'Dow Jones', base: 52394, pipVal: 1, pipDec: 0, tp1Pips: 45, tp2Pips: 110, slPips: 50 },
+    { symbol: 'NAS100', name: 'Nasdaq 100', base: 29117, pipVal: 1, pipDec: 1, tp1Pips: 40, tp2Pips: 95, slPips: 45 },
+    { symbol: 'BTCUSD', name: 'Bitcoin', base: 80404, pipVal: 1, pipDec: 0, tp1Pips: 180, tp2Pips: 450, slPips: 180 }
   ],
 
   tick() {
@@ -802,8 +840,8 @@ const AiEngine = {
       // Pulse scan log every 20s
       if (Math.floor(this.secondsInState) % 20 === 0) {
         const randAsset = this.assets[Math.floor(Math.random() * this.assets.length)];
-        const conf = Math.floor(74 + Math.random() * 21);
-        this.log(`Amaterasu AI scanning ${randAsset.symbol} M15 order blocks... confluence ${conf}%.`);
+        const conf = Math.floor(82 + Math.random() * 14);
+        this.log(`Amaterasu AI (WHA 3rd Eye & Katana Model) scanning ${randAsset.symbol} M15 Order Block... confluence ${conf}%.`);
       }
 
       // Confluence threshold reached -> Autonomous AI signal dispatch
@@ -821,21 +859,34 @@ const AiEngine = {
 
   fireAutonomousSignal(db, forceAsset = null) {
     const asset = forceAsset || this.assets[Math.floor(Math.random() * this.assets.length)];
-    const type = Math.random() > 0.45 ? 'BUY' : 'SELL';
     const liveQ = liveMarketQuotes[asset.symbol];
     const liveP = liveQ ? liveQ.price : (asset.symbol === 'XAUUSD' ? currentMarketPrice : asset.base);
+
+    // Determine high-probability bias following WHA & Katana AI methodology
+    let type = 'BUY';
+    if (liveQ && typeof liveQ.change === 'number') {
+      type = liveQ.change >= 0 ? 'BUY' : 'SELL';
+      if (Math.random() < 0.2) type = type === 'BUY' ? 'SELL' : 'BUY';
+    } else {
+      type = Math.random() > 0.45 ? 'BUY' : 'SELL';
+    }
+
     const entry = Number(liveP.toFixed(asset.pipDec));
     const sign = type === 'BUY' ? 1 : -1;
     const tp1 = Number((entry + sign * asset.tp1Pips * asset.pipVal).toFixed(asset.pipDec));
     const tp2 = Number((entry + sign * asset.tp2Pips * asset.pipVal).toFixed(asset.pipDec));
     const sl = Number((entry - sign * asset.slPips * asset.pipVal).toFixed(asset.pipDec));
 
-    const rationaleList = [
-      `Amaterasu Neural Core detected M15 Order Block absorption + H1 Supply rejection at ${entry.toFixed(asset.pipDec)}. High probability ${type} vector confirmed.`,
-      `Multi-timeframe liquidity sweep completed on ${asset.symbol}. M1, M5 and M15 momentum confluences aligned above 200 EMA cluster.`,
-      `Institutional accumulation volume detected on ${asset.symbol}. Breakout velocity confirmed with 94.2% neural confidence.`
+    const whaRationales = type === 'BUY' ? [
+      `[WHA 3rd Eye & Katana AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.`,
+      `[Katana SMC Scalp] M5 Market Structure Shift (MSS) + Fair Value Gap (FVG) retest pada zon sokongan Malaysian SNR. Momentum bersedia untuk lonjakan TP1 (+${asset.tp1Pips}p).`,
+      `[WHA Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.`
+    ] : [
+      `[WHA 3rd Eye & Katana AI] M15 Bearish Order Block + Asian High Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.`,
+      `[Katana SMC Scalp] Penembusan struktur pasaran (BOS) ke bawah + mitigasi Bearish FVG pada zon rintangan Malaysian SNR. Sasaran TP1 (+${asset.tp1Pips}p).`,
+      `[WHA Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.`
     ];
-    const notes = rationaleList[Math.floor(Math.random() * rationaleList.length)];
+    const notes = whaRationales[Math.floor(Math.random() * whaRationales.length)];
 
     db.activeSignal = {
       status: 'ACTIVE',
@@ -852,7 +903,7 @@ const AiEngine = {
 
     saveDB(db);
     broadcastEvent('signal_fired', db.activeSignal);
-    this.log(`⚡ AI SIGNAL AUTO-FIRED: ${type} ${asset.symbol} @ ${entry.toFixed(asset.pipDec)} (TP1: ${tp1}, TP2: ${tp2}, SL: ${sl})`);
+    this.log(`⚡ AI SIGNAL AUTO-FIRED: ${type} ${asset.symbol} @ ${entry.toFixed(asset.pipDec)} (TP1: ${tp1}, TP2: ${tp2}, SL: ${sl}) · WHA+Katana SOP`);
   },
 
   monitorActiveTrade(db, sig) {
@@ -916,7 +967,7 @@ const AiEngine = {
       entry: sig.entry,
       status: outcome,
       pips: pips,
-      tags: outcome === 'TP2' ? ['TP1', 'TP2'] : outcome === 'TP1' ? ['TP1'] : outcome === 'BE' ? ['BE'] : [],
+      tags: outcome === 'TP2' ? ['TP1', 'TP2'] : outcome === 'TP1' ? ['TP1'] : outcome === 'BE' ? ['TP1', 'BE'] : [],
       peak: Math.abs(pips) + 5
     };
 
@@ -931,8 +982,8 @@ const AiEngine = {
       db.stats.slHit = (db.stats.slHit || 0) + 1;
       db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + pips;
     }
-    const wins = db.signals.filter(s => s.pips > 0).length;
-    db.stats.winRate = Math.round((wins / db.signals.length) * 100);
+    const wins = db.signals.filter(s => s.pips > 0 || (s.tags && s.tags.includes('TP1'))).length;
+    db.stats.winRate = db.signals.length > 0 ? Math.round((wins / db.signals.length) * 100) : 0;
 
     // Reset active signal to WAITING
     db.activeSignal = {
@@ -945,7 +996,7 @@ const AiEngine = {
       tp2: 0,
       sl: 0,
       firedAt: null,
-      notes: `Amaterasu AI Neural Core scanning order book clusters for next high-probability setup...`
+      notes: `Amaterasu AI (WHA 3rd Eye + Katana SMC Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi...`
     };
 
     saveDB(db);

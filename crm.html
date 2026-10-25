@@ -174,12 +174,15 @@
             </div>
 
             <!-- Action Controls -->
-            <div style="display:flex; gap:10px; margin-bottom:16px;">
-              <button type="button" class="btn btn-primary" id="btnForceAiScan" style="flex:1;">
+            <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-primary" id="btnForceAiScan" style="flex:1; min-width:180px;">
                 ⚡ Trigger Immediate AI Scan
               </button>
-              <button type="button" class="btn btn-ghost" id="btnToggleAi" style="flex:1;">
+              <button type="button" class="btn btn-ghost" id="btnToggleAi" style="flex:1; min-width:140px;">
                 ⏸ Pause AI Engine
+              </button>
+              <button type="button" class="btn btn-danger" id="btnResetStats" style="min-width:140px; background:rgba(239,83,80,0.15); border:1px solid #ef5350; color:#ef5350;">
+                🔄 Reset Stats (0)
               </button>
             </div>
 

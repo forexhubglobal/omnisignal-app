@@ -869,30 +869,21 @@ function SignalPage(main) {
 // ---------- 2. Stat ----------
 function StatPage(main) {
   const st = (AppState && AppState.stats) || {
-    totalSignals: 17,
-    winRate: 93,
-    tp1Hit: 13,
-    tp2Hit: 7,
-    slHit: 1,
-    totalProfitToday: 979,
+    totalSignals: 0,
+    winRate: 0,
+    tp1Hit: 0,
+    tp2Hit: 0,
+    slHit: 0,
+    totalProfitToday: 0,
     last7Days: [
-      { day: 'Sat', pips: 0 }, { day: 'Sun', pips: 0 }, { day: 'Mon', pips: 1605 },
-      { day: 'Tue', pips: 1482 }, { day: 'Wed', pips: 1669 }, { day: 'Thu', pips: 1559 }, { day: 'Today', pips: 979 }
+      { day: 'Mon', pips: 0 }, { day: 'Tue', pips: 0 }, { day: 'Wed', pips: 0 },
+      { day: 'Thu', pips: 0 }, { day: 'Fri', pips: 0 }, { day: 'Today', pips: 0 }
     ]
   };
 
-  const signals = [
-    { time: '17:39', date: 'Oct 23', type: 'SELL', symbol: 'XAUUSD', status: 'TP1', pips: 36, badge: 'TP1' },
-    { time: '16:18', date: 'Oct 23', type: 'BUY', symbol: 'XAUUSD', status: 'TP1', pips: 44, badge: 'TP1' },
-    { time: '15:30', date: 'Oct 23', type: 'BUY', symbol: 'XAUUSD', status: 'TP1', pips: 51, badge: 'TP1' },
-    { time: '14:12', date: 'Oct 23', type: 'SELL', symbol: 'XAUUSD', status: 'CLOSED IN PROFIT', pips: 58, badge: 'TP1' },
-    { time: '13:36', date: 'Oct 23', type: 'BUY', symbol: 'XAUUSD', status: 'TP2', pips: 72, badge: 'TP1 TP2' },
-    { time: '13:30', date: 'Oct 23', type: 'SELL', symbol: 'XAUUSD', status: 'SL · -60 pip', sub: 'peak +7', isSL: true },
-    { time: '13:03', date: 'Oct 23', type: 'BUY', symbol: 'XAUUSD', status: 'CLOSED IN PROFIT', pips: 109, badge: 'TP1 TP2' },
-    { time: '12:03', date: 'Oct 23', type: 'SELL', symbol: 'XAUUSD', status: 'CLOSED IN PROFIT', pips: 112, badge: 'TP1 TP2' }
-  ];
-
-  const maxPips = Math.max(...st.last7Days.map(d => d.pips), 100);
+  const signals = (AppState && Array.isArray(AppState.signals)) ? AppState.signals : [];
+  const maxPips = Math.max(...(st.last7Days || []).map(d => d.pips || 0), 100);
+  const total7Days = (st.last7Days || []).reduce((acc, d) => acc + (d.pips || 0), 0) || st.totalProfitToday || 0;
 
   main.innerHTML = `<section class="page">
     ${pageHead('Stat', 'Overall signal performance')}
@@ -900,38 +891,38 @@ function StatPage(main) {
     <!-- 1. Total Profit Today Big Card -->
     <div class="stat-profit-today-card">
       <div class="lbl">TOTAL PROFIT TODAY</div>
-      <div class="val">+${st.totalProfitToday} pip</div>
+      <div class="val">${st.totalProfitToday >= 0 ? '+' : ''}${st.totalProfitToday || 0} pip</div>
     </div>
 
     <!-- 2. Four Metrics Grid (2x2) -->
     <div class="stat-grid-4">
       <div class="stat-box-small">
         <div class="lbl">WIN RATE</div>
-        <div class="val green">${st.winRate}%</div>
+        <div class="val green">${st.totalSignals === 0 ? '0%' : (st.winRate || 0) + '%'}</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">SIGNALS CLOSED</div>
-        <div class="val">${st.totalSignals}</div>
+        <div class="val">${st.totalSignals || 0}</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">TP1 / TP2 HIT</div>
-        <div class="val green">${st.tp1Hit} / ${st.tp2Hit}</div>
+        <div class="val green">${st.tp1Hit || 0} / ${st.tp2Hit || 0}</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">SL HIT</div>
-        <div class="val red">${st.slHit}</div>
+        <div class="val red">${st.slHit || 0}</div>
       </div>
     </div>
-    <div class="stat-signals-closed-sub">17 signals closed on this day</div>
+    <div class="stat-signals-closed-sub">${st.totalSignals || 0} signals closed on this day</div>
 
     <!-- 3. Last 7 Days Bar Chart Card -->
     <div class="stat-7days-card">
       <div class="stat-7days-header">
         <b>Last 7 days</b>
-        <span>+7294 pip</span>
+        <span>+${total7Days} pip</span>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 115px; gap: 8px;">
-        ${st.last7Days.map(d => {
+        ${(st.last7Days || []).map(d => {
           const h = d.pips ? Math.max(8, Math.round((d.pips / maxPips) * 85)) : 2;
           return `
             <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;">
@@ -956,34 +947,50 @@ function StatPage(main) {
       <button id="statNextDate">›</button>
     </div>
 
-    <!-- 5. Signal History List (White House Academy 100% Match) -->
+    <!-- 5. Signal History List (White House Academy & Katana AI 100% Match) -->
     <h4 class="sec" style="margin-top: 10px; margin-bottom: 12px;">Signal History</h4>
     <div class="sig-history-list">
-      ${signals.map(s => {
+      ${signals.length === 0 ? `
+        <div style="text-align:center; padding:36px 16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px;">
+          <div style="font-size:32px; margin-bottom:10px;">📊</div>
+          <b style="color:var(--solar-gold); font-size:14.5px; display:block; margin-bottom:6px;">Rekod Prestasi Dimulakan Semula</b>
+          <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin:0 auto; max-width:280px;">
+            Enjin Amaterasu AI kini bersedia mengira Winning Rate baharu dari permulaan (0). Semua signal yang selesai akan direkodkan secara automatik di sini.
+          </p>
+        </div>
+      ` : signals.map(s => {
         const isSell = s.type === 'SELL';
         const arrow = isSell ? '▼' : '▲';
         const arrowCol = isSell ? '#ef5350' : '#26a69a';
+        const isSL = s.status === 'SL';
+        const isBE = s.status === 'BE';
+        const pipsNum = Number(s.pips) || 0;
+        const badges = (s.tags && Array.isArray(s.tags) ? s.tags : (s.badge || '').split(' ')).filter(Boolean);
         return `
           <div class="sig-history-item">
             <div>
               <div style="font-size: 12.5px; color: #cbd5e1; margin-bottom: 4px; font-weight: 600;">
-                <span class="muted">${s.date}</span>
+                <span class="muted">${s.date || 'Today'}</span>
                 <span style="color: ${arrowCol}; margin: 0 4px;">${arrow}</span>
                 <b style="color: ${arrowCol};">${s.symbol}</b>
               </div>
               <div style="font-size: 11px; color: #8e9aa8; margin-bottom: 6px;">${s.time}</div>
               <div>
-                ${(s.badge || '').split(' ').filter(Boolean).map(b => `<span class="history-badge">${b}</span>`).join('')}
+                ${badges.map(b => `<span class="history-badge ${b.toLowerCase()}">${b}</span>`).join('')}
               </div>
             </div>
             <div style="text-align: right;">
-              ${s.isSL ? `
+              ${isSL ? `
                 <div style="color: #ef5350; font-family:'Space Grotesk',sans-serif; font-size: 13px; font-weight: 700;">
-                  SL · -60 pip <span style="font-size: 10.5px; color: #26a69a; border: 1px solid rgba(38,166,154,0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +7</span>
+                  SL · ${pipsNum} pip ${s.peak ? `<span style="font-size: 10.5px; color: #26a69a; border: 1px solid rgba(38,166,154,0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak}</span>` : ''}
+                </div>
+              ` : isBE ? `
+                <div style="font-family:'Space Grotesk',sans-serif; font-size: 13px; font-weight: 700; color: var(--solar-gold);">
+                  BE LOCKED · 0 pip <span style="font-size: 10.5px; color: #00e676; border: 1px solid rgba(0,230,118,0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">TP1 BANKED</span>
                 </div>
               ` : `
                 <div style="font-family:'Space Grotesk',sans-serif; font-size: 13px; font-weight: 700; color: #00e676;">
-                  ${s.status === 'CLOSED IN PROFIT' ? 'CLOSED IN PROFIT · ' : ''}${s.status.startsWith('TP') ? `${s.status} · ` : ''}+${s.pips} pip
+                  ${s.status === 'CLOSED IN PROFIT' ? 'CLOSED IN PROFIT · ' : ''}${s.status && s.status.startsWith('TP') ? `${s.status} · ` : ''}+${pipsNum} pip
                 </div>
               `}
             </div>
