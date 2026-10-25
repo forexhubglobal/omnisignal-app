@@ -1002,6 +1002,22 @@ function StatPage(main) {
       $('#statDateLabel', main).textContent = btn.dataset.f === 'daily' ? 'Today' : btn.dataset.f === 'weekly' ? 'This Week' : 'October 2026';
     };
   });
+
+  const pDate = $('#statPrevDate', main);
+  const nDate = $('#statNextDate', main);
+  const lDate = $('#statDateLabel', main);
+  const dateOptions = ['23 Oct 2026', '24 Oct 2026', 'Today (25 Oct)'];
+  let curDateIdx = 2;
+  if (pDate && nDate && lDate) {
+    pDate.onclick = () => {
+      curDateIdx = Math.max(0, curDateIdx - 1);
+      lDate.textContent = dateOptions[curDateIdx];
+    };
+    nDate.onclick = () => {
+      curDateIdx = Math.min(dateOptions.length - 1, curDateIdx + 1);
+      lDate.textContent = dateOptions[curDateIdx];
+    };
+  }
 }
 
 // ---------- 3. Analysis (White House Academy 100% Match) ----------
@@ -1196,7 +1212,11 @@ function ScreenerPage(main) {
       const sym = card.dataset.sym;
       if (sym) {
         store.set('selected_signal_sym', sym);
-        navigate('signal');
+        if (typeof Market !== 'undefined') {
+          Market.activeSymbol = sym;
+          Market.updateUI();
+        }
+        location.hash = '#signal';
       }
     };
   });
@@ -1287,7 +1307,7 @@ function NewsPage(main) {
         `).join('')}
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 4px;">
-          <a href="#" style="color: #38bdf8; font-size: 12.5px; font-weight: 600;">More events ›</a>
+          <a href="#news" onclick="event.preventDefault(); toast('Kalendar ekonomi dikemas kini secara langsung mengikut data White House Academy ✓');" style="color: #38bdf8; font-size: 12.5px; font-weight: 600;">More events ›</a>
           <svg width="20" height="14" viewBox="0 0 36 24" fill="rgba(255,255,255,0.4)">
             <path d="M0 19.5V4.5C0 3.67 0.67 3 1.5 3H6.5C7.33 3 8 3.67 8 4.5V19.5C8 20.33 7.33 21 6.5 21H1.5C0.67 21 0 20.33 0 19.5ZM13 14.5V4.5C13 3.67 13.67 3 14.5 3H19.5C20.33 3 21 3.67 21 4.5V14.5C21 15.33 20.33 16 19.5 16H14.5C13.67 16 13 15.33 13 14.5ZM26 21.5V4.5C26 3.67 26.67 3 27.5 3H32.5C33.33 3 34 3.67 34 4.5V21.5C34 22.33 33.33 23 32.5 23H27.5C26.67 23 26 22.33 26 21.5Z"/>
           </svg>

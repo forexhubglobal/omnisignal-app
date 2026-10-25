@@ -684,18 +684,40 @@ const server = http.createServer(async (req, res) => {
   // 12. POST /api/pnl/save (Save user daily PnL)
   if (pathname === '/api/pnl/save' && req.method === 'POST') {
     try {
-      const payload = await parseJsonBody(req); // { user, date, amount }
+      const payload = await parseJsonBody(req); // { user, date, amount/profit }
       const db = getDB();
       const u = payload.user || 'kj35';
       if (!db.pnlRecords[u]) db.pnlRecords[u] = {};
-      if (payload.amount === null) {
+      const rawAmt = payload.amount !== undefined ? payload.amount : payload.profit;
+      if (rawAmt === null || rawAmt === undefined) {
         delete db.pnlRecords[u][payload.date];
       } else {
-        db.pnlRecords[u][payload.date] = Number(payload.amount);
+        db.pnlRecords[u][payload.date] = Number(rawAmt);
       }
       saveDB(db);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: true, pnl: db.pnlRecords[u] }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // 13. POST /api/users/reset-devices (Reset connected devices for operator)
+  if (pathname === '/api/users/reset-devices' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      const u = db.users.find(usr => usr.id === payload.userId || usr.username === payload.username);
+      if (u) {
+        u.devices = 1;
+        saveDB(db);
+        broadcastEvent('user_updated', u);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, user: u }));
+      }
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: 'User not found' }));
     } catch (e) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: e.message }));
@@ -729,10 +751,10 @@ const server = http.createServer(async (req, res) => {
 let currentMarketPrice = 3995.81;
 
 // ===== AMATERASU AI AUTONOMOUS SIGNAL ENGINE =====
-// REAL LIVE MODE: Rapid auto-test loop disabled so signals stay persistent and controlled.
+// REAL LIVE MODE: Autonomous real-time market scanner and live trade tracker
 const AiEngine = {
-  enabled: false, // LIVE PRODUCTION MODE: false (signals are persistent and controlled)
-  scanIntervalSec: 1800, // 30 minutes if toggled by admin
+  enabled: true, // LIVE AUTONOMOUS PRODUCTION MODE: ACTIVE
+  scanIntervalSec: 600, // 10 minutes between setups when waiting
   secondsInState: 0,
   activeTradeTicks: 0,
   tp1Triggered: false,
@@ -777,10 +799,10 @@ const AiEngine = {
     if (!sig || sig.status === 'WAITING') {
       this.secondsInState += 2.5;
 
-      // Pulse scan log every 15s
-      if (Math.floor(this.secondsInState) % 15 === 0) {
+      // Pulse scan log every 20s
+      if (Math.floor(this.secondsInState) % 20 === 0) {
         const randAsset = this.assets[Math.floor(Math.random() * this.assets.length)];
-        const conf = Math.floor(70 + Math.random() * 24);
+        const conf = Math.floor(74 + Math.random() * 21);
         this.log(`Amaterasu AI scanning ${randAsset.symbol} M15 order blocks... confluence ${conf}%.`);
       }
 
@@ -791,7 +813,7 @@ const AiEngine = {
         this.activeTradeTicks = 0;
         this.tp1Triggered = false;
       }
-    } else if (sig.status === 'ACTIVE') {
+    } else if (sig.status === 'ACTIVE' || sig.status === 'TP1_HIT') {
       this.activeTradeTicks++;
       this.monitorActiveTrade(db, sig);
     }
@@ -800,7 +822,9 @@ const AiEngine = {
   fireAutonomousSignal(db, forceAsset = null) {
     const asset = forceAsset || this.assets[Math.floor(Math.random() * this.assets.length)];
     const type = Math.random() > 0.45 ? 'BUY' : 'SELL';
-    const entry = asset.symbol === 'XAUUSD' ? currentMarketPrice : (asset.base + (Math.random() - 0.5) * asset.pipVal * 10);
+    const liveQ = liveMarketQuotes[asset.symbol];
+    const liveP = liveQ ? liveQ.price : (asset.symbol === 'XAUUSD' ? currentMarketPrice : asset.base);
+    const entry = Number(liveP.toFixed(asset.pipDec));
     const sign = type === 'BUY' ? 1 : -1;
     const tp1 = Number((entry + sign * asset.tp1Pips * asset.pipVal).toFixed(asset.pipDec));
     const tp2 = Number((entry + sign * asset.tp2Pips * asset.pipVal).toFixed(asset.pipDec));
@@ -818,7 +842,7 @@ const AiEngine = {
       symbol: asset.symbol,
       type: type,
       timeframe: 'M15',
-      entry: Number(entry.toFixed(asset.pipDec)),
+      entry: entry,
       tp1: tp1,
       tp2: tp2,
       sl: sl,
@@ -833,71 +857,103 @@ const AiEngine = {
 
   monitorActiveTrade(db, sig) {
     const asset = this.assets.find(a => a.symbol === sig.symbol) || this.assets[0];
+    const liveQ = liveMarketQuotes[sig.symbol];
+    const curP = liveQ ? liveQ.price : null;
+    if (!curP) return;
 
-    // Stage 1: Hit TP1 after ~10 ticks (~25s)
-    if (!this.tp1Triggered && this.activeTradeTicks >= 10) {
+    const isBuy = sig.type === 'BUY';
+
+    // Stage 1: Hit TP1 (Trigger + Lock Breakeven)
+    const tp1Condition = isBuy ? (curP >= sig.tp1) : (curP <= sig.tp1);
+    if (!this.tp1Triggered && sig.status === 'ACTIVE' && tp1Condition) {
       this.tp1Triggered = true;
+      sig.status = 'TP1_HIT';
+      sig.beLocked = true;
+      sig.tp1HitAt = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      sig.tp1Pips = asset.tp1Pips;
+      db.stats.tp1Hit = (db.stats.tp1Hit || 0) + 1;
+      db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + asset.tp1Pips;
+      saveDB(db);
+
       this.log(`🎯 AI Engine: Target 1 Hit for ${sig.symbol} (+${asset.tp1Pips} pips)! Trailing stop locked to Breakeven.`);
       broadcastEvent('signal_update', {
         type: 'TP1_HIT',
         symbol: sig.symbol,
         pips: asset.tp1Pips,
-        message: `🎯 Take Profit 1 Achieved (+${asset.tp1Pips} pip)! Trailing stop locked.`
+        activeSignal: sig,
+        message: `🎯 Target 1 Disahkan (+${asset.tp1Pips} pip)! Alih SL ke Break-Even (BE)!`
       });
+      broadcastEvent('signal_fired', sig);
+      return;
     }
 
-    // Stage 2: Hit TP2 or Close after ~22 ticks (~55s)
-    if (this.activeTradeTicks >= 22) {
-      const isWin = Math.random() < 0.93; // 93% historical accuracy target
-      const outcome = isWin ? 'TP2' : 'SL';
-      const pips = isWin ? asset.tp2Pips : -asset.slPips;
+    // Stage 2: Hit TP2 (Full Target Reached)
+    const tp2Condition = isBuy ? (curP >= sig.tp2) : (curP <= sig.tp2);
+    if (tp2Condition) {
+      this.resolveTrade(db, sig, 'TP2', asset.tp2Pips, asset);
+      return;
+    }
 
-      const newHistoryItem = {
-        id: 'sig-' + Date.now(),
-        time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        symbol: sig.symbol,
-        type: sig.type,
-        entry: sig.entry,
-        status: outcome === 'TP2' ? 'TP2' : 'SL',
-        pips: pips,
-        tags: outcome === 'TP2' ? ['TP1', 'TP2'] : [],
-        peak: Math.abs(pips) + 6
-      };
-
-      db.signals.unshift(newHistoryItem);
-      db.stats.totalSignals += 1;
-      if (pips > 0) {
-        db.stats.totalProfitToday += pips;
-        db.stats.tp1Hit += 1;
-        db.stats.tp2Hit += 1;
+    // Stage 3: Hit SL
+    const slCondition = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
+    if (slCondition) {
+      if (sig.beLocked) {
+        this.resolveTrade(db, sig, 'BE', 0, asset);
       } else {
-        db.stats.slHit += 1;
-        db.stats.totalProfitToday += pips;
+        this.resolveTrade(db, sig, 'SL', -asset.slPips, asset);
       }
-      const wins = db.signals.filter(s => s.pips > 0).length;
-      db.stats.winRate = Math.round((wins / db.signals.length) * 100);
-
-      db.activeSignal = {
-        status: 'WAITING',
-        symbol: 'XAUUSD',
-        type: sig.type === 'BUY' ? 'SELL' : 'BUY',
-        timeframe: 'M15',
-        entry: sig.entry,
-        tp1: 0,
-        tp2: 0,
-        sl: 0,
-        firedAt: null,
-        notes: `Amaterasu AI Neural Core scanning order book clusters for next high-probability setup...`
-      };
-
-      saveDB(db);
-      broadcastEvent('signal_resolved', { item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal });
-      this.log(`🏁 AI Engine Trade Closed: ${sig.symbol} hit ${outcome} (${pips > 0 ? '+' : ''}${pips} pips)! Telemetry logged.`);
-      this.secondsInState = 0;
-      this.activeTradeTicks = 0;
-      this.tp1Triggered = false;
+      return;
     }
+  },
+
+  resolveTrade(db, sig, outcome, pips, asset) {
+    const newHistoryItem = {
+      id: 'sig-' + Date.now(),
+      time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      symbol: sig.symbol,
+      type: sig.type,
+      entry: sig.entry,
+      status: outcome,
+      pips: pips,
+      tags: outcome === 'TP2' ? ['TP1', 'TP2'] : outcome === 'TP1' ? ['TP1'] : outcome === 'BE' ? ['BE'] : [],
+      peak: Math.abs(pips) + 5
+    };
+
+    db.signals.unshift(newHistoryItem);
+    db.lastResolvedSignal = { ...newHistoryItem };
+
+    db.stats.totalSignals = (db.stats.totalSignals || 0) + 1;
+    if (pips > 0) {
+      db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + pips;
+      if (outcome === 'TP2') db.stats.tp2Hit = (db.stats.tp2Hit || 0) + 1;
+    } else if (pips < 0) {
+      db.stats.slHit = (db.stats.slHit || 0) + 1;
+      db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + pips;
+    }
+    const wins = db.signals.filter(s => s.pips > 0).length;
+    db.stats.winRate = Math.round((wins / db.signals.length) * 100);
+
+    // Reset active signal to WAITING
+    db.activeSignal = {
+      status: 'WAITING',
+      symbol: 'XAUUSD',
+      type: 'BUY',
+      timeframe: 'M15',
+      entry: 0,
+      tp1: 0,
+      tp2: 0,
+      sl: 0,
+      firedAt: null,
+      notes: `Amaterasu AI Neural Core scanning order book clusters for next high-probability setup...`
+    };
+
+    saveDB(db);
+    broadcastEvent('signal_resolved', { item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal });
+    this.log(`🏁 AI Engine Trade Closed: ${sig.symbol} hit ${outcome} (${pips > 0 ? '+' : ''}${pips} pips)! Telemetry logged.`);
+    this.secondsInState = 0;
+    this.activeTradeTicks = 0;
+    this.tp1Triggered = false;
   }
 };
 
@@ -919,6 +975,9 @@ setInterval(() => {
     price: currentMarketPrice,
     change: liveMarketQuotes.XAUUSD.change
   });
+
+  // Execute AI Engine autonomous tick
+  AiEngine.tick();
 
   // Re-sync with actual real-world TradingView feeds every 12 seconds
   if (tickCounter % 5 === 0) {

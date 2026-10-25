@@ -115,6 +115,32 @@ function modal(html) {
   bg.addEventListener('click', e => { if (e.target === bg || e.target.closest('[data-close]')) close(); });
   return { el: bg, close };
 }
+function playChime(type = 'bell') {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    const now = ctx.currentTime;
+    if (type === 'tp') {
+      osc.frequency.setValueAtTime(587.33, now); // D5
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+    } else {
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12); // E5
+      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.24); // G5
+    }
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.55);
+  } catch(e) {}
+}
+
 function toast(msg) {
   $$('.toast').forEach(t => t.remove());
   const t = document.createElement('div');

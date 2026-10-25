@@ -14,6 +14,7 @@ let state = {
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function toast(msg) {
   const el = $('#crmToast');
@@ -205,15 +206,15 @@ function renderDashboard() {
 
 // 2. Signals
 const DEFAULT_PRICES = {
-  XAUUSD: { entry: 4024.50, tp1: 4028.50, tp2: 4034.00, sl: 4019.50, step: '0.01' },
-  EURUSD: { entry: 1.08500, tp1: 1.08900, tp2: 1.09350, sl: 1.08100, step: '0.00001' },
-  GBPJPY: { entry: 209.65, tp1: 210.25, tp2: 210.95, sl: 209.15, step: '0.01' },
-  GBPUSD: { entry: 1.29800, tp1: 1.30300, tp2: 1.30850, sl: 1.29300, step: '0.00001' },
-  USDJPY: { entry: 156.10, tp1: 155.45, tp2: 154.80, sl: 156.70, step: '0.01' },
-  WTI: { entry: 71.50, tp1: 72.40, tp2: 73.20, sl: 70.60, step: '0.01' },
-  US30: { entry: 42850, tp1: 43050, tp2: 43280, sl: 42650, step: '1' },
-  NAS100: { entry: 20380, tp1: 20520, tp2: 20680, sl: 20240, step: '1' },
-  BTCUSD: { entry: 81700, tp1: 82500, tp2: 83400, sl: 80900, step: '1' }
+  XAUUSD: { entry: 3995.80, tp1: 4005.00, tp2: 4020.00, sl: 3985.00, step: '0.01' },
+  EURUSD: { entry: 1.12030, tp1: 1.12450, tp2: 1.12900, sl: 1.11600, step: '0.00001' },
+  GBPJPY: { entry: 209.72, tp1: 210.40, tp2: 211.10, sl: 209.10, step: '0.01' },
+  GBPUSD: { entry: 1.33710, tp1: 1.34200, tp2: 1.34750, sl: 1.33200, step: '0.00001' },
+  USDJPY: { entry: 156.83, tp1: 156.10, tp2: 155.30, sl: 157.40, step: '0.01' },
+  WTI: { entry: 103.27, tp1: 104.50, tp2: 105.80, sl: 102.10, step: '0.01' },
+  US30: { entry: 52394, tp1: 52600, tp2: 52850, sl: 52150, step: '1' },
+  NAS100: { entry: 29117, tp1: 29280, tp2: 29450, sl: 28950, step: '1' },
+  BTCUSD: { entry: 80404, tp1: 81500, tp2: 82800, sl: 79200, step: '1' }
 };
 
 const sigSymbolSelect = $('#sigSymbol');
@@ -229,6 +230,38 @@ if (sigSymbolSelect) {
       $('#sigTP2').step = p.step;
       $('#sigSL').value = p.sl;
       $('#sigSL').step = p.step;
+    }
+  };
+}
+
+const manualForm = $('#manualSignalForm');
+if (manualForm) {
+  manualForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      symbol: $('#sigSymbol').value,
+      type: $('#sigType').value,
+      entry: Number($('#sigEntry').value),
+      tp1: Number($('#sigTP1').value),
+      tp2: Number($('#sigTP2').value),
+      sl: Number($('#sigSL').value),
+      notes: ($('#sigNotes').value || '').trim() || 'Manual Operator Setup'
+    };
+    try {
+      const res = await fetch('/api/signal/fire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const d = await res.json();
+      if (d.success) {
+        state.activeSignal = d.signal;
+        renderDashboard();
+        renderSignals();
+        toast(`🚀 Signal ${payload.type} ${payload.symbol} broadcasted successfully!`);
+      }
+    } catch(err) {
+      toast('Failed to broadcast manual signal');
     }
   };
 }
@@ -566,14 +599,38 @@ function renderUsers() {
   const tbody = $('#usersTable tbody');
   tbody.innerHTML = (state.users || []).map(u => `
     <tr>
-      <td><b style="color:#fff;">${u.username}</b> (${u.displayName})</td>
-      <td><span class="dot-online"></span> ${u.status}</td>
+      <td><b style="color:#fff;">${esc(u.username)}</b> (${esc(u.displayName)})</td>
+      <td><span class="dot-online"></span> ${esc(u.status)}</td>
       <td>${u.devices} / ${u.maxDevices} active</td>
-      <td>${u.joined}</td>
+      <td>${esc(u.joined)}</td>
       <td style="color:var(--bull); font-weight:700;">+${u.pnlTotal} pips</td>
+      <td>
+        <button class="btn btn-ghost" onclick="resetUserDevices('${esc(u.username)}')" style="padding:4px 8px; font-size:11px;">
+          Reset Devices
+        </button>
+      </td>
     </tr>
   `).join('');
 }
+
+window.resetUserDevices = async function(username) {
+  try {
+    const res = await fetch('/api/users/reset-devices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username })
+    });
+    const d = await res.json();
+    if (d.success) {
+      toast(`Devices reset to 1 for ${username}`);
+      loadData();
+    } else {
+      toast(d.error || 'Failed to reset devices');
+    }
+  } catch (err) {
+    toast('Error connecting to server');
+  }
+};
 
 // Boot
 startClock();

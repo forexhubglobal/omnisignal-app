@@ -223,6 +223,65 @@
             </div>
           </div>
         </div>
+
+        <!-- Manual Signal Override Dispatcher -->
+        <div class="card" style="margin-top:20px;">
+          <div class="card-head">
+            <div>
+              <h3>📡 Manual Signal Broadcast Override</h3>
+              <small class="muted">Override autonomous scan and dispatch an immediate manual VIP trade setup to all connected clients</small>
+            </div>
+            <span class="badge">MANUAL DESK</span>
+          </div>
+          <form id="manualSignalForm">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-bottom:12px;">
+              <div class="form-group" style="margin:0;">
+                <label>Asset Symbol</label>
+                <select id="sigSymbol" required>
+                  <option value="XAUUSD">XAUUSD (Gold)</option>
+                  <option value="EURUSD">EURUSD</option>
+                  <option value="GBPJPY">GBPJPY</option>
+                  <option value="GBPUSD">GBPUSD</option>
+                  <option value="USDJPY">USDJPY</option>
+                  <option value="WTI">WTI (Crude Oil)</option>
+                  <option value="US30">US30 (Dow Jones)</option>
+                  <option value="NAS100">NAS100 (Nasdaq)</option>
+                  <option value="BTCUSD">BTCUSD (Bitcoin)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Direction</label>
+                <select id="sigType" required>
+                  <option value="BUY">BUY 🟢</option>
+                  <option value="SELL">SELL 🔴</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Entry Price</label>
+                <input type="number" id="sigEntry" step="0.01" value="3995.80" required />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Target 1 (TP1)</label>
+                <input type="number" id="sigTP1" step="0.01" value="4005.00" required />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Target 2 (TP2)</label>
+                <input type="number" id="sigTP2" step="0.01" value="4020.00" required />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Stop Loss (SL)</label>
+                <input type="number" id="sigSL" step="0.01" value="3985.00" required />
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Confluence / Technical Notes</label>
+              <input type="text" id="sigNotes" placeholder="e.g. M15 Bullish Order Block + Asian Session Liquidity Sweep" value="M15 Bullish Order Block + Asian Session Liquidity Sweep" />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; font-weight:700;">
+              🚀 Broadcast Signal to All Client Terminals
+            </button>
+          </form>
+        </div>
       </section>
 
       <!-- 3. MARKET ANALYSIS CMS TAB -->
@@ -413,6 +472,7 @@
                   <th>Connected Devices</th>
                   <th>Joined Date</th>
                   <th>P&L Total</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody></tbody>

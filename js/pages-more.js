@@ -363,6 +363,9 @@ function LotPage(main) {
   }
 
   $('#calc', main).onclick = calc;
+  $('#pair', main).onchange = calc;
+  $('#risk', main).onchange = calc;
+  $('#cap', main).oninput = calc;
   $('#cap', main).onkeydown = e => { if (e.key === 'Enter') calc(); };
   calc();
 }
@@ -446,7 +449,7 @@ function PnLPage(main) {
         await fetch('/api/pnl/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user: BRAND.user, date: k, profit: v })
+          body: JSON.stringify({ user: BRAND.user, date: k, amount: v, profit: v })
         });
       } catch (e) {}
     };
@@ -800,8 +803,14 @@ function GamesPage(main) {
     over: score => { saveScore(score); showOv('Game Over', `Score: ${score} · High Score: ${best()}`); }
   });
 
-  showOv('Amaterasu Blocks', 'Clear rows of candles to top the monthly leaderboard');
-  ov.onclick = () => { game.start(); ov.style.display = 'none'; };
+  ov.onclick = () => {
+    if (game.state && game.state() === 'paused') {
+      game.pause();
+    } else {
+      game.start();
+    }
+    ov.style.display = 'none';
+  };
   $('#pauseBtn', main).onclick = () => game.pause();
   $$('.game-controls button', main).forEach(b => {
     b.onpointerdown = e => { e.preventDefault(); game.act(b.dataset.c); };

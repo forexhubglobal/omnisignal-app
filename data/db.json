@@ -1,11 +1,11 @@
 {
   "stats": {
-    "totalSignals": 21,
-    "winRate": 82,
+    "totalSignals": 22,
+    "winRate": 75,
     "tp1Hit": 19,
     "tp2Hit": 17,
-    "slHit": 2,
-    "totalProfitToday": 1125,
+    "slHit": 3,
+    "totalProfitToday": 1075,
     "last7Days": [
       {
         "day": "Mon",
@@ -38,14 +38,26 @@
     "symbol": "XAUUSD",
     "type": "BUY",
     "timeframe": "M15",
-    "entry": 4024.45,
-    "tp1": 4028.5,
-    "tp2": 4034,
-    "sl": 4019.45,
-    "firedAt": "07:41",
-    "notes": "Amaterasu Neural Core detected M15 Order Block absorption + H1 Demand confluence at 4024.45. Follow strict SOP: hit TP1 lock BE, run balance to TP2."
+    "entry": 3995.8,
+    "tp1": 4005,
+    "tp2": 4020,
+    "sl": 3985,
+    "firedAt": "21:02",
+    "notes": "Test Signal"
   },
   "signals": [
+    {
+      "id": "sig-1792932277156",
+      "time": "20:44",
+      "date": "Oct 25",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4024.45,
+      "status": "SL",
+      "pips": -50,
+      "tags": [],
+      "peak": 55
+    },
     {
       "id": "sig-1792884826530",
       "time": "07:33",
@@ -505,7 +517,7 @@
       "username": "kj35",
       "displayName": "kj35",
       "status": "online",
-      "devices": 2,
+      "devices": 1,
       "maxDevices": 4,
       "joined": "2026-09-01",
       "pnlTotal": 979
@@ -556,7 +568,8 @@
       "2026-10-20": 420.5,
       "2026-10-21": -80,
       "2026-10-22": 210,
-      "2026-10-23": 180
+      "2026-10-23": 180,
+      "2026-10-25": 250
     }
   },
   "gameScores": [
@@ -583,18 +596,15 @@
     }
   ],
   "lastResolvedSignal": {
-    "id": "sig-hist-1",
-    "time": "06:45",
+    "id": "sig-1792932277156",
+    "time": "20:44",
     "date": "Oct 25",
-    "symbol": "GBPJPY",
+    "symbol": "XAUUSD",
     "type": "BUY",
-    "entry": 209.65,
-    "status": "TP2",
-    "pips": 100,
-    "tags": [
-      "TP1",
-      "TP2"
-    ],
-    "peak": 106
+    "entry": 4024.45,
+    "status": "SL",
+    "pips": -50,
+    "tags": [],
+    "peak": 55
   }
 }
