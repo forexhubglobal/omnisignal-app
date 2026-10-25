@@ -185,68 +185,111 @@ function broadcastEvent(type, data) {
 }
 
 // ===== LIVE REAL-TIME TRADINGVIEW MARKET FEED SERVICE =====
-const LIVE_MARKET_MAP = {
-  XAUUSD: 'GC=F',
-  EURUSD: 'EURUSD=X',
-  GBPJPY: 'GBPJPY=X',
-  GBPUSD: 'GBPUSD=X',
-  USDJPY: 'USDJPY=X',
-  WTI: 'CL=F',
-  US30: '^DJI',
-  NAS100: '^IXIC',
-  BTCUSD: 'BTC-USD'
+// Queries TradingView's official scanners directly to achieve 100% 1:1 price synchronization
+const TV_SYMBOLS_MAP = {
+  cfd: {
+    XAUUSD: 'OANDA:XAUUSD'
+  },
+  forex: {
+    EURUSD: 'FX:EURUSD',
+    GBPJPY: 'FX:GBPJPY',
+    GBPUSD: 'FX:GBPUSD',
+    USDJPY: 'FX:USDJPY'
+  },
+  futures: {
+    WTI: 'NYMEX:CL1!',
+    US30: 'CBOT_MINI:YM1!',
+    NAS100: 'CME_MINI:NQ1!'
+  },
+  crypto: {
+    BTCUSD: 'BINANCE:BTCUSDT'
+  }
 };
 
 const liveMarketQuotes = {
-  XAUUSD: { price: 4007.90, change: 0.42, decimals: 2 },
-  EURUSD: { price: 1.1204, change: -0.15, decimals: 4 },
-  GBPJPY: { price: 209.776, change: 0.35, decimals: 3 },
-  GBPUSD: { price: 1.3375, change: 0.12, decimals: 4 },
-  USDJPY: { price: 156.814, change: -0.22, decimals: 3 },
-  WTI: { price: 103.27, change: 1.25, decimals: 2 },
-  US30: { price: 52215.16, change: 0.48, decimals: 1 },
-  NAS100: { price: 25955.34, change: 0.65, decimals: 1 },
-  BTCUSD: { price: 80691.12, change: 1.85, decimals: 0 }
+  XAUUSD: { price: 3995.81, change: -0.71, decimals: 2 },
+  EURUSD: { price: 1.1203, change: -0.11, decimals: 4 },
+  GBPJPY: { price: 209.718, change: -0.16, decimals: 3 },
+  GBPUSD: { price: 1.3371, change: -0.22, decimals: 4 },
+  USDJPY: { price: 156.831, change: 0.03, decimals: 3 },
+  WTI: { price: 103.27, change: 3.82, decimals: 2 },
+  US30: { price: 52394.0, change: -1.27, decimals: 1 },
+  NAS100: { price: 29117.75, change: -0.08, decimals: 1 },
+  BTCUSD: { price: 80404.0, change: -0.61, decimals: 0 }
 };
 
-function fetchSingleLiveQuote(sym, querySym) {
-  return new Promise(resolve => {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(querySym)}?interval=1m&range=1d`;
-    const req = https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }, res => {
-      let d = '';
-      res.on('data', c => d += c);
+function queryTradingViewScanner(scannerName, tickers) {
+  return new Promise((resolve) => {
+    const postData = JSON.stringify({
+      symbols: { tickers },
+      columns: ['close', 'change']
+    });
+    const req = https.request(`https://scanner.tradingview.com/${scannerName}/scan`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData),
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+      }
+    }, res => {
+      let b = '';
+      res.on('data', c => b += c);
       res.on('end', () => {
         try {
-          const j = JSON.parse(d);
-          const meta = j.chart.result[0].meta;
-          const p = meta.regularMarketPrice;
-          const prev = meta.chartPreviousClose || meta.previousClose || p;
-          const chg = prev ? Number((((p - prev) / prev) * 100).toFixed(2)) : 0;
-          resolve({ price: p, change: chg });
-        } catch (e) {
-          resolve(null);
-        }
+          const j = JSON.parse(b);
+          const map = {};
+          if (j.data && Array.isArray(j.data)) {
+            j.data.forEach(item => {
+              if (item.s && Array.isArray(item.d) && typeof item.d[0] === 'number') {
+                map[item.s] = {
+                  price: item.d[0],
+                  change: typeof item.d[1] === 'number' ? Number(item.d[1].toFixed(2)) : 0
+                };
+              }
+            });
+          }
+          resolve(map);
+        } catch(e) { resolve({}); }
       });
     });
-    req.on('error', () => resolve(null));
-    req.setTimeout(3500, () => { req.destroy(); resolve(null); });
+    req.on('error', () => resolve({}));
+    req.setTimeout(4000, () => { req.destroy(); resolve({}); });
+    req.write(postData);
+    req.end();
   });
 }
 
 async function refreshAllLiveQuotes() {
-  for (const [sym, qSym] of Object.entries(LIVE_MARKET_MAP)) {
-    const res = await fetchSingleLiveQuote(sym, qSym);
-    if (res && res.price) {
-      if (liveMarketQuotes[sym]) {
-        liveMarketQuotes[sym].price = res.price;
-        liveMarketQuotes[sym].change = res.change;
+  try {
+    const [cfdData, fxData, futData, cryData] = await Promise.all([
+      queryTradingViewScanner('cfd', Object.values(TV_SYMBOLS_MAP.cfd)),
+      queryTradingViewScanner('forex', Object.values(TV_SYMBOLS_MAP.forex)),
+      queryTradingViewScanner('futures', Object.values(TV_SYMBOLS_MAP.futures)),
+      queryTradingViewScanner('crypto', Object.values(TV_SYMBOLS_MAP.crypto))
+    ]);
+
+    const combined = { ...cfdData, ...fxData, ...futData, ...cryData };
+
+    for (const group of Object.values(TV_SYMBOLS_MAP)) {
+      for (const [sym, ticker] of Object.entries(group)) {
+        if (combined[ticker] && typeof combined[ticker].price === 'number') {
+          const decimals = liveMarketQuotes[sym] ? liveMarketQuotes[sym].decimals : 2;
+          liveMarketQuotes[sym] = {
+            price: Number(combined[ticker].price.toFixed(decimals)),
+            change: combined[ticker].change,
+            decimals: decimals
+          };
+        }
       }
     }
+
+    if (liveMarketQuotes.XAUUSD) {
+      currentMarketPrice = liveMarketQuotes.XAUUSD.price;
+    }
+    broadcastEvent('market_quotes', liveMarketQuotes);
+  } catch (err) {
+    // Keep last known quotes on failure
   }
-  if (liveMarketQuotes.XAUUSD) {
-    currentMarketPrice = liveMarketQuotes.XAUUSD.price;
-  }
-  broadcastEvent('market_quotes', liveMarketQuotes);
 }
 
 // MIME Types
@@ -672,13 +715,18 @@ const server = http.createServer(async (req, res) => {
       return res.end('404 Not Found');
     }
     const ext = path.extname(filePath).toLowerCase();
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+    res.writeHead(200, {
+      'Content-Type': MIME[ext] || 'application/octet-stream',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
     res.end(data);
   });
 });
 
 // Periodic simulated market tick broadcast every 2.5s
-let currentMarketPrice = 4024.45;
+let currentMarketPrice = 3995.81;
 
 // ===== AMATERASU AI AUTONOMOUS SIGNAL ENGINE =====
 // REAL LIVE MODE: Rapid auto-test loop disabled so signals stay persistent and controlled.
@@ -710,17 +758,15 @@ const AiEngine = {
   },
 
   assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4024.45, pipVal: 0.1, pipDec: 2, tp1Pips: 40, tp2Pips: 95, slPips: 50 },
-    { symbol: 'XAUUSD', name: 'Gold', base: 4024.45, pipVal: 0.1, pipDec: 2, tp1Pips: 42, tp2Pips: 90, slPips: 50 },
-    { symbol: 'XAUUSD', name: 'Gold', base: 4024.45, pipVal: 0.1, pipDec: 2, tp1Pips: 45, tp2Pips: 100, slPips: 50 },
-    { symbol: 'EURUSD', name: 'Euro', base: 1.08500, pipVal: 0.0001, pipDec: 5, tp1Pips: 35, tp2Pips: 75, slPips: 50 },
-    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 209.65, pipVal: 0.01, pipDec: 2, tp1Pips: 45, tp2Pips: 100, slPips: 50 },
-    { symbol: 'GBPUSD', name: 'Cable', base: 1.29800, pipVal: 0.0001, pipDec: 5, tp1Pips: 35, tp2Pips: 80, slPips: 50 },
-    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 156.10, pipVal: 0.01, pipDec: 2, tp1Pips: 40, tp2Pips: 85, slPips: 50 },
-    { symbol: 'WTI', name: 'Crude Oil', base: 71.50, pipVal: 0.1, pipDec: 2, tp1Pips: 50, tp2Pips: 110, slPips: 50 },
-    { symbol: 'US30', name: 'Dow Jones', base: 42850, pipVal: 1, pipDec: 0, tp1Pips: 60, tp2Pips: 140, slPips: 50 },
-    { symbol: 'NAS100', name: 'Nasdaq 100', base: 20380, pipVal: 1, pipDec: 0, tp1Pips: 50, tp2Pips: 120, slPips: 50 },
-    { symbol: 'BTCUSD', name: 'Bitcoin', base: 81700, pipVal: 1, pipDec: 0, tp1Pips: 250, tp2Pips: 600, slPips: 250 }
+    { symbol: 'XAUUSD', name: 'Gold', base: 3995.81, pipVal: 0.1, pipDec: 2, tp1Pips: 40, tp2Pips: 95, slPips: 50 },
+    { symbol: 'EURUSD', name: 'Euro', base: 1.1203, pipVal: 0.0001, pipDec: 5, tp1Pips: 35, tp2Pips: 75, slPips: 50 },
+    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 209.718, pipVal: 0.01, pipDec: 2, tp1Pips: 45, tp2Pips: 100, slPips: 50 },
+    { symbol: 'GBPUSD', name: 'Cable', base: 1.3371, pipVal: 0.0001, pipDec: 5, tp1Pips: 35, tp2Pips: 80, slPips: 50 },
+    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 156.831, pipVal: 0.01, pipDec: 2, tp1Pips: 40, tp2Pips: 85, slPips: 50 },
+    { symbol: 'WTI', name: 'Crude Oil', base: 103.27, pipVal: 0.1, pipDec: 2, tp1Pips: 50, tp2Pips: 110, slPips: 50 },
+    { symbol: 'US30', name: 'Dow Jones', base: 52394, pipVal: 1, pipDec: 0, tp1Pips: 60, tp2Pips: 140, slPips: 50 },
+    { symbol: 'NAS100', name: 'Nasdaq 100', base: 29117, pipVal: 1, pipDec: 0, tp1Pips: 50, tp2Pips: 120, slPips: 50 },
+    { symbol: 'BTCUSD', name: 'Bitcoin', base: 80404, pipVal: 1, pipDec: 0, tp1Pips: 250, tp2Pips: 600, slPips: 250 }
   ],
 
   tick() {

@@ -1,22 +1,25 @@
 // ===== Amaterasu AI Pages: Signal, Stat, Analysis, Screener, News, AI News =====
 
 const ALL_INSTRUMENTS = [
-  { id: 'XAUUSD', name: 'XAUUSD', category: 'Metals', icon: '🥇', label: 'Gold', basePrice: 4007.90, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'SIDE' },
-  { id: 'EURUSD', name: 'EURUSD', category: 'Forex', icon: '💶', label: 'Euro', basePrice: 1.1204, bias: 'BEARISH', m1: 'DOWN', m5: 'SIDE', m15: 'DOWN' },
-  { id: 'GBPJPY', name: 'GBPJPY', category: 'Forex', icon: '💷', label: 'Pound / Yen', basePrice: 209.776, bias: 'NEUTRAL', m1: 'SIDE', m5: 'DOWN', m15: 'UP' },
-  { id: 'GBPUSD', name: 'GBPUSD', category: 'Forex', icon: '💷', label: 'Cable', basePrice: 1.3375, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'SIDE' },
-  { id: 'USDJPY', name: 'USDJPY', category: 'Forex', icon: '💴', label: 'Dollar / Yen', basePrice: 156.814, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'DOWN' },
+  { id: 'XAUUSD', name: 'XAUUSD', category: 'Metals', icon: '🥇', label: 'Gold', basePrice: 3995.81, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'SIDE' },
+  { id: 'EURUSD', name: 'EURUSD', category: 'Forex', icon: '💶', label: 'Euro', basePrice: 1.1203, bias: 'BEARISH', m1: 'DOWN', m5: 'SIDE', m15: 'DOWN' },
+  { id: 'GBPJPY', name: 'GBPJPY', category: 'Forex', icon: '💷', label: 'Pound / Yen', basePrice: 209.718, bias: 'NEUTRAL', m1: 'SIDE', m5: 'DOWN', m15: 'UP' },
+  { id: 'GBPUSD', name: 'GBPUSD', category: 'Forex', icon: '💷', label: 'Cable', basePrice: 1.3371, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'SIDE' },
+  { id: 'USDJPY', name: 'USDJPY', category: 'Forex', icon: '💴', label: 'Dollar / Yen', basePrice: 156.831, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'DOWN' },
   { id: 'WTI', name: 'WTI', category: 'Commodities', icon: '🛢', label: 'Crude Oil', basePrice: 103.27, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'UP' },
-  { id: 'US30', name: 'US30', category: 'Indices', icon: '📈', label: 'Dow Jones 30', basePrice: 52215.16, bias: 'BULLISH', m1: 'UP', m5: 'SIDE', m15: 'UP' },
-  { id: 'NAS100', name: 'NAS100', category: 'Indices', icon: '💻', label: 'Nasdaq 100', basePrice: 25955.34, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'UP' },
-  { id: 'BTCUSD', name: 'BTCUSD', category: 'Crypto', icon: '₿', label: 'Bitcoin', basePrice: 80691.12, bias: 'BULLISH', m1: 'SIDE', m5: 'UP', m15: 'UP' }
+  { id: 'US30', name: 'US30', category: 'Indices', icon: '📈', label: 'Dow Jones 30', basePrice: 52394.0, bias: 'BULLISH', m1: 'UP', m5: 'SIDE', m15: 'UP' },
+  { id: 'NAS100', name: 'NAS100', category: 'Indices', icon: '💻', label: 'Nasdaq 100', basePrice: 29117.75, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'UP' },
+  { id: 'BTCUSD', name: 'BTCUSD', category: 'Crypto', icon: '₿', label: 'Bitcoin', basePrice: 80404.0, bias: 'BULLISH', m1: 'SIDE', m5: 'UP', m15: 'UP' }
 ];
 
 // ---------- 1. Signal ----------
 function SignalPage(main) {
-  const globalSig = (AppState && AppState.activeSignal) || { status: 'WAITING', type: 'BUY', symbol: 'XAUUSD', entry: 4007.90, tp1: 4014.00, tp2: 4022.00, sl: 4001.90 };
   let activeSymId = store.get('selected_signal_sym') || 'XAUUSD';
   let inst = ALL_INSTRUMENTS.find(i => i.id === activeSymId) || ALL_INSTRUMENTS[0];
+  Market.activeSymbol = inst.id;
+  Market.updateUI();
+
+  const globalSig = (AppState && AppState.activeSignal) || { status: 'WAITING', type: 'BUY', symbol: 'XAUUSD', entry: 3995.81, tp1: 4004.00, tp2: 4015.00, sl: 3989.50 };
 
   const isLiveOrTp1 = globalSig.status === 'ACTIVE' || globalSig.status === 'TP1_HIT';
   const isCurrentAssetActive = isLiveOrTp1 && globalSig.symbol === inst.id;
@@ -328,10 +331,27 @@ function SignalPage(main) {
     GBPJPY: 'FX:GBPJPY',
     GBPUSD: 'FX:GBPUSD',
     USDJPY: 'FX:USDJPY',
-    WTI: 'TVC:USOIL',
-    US30: 'BLACKBULL:US30',
-    NAS100: 'PEPPERSTONE:NAS100',
+    WTI: 'NYMEX:CL1!',
+    US30: 'CBOT_MINI:YM1!',
+    NAS100: 'CME_MINI:NQ1!',
     BTCUSD: 'BINANCE:BTCUSDT'
+  };
+
+  const tfToTvInterval = {
+    M1: '1', M3: '3', M5: '5', M15: '15', M30: '30', H1: '60', H4: '240', D1: 'D'
+  };
+
+  const renderTvIframe = () => {
+    if (!tvEmbedWrap) return;
+    const sym = tvSymbols[inst.id] || 'OANDA:XAUUSD';
+    const interval = tfToTvInterval[currentActiveTf] || '15';
+    tvEmbedWrap.innerHTML = `
+      <iframe 
+        src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(sym)}&interval=${interval}&theme=dark&style=1&timezone=Asia%2FKuala_Lumpur&hide_top_toolbar=0&studies=[]&hide_side_toolbar=1" 
+        style="width:100%; height:100%; border:none; display:block;"
+        loading="lazy">
+      </iframe>
+    `;
   };
 
   if (btnModeSnr && btnModeTv) {
@@ -340,8 +360,6 @@ function SignalPage(main) {
       btnModeTv.classList.remove('active');
       if (tvEmbedWrap) { tvEmbedWrap.style.display = 'none'; tvEmbedWrap.innerHTML = ''; }
       if (canvasWrap) canvasWrap.style.display = 'block';
-      if (tvBtnPills) tvBtnPills.style.opacity = '1';
-      if (tvTools) tvTools.style.opacity = '1';
       if (chartInstance && chartInstance.redraw) chartInstance.redraw();
     };
 
@@ -349,18 +367,9 @@ function SignalPage(main) {
       btnModeTv.classList.add('active');
       btnModeSnr.classList.remove('active');
       if (canvasWrap) canvasWrap.style.display = 'none';
-      if (tvBtnPills) tvBtnPills.style.opacity = '0.35';
-      if (tvTools) tvTools.style.opacity = '0.35';
       if (tvEmbedWrap) {
         tvEmbedWrap.style.display = 'block';
-        const sym = tvSymbols[inst.id] || 'OANDA:XAUUSD';
-        tvEmbedWrap.innerHTML = `
-          <iframe 
-            src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(sym)}&interval=15&theme=dark&style=1&timezone=Asia%2FKuala_Lumpur&hide_top_toolbar=0&studies=[]&hide_side_toolbar=1" 
-            style="width:100%; height:100%; border:none; display:block;"
-            loading="lazy">
-          </iframe>
-        `;
+        renderTvIframe();
       }
     };
   }
@@ -380,6 +389,9 @@ function SignalPage(main) {
       }
       currentActiveTf = p.dataset.tf;
       chartInstance.setTf(currentActiveTf);
+      if (btnModeTv && btnModeTv.classList.contains('active')) {
+        renderTvIframe();
+      }
     };
   });
 
@@ -398,6 +410,9 @@ function SignalPage(main) {
         dropBtn.classList.add('active');
         dropMenu.style.display = 'none';
         chartInstance.setTf(currentActiveTf);
+        if (btnModeTv && btnModeTv.classList.contains('active')) {
+          renderTvIframe();
+        }
       };
     });
   }
@@ -486,6 +501,8 @@ function SignalPage(main) {
     btn.onclick = () => {
       const sym = btn.dataset.sym;
       store.set('selected_signal_sym', sym);
+      Market.activeSymbol = sym;
+      Market.updateUI();
       SignalPage(main);
     };
   });
@@ -654,6 +671,8 @@ function SignalPage(main) {
         item.onclick = () => {
           const sym = item.dataset.sym;
           store.set('selected_signal_sym', sym);
+          Market.activeSymbol = sym;
+          Market.updateUI();
           modal.remove();
           SignalPage(main);
         };

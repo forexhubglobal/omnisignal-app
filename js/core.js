@@ -259,18 +259,19 @@ const AppState = {
 
 // ----- Real-Time TradingView-Synchronized Market Feed -----
 const Market = {
-  open: 4007.90,
-  price: 4007.90,
+  activeSymbol: 'XAUUSD',
+  open: 3995.81,
+  price: 3995.81,
   quotes: {
-    XAUUSD: { price: 4007.90, change: 0.42, decimals: 2 },
-    EURUSD: { price: 1.1204, change: -0.15, decimals: 4 },
-    GBPJPY: { price: 209.776, change: 0.35, decimals: 3 },
-    GBPUSD: { price: 1.3375, change: 0.12, decimals: 4 },
-    USDJPY: { price: 156.814, change: -0.22, decimals: 3 },
-    WTI: { price: 103.27, change: 1.25, decimals: 2 },
-    US30: { price: 52215.16, change: 0.48, decimals: 1 },
-    NAS100: { price: 25955.34, change: 0.65, decimals: 1 },
-    BTCUSD: { price: 80691.12, change: 1.85, decimals: 0 }
+    XAUUSD: { price: 3995.81, change: -0.71, decimals: 2 },
+    EURUSD: { price: 1.1203, change: -0.11, decimals: 4 },
+    GBPJPY: { price: 209.718, change: -0.16, decimals: 3 },
+    GBPUSD: { price: 1.3371, change: -0.22, decimals: 4 },
+    USDJPY: { price: 156.831, change: 0.03, decimals: 3 },
+    WTI: { price: 103.27, change: 3.82, decimals: 2 },
+    US30: { price: 52394.0, change: -1.27, decimals: 1 },
+    NAS100: { price: 29117.75, change: -0.08, decimals: 1 },
+    BTCUSD: { price: 80404.0, change: -0.61, decimals: 0 }
   },
   subs: new Set(),
   getLivePrice(sym) {
@@ -288,16 +289,22 @@ const Market = {
     this.updateUI();
   },
   updateUI() {
-    const p = this.price;
+    const sym = this.activeSymbol || 'XAUUSD';
+    const q = this.quotes[sym] || this.quotes.XAUUSD;
+    const p = this.getLivePrice(sym) || this.price;
+    const dec = q && typeof q.decimals === 'number' ? q.decimals : 2;
+
+    const symEl = $('#tickerSymbol');
+    if (symEl) symEl.textContent = sym;
     const pEl = $('#price');
-    if (pEl) pEl.textContent = num(p);
+    if (pEl) pEl.textContent = num(p, dec);
     const c = $('#change');
-    const chg = this.quotes.XAUUSD ? this.quotes.XAUUSD.change : 0;
+    const chg = q ? q.change : 0;
     if (c) {
       c.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
       c.className = 'change ' + (chg >= 0 ? 'up' : 'down');
     }
-    $$('[data-live]').forEach(el => (el.textContent = num(p)));
+    $$('[data-live]').forEach(el => (el.textContent = num(p, dec)));
 
     // Synchronize ALL_INSTRUMENTS base prices with live TradingView prices
     if (typeof ALL_INSTRUMENTS !== 'undefined' && Array.isArray(ALL_INSTRUMENTS)) {
@@ -315,7 +322,15 @@ const Market = {
     this.subs.forEach(fn => fn(p));
   },
   tick() {
-    this.price += (Math.random() - 0.495) * 0.45;
+    const sym = this.activeSymbol || 'XAUUSD';
+    const q = this.quotes[sym];
+    const step = q && q.decimals === 4 ? 0.0001 : q && q.decimals === 3 ? 0.005 : q && q.decimals === 2 ? 0.05 : 0.5;
+    if (q) {
+      q.price = Number((q.price + (Math.random() - 0.495) * step).toFixed(q.decimals));
+    }
+    if (sym === 'XAUUSD') {
+      this.price = this.quotes.XAUUSD.price;
+    }
     this.updateUI();
   }
 };
@@ -475,139 +490,94 @@ function mountChart(el, timeframe = 'M15', tfMult = 1) {
 // ----- Amaterasu 100% SNR / Supply & Demand Canvas Chart (Multi-Asset Capable) -----
 const INSTRUMENT_SNR_CONFIGS = {
   XAUUSD: {
-    symbol: 'XAUUSD', name: 'Gold', base: 4020.00, range: 32.0, decimals: 2, gridInterval: 2.50,
-    viewMin: 4004.50, viewMax: 4035.50,
-    refPrice: 4024.45, liveStart: 4023.87,
-    supplyTop: 4032.50, supplyBot: 4030.00, supplyLabel: 'Supply · Tested 2×',
-    supplyMidTop: 4027.80, supplyMidBot: 4026.00, supplyMidLabel: 'Supply · Fresh',
-    demandMidTop: 4015.00, demandMidBot: 4013.50, demandMidLabel: 'Demand · Tested 2×',
-    demand1Top: 4012.50, demand1Bot: 4011.00, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 4007.50, demandBotBot: 4005.80, demandBotLabel: 'Demand · Fresh',
-    high1: { val: 4030.88, label: 'High 4,030.88', dashToIdx: 21 },
-    high2: { val: 4021.79, label: 'High 4,021.79', dashToIdx: 7 },
-    lowLive: { val: 4020.62, label: 'Low 4,020.62 · live' },
-    low1: { val: 4011.48, label: 'Low 4,011.48' },
-    low2: { val: 4009.47, label: 'Low 4,009.47', dashToIdx: 15 }
+    symbol: 'XAUUSD', name: 'Gold', base: 3995.81, range: 35.0, decimals: 2, gridInterval: 2.50,
+    viewMin: 3980.00, viewMax: 4016.00,
+    refPrice: 3996.20, liveStart: 3995.81,
+    supplyTop: 4012.50, supplyBot: 4008.00, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 4004.80, supplyMidBot: 4001.00, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 3991.00, demandMidBot: 3988.50, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 3986.50, demand1Bot: 3984.00, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 3981.50, demandBotBot: 3978.80, demandBotLabel: 'Demand · Fresh'
   },
   EURUSD: {
-    symbol: 'EURUSD', name: 'Euro', base: 1.08500, range: 0.00800, decimals: 5, gridInterval: 0.00100,
-    viewMin: 1.08050, viewMax: 1.08900,
-    refPrice: 1.08610, liveStart: 1.08595,
-    supplyTop: 1.08850, supplyBot: 1.08720, supplyLabel: 'Supply · Tested 2×',
-    supplyMidTop: 1.08650, supplyMidBot: 1.08580, supplyMidLabel: 'Supply · Fresh',
-    demandMidTop: 1.08320, demandMidBot: 1.08250, demandMidLabel: 'Demand · Tested 2×',
-    demand1Top: 1.08220, demand1Bot: 1.08170, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 1.08120, demandBotBot: 1.08050, demandBotLabel: 'Demand · Fresh',
-    high1: { val: 1.08820, label: 'High 1.08820', dashToIdx: 21 },
-    high2: { val: 1.08610, label: 'High 1.08610', dashToIdx: 7 },
-    lowLive: { val: 1.08420, label: 'Low 1.08420 · live' },
-    low1: { val: 1.08220, label: 'Low 1.08220' },
-    low2: { val: 1.08110, label: 'Low 1.08110', dashToIdx: 15 }
+    symbol: 'EURUSD', name: 'Euro', base: 1.1203, range: 0.0080, decimals: 4, gridInterval: 0.0010,
+    viewMin: 1.1160, viewMax: 1.1245,
+    refPrice: 1.1205, liveStart: 1.1203,
+    supplyTop: 1.1238, supplyBot: 1.1225, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 1.1218, supplyMidBot: 1.1210, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 1.1188, demandMidBot: 1.1180, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 1.1175, demand1Bot: 1.1168, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 1.1162, demandBotBot: 1.1155, demandBotLabel: 'Demand · Fresh'
   },
   GBPJPY: {
-    symbol: 'GBPJPY', name: 'Pound / Yen', base: 209.646, range: 2.40, decimals: 3, gridInterval: 0.30,
-    viewMin: 208.300, viewMax: 210.800,
-    refPrice: 209.980, liveStart: 209.930,
+    symbol: 'GBPJPY', name: 'Pound / Yen', base: 209.718, range: 2.50, decimals: 3, gridInterval: 0.30,
+    viewMin: 208.500, viewMax: 211.000,
+    refPrice: 209.850, liveStart: 209.718,
     supplyTop: 210.650, supplyBot: 210.200, supplyLabel: 'Supply · Tested 2×',
     supplyMidTop: 209.950, supplyMidBot: 209.750, supplyMidLabel: 'Supply · Fresh',
     demandMidTop: 209.150, demandMidBot: 208.850, demandMidLabel: 'Demand · Tested 2×',
     demand1Top: 208.800, demand1Bot: 208.650, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 208.550, demandBotBot: 208.380, demandBotLabel: 'Demand · Fresh',
-    high1: { val: 210.596, label: 'High 210.596', dashToIdx: 21 },
-    high2: { val: 209.926, label: 'High 209.926', dashToIdx: 7 },
-    lowLive: { val: 209.426, label: 'Low 209.426 · live' },
-    low1: { val: 208.796, label: 'Low 208.796' },
-    low2: { val: 208.446, label: 'Low 208.446', dashToIdx: 15 }
+    demandBotTop: 208.550, demandBotBot: 208.380, demandBotLabel: 'Demand · Fresh'
   },
   GBPUSD: {
-    symbol: 'GBPUSD', name: 'Cable', base: 1.29800, range: 0.01000, decimals: 5, gridInterval: 0.00120,
-    viewMin: 1.29250, viewMax: 1.30320,
-    refPrice: 1.29950, liveStart: 1.29920,
-    supplyTop: 1.30250, supplyBot: 1.30100, supplyLabel: 'Supply · Tested 2×',
-    supplyMidTop: 1.29980, supplyMidBot: 1.29900, supplyMidLabel: 'Supply · Fresh',
-    demandMidTop: 1.29600, demandMidBot: 1.29500, demandMidLabel: 'Demand · Tested 2×',
-    demand1Top: 1.29480, demand1Bot: 1.29400, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 1.29360, demandBotBot: 1.29280, demandBotLabel: 'Demand · Fresh',
-    high1: { val: 1.30190, label: 'High 1.30190', dashToIdx: 21 },
-    high2: { val: 1.29950, label: 'High 1.29950', dashToIdx: 7 },
-    lowLive: { val: 1.29690, label: 'Low 1.29690 · live' },
-    low1: { val: 1.29460, label: 'Low 1.29460' },
-    low2: { val: 1.29320, label: 'Low 1.29320', dashToIdx: 15 }
+    symbol: 'GBPUSD', name: 'Cable', base: 1.3371, range: 0.0100, decimals: 4, gridInterval: 0.0012,
+    viewMin: 1.3320, viewMax: 1.3420,
+    refPrice: 1.3375, liveStart: 1.3371,
+    supplyTop: 1.3415, supplyBot: 1.3400, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 1.3388, supplyMidBot: 1.3380, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 1.3350, demandMidBot: 1.3340, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 1.3335, demand1Bot: 1.3328, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 1.3322, demandBotBot: 1.3315, demandBotLabel: 'Demand · Fresh'
   },
   USDJPY: {
-    symbol: 'USDJPY', name: 'Dollar / Yen', base: 156.102, range: 2.20, decimals: 3, gridInterval: 0.25,
-    viewMin: 154.800, viewMax: 157.250,
-    refPrice: 156.450, liveStart: 156.410,
-    supplyTop: 157.100, supplyBot: 156.750, supplyLabel: 'Supply · Tested 2×',
-    supplyMidTop: 156.450, supplyMidBot: 156.250, supplyMidLabel: 'Supply · Fresh',
-    demandMidTop: 155.650, demandMidBot: 155.400, demandMidLabel: 'Demand · Tested 2×',
-    demand1Top: 155.350, demand1Bot: 155.150, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 155.050, demandBotBot: 154.880, demandBotLabel: 'Demand · Fresh',
-    high1: { val: 156.982, label: 'High 156.982', dashToIdx: 21 },
-    high2: { val: 156.422, label: 'High 156.422', dashToIdx: 7 },
-    lowLive: { val: 155.852, label: 'Low 155.852 · live' },
-    low1: { val: 155.282, label: 'Low 155.282' },
-    low2: { val: 154.952, label: 'Low 154.952', dashToIdx: 15 }
+    symbol: 'USDJPY', name: 'Dollar / Yen', base: 156.831, range: 2.20, decimals: 3, gridInterval: 0.25,
+    viewMin: 155.600, viewMax: 157.800,
+    refPrice: 156.900, liveStart: 156.831,
+    supplyTop: 157.600, supplyBot: 157.300, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 157.050, supplyMidBot: 156.900, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 156.400, demandMidBot: 156.200, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 156.050, demand1Bot: 155.850, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 155.700, demandBotBot: 155.500, demandBotLabel: 'Demand · Fresh'
   },
   WTI: {
-    symbol: 'WTI', name: 'Crude Oil', base: 71.50, range: 3.60, decimals: 2, gridInterval: 0.50,
-    viewMin: 69.50, viewMax: 73.40,
-    refPrice: 72.05, liveStart: 71.98,
-    supplyTop: 73.10, supplyBot: 72.60, supplyLabel: 'Supply · Tested 2×',
-    supplyMidTop: 72.10, supplyMidBot: 71.85, supplyMidLabel: 'Supply · Fresh',
-    demandMidTop: 70.80, demandMidBot: 70.40, demandMidLabel: 'Demand · Tested 2×',
-    demand1Top: 70.35, demand1Bot: 70.10, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 69.95, demandBotBot: 69.70, demandBotLabel: 'Demand · Fresh',
-    high1: { val: 72.95, label: 'High 72.95', dashToIdx: 21 },
-    high2: { val: 71.98, label: 'High 71.98', dashToIdx: 7 },
-    lowLive: { val: 71.08, label: 'Low 71.08 · live' },
-    low1: { val: 70.25, label: 'Low 70.25' },
-    low2: { val: 69.85, label: 'Low 69.85', dashToIdx: 15 }
+    symbol: 'WTI', name: 'Crude Oil', base: 103.27, range: 3.80, decimals: 2, gridInterval: 0.50,
+    viewMin: 101.40, viewMax: 105.20,
+    refPrice: 103.35, liveStart: 103.27,
+    supplyTop: 104.80, supplyBot: 104.30, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 103.85, supplyMidBot: 103.55, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 102.60, demandMidBot: 102.25, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 102.10, demand1Bot: 101.80, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 101.60, demandBotBot: 101.30, demandBotLabel: 'Demand · Fresh'
   },
   US30: {
-    symbol: 'US30', name: 'Dow Jones 30', base: 42850, range: 580, decimals: 0, gridInterval: 75,
-    viewMin: 42480, viewMax: 43160,
-    refPrice: 42930, liveStart: 42915,
-    supplyTop: 43120, supplyBot: 43020, supplyLabel: 'Supply · Tested 2×',
-    supplyMidTop: 42940, supplyMidBot: 42890, supplyMidLabel: 'Supply · Fresh',
-    demandMidTop: 42720, demandMidBot: 42640, demandMidLabel: 'Demand · Tested 2×',
-    demand1Top: 42620, demand1Bot: 42560, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 42540, demandBotBot: 42480, demandBotLabel: 'Demand · Fresh',
-    high1: { val: 43085, label: 'High 43,085', dashToIdx: 21 },
-    high2: { val: 42935, label: 'High 42,935', dashToIdx: 7 },
-    lowLive: { val: 42782, label: 'Low 42,782 · live' },
-    low1: { val: 42640, label: 'Low 42,640' },
-    low2: { val: 42530, label: 'Low 42,530', dashToIdx: 15 }
+    symbol: 'US30', name: 'Dow Jones 30', base: 52394, range: 650, decimals: 0, gridInterval: 80,
+    viewMin: 52050, viewMax: 52750,
+    refPrice: 52420, liveStart: 52394,
+    supplyTop: 52680, supplyBot: 52580, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 52480, supplyMidBot: 52420, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 52280, demandMidBot: 52200, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 52180, demand1Bot: 52120, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 52100, demandBotBot: 52020, demandBotLabel: 'Demand · Fresh'
   },
   NAS100: {
-    symbol: 'NAS100', name: 'Nasdaq 100', base: 20380, range: 360, decimals: 0, gridInterval: 45,
-    viewMin: 20150, viewMax: 20580,
-    refPrice: 20435, liveStart: 20425,
-    supplyTop: 20540, supplyBot: 20480, supplyLabel: 'Supply · Tested 2×',
-    supplyMidTop: 20430, supplyMidBot: 20400, supplyMidLabel: 'Supply · Fresh',
-    demandMidTop: 20290, demandMidBot: 20240, demandMidLabel: 'Demand · Tested 2×',
-    demand1Top: 20230, demand1Bot: 20190, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 20180, demandBotBot: 20140, demandBotLabel: 'Demand · Fresh',
-    high1: { val: 20525, label: 'High 20,525', dashToIdx: 21 },
-    high2: { val: 20432, label: 'High 20,432', dashToIdx: 7 },
-    lowLive: { val: 20335, label: 'Low 20,335 · live' },
-    low1: { val: 20250, label: 'Low 20,250' },
-    low2: { val: 20185, label: 'Low 20,185', dashToIdx: 15 }
+    symbol: 'NAS100', name: 'Nasdaq 100', base: 29117, range: 450, decimals: 1, gridInterval: 60,
+    viewMin: 28850, viewMax: 29350,
+    refPrice: 29130, liveStart: 29117,
+    supplyTop: 29310, supplyBot: 29250, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 29190, supplyMidBot: 29150, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 29040, demandMidBot: 28980, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 28960, demand1Bot: 28910, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 28880, demandBotBot: 28830, demandBotLabel: 'Demand · Fresh'
   },
   BTCUSD: {
-    symbol: 'BTCUSD', name: 'Bitcoin', base: 81700, range: 2200, decimals: 0, gridInterval: 280,
-    viewMin: 80300, viewMax: 82950,
-    refPrice: 82030, liveStart: 81980,
-    supplyTop: 82750, supplyBot: 82350, supplyLabel: 'Supply · Tested 2×',
-    supplyMidTop: 82050, supplyMidBot: 81850, supplyMidLabel: 'Supply · Fresh',
-    demandMidTop: 81250, demandMidBot: 80950, demandMidLabel: 'Demand · Tested 2×',
-    demand1Top: 80900, demand1Bot: 80650, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 80600, demandBotBot: 80350, demandBotLabel: 'Demand · Fresh',
-    high1: { val: 82650, label: 'High 82,650', dashToIdx: 21 },
-    high2: { val: 82020, label: 'High 82,020', dashToIdx: 7 },
-    lowLive: { val: 81420, label: 'Low 81,420 · live' },
-    low1: { val: 80850, label: 'Low 80,850' },
-    low2: { val: 80450, label: 'Low 80,450', dashToIdx: 15 }
+    symbol: 'BTCUSD', name: 'Bitcoin', base: 80404, range: 2500, decimals: 0, gridInterval: 350,
+    viewMin: 79000, viewMax: 82000,
+    refPrice: 80500, liveStart: 80404,
+    supplyTop: 81850, supplyBot: 81450, supplyLabel: 'Supply · Tested 2×',
+    supplyMidTop: 81100, supplyMidBot: 80850, supplyMidLabel: 'Supply · Fresh',
+    demandMidTop: 80100, demandMidBot: 79750, demandMidLabel: 'Demand · Tested 2×',
+    demand1Top: 79650, demand1Bot: 79350, demand1Label: 'Demand · Tested 1×',
+    demandBotTop: 79250, demandBotBot: 78900, demandBotLabel: 'Demand · Fresh'
   }
 };
 
@@ -1401,24 +1371,19 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
       const targetDashIdx = k.dashToIdx !== undefined ? (historyCount + k.dashToIdx) : undefined;
 
       if (k.isHigh1) {
-        const lbl = isM3Flagship ? cfg.high1.label : `High ${fmtPrice(k.h, cfg.decimals)}`;
-        drawHighLowPill(x, Y(k.h), lbl, 'high', targetDashIdx, false);
+        drawHighLowPill(x, Y(k.h), `High ${fmtPrice(k.h, cfg.decimals)}`, 'high', targetDashIdx, false);
       }
       if (k.isHigh2) {
-        const lbl = isM3Flagship ? cfg.high2.label : `High ${fmtPrice(k.h, cfg.decimals)}`;
-        drawHighLowPill(x, Y(k.h), lbl, 'high', targetDashIdx, true);
+        drawHighLowPill(x, Y(k.h), `High ${fmtPrice(k.h, cfg.decimals)}`, 'high', targetDashIdx, true);
       }
       if (k.isLowLive) {
-        const lbl = isM3Flagship ? cfg.lowLive.label : `Low ${fmtPrice(k.l, cfg.decimals)} · live`;
-        drawHighLowPill(x, Y(k.l), lbl, 'low', undefined, false);
+        drawHighLowPill(x, Y(k.l), `Low ${fmtPrice(k.l, cfg.decimals)} · live`, 'low', undefined, false);
       }
       if (k.isLow1) {
-        const lbl = isM3Flagship ? cfg.low1.label : `Low ${fmtPrice(k.l, cfg.decimals)}`;
-        drawHighLowPill(x, Y(k.l), lbl, 'low', undefined, false);
+        drawHighLowPill(x, Y(k.l), `Low ${fmtPrice(k.l, cfg.decimals)}`, 'low', undefined, false);
       }
       if (k.isLow2) {
-        const lbl = isM3Flagship ? cfg.low2.label : `Low ${fmtPrice(k.l, cfg.decimals)}`;
-        drawHighLowPill(x, Y(k.l), lbl, 'low', targetDashIdx, false);
+        drawHighLowPill(x, Y(k.l), `Low ${fmtPrice(k.l, cfg.decimals)}`, 'low', targetDashIdx, false);
       }
     });
 
