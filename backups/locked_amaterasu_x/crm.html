@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AMATERASU X · Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="crm.css" />
+</head>
+<body>
+  <div class="crm-layout">
+    <!-- Sidebar -->
+    <aside class="crm-sidebar">
+      <div class="sidebar-brand">
+        <!-- AMATERASU X Sharingan Mon -->
+        <svg viewBox="0 0 48 48" width="38" height="38" aria-hidden="true">
+          <defs>
+            <radialGradient id="crmSharinganRed" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#FF4D5A"/>
+              <stop offset="60%" stop-color="#EF2D3D"/>
+              <stop offset="100%" stop-color="#800612"/>
+            </radialGradient>
+          </defs>
+          <circle cx="24" cy="24" r="22" fill="#080D14" stroke="#EF2D3D" stroke-width="1.5" />
+          <circle cx="24" cy="24" r="18" fill="url(#crmSharinganRed)" stroke="#000" stroke-width="2" />
+          <g fill="#080D14">
+            <circle cx="24" cy="24" r="4.2"/>
+            <path d="M24 24 Q21 13 24 6 Q27 12 25.5 21 Z" />
+            <path d="M24 24 Q34 29 39.5 35 Q30 36 25 26.5 Z" />
+            <path d="M24 24 Q14 29 8.5 35 Q18 36 23 26.5 Z" />
+          </g>
+          <circle cx="24" cy="24" r="1.5" fill="#FF2638" />
+        </svg>
+        <div>
+          <div class="crm-title">AMATERASU<span style="color:#EF2D3D; font-weight:900;">X</span></div>
+          <div class="crm-sub">COMMAND CENTER</div>
+        </div>
+      </div>
+
+      <nav class="crm-nav">
+        <button class="nav-item active" data-tab="dashboard">
+          <span class="icon">📊</span> Telemetry Overview
+        </button>
+        <button class="nav-item" data-tab="signals">
+          <span class="icon">🤖</span> AI Autonomous Engine <span class="badge-live">AUTO</span>
+        </button>
+        <button class="nav-item" data-tab="analysis">
+          <span class="icon">📝</span> Solar Macro CMS
+        </button>
+        <button class="nav-item" data-tab="screener">
+          <span class="icon">📈</span> Heat Matrix Tuner
+        </button>
+        <button class="nav-item" data-tab="classes">
+          <span class="icon">🎓</span> Masterclasses
+        </button>
+        <button class="nav-item" data-tab="feedback">
+          <span class="icon">💬</span> Direct Transmissions <span class="badge-count" id="fbCount">0</span>
+        </button>
+        <button class="nav-item" data-tab="contest">
+          <span class="icon">🏆</span> Championship
+        </button>
+        <button class="nav-item" data-tab="users">
+          <span class="icon">👥</span> Operator Accounts
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/" target="_blank" class="btn-app-preview">
+          📱 Open Trader App ↗
+        </a>
+        <div class="node-status">
+          <span class="dot-online"></span> MT5 Cluster: Connected (14ms)
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="crm-main">
+      <header class="crm-header">
+        <div>
+          <h1 id="pageTitle">Telemetry Overview</h1>
+          <p class="subtitle" id="pageSub">Real-time status of Amaterasu AI platform, live signals, and operator activity.</p>
+        </div>
+        <div class="header-right">
+          <div class="live-clock" id="liveClock">21:00:00 MYT</div>
+          <button class="btn btn-primary" id="quickSignalBtn">⚡ Dispatch Live Signal</button>
+        </div>
+      </header>
+
+      <!-- 1. DASHBOARD OVERVIEW TAB -->
+      <section class="tab-pane active" id="tab-dashboard">
+        <div class="metric-grid">
+          <div class="metric-card">
+            <span class="m-label">Win Rate</span>
+            <div class="m-val" id="mWinRate" style="color:var(--solar-gold);">93%</div>
+            <span class="m-sub">MT5 Verified Executions</span>
+          </div>
+          <div class="metric-card">
+            <span class="m-label">Today Net Return</span>
+            <div class="m-val" id="mPips" style="color:var(--bull);">+979</div>
+            <span class="m-sub">Cumulative Pips</span>
+          </div>
+          <div class="metric-card">
+            <span class="m-label">Total Signals Fired</span>
+            <div class="m-val" id="mTotalSignals">17</div>
+            <span class="m-sub" id="mHits">13 TP1 · 7 TP2 · 1 SL</span>
+          </div>
+          <div class="metric-card">
+            <span class="m-label">Active Operators</span>
+            <div class="m-val" id="mOnlineUsers">24</div>
+            <span class="m-sub"><span class="dot-online"></span> All Nodes Streaming</span>
+          </div>
+        </div>
+
+        <div class="split-row">
+          <!-- Active Signal Live Status -->
+          <div class="card active-signal-control">
+            <div class="card-head">
+              <h3>⚡ Live Signal Room</h3>
+              <span class="status-pill" id="activeStatusPill">WAITING SCANNER</span>
+            </div>
+            <div id="activeSignalDetails" class="active-signal-box">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Quick Actions & Desk Telemetry -->
+          <div class="card">
+            <div class="card-head">
+              <h3>📡 Real-time Telemetry Stream</h3>
+              <span class="badge-live">SSE CONNECTED</span>
+            </div>
+            <div class="feed-list" id="activityFeed">
+              <div class="feed-item">
+                <span class="time">Just now</span>
+                <span class="txt">Amaterasu Core connected to MT5 Gold Feed.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. AI AUTONOMOUS SIGNAL ENGINE TAB -->
+      <section class="tab-pane" id="tab-signals">
+        <div class="split-row">
+          <!-- AI Autonomous Engine Control Console -->
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <h3 style="display:flex; align-items:center; gap:8px;">
+                  <span>🤖</span> Amaterasu AI Autonomous Engine
+                </h3>
+                <small class="muted">100% Autonomous Neural Market Scanner · No manual intervention needed</small>
+              </div>
+              <span class="badge-live" id="aiEngineBadge">● AUTONOMOUS AI ACTIVE</span>
+            </div>
+
+            <!-- AI Engine Stats Banner -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0;">
+              <div style="background:#07090e; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 14px;">
+                <span class="m-label" style="font-size:10.5px;">AI Neural Accuracy</span>
+                <div style="font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:800; color:var(--solar-gold); margin:4px 0;">93% Win Rate</div>
+                <small class="muted" style="font-size:11px;">M1 · M5 · M15 Confluence Model</small>
+              </div>
+              <div style="background:#07090e; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 14px;">
+                <span class="m-label" style="font-size:10.5px;">Auto Multi-Asset Scanner</span>
+                <div style="font-family:'Space Grotesk',sans-serif; font-size:13.5px; font-weight:700; color:#00e676; margin:6px 0;">
+                  Gold · FX · WTI · US30
+                </div>
+                <small class="muted" style="font-size:11px;">Autonomous Order Block Detection</small>
+              </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-primary" id="btnForceAiScan" style="flex:1; min-width:180px;">
+                ⚡ Trigger Immediate AI Scan
+              </button>
+              <button type="button" class="btn btn-ghost" id="btnToggleAi" style="flex:1; min-width:140px;">
+                ⏸ Pause AI Engine
+              </button>
+              <button type="button" class="btn btn-danger" id="btnResetStats" style="min-width:140px; background:rgba(239,83,80,0.15); border:1px solid #ef5350; color:#ef5350;">
+                🔄 Reset Stats (0)
+              </button>
+            </div>
+
+            <!-- Real-Time AI Decision Terminal -->
+            <div class="card-head" style="margin-bottom:8px; padding-bottom:4px;">
+              <h4 style="font-size:12.5px; text-transform:uppercase; letter-spacing:0.8px; color:var(--solar-gold); margin:0;">
+                🧠 Live Neural Decision Stream
+              </h4>
+              <span class="badge" style="font-size:10px; background:rgba(0,230,118,0.15); color:#00e676;">REAL-TIME AI</span>
+            </div>
+            <div id="aiTerminalLog" style="background:#050609; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 14px; font-family:'Courier New', monospace; font-size:12px; height:210px; overflow-y:auto; line-height:1.55; color:#94a3b8;">
+              <div style="color:#00e676;">[SYSTEM] Amaterasu AI Autonomous Engine v4.2 Online.</div>
+              <div>[SCANNER] Scanning M15 order blocks across Gold, FX, WTI and US30...</div>
+            </div>
+          </div>
+
+          <!-- Active AI Trade Telemetry -->
+          <div class="card">
+            <div class="card-head">
+              <h3>🎯 Active AI Position Telemetry</h3>
+              <small class="muted">Live position tracked by Amaterasu AI core</small>
+            </div>
+            <div id="resolutionBox" class="resolution-box">
+              <!-- Rendered via JS -->
+            </div>
+
+            <h4 style="margin: 20px 0 10px; font-size: 14px; color: var(--solar-gold);">Recent Executed Signals</h4>
+            <div class="table-wrap">
+              <table class="crm-table" id="signalsHistoryTable">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Entry</th>
+                    <th>Result</th>
+                    <th>Pips</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manual Signal Override Dispatcher -->
+        <div class="card" style="margin-top:20px;">
+          <div class="card-head">
+            <div>
+              <h3>📡 Manual Signal Broadcast Override</h3>
+              <small class="muted">Override autonomous scan and dispatch an immediate manual VIP trade setup to all connected clients</small>
+            </div>
+            <span class="badge">MANUAL DESK</span>
+          </div>
+          <form id="manualSignalForm">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-bottom:12px;">
+              <div class="form-group" style="margin:0;">
+                <label>Asset Symbol</label>
+                <select id="sigSymbol" required>
+                  <option value="XAUUSD">XAUUSD (Gold)</option>
+                  <option value="EURUSD">EURUSD</option>
+                  <option value="GBPJPY">GBPJPY</option>
+                  <option value="GBPUSD">GBPUSD</option>
+                  <option value="USDJPY">USDJPY</option>
+                  <option value="WTI">WTI (Crude Oil)</option>
+                  <option value="US30">US30 (Dow Jones)</option>
+                  <option value="NAS100">NAS100 (Nasdaq)</option>
+                  <option value="BTCUSD">BTCUSD (Bitcoin)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Direction</label>
+                <select id="sigType" required>
+                  <option value="BUY">BUY 🟢</option>
+                  <option value="SELL">SELL 🔴</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Entry Price</label>
+                <input type="number" id="sigEntry" step="0.01" value="3995.80" required />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Target 1 (TP1)</label>
+                <input type="number" id="sigTP1" step="0.01" value="4005.00" required />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Target 2 (TP2)</label>
+                <input type="number" id="sigTP2" step="0.01" value="4020.00" required />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Stop Loss (SL)</label>
+                <input type="number" id="sigSL" step="0.01" value="3985.00" required />
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label>Confluence / Technical Notes</label>
+              <input type="text" id="sigNotes" placeholder="e.g. M15 Bullish Order Block + Asian Session Liquidity Sweep" value="M15 Bullish Order Block + Asian Session Liquidity Sweep" />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; font-weight:700;">
+              🚀 Broadcast Signal to All Client Terminals
+            </button>
+          </form>
+        </div>
+
+        <!-- AI News Release Outcome Logger -->
+        <div class="card" style="margin-top:20px;">
+          <div class="card-head">
+            <div>
+              <h3>📰 AI News Outcome Logger & Stat Updater</h3>
+              <small class="muted">Record completed high-impact news trades (NFP, CPI, FOMC, PMI) directly to the AI News tab</small>
+            </div>
+            <span class="badge" style="background:rgba(255,160,0,0.18); color:var(--solar-gold); border:1px solid var(--solar-gold);">AI NEWS DESK</span>
+          </div>
+          <form id="aiNewsRecordForm">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-bottom:12px;">
+              <div class="form-group" style="margin:0;">
+                <label>Economic Event</label>
+                <select id="nwsEvent" required>
+                  <option value="US Non-Farm Payrolls (NFP)">US Non-Farm Payrolls (NFP)</option>
+                  <option value="US CPI Inflation Rate">US CPI Inflation Rate</option>
+                  <option value="FOMC Fed Rate Decision">FOMC Fed Rate Decision</option>
+                  <option value="US ISM Manufacturing PMI">US ISM Manufacturing PMI</option>
+                  <option value="US Initial Jobless Claims">US Initial Jobless Claims</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Asset</label>
+                <select id="nwsSymbol">
+                  <option value="XAUUSD">XAUUSD (Gold)</option>
+                  <option value="EURUSD">EURUSD</option>
+                  <option value="GBPUSD">GBPUSD</option>
+                  <option value="US30">US30</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>AI Direction Bias</label>
+                <select id="nwsBias">
+                  <option value="BULLISH">BULLISH ▲</option>
+                  <option value="BEARISH">BEARISH ▼</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Outcome</label>
+                <select id="nwsStatus">
+                  <option value="TP">🎯 TP HIT (Win)</option>
+                  <option value="SL">🛑 SL HIT (Loss)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Realized Pips</label>
+                <input type="number" id="nwsPips" value="85" required />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; font-weight:700;">
+              📰 Catatkan Rekod ke Tab AI News
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 3. MARKET ANALYSIS CMS TAB -->
+      <section class="tab-pane" id="tab-analysis">
+        <div class="card">
+          <div class="card-head">
+            <h3>📝 Solar Macro Intelligence Publisher</h3>
+            <small class="muted">Updates the Analysis tab in trader app in real-time</small>
+          </div>
+          <form id="analysisForm">
+            <div class="form-group">
+              <label>Executive Macro Headline</label>
+              <input type="text" id="anaHeadline" required />
+            </div>
+
+            <div class="form-row four">
+              <div class="form-group">
+                <label>M1 Trend</label>
+                <select id="anaM1"><option value="BEARISH">BEARISH</option><option value="BULLISH">BULLISH</option></select>
+              </div>
+              <div class="form-group">
+                <label>M5 Trend</label>
+                <select id="anaM5"><option value="BEARISH">BEARISH</option><option value="BULLISH">BULLISH</option></select>
+              </div>
+              <div class="form-group">
+                <label>H1 Trend</label>
+                <select id="anaH1"><option value="BEARISH">BEARISH</option><option value="BULLISH">BULLISH</option></select>
+              </div>
+              <div class="form-group">
+                <label>D1 Trend</label>
+                <select id="anaD1"><option value="BULLISH">BULLISH</option><option value="BEARISH">BEARISH</option></select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Solar Resistance Levels (comma separated)</label>
+                <input type="text" id="anaRes" placeholder="4,030.88, 4,042.50, 4,055.00" />
+              </div>
+              <div class="form-group">
+                <label>Solar Demand Levels (comma separated)</label>
+                <input type="text" id="anaSup" placeholder="4,015.20, 4,009.47, 3,995.00" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Macro Drivers (one bullet point per line)</label>
+              <textarea id="anaDriving" rows="4"></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Invalidation Risk</label>
+                <textarea id="anaRisk" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Tactical Takeaway</label>
+                <textarea id="anaTakeaway" rows="3"></textarea>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">💾 Publish Intelligence Report</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 4. SCREENER TUNER TAB -->
+      <section class="tab-pane" id="tab-screener">
+        <div class="card">
+          <div class="card-head">
+            <h3>📈 Amaterasu Heat Matrix Tuner</h3>
+            <small class="muted">Calibrate live strength score (-100 to +100) and trend ratings</small>
+          </div>
+          <div class="table-wrap">
+            <table class="crm-table" id="screenerTable">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Spot Price</th>
+                  <th>Trend Bias</th>
+                  <th>Strength Score (-100 to +100)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. ACADEMY CLASSES TAB -->
+      <section class="tab-pane" id="tab-classes">
+        <div class="split-row">
+          <div class="card">
+            <div class="card-head">
+              <h3>🎓 Schedule New Masterclass</h3>
+            </div>
+            <form id="createClassForm">
+              <div class="form-group">
+                <label>Class Title</label>
+                <input type="text" id="clsTitle" placeholder="Amaterasu Liquidity Masterclass" required />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Lead Sensei / Strategist</label>
+                  <input type="text" id="clsTrainer" placeholder="Sensei Hiro" required />
+                </div>
+                <div class="form-group">
+                  <label>Date</label>
+                  <input type="date" id="clsDate" required />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Time (MYT)</label>
+                  <input type="text" id="clsTime" value="21:00 MYT" required />
+                </div>
+                <div class="form-group">
+                  <label>Duration</label>
+                  <input type="text" id="clsDuration" value="90 mins" required />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary full">Schedule Masterclass</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Scheduled Masterclasses</h3>
+              <small class="muted">Registered participants tracked automatically</small>
+            </div>
+            <div class="table-wrap">
+              <table class="crm-table" id="classesTable">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Date & Time</th>
+                    <th>Trainer</th>
+                    <th>Enrolled</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. DIRECT TRANSMISSIONS INBOX TAB -->
+      <section class="tab-pane" id="tab-feedback">
+        <div class="card">
+          <div class="card-head">
+            <h3>💬 Direct Operator Transmissions</h3>
+            <small class="muted">Messages sent via "Direct Desk Support" in user app. Replying pushes directly to the trader's screen.</small>
+          </div>
+          <div class="feedbacks-container" id="feedbacksList">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. CHAMPIONSHIP DESK TAB -->
+      <section class="tab-pane" id="tab-contest">
+        <div class="card">
+          <div class="card-head">
+            <h3>🏆 Solar Championship Operations</h3>
+            <button class="btn btn-primary" id="toggleContestBtn">Toggle Tournament Status</button>
+          </div>
+          <div id="contestAdminView">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. OPERATOR ACCOUNTS TAB -->
+      <section class="tab-pane" id="tab-users">
+        <div class="card">
+          <div class="card-head">
+            <h3>👥 Registered Operator Accounts</h3>
+            <small class="muted">Live connected sessions and registered device limits</small>
+          </div>
+          <div class="table-wrap">
+            <table class="crm-table" id="usersTable">
+              <thead>
+                <tr>
+                  <th>Call-Sign</th>
+                  <th>Status</th>
+                  <th>Connected Devices</th>
+                  <th>Joined Date</th>
+                  <th>P&L Total</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="crmToast" class="crm-toast"></div>
+  <script src="crm.js"></script>
+</body>
+</html>
