@@ -1,0 +1,9 @@
+{
+  "name": "amaterasu-backend",
+  "version": "2.4.0",
+  "description": "Amaterasu X Server Runner",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}

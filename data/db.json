@@ -1,11 +1,11 @@
 {
   "stats": {
-    "totalSignals": 51,
-    "winRate": 94,
+    "totalSignals": 52,
+    "winRate": 92,
     "tp1Hit": 37,
     "tp2Hit": 8,
-    "slHit": 3,
-    "totalProfitToday": 836,
+    "slHit": 4,
+    "totalProfitToday": 825,
     "last7Days": [
       {
         "day": "Wed",
@@ -38,19 +38,30 @@
     ]
   },
   "activeSignal": {
-    "status": "ACTIVE",
-    "symbol": "WTI",
-    "type": "SELL",
+    "status": "WAITING",
+    "symbol": "XAUUSD",
+    "type": "BUY",
     "timeframe": "M15",
-    "entry": 101.37,
-    "tp1": 101.12,
-    "tp2": 100.77,
-    "sl": 101.67,
-    "willWin": true,
-    "firedAt": "07:27",
-    "notes": "[Amaterasu SMC Scalp] Penembusan struktur pasaran (BOS) ke bawah + mitigasi Bearish FVG pada zon rintangan Malaysian SNR. Sasaran TP1 (+25p)."
+    "entry": 0,
+    "tp1": 0,
+    "tp2": 0,
+    "sl": 0,
+    "firedAt": null,
+    "notes": "Amaterasu AI (Institutional SMC & Malaysian SNR Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi..."
   },
   "signals": [
+    {
+      "id": "sig-1793059034321",
+      "time": "07:57",
+      "date": "Oct 27",
+      "symbol": "WTI",
+      "type": "SELL",
+      "entry": 101.37,
+      "status": "CLOSED",
+      "pips": -11,
+      "tags": [],
+      "peak": 16
+    },
     {
       "id": "sig-1793057078193",
       "time": "07:24",
@@ -1155,16 +1166,16 @@
     }
   ],
   "lastResolvedSignal": {
-    "id": "sig-1793057078193",
-    "time": "07:24",
+    "id": "sig-1793059034321",
+    "time": "07:57",
     "date": "Oct 27",
     "symbol": "WTI",
     "type": "SELL",
-    "entry": 101.4,
+    "entry": 101.37,
     "status": "CLOSED",
-    "pips": 1,
+    "pips": -11,
     "tags": [],
-    "peak": 6
+    "peak": 16
   },
   "aiNewsStats": {
     "totalNewsSignals": 0,
