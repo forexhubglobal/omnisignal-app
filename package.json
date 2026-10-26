@@ -1,0 +1,21 @@
+{
+  "name": "amaterasu-x",
+  "version": "2.4.0",
+  "description": "Amaterasu X · Autonomous AI Signal & Institutional Trading Terminal",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "forex",
+    "trading",
+    "signals",
+    "tradingview",
+    "amaterasu"
+  ],
+  "author": "Amaterasu Desk",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -674,48 +674,189 @@ input:focus, select:focus, textarea:focus {
   gap: 8px;
 }
 
-/* Splash Screen */
+/* Splash Screen - AMATERASU X Mangekyo Sharingan Awakening */
 .splash {
   position: fixed;
   inset: 0;
-  background: #050609;
+  background: radial-gradient(circle at center, #0F1722 0%, #080D14 65%, #04060A 100%);
   z-index: 100000;
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: splashFade 1.6s forwards;
+  animation: splashFade 2.6s forwards;
+  overflow: hidden;
+}
+.splash::before {
+  content: '';
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239, 45, 61, 0.22) 0%, rgba(255, 38, 56, 0.08) 50%, transparent 70%);
+  animation: sharinganAuraPulse 2s ease-in-out infinite alternate;
+  pointer-events: none;
 }
 .splash-in {
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  z-index: 2;
+  padding: 20px;
+}
+.kanji-splash-tag {
+  background: rgba(239, 45, 61, 0.18);
+  border: 1px solid #EF2D3D;
+  color: #FF4D5A;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 3px 12px;
+  border-radius: 12px;
+  letter-spacing: 2.5px;
+  box-shadow: 0 0 16px rgba(239, 45, 61, 0.4);
+  margin-bottom: 16px;
+  animation: tagDrop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .splash-logo {
-  margin-bottom: 14px;
-  filter: drop-shadow(0 0 30px rgba(255, 109, 0, 0.6));
-  animation: logoPulse 1.4s ease-in-out infinite alternate;
+  margin-bottom: 16px;
 }
-.splash-in b {
+.splash-brand-title {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 24px;
-  letter-spacing: 2px;
-  color: #fff;
-}
-.splash-in small {
-  font-size: 12px;
+  font-size: 28px;
+  font-weight: 900;
   letter-spacing: 3px;
-  color: var(--solar-orange);
+  color: #FFFFFF;
+  text-shadow: 0 0 20px rgba(239, 45, 61, 0.4);
+}
+.splash-tagline {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #EF2D3D;
   text-transform: uppercase;
-  margin-top: 4px;
+  margin-top: 6px;
+  font-weight: 700;
+}
+.splash-loader-bar {
+  width: 140px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  margin-top: 18px;
+  overflow: hidden;
+  position: relative;
+}
+.splash-loader-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #EF2D3D 0%, #FF2638 100%);
+  box-shadow: 0 0 8px #FF2638;
+  border-radius: 3px;
+  animation: loaderProgress 2s ease-in-out forwards;
+}
+@keyframes loaderProgress {
+  0% { width: 0%; }
+  60% { width: 75%; }
+  100% { width: 100%; }
+}
+@keyframes tagDrop {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 @keyframes splashFade {
-  0%, 75% { opacity: 1; }
+  0%, 82% { opacity: 1; }
   100% { opacity: 0; pointer-events: none; }
 }
-@keyframes logoPulse {
-  from { transform: scale(0.96); opacity: 0.85; }
-  to { transform: scale(1.04); opacity: 1; }
+
+/* Sharingan Eye Vector Animation */
+.sharingan-eye-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sharingan-outer-pulse {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239, 45, 61, 0.5) 0%, rgba(255, 38, 56, 0.15) 50%, transparent 75%);
+  animation: sharinganAuraPulse 1.8s ease-in-out infinite alternate;
+}
+.sharingan-ripple {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(239, 45, 61, 0.6);
+  animation: sharinganRippleExpand 1.6s ease-out infinite;
+}
+.sharingan-eye-svg {
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 0 20px rgba(239, 45, 61, 0.8));
+  animation: eyeScaleFocus 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+.sharingan-pinwheel {
+  transform-origin: 50px 50px;
+  animation: mangekyoSpinAwaken 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes mangekyoSpinAwaken {
+  0% {
+    transform: rotate(0deg) scale(0.6);
+    opacity: 0.3;
+  }
+  30% {
+    transform: rotate(360deg) scale(1.12);
+    opacity: 0.85;
+  }
+  65% {
+    transform: rotate(720deg) scale(0.96);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(1080deg) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes eyeScaleFocus {
+  0% {
+    transform: scale(0.65);
+    opacity: 0;
+  }
+  35% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.97);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes sharinganAuraPulse {
+  from {
+    transform: scale(0.92);
+    opacity: 0.5;
+    filter: blur(4px);
+  }
+  to {
+    transform: scale(1.18);
+    opacity: 0.95;
+    filter: blur(8px);
+  }
+}
+@keyframes sharinganRippleExpand {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
 }
 
 /* Responsive Desktop Mode - Locked to authentic mobile phone frame */
@@ -725,3 +866,182 @@ body.desktop .app {
 body.desktop .tabbar {
   max-width: 440px;
 }
+
+/* ===== AMATERASU X: Itachi Uchiha Anime Login Screen ===== */
+.login-screen-overlay {
+  position: fixed;
+  inset: 0;
+  background: #080D14;
+  z-index: 99999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+}
+.login-card {
+  width: 100%;
+  max-width: 430px;
+  background: #0F1722;
+  border: 1px solid rgba(239, 45, 61, 0.35);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(239, 45, 61, 0.2);
+  position: relative;
+  animation: fadeInModal 0.3s ease-out;
+}
+.login-hero-artwork {
+  position: relative;
+  width: 100%;
+  height: 290px;
+  background-size: cover;
+  background-position: center top;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+}
+.login-hero-artwork::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 13, 20, 0.1) 0%, rgba(15, 23, 34, 0.95) 100%);
+}
+.login-hero-badges {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.kanji-badge {
+  background: rgba(239, 45, 61, 0.2);
+  border: 1px solid #EF2D3D;
+  color: #FF4D5A;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 2px;
+  box-shadow: 0 0 12px rgba(239, 45, 61, 0.4);
+}
+.login-body {
+  padding: 20px 24px 28px;
+  background: #0F1722;
+  position: relative;
+  z-index: 2;
+}
+.login-field {
+  margin-bottom: 14px;
+}
+.login-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #A0A6B4;
+  margin-bottom: 6px;
+}
+.login-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.login-input-wrap input {
+  width: 100%;
+  background: #111A28;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #F5F7FA;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.login-input-wrap input:focus {
+  outline: none;
+  border-color: #EF2D3D;
+  box-shadow: 0 0 12px rgba(239, 45, 61, 0.35);
+  background: #172132;
+}
+.login-operator-pills {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.operator-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #A0A6B4;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.operator-chip:hover, .operator-chip.active {
+  background: rgba(239, 45, 61, 0.15);
+  border-color: #EF2D3D;
+  color: #FFF;
+}
+.btn-login-fire {
+  width: 100%;
+  background: linear-gradient(135deg, #EF2D3D 0%, #B81423 100%);
+  color: #FFF;
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(239, 45, 61, 0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-login-fire:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(239, 45, 61, 0.6);
+}
+
+/* Itachi Hero Dashboard Banner */
+.itachi-hero-banner {
+  background: linear-gradient(135deg, rgba(239, 45, 61, 0.12) 0%, rgba(15, 23, 34, 0.95) 100%);
+  border: 1px solid rgba(239, 45, 61, 0.35);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  position: relative;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+}
+.itachi-banner-bg {
+  width: 100%;
+  height: 125px;
+  background-size: cover;
+  background-position: center 25%;
+  position: relative;
+}
+.itachi-banner-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 13, 20, 0.1) 0%, rgba(15, 23, 34, 0.95) 100%);
+}
+.itachi-banner-content {
+  padding: 12px 14px 14px;
+  position: relative;
+  z-index: 2;
+  margin-top: -24px;
+}
+

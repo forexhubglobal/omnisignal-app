@@ -30,5 +30,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`White House Academy app running at http://localhost:${PORT}`);
+  console.log(`Amaterasu X app running at http://localhost:${PORT}`);
 });

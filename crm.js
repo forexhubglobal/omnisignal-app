@@ -215,15 +215,13 @@ function renderDashboard() {
 
 // 2. Signals
 const DEFAULT_PRICES = {
-  XAUUSD: { entry: 3995.80, tp1: 4005.00, tp2: 4020.00, sl: 3985.00, step: '0.01' },
-  EURUSD: { entry: 1.12030, tp1: 1.12450, tp2: 1.12900, sl: 1.11600, step: '0.00001' },
-  GBPJPY: { entry: 209.72, tp1: 210.40, tp2: 211.10, sl: 209.10, step: '0.01' },
-  GBPUSD: { entry: 1.33710, tp1: 1.34200, tp2: 1.34750, sl: 1.33200, step: '0.00001' },
-  USDJPY: { entry: 156.83, tp1: 156.10, tp2: 155.30, sl: 157.40, step: '0.01' },
-  WTI: { entry: 103.27, tp1: 104.50, tp2: 105.80, sl: 102.10, step: '0.01' },
-  US30: { entry: 52394, tp1: 52600, tp2: 52850, sl: 52150, step: '1' },
-  NAS100: { entry: 29117, tp1: 29280, tp2: 29450, sl: 28950, step: '1' },
-  BTCUSD: { entry: 80404, tp1: 81500, tp2: 82800, sl: 79200, step: '1' }
+  XAUUSD: { entry: 2738.50, tp1: 2746.50, tp2: 2758.00, sl: 2730.00, step: '0.01' },
+  EURUSD: { entry: 1.08250, tp1: 1.08650, tp2: 1.09100, sl: 1.07850, step: '0.00001' },
+  GBPJPY: { entry: 198.50, tp1: 199.20, tp2: 200.00, sl: 197.80, step: '0.01' },
+  GBPUSD: { entry: 1.29800, tp1: 1.30250, tp2: 1.30800, sl: 1.29350, step: '0.00001' },
+  USDJPY: { entry: 152.80, tp1: 152.10, tp2: 151.30, sl: 153.50, step: '0.01' },
+  WTI: { entry: 71.50, tp1: 72.60, tp2: 73.80, sl: 70.40, step: '0.01' },
+  BTCUSD: { entry: 67800, tp1: 68900, tp2: 70200, sl: 66600, step: '1' }
 };
 
 const sigSymbolSelect = $('#sigSymbol');
@@ -294,6 +292,35 @@ if (btnForce) {
   };
 }
 
+const selFreq = $('#selAiFrequency');
+const selWin = $('#selAiWinrate');
+const cfgBadge = $('#aiConfigStatusBadge');
+
+async function syncAiConfig() {
+  if (!selFreq || !selWin) return;
+  const frequencyMode = selFreq.value;
+  const targetWinrate = Number(selWin.value);
+  try {
+    const res = await fetch('/api/ai/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ frequencyMode, targetWinrate })
+    });
+    const d = await res.json();
+    if (d.success) {
+      if (cfgBadge) {
+        cfgBadge.textContent = `${targetWinrate}% WINRATE · ${frequencyMode === 'SCALP_PRO' ? 'SCALP PRO' : 'INTRADAY'}`;
+      }
+      toast(`⚙️ Konfigurasi AI Dikemaskini: ${targetWinrate}% Winrate (${frequencyMode === 'SCALP_PRO' ? '10-15 signal/hari' : '5-8 signal/hari'})`);
+    }
+  } catch(err) {
+    console.error('Failed to update AI config', err);
+  }
+}
+
+if (selFreq) selFreq.onchange = syncAiConfig;
+if (selWin) selWin.onchange = syncAiConfig;
+
 const btnToggle = $('#btnToggleAi');
 if (btnToggle) {
   btnToggle.onclick = async () => {
@@ -343,7 +370,7 @@ if (nwsForm) {
       'EURUSD': 1.08450,
       'GBPJPY': 209.650,
       'GBPUSD': 1.29800,
-      'US30': 43850.0
+      'USDJPY': 152.80
     };
     try {
       const res = await fetch('/api/ainews/record', {
@@ -705,7 +732,106 @@ window.resetUserDevices = async function(username) {
   }
 };
 
+// 9. Telegram VIP Broadcast
+async function loadTelegramConfig() {
+  try {
+    const res = await fetch('/api/telegram/config');
+    const cfg = await res.json();
+    if ($('#tgEnabled')) $('#tgEnabled').checked = Boolean(cfg.enabled);
+    if ($('#tgBotToken')) $('#tgBotToken').value = cfg.botToken || '';
+    if ($('#tgChatId')) $('#tgChatId').value = cfg.chatId || '';
+    updateTelegramBadge(cfg.enabled && cfg.botToken && cfg.chatId);
+  } catch (e) {}
+}
+
+function updateTelegramBadge(isConnected) {
+  const badge = $('#telegramBadge');
+  const txt = $('#tgStatusText');
+  if (badge) {
+    if (isConnected) {
+      badge.textContent = '● VIP BROADCAST ACTIVE';
+      badge.style.background = 'rgba(0,214,143,0.15)';
+      badge.style.borderColor = '#00D68F';
+      badge.style.color = '#00D68F';
+    } else {
+      badge.textContent = '● DISCONNECTED';
+      badge.style.background = 'rgba(239,45,61,0.15)';
+      badge.style.borderColor = '#EF2D3D';
+      badge.style.color = '#EF2D3D';
+    }
+  }
+  if (txt) {
+    const chk = $('#tgEnabled')?.checked;
+    txt.textContent = chk ? 'Aktif (Disiarkan ke Telegram)' : 'Tidak Aktif';
+    txt.style.color = chk ? '#00D68F' : '#EF2D3D';
+  }
+}
+
+if ($('#tgEnabled')) {
+  $('#tgEnabled').onchange = () => {
+    updateTelegramBadge($('#tgEnabled').checked && $('#tgBotToken')?.value && $('#tgChatId')?.value);
+  };
+}
+
+if ($('#telegramConfigForm')) {
+  $('#telegramConfigForm').onsubmit = async e => {
+    e.preventDefault();
+    const payload = {
+      enabled: $('#tgEnabled')?.checked,
+      botToken: $('#tgBotToken')?.value.trim(),
+      chatId: $('#tgChatId')?.value.trim()
+    };
+    try {
+      const res = await fetch('/api/telegram/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const d = await res.json();
+      if (d.success) {
+        toast('Tetapan Telegram berjaya disimpan!');
+        updateTelegramBadge(payload.enabled && payload.botToken && payload.chatId);
+      } else {
+        toast('Gagal menyimpan tetapan');
+      }
+    } catch(err) {
+      toast('Ralat sambungan ke pelayan');
+    }
+  };
+}
+
+if ($('#btnTestTgPing')) {
+  $('#btnTestTgPing').onclick = async () => {
+    const payload = {
+      botToken: $('#tgBotToken')?.value.trim(),
+      chatId: $('#tgChatId')?.value.trim()
+    };
+    if (!payload.botToken || !payload.chatId) {
+      alert('Sila masukkan Bot Token dan Chat ID sebelum membuat ujian ping!');
+      return;
+    }
+    toast('Menghantar mesej ujian ke Telegram...');
+    try {
+      const res = await fetch('/api/telegram/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const d = await res.json();
+      if (d.success) {
+        alert('✅ BERJAYA! Mesej ujian telah selamat diterima di Channel/Group Telegram anda!');
+        updateTelegramBadge(true);
+      } else {
+        alert('❌ GAGAL: ' + (d.details?.error || d.error || 'Pastikan Bot dijadikan Admin dalam Channel!'));
+      }
+    } catch(err) {
+      alert('Ralat sambungan: ' + err.message);
+    }
+  };
+}
+
 // Boot
 startClock();
 loadData();
+loadTelegramConfig();
 initSSE();

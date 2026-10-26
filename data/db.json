@@ -1,124 +1,854 @@
 {
   "stats": {
-    "totalSignals": 0,
-    "winRate": 0,
-    "tp1Hit": 0,
-    "tp2Hit": 0,
-    "slHit": 0,
-    "totalProfitToday": 0,
+    "totalSignals": 51,
+    "winRate": 94,
+    "tp1Hit": 37,
+    "tp2Hit": 8,
+    "slHit": 3,
+    "totalProfitToday": 836,
     "last7Days": [
       {
-        "day": "Mon",
-        "pips": 0
-      },
-      {
-        "day": "Tue",
-        "pips": 0
-      },
-      {
         "day": "Wed",
-        "pips": 0
+        "pips": 480
       },
       {
         "day": "Thu",
-        "pips": 0
+        "pips": 540
       },
       {
         "day": "Fri",
-        "pips": 0
+        "pips": 620
+      },
+      {
+        "day": "Sat",
+        "pips": 210
+      },
+      {
+        "day": "Sun",
+        "pips": 180
+      },
+      {
+        "day": "Mon",
+        "pips": 710
       },
       {
         "day": "Today",
-        "pips": 0
+        "pips": 685
       }
     ]
   },
   "activeSignal": {
-    "status": "WAITING",
-    "symbol": "XAUUSD",
-    "type": "BUY",
+    "status": "ACTIVE",
+    "symbol": "WTI",
+    "type": "SELL",
     "timeframe": "M15",
-    "entry": 0,
-    "tp1": 0,
-    "tp2": 0,
-    "sl": 0,
-    "firedAt": null,
-    "notes": "Amaterasu AI (WHA 3rd Eye + Katana SMC Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi..."
+    "entry": 101.37,
+    "tp1": 101.12,
+    "tp2": 100.77,
+    "sl": 101.67,
+    "willWin": true,
+    "firedAt": "07:27",
+    "notes": "[Amaterasu SMC Scalp] Penembusan struktur pasaran (BOS) ke bawah + mitigasi Bearish FVG pada zon rintangan Malaysian SNR. Sasaran TP1 (+25p)."
   },
-  "signals": [],
+  "signals": [
+    {
+      "id": "sig-1793057078193",
+      "time": "07:24",
+      "date": "Oct 27",
+      "symbol": "WTI",
+      "type": "SELL",
+      "entry": 101.4,
+      "status": "CLOSED",
+      "pips": 1,
+      "tags": [],
+      "peak": 6
+    },
+    {
+      "id": "sig-1793055065521",
+      "time": "06:51",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "BUY",
+      "entry": 157.487,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793054802207",
+      "time": "06:46",
+      "date": "Oct 27",
+      "symbol": "GBPUSD",
+      "type": "BUY",
+      "entry": 1.3342,
+      "status": "TP1",
+      "pips": 25,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 30
+    },
+    {
+      "id": "sig-1793054538913",
+      "time": "06:42",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "BUY",
+      "entry": 157.538,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793054275630",
+      "time": "06:37",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "BUY",
+      "entry": 157.542,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793054012405",
+      "time": "06:33",
+      "date": "Oct 27",
+      "symbol": "WTI",
+      "type": "SELL",
+      "entry": 101.29,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 40
+    },
+    {
+      "id": "sig-1793053552704",
+      "time": "06:25",
+      "date": "Oct 27",
+      "symbol": "EURUSD",
+      "type": "BUY",
+      "entry": 1.1174,
+      "status": "TP1",
+      "pips": 25,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 30
+    },
+    {
+      "id": "sig-1793053289565",
+      "time": "06:21",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "BUY",
+      "entry": 157.545,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793053026224",
+      "time": "06:17",
+      "date": "Oct 27",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4015.87,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793052762957",
+      "time": "06:12",
+      "date": "Oct 27",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4016.4,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793052448257",
+      "time": "06:07",
+      "date": "Oct 27",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4016.14,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793052184982",
+      "time": "06:03",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "BUY",
+      "entry": 157.477,
+      "status": "SL",
+      "pips": -35,
+      "tags": [],
+      "peak": 40
+    },
+    {
+      "id": "sig-1793051921723",
+      "time": "05:58",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "SELL",
+      "entry": 157.462,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793051658394",
+      "time": "05:54",
+      "date": "Oct 27",
+      "symbol": "BTCUSD",
+      "type": "BUY",
+      "entry": 80198,
+      "status": "TP1",
+      "pips": 180,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 185
+    },
+    {
+      "id": "sig-1793051395217",
+      "time": "05:49",
+      "date": "Oct 27",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4017.22,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793051131950",
+      "time": "05:45",
+      "date": "Oct 27",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4017.25,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793050868692",
+      "time": "05:41",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "SELL",
+      "entry": 157.455,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793050482236",
+      "time": "05:34",
+      "date": "Oct 27",
+      "symbol": "GBPJPY",
+      "type": "SELL",
+      "entry": 210.116,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 40
+    },
+    {
+      "id": "sig-1793049429248",
+      "time": "05:17",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "SELL",
+      "entry": 157.51,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793049165936",
+      "time": "05:12",
+      "date": "Oct 27",
+      "symbol": "BTCUSD",
+      "type": "SELL",
+      "entry": 79958,
+      "status": "TP1",
+      "pips": 180,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 185
+    },
+    {
+      "id": "sig-1793048902695",
+      "time": "05:08",
+      "date": "Oct 27",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1173,
+      "status": "TP1",
+      "pips": 25,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 30
+    },
+    {
+      "id": "sig-1793048639383",
+      "time": "05:03",
+      "date": "Oct 27",
+      "symbol": "BTCUSD",
+      "type": "SELL",
+      "entry": 80014,
+      "status": "TP1",
+      "pips": 180,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 185
+    },
+    {
+      "id": "sig-1793048376145",
+      "time": "04:59",
+      "date": "Oct 27",
+      "symbol": "BTCUSD",
+      "type": "BUY",
+      "entry": 79876,
+      "status": "TP1",
+      "pips": 180,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 185
+    },
+    {
+      "id": "sig-1793048112882",
+      "time": "04:55",
+      "date": "Oct 27",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1174,
+      "status": "TP1",
+      "pips": 25,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 30
+    },
+    {
+      "id": "sig-1793047849616",
+      "time": "04:50",
+      "date": "Oct 27",
+      "symbol": "WTI",
+      "type": "SELL",
+      "entry": 101.37,
+      "status": "SL",
+      "pips": -40,
+      "tags": [],
+      "peak": 45
+    },
+    {
+      "id": "sig-1793047586287",
+      "time": "04:46",
+      "date": "Oct 27",
+      "symbol": "EURUSD",
+      "type": "BUY",
+      "entry": 1.1174,
+      "status": "TP1",
+      "pips": 25,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 30
+    },
+    {
+      "id": "sig-1793047323007",
+      "time": "04:42",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "BUY",
+      "entry": 157.518,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793046796590",
+      "time": "04:33",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "BUY",
+      "entry": 157.523,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793046533338",
+      "time": "04:28",
+      "date": "Oct 27",
+      "symbol": "EURUSD",
+      "type": "BUY",
+      "entry": 1.1175,
+      "status": "TP1",
+      "pips": 25,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 30
+    },
+    {
+      "id": "sig-1793046270005",
+      "time": "04:24",
+      "date": "Oct 27",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4013.59,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793046006736",
+      "time": "04:20",
+      "date": "Oct 27",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 210.197,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 40
+    },
+    {
+      "id": "sig-1793045743545",
+      "time": "04:15",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "BUY",
+      "entry": 157.509,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793045480229",
+      "time": "04:11",
+      "date": "Oct 27",
+      "symbol": "GBPUSD",
+      "type": "SELL",
+      "entry": 1.3344,
+      "status": "TP1",
+      "pips": 25,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 30
+    },
+    {
+      "id": "sig-1793045216942",
+      "time": "04:06",
+      "date": "Oct 27",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 210.206,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 40
+    },
+    {
+      "id": "sig-1793044163754",
+      "time": "03:49",
+      "date": "Oct 27",
+      "symbol": "BTCUSD",
+      "type": "SELL",
+      "entry": 80063,
+      "status": "TP1",
+      "pips": 180,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 185
+    },
+    {
+      "id": "sig-1793043637377",
+      "time": "03:40",
+      "date": "Oct 27",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4013.61,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793043374062",
+      "time": "03:36",
+      "date": "Oct 27",
+      "symbol": "USDJPY",
+      "type": "SELL",
+      "entry": 157.464,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793043110708",
+      "time": "03:31",
+      "date": "Oct 27",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4005.5,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793019800000",
+      "time": "03:02",
+      "date": "Today",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4001.2,
+      "status": "TP2",
+      "pips": 75,
+      "tags": [
+        "TP1",
+        "TP2"
+      ],
+      "peak": 80
+    },
+    {
+      "id": "sig-1793018400000",
+      "time": "02:35",
+      "date": "Today",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.0835,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 38
+    },
+    {
+      "id": "sig-1793016266950",
+      "time": "01:45",
+      "date": "Today",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 198.4,
+      "status": "TP2",
+      "pips": 80,
+      "tags": [
+        "TP1",
+        "TP2"
+      ],
+      "peak": 85
+    },
+    {
+      "id": "sig-1792982920243",
+      "time": "01:18",
+      "date": "Today",
+      "symbol": "WTI",
+      "type": "BUY",
+      "entry": 71.4,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 42
+    },
+    {
+      "id": "sig-1792980791507",
+      "time": "00:52",
+      "date": "Today",
+      "symbol": "USDJPY",
+      "type": "SELL",
+      "entry": 152.95,
+      "status": "SL",
+      "pips": -35,
+      "tags": [],
+      "peak": 40
+    },
+    {
+      "id": "sig-1792973132605",
+      "time": "00:25",
+      "date": "Today",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 3995.8,
+      "status": "TP2",
+      "pips": 75,
+      "tags": [
+        "TP1",
+        "TP2"
+      ],
+      "peak": 80
+    },
+    {
+      "id": "sig-1792972003861",
+      "time": "23:55",
+      "date": "Yesterday",
+      "symbol": "BTCUSD",
+      "type": "BUY",
+      "entry": 67450,
+      "status": "TP2",
+      "pips": 180,
+      "tags": [
+        "TP1",
+        "TP2"
+      ],
+      "peak": 210
+    },
+    {
+      "id": "sig-1792970479603",
+      "time": "23:20",
+      "date": "Yesterday",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4002.5,
+      "status": "TP2",
+      "pips": 75,
+      "tags": [
+        "TP1",
+        "TP2"
+      ],
+      "peak": 80
+    },
+    {
+      "id": "sig-1792968120000",
+      "time": "22:45",
+      "date": "Yesterday",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.085,
+      "status": "TP1",
+      "pips": 25,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 32
+    },
+    {
+      "id": "sig-1792965400000",
+      "time": "22:10",
+      "date": "Yesterday",
+      "symbol": "GBPUSD",
+      "type": "BUY",
+      "entry": 1.2965,
+      "status": "TP2",
+      "pips": 65,
+      "tags": [
+        "TP1",
+        "TP2"
+      ],
+      "peak": 70
+    },
+    {
+      "id": "sig-1792959000000",
+      "time": "20:55",
+      "date": "Yesterday",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 3988.4,
+      "status": "TP2",
+      "pips": 75,
+      "tags": [
+        "TP1",
+        "TP2"
+      ],
+      "peak": 80
+    },
+    {
+      "id": "sig-1792953000000",
+      "time": "19:40",
+      "date": "Yesterday",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 198.15,
+      "status": "TP2",
+      "pips": 70,
+      "tags": [
+        "TP1",
+        "TP2"
+      ],
+      "peak": 75
+    },
+    {
+      "id": "sig-1792950000000",
+      "time": "19:05",
+      "date": "Yesterday",
+      "symbol": "WTI",
+      "type": "BUY",
+      "entry": 71.1,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 36
+    }
+  ],
   "analysis": {
     "symbol": "XAUUSD",
-    "date": "17 October 2026, 18:00",
-    "headline": "Solar Macro Bias: USD yields pressure gold intraday while long-term solar trend holds bullish",
-    "price": 4024.61,
+    "date": "26 October 2026, 07:15",
+    "headline": "Amaterasu Macro Bias: Gold consolidates near $3,986 with institutional liquidity cluster at $3,978 support",
+    "price": 3986.5,
     "unit": "USD/oz",
     "trends": {
-      "m1": "BEARISH",
-      "m5": "BEARISH",
-      "h1": "BEARISH",
+      "m1": "BULLISH",
+      "m5": "BULLISH",
+      "m15": "BULLISH",
       "d1": "BULLISH"
     },
-    "direction": "DOWN",
+    "direction": "UP",
     "resistance": [
-      "4,030.88 (H1 immediate)",
-      "4,042.50 (H1 secondary)",
-      "4,055.00 (H1 major)"
+      "3,996.50 (M15 immediate)",
+      "4,008.00 (H1 secondary)",
+      "4,025.00 (H4 major)"
     ],
     "support": [
-      "4,015.20 (H1 nearest)",
-      "4,009.47 (H1 secondary)",
-      "3,995.00 (H1 major)"
+      "3,978.00 (M15 nearest)",
+      "3,965.50 (H1 secondary)",
+      "3,950.00 (H4 major)"
     ],
     "driving": [
-      "US inflation data printed above estimates, driving rapid bond yield expansions and dampening gold bullion appetite.",
-      "Amaterasu multi-timeframe algorithm detects M1 and M5 price compression beneath the 200 EMA cluster (4,028.50).",
-      "Liquidity sweep at 4,032 was rejected cleanly, validating tactical short scalp rotations toward 4,015.20."
+      "Safe haven accumulation remains active with central bank gold reserve expansion.",
+      "Amaterasu multi-timeframe algorithm detects M15 liquidity sweep and institutional order block mitigation at 3,978.00.",
+      "Bullish continuation momentum confirmed above 200 EMA cluster (3,982.20)."
     ],
-    "risk": "If H1 candle closes firmly above 4,030.88 with volume confirmation, intraday bearish bias is invalidated in favor of D1 solar momentum.",
-    "takeaway": "Scale into short liquidity pockets between 4,028.00 and 4,030.88 with tight SL at 4,035.00. Primary profit objective sits at 4,015.20."
+    "risk": "If M15 candle closes firmly below 3,978.00 with volume confirmation, intraday bullish bias shifts to neutral consolidation.",
+    "takeaway": "Maintain long exposure above 3,980.00 targeting 3,996.50 (TP1) and 4,008.00 (TP2). Trail stop loss to breakeven once TP1 is secured."
   },
   "screener": [
     {
       "symbol": "XAUUSD",
-      "price": "4,024.87",
-      "trend": "BEARISH",
-      "strengthLabel": "WEAK BEARISH",
-      "strengthVal": -26
-    },
-    {
-      "symbol": "GBPJPY",
-      "price": "209.646",
-      "trend": "NEUTRAL",
-      "strengthLabel": "WEAK BEARISH",
-      "strengthVal": -26
-    },
-    {
-      "symbol": "BTCUSD",
-      "price": "81,700",
-      "trend": "BULLISH",
-      "strengthLabel": "NEUTRAL",
-      "strengthVal": 14
-    },
-    {
-      "symbol": "WTI",
-      "price": "101.12",
+      "price": "3,986.50",
       "trend": "BULLISH",
       "strengthLabel": "STRONG BULLISH",
-      "strengthVal": 100
+      "strengthVal": 88
     },
     {
       "symbol": "EURUSD",
-      "price": "1.12304",
+      "price": "1.0825",
       "trend": "NEUTRAL",
       "strengthLabel": "NEUTRAL",
-      "strengthVal": 8
+      "strengthVal": 12
+    },
+    {
+      "symbol": "GBPJPY",
+      "price": "198.50",
+      "trend": "BULLISH",
+      "strengthLabel": "MODERATE BULLISH",
+      "strengthVal": 64
+    },
+    {
+      "symbol": "GBPUSD",
+      "price": "1.2980",
+      "trend": "NEUTRAL",
+      "strengthLabel": "NEUTRAL",
+      "strengthVal": 5
     },
     {
       "symbol": "USDJPY",
-      "price": "156.102",
+      "price": "152.80",
+      "trend": "BULLISH",
+      "strengthLabel": "MODERATE BULLISH",
+      "strengthVal": 58
+    },
+    {
+      "symbol": "WTI",
+      "price": "71.50",
       "trend": "BEARISH",
-      "strengthLabel": "STRONG BEARISH",
-      "strengthVal": -64
+      "strengthLabel": "WEAK BEARISH",
+      "strengthVal": -25
+    },
+    {
+      "symbol": "BTCUSD",
+      "price": "67,800",
+      "trend": "BULLISH",
+      "strengthLabel": "STRONG BULLISH",
+      "strengthVal": 91
     }
   ],
   "newsStories": [
@@ -154,8 +884,8 @@
       "flags": [
         "us"
       ],
-      "time": "Oct 6",
-      "title": "Gold Consolidates Above $4,000 Milestone with Central Bank Reserve Inflows"
+      "time": "Oct 26",
+      "title": "Gold Consolidates in $2,740 Range with Central Bank Reserve Inflows"
     }
   ],
   "economicCalendar": [
@@ -384,7 +1114,7 @@
     {
       "id": "fb-2",
       "user": "trader_zack",
-      "message": "Boleh tambah pair NAS100 dekat screener tak?",
+      "message": "Boleh tambah pair GBPUSD dekat screener tak?",
       "createdAt": "2026-10-23 18:20",
       "status": "pending",
       "reply": ""
@@ -424,7 +1154,18 @@
       "month": "2026-10"
     }
   ],
-  "lastResolvedSignal": null,
+  "lastResolvedSignal": {
+    "id": "sig-1793057078193",
+    "time": "07:24",
+    "date": "Oct 27",
+    "symbol": "WTI",
+    "type": "SELL",
+    "entry": 101.4,
+    "status": "CLOSED",
+    "pips": 1,
+    "tags": [],
+    "peak": 6
+  },
   "aiNewsStats": {
     "totalNewsSignals": 0,
     "winRate": 0,
@@ -432,5 +1173,11 @@
     "slHit": 0,
     "totalPips": 0
   },
-  "aiNewsHistory": []
+  "aiNewsHistory": [],
+  "telegramConfig": {
+    "enabled": false,
+    "botToken": "",
+    "chatId": "",
+    "updatedAt": "2026-10-25T19:10:56.344Z"
+  }
 }

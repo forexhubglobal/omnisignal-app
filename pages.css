@@ -1675,7 +1675,7 @@
 }
 
 /* ============================================================
-   WHITE HOUSE ACADEMY EXACT FUNCTIONAL CARDS & MODULES (AMATERASU STYLED)
+   AMATERASU X INSTITUTIONAL FUNCTIONAL CARDS & MODULES
    ============================================================ */
 
 /* Stat Page */
@@ -2127,6 +2127,225 @@
   color: #94a3b8;
   line-height: 1.45;
   margin: 0;
+}
+
+/* AMATERASU X: AI Confluence & VIP Share Styles */
+.ai-confluence-card {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.ai-confluence-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 3px; height: 100%;
+  background: linear-gradient(180deg, #EF2D3D 0%, transparent 100%);
+}
+.confluence-grid div {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.confluence-grid div:hover {
+  background: rgba(239, 45, 61, 0.06);
+  border-color: rgba(239, 45, 61, 0.2);
+}
+#btnShareWinPoster:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 6px 20px rgba(239, 45, 61, 0.5) !important;
+}
+#btnShareScannerPoster:hover {
+  background: rgba(239, 45, 61, 0.1);
+  border-color: #EF2D3D !important;
+}
+#soundToggleBtn:hover {
+  background: rgba(239, 45, 61, 0.15) !important;
+  border-color: rgba(239, 45, 61, 0.4) !important;
+}
+
+/* ===== AMATERASU SNR & SMC FORWARD PROJECTION RAYS ===== */
+.snr-forward-rays-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9;
+  overflow: hidden;
+}
+
+.snr-ray-container {
+  position: absolute;
+  left: 64%; /* Starts right after the latest closed candle */
+  right: 0;   /* Extends forward into future space to price scale */
+  height: 2px;
+  display: flex;
+  align-items: center;
+  transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.snr-ray-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: absolute;
+  left: -4px;
+  flex-shrink: 0;
+}
+
+.snr-ray-line {
+  width: 100%;
+  height: 2px;
+  border-top-style: dashed;
+  border-top-width: 2px;
+}
+
+.snr-ray-tag {
+  position: absolute;
+  right: 6px;
+  top: -11px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+/* R2 Major Supply */
+.ray-r2 .snr-ray-dot {
+  background: #ef5350;
+  box-shadow: 0 0 10px #ef5350;
+  animation: pulseDot 1.4s infinite;
+}
+.ray-r2 .snr-ray-line {
+  border-color: rgba(239, 83, 80, 0.9);
+  filter: drop-shadow(0 0 4px rgba(239, 83, 80, 0.6));
+}
+.ray-r2 .snr-ray-tag {
+  background: rgba(239, 83, 80, 0.95);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+/* R1 Rejection Res */
+.ray-r1 .snr-ray-dot {
+  background: #ff8a80;
+  box-shadow: 0 0 8px #ff8a80;
+}
+.ray-r1 .snr-ray-line {
+  border-color: rgba(255, 138, 128, 0.85);
+  border-top-width: 1.5px;
+}
+.ray-r1 .snr-ray-tag {
+  background: rgba(198, 40, 40, 0.92);
+  color: #ffebee;
+  border: 1px solid rgba(255, 138, 128, 0.4);
+}
+
+/* S1 Instant Demand */
+.ray-s1 .snr-ray-dot {
+  background: #00e676;
+  box-shadow: 0 0 8px #00e676;
+}
+.ray-s1 .snr-ray-line {
+  border-color: rgba(0, 230, 118, 0.85);
+  border-top-width: 1.5px;
+}
+.ray-s1 .snr-ray-tag {
+  background: rgba(0, 200, 83, 0.92);
+  color: #06070a;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  font-weight: 800;
+}
+
+/* S2 Major Support */
+.ray-s2 .snr-ray-dot {
+  background: #69f0ae;
+  box-shadow: 0 0 10px #69f0ae;
+  animation: pulseDot 1.4s infinite;
+}
+.ray-s2 .snr-ray-line {
+  border-color: rgba(105, 240, 174, 0.9);
+  filter: drop-shadow(0 0 4px rgba(0, 230, 118, 0.6));
+}
+.ray-s2 .snr-ray-tag {
+  background: rgba(0, 230, 118, 0.98);
+  color: #06070a;
+  border: 1px solid #fff;
+  font-weight: 900;
+}
+
+/* Live Quote Line */
+.ray-live .snr-ray-dot {
+  background: #ffb300;
+  box-shadow: 0 0 8px #ffb300;
+}
+.ray-live .snr-ray-line {
+  border-color: rgba(255, 179, 0, 0.8);
+  border-top-style: dotted;
+}
+.ray-live .snr-ray-tag {
+  background: #ffb300;
+  color: #06070a;
+  font-weight: 800;
+}
+
+/* Amaterasu SMC Shaded Order Block Zone */
+.amaterasu-smc-block-zone {
+  position: absolute;
+  left: 64%;
+  right: 0;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-start;
+  padding: 4px 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.amaterasu-smc-block-zone.demand {
+  background: linear-gradient(90deg, rgba(0, 230, 118, 0.20) 0%, rgba(0, 230, 118, 0.05) 100%);
+  border-top: 1px dashed rgba(0, 230, 118, 0.65);
+  border-bottom: 1px dashed rgba(0, 230, 118, 0.65);
+  box-shadow: inset 0 0 15px rgba(0, 230, 118, 0.08);
+}
+.amaterasu-smc-block-zone.supply {
+  background: linear-gradient(90deg, rgba(239, 83, 80, 0.20) 0%, rgba(239, 83, 80, 0.05) 100%);
+  border-top: 1px dashed rgba(239, 83, 80, 0.65);
+  border-bottom: 1px dashed rgba(239, 83, 80, 0.65);
+  box-shadow: inset 0 0 15px rgba(239, 83, 80, 0.08);
+}
+.amaterasu-smc-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.snr-btn-lines.active {
+  background: rgba(239, 45, 61, 0.2) !important;
+  color: var(--solar-gold) !important;
+  border-color: rgba(239, 45, 61, 0.5) !important;
 }
 
 

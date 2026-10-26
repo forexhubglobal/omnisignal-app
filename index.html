@@ -75,10 +75,16 @@
 
     <!-- User Operator Bar -->
     <div class="userbar">
-      <div class="user-pill">
-        <span></span> OPERATOR: <b id="user">Tengku Khairi</b>
+      <div class="user-pill" style="display:flex; align-items:center; gap:6px;">
+        <img src="img/itachi_avatar.jpg" style="width:20px; height:20px; border-radius:50%; object-fit:cover; border:1.5px solid #EF2D3D; box-shadow:0 0 8px rgba(239,45,61,0.5);" alt="Itachi Avatar" />
+        <span style="font-size:10px; color:#A0A6B4;">OPERATOR:</span> <b id="user" style="color:#FFF;">Tengku Khairi</b>
       </div>
-      <a href="#" id="logout">Disconnect</a>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button id="soundToggleBtn" style="font-size:12px; color:#A0A6B4; display:flex; align-items:center; gap:4px; cursor:pointer;" title="Toggle Amaterasu FX Sound">
+          <span id="soundIcon">🔊</span> <span style="font-size:11px;">Sound</span>
+        </button>
+        <a href="#" id="logout" style="font-size:11px; color:#EF2D3D; font-weight:700; border-bottom:1px dashed rgba(239,45,61,0.4);">Log Keluar</a>
+      </div>
     </div>
 
     <!-- Main Content Container -->

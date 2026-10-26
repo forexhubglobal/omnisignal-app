@@ -68,26 +68,66 @@ const ICON = {
 };
 const ic = (name, cls = '') => `<svg class="ico ${cls}" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name] || ''}</svg>`;
 
-// Amaterasu Solar Crest Logo
-const LOGO = `<svg viewBox="0 0 48 48" width="42" height="42" aria-hidden="true">
-  <defs>
-    <radialGradient id="solG" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ff7a00"/>
-      <stop offset="65%" stop-color="#ff3b30"/>
-      <stop offset="100%" stop-color="#ff9100" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <g stroke="#ff9100" stroke-width="1.8" stroke-linecap="round">
-    <line x1="24" y1="3" x2="24" y2="8" /><line x1="24" y1="40" x2="24" y2="45" />
-    <line x1="3" y1="24" x2="8" y2="24" /><line x1="40" y1="24" x2="45" y2="24" />
-    <line x1="9.15" y1="9.15" x2="12.69" y2="12.69" /><line x1="35.31" y1="35.31" x2="38.85" y2="38.85" />
-    <line x1="9.15" y1="38.85" x2="12.69" y2="35.31" /><line x1="35.31" y1="12.69" x2="38.85" y2="9.15" />
-  </g>
-  <circle cx="24" cy="24" r="14.5" fill="none" stroke="#ffc107" stroke-width="1.6" stroke-dasharray="3 2" />
-  <circle cx="24" cy="24" r="10" fill="url(#solG)" stroke="#ff6d00" stroke-width="1.2" />
-  <path d="M24 18 C26.5 18 28 20.5 28 23 C28 26.5 24 29 20 28 C23 27 25 25 24 22 C23.5 20 22 19.5 24 18 Z" fill="#ffffff" />
-  <circle cx="24" cy="24" r="2.2" fill="#ffd000" />
-</svg>`;
+// AMATERASU X: Authentic Itachi Mangekyo Sharingan Logo
+const LOGO = `<div class="sharingan-eye-container">
+  <div class="sharingan-outer-pulse"></div>
+  <div class="sharingan-ripple"></div>
+  <svg class="sharingan-eye-svg" viewBox="0 0 100 100" width="84" height="84" aria-hidden="true">
+    <defs>
+      <radialGradient id="irisRedGrad" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#FF3848"/>
+        <stop offset="45%" stop-color="#EF2D3D"/>
+        <stop offset="85%" stop-color="#A80D1A"/>
+        <stop offset="100%" stop-color="#3D0308"/>
+      </radialGradient>
+      <radialGradient id="eyeGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="50%" stop-color="#FF2638" stop-opacity="0.8"/>
+        <stop offset="100%" stop-color="#FF2638" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="sharinganBloom" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="2.5" result="glow" />
+        <feMerge>
+          <feMergeNode in="glow" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+
+    <!-- Outer Neon Glow Halo -->
+    <circle cx="50" cy="50" r="48" fill="url(#eyeGlow)" />
+
+    <!-- Sclera / Outer Eye Ring -->
+    <circle cx="50" cy="50" r="42" fill="#06080D" stroke="#EF2D3D" stroke-width="1.8" />
+
+    <!-- Crimson Iris -->
+    <circle cx="50" cy="50" r="38" fill="url(#irisRedGrad)" />
+
+    <!-- Inner Iris Ring Guide -->
+    <circle cx="50" cy="50" r="28" fill="none" stroke="#2B0408" stroke-width="1.2" opacity="0.6"/>
+
+    <!-- Rotating Mangekyo Pinwheel Group -->
+    <g class="sharingan-pinwheel" filter="url(#sharinganBloom)">
+      <!-- Central Core Pupil -->
+      <circle cx="50" cy="50" r="8" fill="#080D14" stroke="#000000" stroke-width="1"/>
+      
+      <!-- Blade 1 (Top) -->
+      <path d="M50 50 Q43 25 50 14 Q57 25 53 44 Z" fill="#080D14"/>
+      <!-- Blade 2 (Bottom-Right) -->
+      <path d="M50 50 Q71 58 81 68 Q64 73 53 54 Z" fill="#080D14"/>
+      <!-- Blade 3 (Bottom-Left) -->
+      <path d="M50 50 Q29 58 19 68 Q36 73 47 54 Z" fill="#080D14"/>
+
+      <!-- Inner accent points -->
+      <circle cx="50" cy="20" r="2.2" fill="#080D14"/>
+      <circle cx="75" cy="64" r="2.2" fill="#080D14"/>
+      <circle cx="25" cy="64" r="2.2" fill="#080D14"/>
+    </g>
+
+    <!-- Pupil Core Red Dot & Glint -->
+    <circle cx="50" cy="50" r="3.2" fill="#EF2D3D"/>
+    <circle cx="48" cy="48" r="1.5" fill="#FFFFFF" opacity="0.9"/>
+  </svg>
+</div>`;
 
 // Solar background glow
 function solarGlow() {
@@ -116,30 +156,116 @@ function modal(html) {
   bg.addEventListener('click', e => { if (e.target === bg || e.target.closest('[data-close]')) close(); });
   return { el: bg, close };
 }
+// ===== Amaterasu X Futuristic Web Audio FX Suite =====
+const AmaterasuSound = {
+  enabled: store.get('ama_sound_enabled', true),
+
+  toggle() {
+    this.enabled = !this.enabled;
+    store.set('ama_sound_enabled', this.enabled);
+    if (this.enabled) this.alert();
+    return this.enabled;
+  },
+
+  getContext() {
+    if (!this.enabled) return null;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      if (!this._ctx) this._ctx = new AudioCtx();
+      if (this._ctx.state === 'suspended') this._ctx.resume();
+      return this._ctx;
+    } catch(e) { return null; }
+  },
+
+  // 1. Sharingan Resonance Sweep (Signal Fired / Scanner Lock)
+  sharingan() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.18);
+      osc.frequency.exponentialRampToValueAtTime(440, now + 0.45);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(400, now);
+      filter.frequency.exponentialRampToValueAtTime(2400, now + 0.2);
+      filter.frequency.exponentialRampToValueAtTime(600, now + 0.5);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.22, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.65);
+    } catch(e) {}
+  },
+
+  // 2. Crystal Victory Chime (Target 1 & 2 Achieved)
+  tpWin() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 arpeggio
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const startTime = ctx.currentTime + (idx * 0.08);
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gain.gain.setValueAtTime(0.18, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.45);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(startTime);
+        osc.stop(startTime + 0.5);
+      });
+    } catch(e) {}
+  },
+
+  // 3. Crisp Alert Chime
+  alert() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(659.25, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.38);
+    } catch(e) {}
+  }
+};
+
 function playChime(type = 'bell') {
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    const now = ctx.currentTime;
-    if (type === 'tp') {
-      osc.frequency.setValueAtTime(587.33, now); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
-    } else {
-      osc.frequency.setValueAtTime(523.25, now); // C5
-      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12); // E5
-      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.24); // G5
-    }
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.55);
-  } catch(e) {}
+  if (type === 'tp' || type === 'win') AmaterasuSound.tpWin();
+  else if (type === 'sharingan' || type === 'signal') AmaterasuSound.sharingan();
+  else AmaterasuSound.alert();
 }
 
 function toast(msg) {
@@ -215,12 +341,37 @@ const AppState = {
         if (this.activeSignal && this.activeSignal.symbol) {
           store.set('selected_signal_sym', this.activeSignal.symbol);
         }
+        AmaterasuSound.sharingan();
         toast(`⚡ AMATERASU SIGNAL: ${this.activeSignal.type} ${this.activeSignal.symbol}!`);
         if (typeof route === 'function') route();
+      });
+      s.addEventListener('signal_active_tick', e => {
+        const d = JSON.parse(e.data);
+        if (this.activeSignal && this.activeSignal.symbol === d.symbol) {
+          this.activeSignal.currentPrice = d.currentPrice;
+          this.activeSignal.floatingPips = d.floatingPips;
+          this.activeSignal.beLocked = d.beLocked;
+          const floatPipsEl = document.getElementById('liveFloatingPipsVal');
+          if (floatPipsEl) {
+            floatPipsEl.textContent = (d.floatingPips >= 0 ? '+' : '') + d.floatingPips + ' PIP';
+            floatPipsEl.style.color = d.floatingPips >= 0 ? '#00e676' : '#ef5350';
+            floatPipsEl.style.background = d.floatingPips >= 0 ? 'rgba(0,230,118,0.12)' : 'rgba(239,83,80,0.12)';
+          }
+          const livePriceEl = document.getElementById('liveSignalCurrentPrice');
+          if (livePriceEl) {
+            livePriceEl.textContent = num(d.currentPrice);
+          }
+          const topBarPipsEl = document.getElementById('topBarFloatingPips');
+          if (topBarPipsEl) {
+            topBarPipsEl.textContent = (d.floatingPips >= 0 ? '+' : '') + d.floatingPips + ' PIP';
+            topBarPipsEl.style.color = d.floatingPips >= 0 ? '#00e676' : '#ef5350';
+          }
+        }
       });
       s.addEventListener('signal_update', e => {
         const d = JSON.parse(e.data);
         if (d.activeSignal) this.activeSignal = d.activeSignal;
+        AmaterasuSound.tpWin();
         toast(d.message || `🎯 Target 1 Disahkan! Alih SL ke Break-Even (BE)!`);
         if (typeof route === 'function') route();
       });
@@ -230,6 +381,9 @@ const AppState = {
         this.lastResolvedSignal = d.item;
         if (d.item) {
           this.signals = [d.item, ...(this.signals || [])];
+          if (d.item.status === 'TP2' || (d.item.pips && d.item.pips > 0)) {
+            AmaterasuSound.tpWin();
+          }
         }
         this.stats = d.stats;
         toast(`🎯 Signal ${d.item.status}: ${d.item.pips > 0 ? '+' : ''}${d.item.pips} pip!`);
@@ -307,18 +461,16 @@ const AppState = {
 // ----- Real-Time TradingView-Synchronized Market Feed -----
 const Market = {
   activeSymbol: 'XAUUSD',
-  open: 3995.81,
-  price: 3995.81,
+  open: 3986.50,
+  price: 3986.50,
   quotes: {
-    XAUUSD: { price: 3995.81, change: -0.71, decimals: 2 },
-    EURUSD: { price: 1.1203, change: -0.11, decimals: 4 },
-    GBPJPY: { price: 209.718, change: -0.16, decimals: 3 },
-    GBPUSD: { price: 1.3371, change: -0.22, decimals: 4 },
-    USDJPY: { price: 156.831, change: 0.03, decimals: 3 },
-    WTI: { price: 103.27, change: 3.82, decimals: 2 },
-    US30: { price: 52394.0, change: -1.27, decimals: 1 },
-    NAS100: { price: 29117.75, change: -0.08, decimals: 1 },
-    BTCUSD: { price: 80404.0, change: -0.61, decimals: 0 }
+    XAUUSD: { price: 3986.50, change: -0.42, decimals: 2 },
+    EURUSD: { price: 1.0825, change: -0.11, decimals: 4 },
+    GBPJPY: { price: 198.50, change: -0.16, decimals: 3 },
+    GBPUSD: { price: 1.2980, change: -0.22, decimals: 4 },
+    USDJPY: { price: 152.80, change: 0.03, decimals: 3 },
+    WTI: { price: 71.50, change: 0.82, decimals: 2 },
+    BTCUSD: { price: 67800.0, change: 1.45, decimals: 0 }
   },
   subs: new Set(),
   getLivePrice(sym) {
@@ -596,26 +748,6 @@ const INSTRUMENT_SNR_CONFIGS = {
     demand1Top: 102.10, demand1Bot: 101.80, demand1Label: 'Demand · Tested 1×',
     demandBotTop: 101.60, demandBotBot: 101.30, demandBotLabel: 'Demand · Fresh'
   },
-  US30: {
-    symbol: 'US30', name: 'Dow Jones 30', base: 52394, range: 650, decimals: 0, gridInterval: 80,
-    viewMin: 52050, viewMax: 52750,
-    refPrice: 52420, liveStart: 52394,
-    supplyTop: 52680, supplyBot: 52580, supplyLabel: 'Supply · Tested 2×',
-    supplyMidTop: 52480, supplyMidBot: 52420, supplyMidLabel: 'Supply · Fresh',
-    demandMidTop: 52280, demandMidBot: 52200, demandMidLabel: 'Demand · Tested 2×',
-    demand1Top: 52180, demand1Bot: 52120, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 52100, demandBotBot: 52020, demandBotLabel: 'Demand · Fresh'
-  },
-  NAS100: {
-    symbol: 'NAS100', name: 'Nasdaq 100', base: 29117, range: 450, decimals: 1, gridInterval: 60,
-    viewMin: 28850, viewMax: 29350,
-    refPrice: 29130, liveStart: 29117,
-    supplyTop: 29310, supplyBot: 29250, supplyLabel: 'Supply · Tested 2×',
-    supplyMidTop: 29190, supplyMidBot: 29150, supplyMidLabel: 'Supply · Fresh',
-    demandMidTop: 29040, demandMidBot: 28980, demandMidLabel: 'Demand · Tested 2×',
-    demand1Top: 28960, demand1Bot: 28910, demand1Label: 'Demand · Tested 1×',
-    demandBotTop: 28880, demandBotBot: 28830, demandBotLabel: 'Demand · Fresh'
-  },
   BTCUSD: {
     symbol: 'BTCUSD', name: 'Bitcoin', base: 80404, range: 2500, decimals: 0, gridInterval: 350,
     viewMin: 79000, viewMax: 82000,
@@ -885,37 +1017,6 @@ const INSTRUMENT_BASE_PATTERNS = {
     { o: 71.70, h: 71.85, l: 71.35, c: 71.45 },
     { o: 71.45, h: 71.65, l: 71.40, c: 71.50, isLive: true }
   ],
-  US30: [
-    { o: 42780, h: 42840, l: 42740, c: 42810 },
-    { o: 42810, h: 42860, l: 42790, c: 42830 },
-    { o: 42830, h: 42850, l: 42720, c: 42740 },
-    { o: 42740, h: 42760, l: 42615, c: 42640, isLow1: true, dashToIdx: 8 },
-    { o: 42640, h: 42720, l: 42630, c: 42700 },
-    { o: 42700, h: 42790, l: 42680, c: 42770 },
-    { o: 42770, h: 42850, l: 42750, c: 42840 },
-    { o: 42840, h: 42920, l: 42820, c: 42910 },
-    { o: 42910, h: 42985, l: 42890, c: 42960, isHigh1: true, dashToIdx: 13 },
-    { o: 42960, h: 42970, l: 42890, c: 42910 },
-    { o: 42910, h: 42930, l: 42840, c: 42860 },
-    { o: 42860, h: 42890, l: 42810, c: 42830, isLow2: true },
-    { o: 42830, h: 42880, l: 42820, c: 42865 },
-    { o: 42865, h: 42880, l: 42830, c: 42850, isLive: true }
-  ],
-  NAS100: [
-    { o: 20260, h: 20310, l: 20240, c: 20290 },
-    { o: 20290, h: 20320, l: 20220, c: 20240 },
-    { o: 20240, h: 20260, l: 20170, c: 20185, isLow1: true, dashToIdx: 7 },
-    { o: 20185, h: 20250, l: 20180, c: 20240 },
-    { o: 20240, h: 20310, l: 20230, c: 20300 },
-    { o: 20300, h: 20370, l: 20290, c: 20360 },
-    { o: 20360, h: 20430, l: 20350, c: 20420 },
-    { o: 20420, h: 20475, l: 20410, c: 20460, isHigh1: true, dashToIdx: 12 },
-    { o: 20460, h: 20465, l: 20400, c: 20415 },
-    { o: 20415, h: 20430, l: 20360, c: 20375 },
-    { o: 20375, h: 20400, l: 20350, c: 20360, isLow2: true },
-    { o: 20360, h: 20410, l: 20355, c: 20395 },
-    { o: 20395, h: 20410, l: 20365, c: 20380, isLive: true }
-  ],
   BTCUSD: [
     { o: 81150, h: 81400, l: 80900, c: 81250 },
     { o: 81250, h: 81350, l: 80600, c: 80750 },
@@ -973,8 +1074,6 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
       GBPUSD: { f1: 0.22, f2: 0.09, f3: 2.1, w1: 0.55, w2: 0.45, noise: 0.07, wick: 0.06 },
       USDJPY: { f1: 0.16, f2: 0.04, f3: 2.4, w1: 0.70, w2: 0.30, noise: 0.09, wick: 0.08 },
       WTI:    { f1: 0.24, f2: 0.08, f3: 2.9, w1: 0.60, w2: 0.40, noise: 0.14, wick: 0.12 },
-      US30:   { f1: 0.12, f2: 0.03, f3: 3.1, w1: 0.80, w2: 0.20, noise: 0.15, wick: 0.11 },
-      NAS100: { f1: 0.15, f2: 0.04, f3: 2.8, w1: 0.78, w2: 0.22, noise: 0.14, wick: 0.10 },
       BTCUSD: { f1: 0.10, f2: 0.03, f3: 4.2, w1: 0.85, w2: 0.15, noise: 0.25, wick: 0.22 }
     }[symbol] || { f1: 0.14, f2: 0.05, f3: 2.7, w1: 0.65, w2: 0.35, noise: 0.12, wick: 0.10 };
 
@@ -1176,13 +1275,13 @@ function mountSNRChart(container, defaultTf = 'M3', initSymbol = 'XAUUSD') {
     ctx.rect(0, 0, pw, ph);
     ctx.clip();
 
-    // Exact faint watermark from Gambar Pertama: WHA · kj35
+    // Watermark: AMATERASU X · AI
     ctx.save();
     ctx.fillStyle = 'rgba(255, 255, 255, 0.045)';
     ctx.font = '700 24px "Space Grotesk", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('WHA · kj35', pw / 2, ph / 2);
+    ctx.fillText('AMATERASU X · AI', pw / 2, ph / 2);
     ctx.restore();
 
     // TradingView Logo Watermark at bottom left
