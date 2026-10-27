@@ -23,6 +23,14 @@ from datetime import datetime
 import requests
 
 try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
+
+try:
     import MetaTrader5 as mt5
 except ImportError:
     print("[ERROR] Pakej MetaTrader5 belum dipasang. Sila jalankan: pip install MetaTrader5")
@@ -91,17 +99,17 @@ class AmaterasuBridge:
         
     def banner(self):
         print(f"{Colors.RED}{Colors.BOLD}")
-        print("  ╔═════════════════════════════════════════════════════════════════════╗")
-        print("  ║                   AMATERASU X · MT5 AI BRIDGE                       ║")
-        print("  ║        High-Frequency Quantitative Signal Execution Terminal        ║")
-        print("  ╚═════════════════════════════════════════════════════════════════════╝")
+        print("  +===================================================================+")
+        print("  |                   AMATERASU X - MT5 AI BRIDGE                     |")
+        print("  |        High-Frequency Quantitative Signal Execution Terminal      |")
+        print("  +===================================================================+")
         print(f"{Colors.RESET}")
-        print(f" {Colors.CYAN}• Server Target   :{Colors.RESET} {self.server_url}")
-        print(f" {Colors.CYAN}• Base Lot Size   :{Colors.RESET} {self.lot_size}")
-        print(f" {Colors.CYAN}• Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2)")
-        print(f" {Colors.CYAN}• Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
-        print(f" {Colors.CYAN}• Magic Number    :{Colors.RESET} {self.magic_number}")
-        print(" ─────────────────────────────────────────────────────────────────────")
+        print(f" {Colors.CYAN}* Server Target   :{Colors.RESET} {self.server_url}")
+        print(f" {Colors.CYAN}* Base Lot Size   :{Colors.RESET} {self.lot_size}")
+        print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2)")
+        print(f" {Colors.CYAN}* Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
+        print(f" {Colors.CYAN}* Magic Number    :{Colors.RESET} {self.magic_number}")
+        print("  -------------------------------------------------------------------")
 
     def init_mt5(self):
         print(f"\n{Colors.YELLOW}[MT5] Menyambung ke terminal MetaTrader 5...{Colors.RESET}")

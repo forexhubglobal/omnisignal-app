@@ -24,7 +24,7 @@ pip install MetaTrader5 requests --quiet
 :: Launch the bridge
 echo [2/2] Memulakan Amaterasu MT5 Bridge...
 echo.
-python amaterasu_mt5_bridge.py
+python -u amaterasu_mt5_bridge.py
 
 if %errorlevel% neq 0 (
     echo.
