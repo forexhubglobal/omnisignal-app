@@ -282,7 +282,7 @@
 
       player = {
         x: 60,
-        y: 380,
+        y: 290,
         width: 32,
         height: 48,
         vx: 0,
@@ -306,147 +306,150 @@
         // STAGE 1: Konoha Outskirts (Blood Moon Night)
         worldWidth = 1900;
 
-        // Ground segments
-        platforms.push({ x: 0, y: 440, w: 500, h: 80, type: 'ground' });
-        platforms.push({ x: 580, y: 440, w: 450, h: 80, type: 'ground' });
-        platforms.push({ x: 1100, y: 440, w: 800, h: 80, type: 'ground' });
+        // Ground segments (y = 350, fully visible with 70px base)
+        platforms.push({ x: 0, y: 350, w: 480, h: 75, type: 'ground' });
+        platforms.push({ x: 560, y: 350, w: 460, h: 75, type: 'ground' });
+        platforms.push({ x: 1100, y: 350, w: 800, h: 75, type: 'ground' });
 
         // Floating Akatsuki platforms
-        platforms.push({ x: 180, y: 340, w: 120, h: 22, type: 'float' });
-        platforms.push({ x: 360, y: 260, w: 140, h: 22, type: 'float' });
-        platforms.push({ x: 560, y: 320, w: 120, h: 22, type: 'float' });
-        platforms.push({ x: 740, y: 240, w: 150, h: 22, type: 'float' });
-        platforms.push({ x: 950, y: 310, w: 130, h: 22, type: 'float' });
-        platforms.push({ x: 1180, y: 330, w: 140, h: 22, type: 'float' });
-        platforms.push({ x: 1380, y: 250, w: 150, h: 22, type: 'float' });
-        platforms.push({ x: 1590, y: 320, w: 140, h: 22, type: 'float' });
+        platforms.push({ x: 180, y: 265, w: 120, h: 20, type: 'float' });
+        platforms.push({ x: 350, y: 185, w: 140, h: 20, type: 'float' });
+        platforms.push({ x: 560, y: 260, w: 120, h: 20, type: 'float' });
+        platforms.push({ x: 740, y: 180, w: 150, h: 20, type: 'float' });
+        platforms.push({ x: 950, y: 255, w: 130, h: 20, type: 'float' });
+        platforms.push({ x: 1180, y: 270, w: 140, h: 20, type: 'float' });
+        platforms.push({ x: 1380, y: 190, w: 150, h: 20, type: 'float' });
+        platforms.push({ x: 1590, y: 260, w: 140, h: 20, type: 'float' });
 
-        // Candles (15 in stage 1)
+        // Candles (15 in stage 1, clearly placed above platforms and along arcs)
         const candleLocs = [
-          [200, 300], [240, 300], [380, 220], [420, 220], [460, 220],
-          [600, 280], [760, 200], [800, 200], [840, 200], [980, 270],
-          [1220, 290], [1400, 210], [1440, 210], [1480, 210], [1630, 280]
+          [200, 225], [240, 225], [370, 145], [410, 145], [450, 145],
+          [580, 220], [760, 140], [800, 140], [840, 140], [970, 215],
+          [1200, 230], [1400, 150], [1440, 150], [1480, 150], [1610, 220]
         ];
         candleLocs.forEach(([cx, cy]) => {
           candles.push({ x: cx, y: cy, w: 16, h: 26, collected: false, hoverOffset: Math.random() * Math.PI * 2 });
         });
 
-        // Enemies: 3 Anbu Mask Ninjas
+        // Enemies: 4 Anbu Mask Ninjas (walking directly on the visible ground & mid-ledges)
         enemies.push({
-          x: 300, y: 400, w: 32, h: 44, type: 'anbu',
-          minX: 200, maxX: 460, speed: 1.4, vx: 1.4, alive: true
+          x: 280, y: 306, w: 32, h: 44, type: 'anbu',
+          minX: 160, maxX: 460, speed: 1.4, vx: 1.4, alive: true
         });
         enemies.push({
-          x: 750, y: 400, w: 32, h: 44, type: 'anbu',
-          minX: 620, maxX: 950, speed: 1.6, vx: -1.6, alive: true
+          x: 750, y: 306, w: 32, h: 44, type: 'anbu',
+          minX: 580, maxX: 980, speed: 1.6, vx: -1.6, alive: true
         });
         enemies.push({
-          x: 1250, y: 400, w: 32, h: 44, type: 'anbu',
-          minX: 1150, maxX: 1550, speed: 1.8, vx: 1.8, alive: true
+          x: 1260, y: 306, w: 32, h: 44, type: 'anbu',
+          minX: 1140, maxX: 1540, speed: 1.8, vx: 1.8, alive: true
+        });
+        enemies.push({
+          x: 1400, y: 146, w: 32, h: 44, type: 'anbu',
+          minX: 1380, maxX: 1510, speed: 1.2, vx: 1.2, alive: true
         });
 
-        // Finish Torii Gate
-        goalGate = { x: 1750, y: 340, w: 60, h: 100 };
+        // Finish Torii Gate (firmly planted on the ground at y=250 to 350)
+        goalGate = { x: 1750, y: 250, w: 60, h: 100 };
 
       } else if (stageNum === 2) {
-        // STAGE 2: The Hokage Monument & Mist Valley
+        // STAGE 2: The Hokage Monument & Mist Valley (Night Blue)
         worldWidth = 2300;
 
-        // Ground segments with larger pits
-        platforms.push({ x: 0, y: 440, w: 420, h: 80, type: 'ground' });
-        platforms.push({ x: 520, y: 440, w: 380, h: 80, type: 'ground' });
-        platforms.push({ x: 1000, y: 440, w: 450, h: 80, type: 'ground' });
-        platforms.push({ x: 1550, y: 440, w: 750, h: 80, type: 'ground' });
+        // Ground segments
+        platforms.push({ x: 0, y: 350, w: 400, h: 75, type: 'ground' });
+        platforms.push({ x: 500, y: 350, w: 380, h: 75, type: 'ground' });
+        platforms.push({ x: 980, y: 350, w: 440, h: 75, type: 'ground' });
+        platforms.push({ x: 1520, y: 350, w: 780, h: 75, type: 'ground' });
 
         // Stepped mountain platforms & moving platforms
-        platforms.push({ x: 220, y: 340, w: 110, h: 22, type: 'float' });
-        platforms.push({ x: 380, y: 250, w: 120, h: 22, type: 'float' });
-        platforms.push({ x: 480, y: 170, w: 130, h: 22, type: 'float' });
+        platforms.push({ x: 200, y: 265, w: 110, h: 20, type: 'float' });
+        platforms.push({ x: 360, y: 185, w: 120, h: 20, type: 'float' });
+        platforms.push({ x: 470, y: 115, w: 120, h: 20, type: 'float' });
 
         // Moving platform
         platforms.push({
-          x: 680, y: 280, w: 110, h: 22, type: 'moving',
-          minX: 650, maxX: 880, vx: 1.5
+          x: 660, y: 220, w: 110, h: 20, type: 'moving',
+          minX: 630, maxX: 860, vx: 1.5
         });
 
-        platforms.push({ x: 920, y: 230, w: 120, h: 22, type: 'float' });
-        platforms.push({ x: 1100, y: 320, w: 130, h: 22, type: 'float' });
-        platforms.push({ x: 1280, y: 240, w: 140, h: 22, type: 'float' });
+        platforms.push({ x: 900, y: 175, w: 120, h: 20, type: 'float' });
+        platforms.push({ x: 1080, y: 260, w: 130, h: 20, type: 'float' });
 
         // Second moving platform
         platforms.push({
-          x: 1450, y: 290, w: 120, h: 22, type: 'moving',
-          minX: 1440, maxX: 1680, vx: -1.8
+          x: 1420, y: 230, w: 120, h: 20, type: 'moving',
+          minX: 1400, maxX: 1650, vx: -1.8
         });
 
-        platforms.push({ x: 1750, y: 340, w: 120, h: 22, type: 'float' });
-        platforms.push({ x: 1920, y: 260, w: 140, h: 22, type: 'float' });
+        platforms.push({ x: 1720, y: 270, w: 120, h: 20, type: 'float' });
+        platforms.push({ x: 1890, y: 195, w: 130, h: 20, type: 'float' });
 
         // 22 Candles
         const candleLocs2 = [
-          [240, 300], [400, 210], [500, 130], [540, 130],
-          [700, 240], [740, 240], [940, 190], [980, 190],
-          [1120, 280], [1160, 280], [1300, 200], [1340, 200],
-          [1500, 250], [1540, 250], [1780, 300], [1820, 300],
-          [1940, 220], [1980, 220], [2020, 220], [600, 400], [800, 400], [1200, 400]
+          [220, 225], [380, 145], [490, 75], [530, 75],
+          [680, 180], [720, 180], [920, 135], [960, 135],
+          [1100, 220], [1140, 220], [1440, 190], [1480, 190],
+          [1740, 230], [1780, 230], [1910, 155], [1950, 155],
+          [250, 310], [600, 310], [750, 310], [1150, 310], [1650, 310], [1800, 310]
         ];
         candleLocs2.forEach(([cx, cy]) => {
           candles.push({ x: cx, y: cy, w: 16, h: 26, collected: false, hoverOffset: Math.random() * Math.PI * 2 });
         });
 
-        // Enemies: 2 Anbu + 2 Shadow Hounds
+        // Enemies: 2 Anbu + 2 Fast Shadow Hounds (all on visible ground floor)
         enemies.push({
-          x: 250, y: 400, w: 32, h: 44, type: 'anbu',
-          minX: 100, maxX: 390, speed: 1.5, vx: 1.5, alive: true
+          x: 220, y: 306, w: 32, h: 44, type: 'anbu',
+          minX: 80, maxX: 380, speed: 1.5, vx: 1.5, alive: true
         });
         enemies.push({
-          x: 650, y: 400, w: 40, h: 36, type: 'hound',
-          minX: 530, maxX: 880, speed: 2.8, vx: 2.8, alive: true
+          x: 640, y: 314, w: 40, h: 36, type: 'hound',
+          minX: 520, maxX: 860, speed: 2.8, vx: 2.8, alive: true
         });
         enemies.push({
-          x: 1100, y: 400, w: 32, h: 44, type: 'anbu',
-          minX: 1020, maxX: 1400, speed: 1.8, vx: -1.8, alive: true
+          x: 1080, y: 306, w: 32, h: 44, type: 'anbu',
+          minX: 1000, maxX: 1400, speed: 1.8, vx: -1.8, alive: true
         });
         enemies.push({
-          x: 1700, y: 400, w: 40, h: 36, type: 'hound',
-          minX: 1600, maxX: 2000, speed: 3.0, vx: -3.0, alive: true
+          x: 1680, y: 314, w: 40, h: 36, type: 'hound',
+          minX: 1540, maxX: 1980, speed: 3.0, vx: -3.0, alive: true
         });
 
         // Finish Torii Gate
-        goalGate = { x: 2150, y: 340, w: 60, h: 100 };
+        goalGate = { x: 2150, y: 250, w: 60, h: 100 };
 
       } else {
         // STAGE 3: The Crimson Moon Boss Arena (Madara Uchiha)
         worldWidth = 1200;
 
         // Arena ground
-        platforms.push({ x: 0, y: 440, w: 1200, h: 80, type: 'ground' });
+        platforms.push({ x: 0, y: 350, w: 1200, h: 75, type: 'ground' });
 
         // Floating battle ledges
-        platforms.push({ x: 120, y: 330, w: 140, h: 22, type: 'float' });
-        platforms.push({ x: 300, y: 240, w: 160, h: 22, type: 'float' });
-        platforms.push({ x: 500, y: 310, w: 200, h: 22, type: 'float' });
-        platforms.push({ x: 740, y: 220, w: 160, h: 22, type: 'float' });
-        platforms.push({ x: 920, y: 330, w: 150, h: 22, type: 'float' });
+        platforms.push({ x: 120, y: 255, w: 140, h: 20, type: 'float' });
+        platforms.push({ x: 300, y: 175, w: 160, h: 20, type: 'float' });
+        platforms.push({ x: 500, y: 245, w: 180, h: 20, type: 'float' });
+        platforms.push({ x: 740, y: 165, w: 160, h: 20, type: 'float' });
+        platforms.push({ x: 920, y: 255, w: 150, h: 20, type: 'float' });
 
         // 18 Sacred Candles
         const candleLocs3 = [
-          [140, 290], [180, 290], [220, 290],
-          [320, 200], [360, 200], [400, 200],
-          [540, 270], [580, 270], [620, 270], [660, 270],
-          [760, 180], [800, 180], [840, 180],
-          [940, 290], [980, 290], [1020, 290],
-          [400, 400], [800, 400]
+          [140, 215], [180, 215], [220, 215],
+          [320, 135], [360, 135], [400, 135],
+          [540, 205], [580, 205], [620, 205],
+          [760, 125], [800, 125], [840, 125],
+          [940, 215], [980, 215], [1020, 215],
+          [200, 310], [450, 310], [800, 310]
         ];
         candleLocs3.forEach(([cx, cy]) => {
           candles.push({ x: cx, y: cy, w: 16, h: 26, collected: false, hoverOffset: Math.random() * Math.PI * 2 });
         });
 
-        // Madara Boss
+        // Madara Boss (rests right on ground floor at y=280)
         boss = {
           name: 'Madara Uchiha',
           x: 750,
-          y: 350,
+          y: 280,
           w: 48,
           h: 70,
           hp: 5,
@@ -461,7 +464,7 @@
         };
 
         // Finish Sanctuary (unlocked after Madara defeated)
-        goalGate = { x: 1080, y: 340, w: 60, h: 100, locked: true };
+        goalGate = { x: 1080, y: 250, w: 60, h: 100, locked: true };
       }
     }
 
@@ -606,10 +609,10 @@
       });
 
       // Pit death
-      if (player.y > 490) {
+      if (player.y > 390) {
         hurtPlayer();
         player.x = Math.max(60, player.x - 120);
-        player.y = 300;
+        player.y = 280;
         player.vy = 0;
       }
 
@@ -795,67 +798,98 @@
 
       ctx.clearRect(0, 0, viewW, viewH);
 
-      // 1. Draw Background Image (Parallax)
+      // 1. Draw Background Image (Parallax for each distinct stage)
       let bgImg = images.bgLevel1;
-      if (currentStage === 2) bgImg = images.bgLevel2;
-      if (currentStage === 3) bgImg = images.bgLevel3;
+      let stageTheme = {
+        stroke: '#EF2D3D',
+        glow: '#FF2638',
+        edge: '#FF4D5A',
+        rune: 'rgba(239, 45, 61, 0.25)',
+        mistTop: 'rgba(239, 45, 61, 0)',
+        mistBot: 'rgba(8, 13, 20, 0.88)'
+      };
+
+      if (currentStage === 2) {
+        bgImg = images.bgLevel2;
+        stageTheme = {
+          stroke: '#38BDF8',
+          glow: '#00E5FF',
+          edge: '#7DD3FC',
+          rune: 'rgba(56, 189, 248, 0.25)',
+          mistTop: 'rgba(14, 165, 233, 0)',
+          mistBot: 'rgba(6, 11, 20, 0.9)'
+        };
+      } else if (currentStage === 3) {
+        bgImg = images.bgLevel3;
+        stageTheme = {
+          stroke: '#FF1744',
+          glow: '#FF5252',
+          edge: '#FF8A80',
+          rune: 'rgba(255, 23, 68, 0.3)',
+          mistTop: 'rgba(255, 23, 68, 0)',
+          mistBot: 'rgba(7, 9, 14, 0.95)'
+        };
+      }
 
       if (bgImg && bgImg.complete) {
-        // Draw background with subtle parallax
-        const bgParallax = cameraX * 0.25;
-        const bgW = viewW * 1.5;
-        ctx.drawImage(bgImg, -bgParallax % viewW, 0, bgW, viewH);
-        if (-bgParallax % viewW + bgW < viewW) {
-          ctx.drawImage(bgImg, (-bgParallax % viewW) + bgW, 0, bgW, viewH);
+        const bgParallax = (cameraX * 0.18) % viewW;
+        const bgW = viewW * 1.35;
+        ctx.drawImage(bgImg, -bgParallax, 0, bgW, viewH);
+        if (-bgParallax + bgW < viewW) {
+          ctx.drawImage(bgImg, -bgParallax + bgW, 0, bgW, viewH);
         }
       } else {
         // Fallback procedural background
         const grad = ctx.createLinearGradient(0, 0, 0, viewH);
-        grad.addColorStop(0, '#100305');
-        grad.addColorStop(0.5, '#28060B');
+        grad.addColorStop(0, currentStage === 2 ? '#07162c' : '#140306');
+        grad.addColorStop(0.5, currentStage === 2 ? '#0c2340' : '#28060B');
         grad.addColorStop(1, '#080D14');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, viewW, viewH);
 
-        // Crimson Blood Moon
+        // Moon
         ctx.beginPath();
         ctx.arc(viewW * 0.65, 80, 48, 0, Math.PI * 2);
-        ctx.fillStyle = '#EF2D3D';
-        ctx.shadowColor = '#FF2638';
+        ctx.fillStyle = currentStage === 2 ? '#BAE6FD' : '#EF2D3D';
+        ctx.shadowColor = currentStage === 2 ? '#38BDF8' : '#FF2638';
         ctx.shadowBlur = 30;
         ctx.fill();
         ctx.shadowBlur = 0;
       }
 
-      // Crimson night mist overlay
-      const mistGrad = ctx.createLinearGradient(0, viewH - 120, 0, viewH);
-      mistGrad.addColorStop(0, 'rgba(239, 45, 61, 0)');
-      mistGrad.addColorStop(1, 'rgba(8, 13, 20, 0.85)');
+      // Stage atmospheric night mist overlay
+      const mistGrad = ctx.createLinearGradient(0, viewH - 110, 0, viewH);
+      mistGrad.addColorStop(0, stageTheme.mistTop);
+      mistGrad.addColorStop(1, stageTheme.mistBot);
       ctx.fillStyle = mistGrad;
-      ctx.fillRect(0, viewH - 120, viewW, 120);
+      ctx.fillRect(0, viewH - 110, viewW, 110);
 
       ctx.save();
-      ctx.translate(-Math.floor(cameraX), 0);
+      let cameraY = 0;
+      if (viewH < 380) {
+        cameraY = Math.max(0, player.y - (viewH - 100));
+      }
+      ctx.translate(-Math.floor(cameraX), -Math.floor(cameraY));
 
-      // 2. Draw Platforms
+      // 2. Draw Platforms (Themed by stage)
       platforms.forEach((p) => {
         // Stone slab body
         ctx.fillStyle = '#141824';
-        ctx.strokeStyle = '#EF2D3D';
+        ctx.strokeStyle = stageTheme.stroke;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.roundRect(p.x, p.y, p.w, p.h, [4, 4, 0, 0]);
         ctx.fill();
         ctx.stroke();
 
-        // Akatsuki red cloud rune bar
-        ctx.fillStyle = 'rgba(239, 45, 61, 0.25)';
+        // Platform rune bar
+        ctx.fillStyle = stageTheme.rune;
         ctx.fillRect(p.x + 2, p.y + 2, p.w - 4, 5);
 
         // Platform neon edge glow
-        ctx.shadowColor = '#FF2638';
+        ctx.shadowColor = stageTheme.glow;
         ctx.shadowBlur = 6;
-        ctx.fillStyle = '#FF4D5A';
+        ctx.fillStyle = stageTheme.edge;
         ctx.fillRect(p.x + 4, p.y, p.w - 8, 2);
         ctx.shadowBlur = 0;
       });
@@ -1454,7 +1488,7 @@
         </div>
 
         <!-- Canvas Wrap -->
-        <div style="position:relative; width:100%; height:370px; background:#000;">
+        <div style="position:relative; width:100%; height:420px; background:#000;">
           <canvas id="spCanvas" style="display:block; width:100%; height:100%;"></canvas>
           <div id="spOverlay" style="position:absolute; inset:0; z-index:10; display:flex; align-items:center; justify-content:center; background:rgba(5,7,11,0.85); backdrop-filter:blur(3px); padding:10px;"></div>
         </div>
