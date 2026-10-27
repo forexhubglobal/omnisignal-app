@@ -2333,19 +2333,40 @@
   align-items: center;
   gap: 4px;
 }
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
 .snr-btn-lines.active {
   background: rgba(239, 45, 61, 0.2) !important;
   color: var(--solar-gold) !important;
   border-color: rgba(239, 45, 61, 0.5) !important;
 }
+
+/* ============================================================
+   10. ITACHI - THE SHADOW PATH GAME STYLES
+   ============================================================ */
+.shadow-path-game-container {
+  touch-action: none;
+  font-family: 'Montserrat', sans-serif;
+}
+#spCtrlLeft:active, #spCtrlRight:active {
+  background: rgba(239, 45, 61, 0.25) !important;
+  border-color: #EF2D3D !important;
+  transform: scale(0.92);
+}
+#spCtrlJump:active {
+  transform: scale(0.92);
+  box-shadow: 0 0 25px #FF2638 !important;
+  filter: brightness(1.2);
+}
+.sp-modal-content {
+  animation: spPop 0.22s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+@keyframes spPop {
+  0% { opacity: 0; transform: scale(0.92); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.sp-stage-node:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
 
 

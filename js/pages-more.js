@@ -64,15 +64,18 @@ function MorePage(main) {
     </div>
 
     <!-- Games Banner -->
-    <a class="card" href="#games" style="display:flex; align-items:center; justify-content:space-between; padding:14px 18px; margin-bottom:20px; border-color:rgba(255,109,0,0.3); background:linear-gradient(135deg, rgba(255,109,0,0.1), rgba(15,20,32,0.95));">
+    <a class="card" href="#games" style="display:flex; align-items:center; justify-content:space-between; padding:14px 18px; margin-bottom:20px; border-color:rgba(239,45,61,0.5); background:linear-gradient(135deg, rgba(239,45,61,0.18), rgba(15,20,32,0.95)); box-shadow:0 0 16px rgba(239,45,61,0.25);">
       <div style="display:flex; align-items:center; gap:12px;">
-        <span style="font-size:24px;">🧱</span>
+        <span style="font-size:24px;">👁️</span>
         <div>
-          <b style="font-family:'Space Grotesk',sans-serif; font-size:14.5px; color:#fff; display:block;">Amaterasu Blocks</b>
-          <small class="muted">Candlestick puzzle · monthly tournament</small>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <b style="font-family:'Space Grotesk',sans-serif; font-size:14.5px; color:#fff;">Itachi: The Shadow Path</b>
+            <span class="badge" style="background:rgba(239,45,61,0.3); color:#FF4D5A; border:1px solid rgba(239,45,61,0.6); padding:1px 6px; font-size:9.5px; font-weight:800; border-radius:8px;">NEW ⚔️</span>
+          </div>
+          <small class="muted">Anime platformer · Collect candles & defeat Madara</small>
         </div>
       </div>
-      <span style="color:var(--solar-gold); font-size:20px;">›</span>
+      <span style="color:#EF2D3D; font-size:22px; font-weight:bold;">›</span>
     </a>
 
     <!-- Trading Tools -->
@@ -650,180 +653,263 @@ function ContestPage(main) {
   render();
 }
 
-// ---------- 6. Games (Amaterasu Blocks & Arcade) ----------
+// ---------- 6. Games (Itachi: The Shadow Path & Amaterasu Arcade) ----------
 const GAMES_LIST = [
-  { id: 'blocks', name: 'Amaterasu Blocks', desc: 'Clear rows of candles', icon: '🧱', active: true },
-  { id: 'commando', name: 'Bull Commando', desc: '20 stages · run & gun', icon: '🐂', active: false },
-  { id: 'run', name: 'Candle Run', desc: 'Jump the candles', icon: '📈', active: false },
-  { id: 'strike', name: 'Candle Strike', desc: 'Beat 10 market bosses', icon: '🚀', active: false }
+  { id: 'itachi', name: 'Itachi: Shadow Path', desc: 'Akatsuki Anime Platformer', icon: '👁️', active: true, badge: 'HOT 🔥' },
+  { id: 'blocks', name: 'Amaterasu Blocks', desc: 'Clear rows of candles', icon: '🧱', active: true, badge: 'CLASSIC' },
+  { id: 'commando', name: 'Bull Commando', desc: '20 stages · run & gun', icon: '🐂', active: false, badge: 'LOCKED' },
+  { id: 'strike', name: 'Candle Strike', desc: 'Beat 10 market bosses', icon: '🚀', active: false, badge: 'LOCKED' }
 ];
 
 function GamesPage(main) {
-  let game = null;
-  const best = () => store.get('best:' + monthKey(), 0);
+  let activeGameInstance = null;
+  let activeGameId = store.get('active_game_id') || 'itachi';
+
+  const bestBlocks = () => store.get('best:' + monthKey(), 0);
+  const bestItachi = () => parseInt(localStorage.getItem('itachi_candles') || '28', 10);
   const name = () => store.get('displayName', '');
 
-  main.innerHTML = `<section class="page">
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
-      <a href="#more" class="back-link" style="color:var(--solar-gold); font-size:13.5px; font-weight:600; text-decoration:none;">← More</a>
-      <button class="btn ghost sm" id="gameRankingsBtn" style="padding:4px 10px; font-size:14px; border-radius:8px;">🏆</button>
-    </div>
+  function renderView() {
+    if (activeGameInstance) {
+      if (typeof activeGameInstance === 'function') activeGameInstance();
+      else if (activeGameInstance.destroy) activeGameInstance.destroy();
+      activeGameInstance = null;
+    }
 
-    <div style="margin-bottom:14px;">
-      <h1 style="font-family:'Space Grotesk',sans-serif; font-size:24px; color:#fff; font-weight:800; margin-bottom:4px;">Games</h1>
-      <p style="font-size:12.5px; color:#8e9aa8; margin:0;">Top the monthly ranking. Fresh start on the 1st.</p>
-    </div>
-
-    <!-- Set Display Name Banner -->
-    <div class="card" style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; margin-bottom:14px; border:1px dashed rgba(255,160,0,0.4); background:rgba(255,109,0,0.04);">
-      <p style="font-size:12px; color:#cbd5e1; line-height:1.45; margin:0; padding-right:10px;">
-        Pick a display name for the rankings — your username stays private.
-      </p>
-      <button class="btn gold sm" id="setNameBtn" style="white-space:nowrap; padding:8px 14px; font-size:12px; font-weight:700;">
-        ${name() ? 'Edit name' : 'Set name'}
-      </button>
-    </div>
-
-    <!-- 4 Games Grid -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
-      ${GAMES_LIST.map(g => `
-        <div class="card game-card-tile" data-game="${g.id}" style="padding:12px 14px; cursor:pointer; border:1px solid ${g.active ? 'rgba(255,160,0,0.6)' : 'rgba(255,255,255,0.08)'}; background:${g.active ? 'linear-gradient(135deg, rgba(255,109,0,0.12), rgba(11,15,25,0.95))' : 'var(--bg-card)'}; position:relative; overflow:hidden;">
-          <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px;">
-            <span style="font-size:22px;">${g.icon}</span>
-            ${g.active ? '<span class="badge" style="background:rgba(0,230,118,0.18); color:#00e676; border:1px solid rgba(0,230,118,0.4); padding:1px 6px; font-size:9.5px; border-radius:10px; font-weight:700;">PLAY</span>' : '<span class="badge" style="background:rgba(255,255,255,0.06); color:#8e9aa8; font-size:9.5px; border-radius:10px;">LOCKED</span>'}
-          </div>
-          <b style="font-family:'Space Grotesk',sans-serif; font-size:13.5px; color:#fff; display:block; margin-bottom:2px;">${g.name}</b>
-          <small style="font-size:11px; color:#8e9aa8; display:block;">${g.desc}</small>
-        </div>
-      `).join('')}
-    </div>
-
-    <!-- Live Game Stats Bar -->
-    <div class="card" style="display:flex; align-items:center; justify-content:space-between; padding:10px 16px; margin-bottom:12px; background:#07090e; border:1px solid rgba(255,255,255,0.1);">
-      <div style="display:flex; gap:18px;">
-        <div>
-          <span style="font-size:10px; font-weight:700; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.8px;">Score</span>
-          <b id="gScore" style="font-family:'Space Grotesk',sans-serif; font-size:16px; color:#00e676; display:block;">0</b>
-        </div>
-        <div>
-          <span style="font-size:10px; font-weight:700; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.8px;">Lines</span>
-          <b id="gLines" style="font-family:'Space Grotesk',sans-serif; font-size:16px; color:#38bdf8; display:block;">0</b>
-        </div>
-        <div>
-          <span style="font-size:10px; font-weight:700; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.8px;">Level</span>
-          <b id="gLevel" style="font-family:'Space Grotesk',sans-serif; font-size:16px; color:var(--solar-gold); display:block;">1</b>
-        </div>
+    main.innerHTML = `<section class="page">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+        <a href="#more" class="back-link" style="color:var(--solar-gold); font-size:13.5px; font-weight:600; text-decoration:none;">← More</a>
+        <button class="btn ghost sm" id="gameRankingsBtn" style="padding:4px 10px; font-size:14px; border-radius:8px;">🏆</button>
       </div>
-      <button class="btn ghost sm" id="pauseBtn" style="padding:6px 12px; font-size:14px; border-radius:6px;">⏸</button>
-    </div>
 
-    <!-- Tetris Board & Controls -->
-    <div class="board-wrap" style="position:relative;">
-      <div class="board"><canvas id="board"></canvas></div>
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <span class="label" style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.8px; color:#8e9aa8;">Next</span>
-        <canvas id="nextC" style="background:#050609; border:1px solid rgba(255,255,255,0.1); border-radius:6px;"></canvas>
+      <div style="margin-bottom:12px;">
+        <h1 style="font-family:'Space Grotesk',sans-serif; font-size:24px; color:#fff; font-weight:800; margin-bottom:4px;">Amaterasu Arcade</h1>
+        <p style="font-size:12.5px; color:#8e9aa8; margin:0;">Collect candles and top the monthly rankings. Fresh start on the 1st.</p>
       </div>
-      <div id="overlay" class="modal-bg hidden" style="position:absolute; inset:0; border-radius:8px;"></div>
-    </div>
 
-    <div class="game-controls" style="margin-top:14px;">
-      <button data-c="left">◀</button>
-      <button data-c="rotate">⟳</button>
-      <button data-c="right">▶</button>
-      <button data-c="down">▼</button>
-      <button data-c="drop">⤓</button>
-    </div>
-  </section>`;
-
-  $('#setNameBtn', main).onclick = () => askDisplayName(() => {
-    $('#setNameBtn', main).textContent = name() ? 'Edit name' : 'Set name';
-  });
-
-  $('#gameRankingsBtn', main).onclick = () => {
-    modal(`<h3>Monthly Leaderboard</h3><p class="muted">Fresh reset on the 1st of every month</p>
-      <div class="card" style="padding:4px 14px;">
-        <div class="row" style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span>👑</span>
-            <b style="color:#fff; font-size:13.5px;">SolarBlade_MY</b>
-          </div>
-          <b class="gold">24,500 pts</b>
-        </div>
-        <div class="row" style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span>🥈</span>
-            <b style="color:#fff; font-size:13.5px;">Kenji_Quant</b>
-          </div>
-          <b class="gold">19,820 pts</b>
-        </div>
-        <div class="row" style="padding:10px 0;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span>☀️</span>
-            <b style="color:#fff; font-size:13.5px;">${name() || 'You (kj35)'}</b>
-          </div>
-          <b class="green">${best()} pts</b>
-        </div>
+      <!-- Set Display Name Banner -->
+      <div class="card" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; margin-bottom:12px; border:1px dashed rgba(239,45,61,0.4); background:rgba(239,45,61,0.04);">
+        <p style="font-size:11.5px; color:#cbd5e1; line-height:1.45; margin:0; padding-right:10px;">
+          Pick a display name for the rankings — your username stays private.
+        </p>
+        <button class="btn gold sm" id="setNameBtn" style="white-space:nowrap; padding:6px 12px; font-size:11.5px; font-weight:700;">
+          ${name() ? 'Edit name' : 'Set name'}
+        </button>
       </div>
-      <div class="modal-actions"><button class="btn gold" data-close>Close</button></div>`);
-  };
 
-  function saveScore(score) {
-    if (score > best()) store.set('best:' + monthKey(), score);
-    if (score > 0) {
-      const nm = name() || BRAND.user;
-      fetch('/api/scores', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: nm, score, game: 'blocks', month: monthKey() })
-      }).catch(() => {});
+      <!-- 4 Games Grid -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+        ${GAMES_LIST.map(g => {
+          const isCurrent = g.id === activeGameId;
+          const bgStyle = isCurrent
+            ? 'linear-gradient(135deg, rgba(239,45,61,0.22), rgba(11,15,25,0.96))'
+            : (g.active ? 'linear-gradient(135deg, rgba(255,109,0,0.08), rgba(11,15,25,0.95))' : 'var(--bg-card)');
+          const borderStyle = isCurrent
+            ? '1.5px solid #EF2D3D; box-shadow:0 0 14px rgba(239,45,61,0.4);'
+            : (g.active ? '1px solid rgba(255,160,0,0.4);' : '1px solid rgba(255,255,255,0.08);');
+
+          return `
+            <div class="card game-card-tile" data-game="${g.id}" style="padding:10px 12px; cursor:pointer; border:${borderStyle} background:${bgStyle} position:relative; overflow:hidden; border-radius:10px;">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px;">
+                <span style="font-size:20px;">${g.icon}</span>
+                <span class="badge" style="background:${isCurrent ? 'rgba(239,45,61,0.3)' : (g.active ? 'rgba(0,230,118,0.18)' : 'rgba(255,255,255,0.06)')}; color:${isCurrent ? '#FF4D5A' : (g.active ? '#00e676' : '#8e9aa8')}; border:1px solid ${isCurrent ? 'rgba(239,45,61,0.6)' : (g.active ? 'rgba(0,230,118,0.4)' : 'transparent')}; padding:1px 6px; font-size:9px; border-radius:10px; font-weight:800;">
+                  ${isCurrent ? 'ACTIVE' : g.badge}
+                </span>
+              </div>
+              <b style="font-family:'Space Grotesk',sans-serif; font-size:12.5px; color:#fff; display:block; margin-bottom:2px;">${g.name}</b>
+              <small style="font-size:10.5px; color:#8e9aa8; display:block; line-height:1.3;">${g.desc}</small>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- Active Game Container Mount Point -->
+      <div id="gameActiveWrap"></div>
+    </section>`;
+
+    // Display Name Action
+    $('#setNameBtn', main).onclick = () => askDisplayName(() => {
+      $('#setNameBtn', main).textContent = name() ? 'Edit name' : 'Set name';
+    });
+
+    // Rankings Dialog Action
+    $('#gameRankingsBtn', main).onclick = () => {
+      const itachiPts = bestItachi();
+      const blocksPts = bestBlocks();
+      modal(`<h3>Monthly Arcade Leaderboard</h3><p class="muted">Fresh reset on the 1st of every month</p>
+        <div style="font-size:12px; font-weight:700; color:#EF2D3D; margin-bottom:6px; letter-spacing:0.5px;">🔥 ITACHI: THE SHADOW PATH</div>
+        <div class="card" style="padding:4px 12px; margin-bottom:12px;">
+          <div class="row" style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>👑</span>
+              <b style="color:#fff; font-size:13px;">Uchiha_Ghost</b>
+            </div>
+            <b class="gold">842 🕯️</b>
+          </div>
+          <div class="row" style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>🥈</span>
+              <b style="color:#fff; font-size:13px;">SolarBlade_MY</b>
+            </div>
+            <b class="gold">620 🕯️</b>
+          </div>
+          <div class="row" style="padding:8px 0;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span>☀️</span>
+              <b style="color:#fff; font-size:13px;">${name() || 'You (' + BRAND.user + ')'}</b>
+            </div>
+            <b class="green">${itachiPts} 🕯️</b>
+          </div>
+        </div>
+
+        <div style="font-size:12px; font-weight:700; color:#FFA000; margin-bottom:6px; letter-spacing:0.5px;">🧱 AMATERASU BLOCKS</div>
+        <div class="card" style="padding:4px 12px; margin-bottom:12px;">
+          <div class="row" style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <div style="display:flex; align-items:center; gap:8px;"><span>👑</span><b style="color:#fff; font-size:13px;">Kenji_Quant</b></div>
+            <b class="gold">24,500 pts</b>
+          </div>
+          <div class="row" style="padding:8px 0;">
+            <div style="display:flex; align-items:center; gap:8px;"><span>☀️</span><b style="color:#fff; font-size:13px;">${name() || 'You (' + BRAND.user + ')'}</b></div>
+            <b class="green">${blocksPts} pts</b>
+          </div>
+        </div>
+        <div class="modal-actions"><button class="btn gold" data-close>Close</button></div>`);
+    };
+
+    // Game Switch Tiles Action
+    $$('.game-card-tile', main).forEach(tile => {
+      tile.onclick = () => {
+        const gId = tile.dataset.game;
+        if (gId === 'commando' || gId === 'strike') {
+          toast(`⚠️ ${tile.querySelector('b').textContent} will unlock in the next tournament season!`);
+          return;
+        }
+        if (gId !== activeGameId) {
+          activeGameId = gId;
+          store.set('active_game_id', gId);
+          renderView();
+        }
+      };
+    });
+
+    // Mount Active Game
+    const mountPoint = $('#gameActiveWrap', main);
+
+    if (activeGameId === 'itachi') {
+      // 1. Mount Itachi: The Shadow Path
+      if (window.createShadowPathGame) {
+        activeGameInstance = window.createShadowPathGame(mountPoint, {
+          onScore: (candles) => {
+            const nm = name() || BRAND.user;
+            fetch('/api/scores', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: nm, score: candles, game: 'itachi', month: monthKey() })
+            }).catch(() => {});
+          }
+        });
+      } else {
+        mountPoint.innerHTML = `<div class="card" style="text-align:center; padding:30px;">Loading Shinobi Engine...</div>`;
+      }
+
+    } else if (activeGameId === 'blocks') {
+      // 2. Mount Amaterasu Blocks
+      mountPoint.innerHTML = `
+        <div class="card" style="display:flex; align-items:center; justify-content:space-between; padding:10px 16px; margin-bottom:12px; background:#07090e; border:1px solid rgba(255,255,255,0.1);">
+          <div style="display:flex; gap:18px;">
+            <div>
+              <span style="font-size:10px; font-weight:700; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.8px;">Score</span>
+              <b id="gScore" style="font-family:'Space Grotesk',sans-serif; font-size:16px; color:#00e676; display:block;">0</b>
+            </div>
+            <div>
+              <span style="font-size:10px; font-weight:700; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.8px;">Lines</span>
+              <b id="gLines" style="font-family:'Space Grotesk',sans-serif; font-size:16px; color:#38bdf8; display:block;">0</b>
+            </div>
+            <div>
+              <span style="font-size:10px; font-weight:700; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.8px;">Level</span>
+              <b id="gLevel" style="font-family:'Space Grotesk',sans-serif; font-size:16px; color:var(--solar-gold); display:block;">1</b>
+            </div>
+          </div>
+          <button class="btn ghost sm" id="pauseBtn" style="padding:6px 12px; font-size:14px; border-radius:6px;">⏸</button>
+        </div>
+
+        <div class="board-wrap" style="position:relative;">
+          <div class="board"><canvas id="board"></canvas></div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <span class="label" style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.8px; color:#8e9aa8;">Next</span>
+            <canvas id="nextC" style="background:#050609; border:1px solid rgba(255,255,255,0.1); border-radius:6px;"></canvas>
+          </div>
+          <div id="overlay" class="modal-bg hidden" style="position:absolute; inset:0; border-radius:8px;"></div>
+        </div>
+
+        <div class="game-controls" style="margin-top:14px;">
+          <button data-c="left">◀</button>
+          <button data-c="rotate">⟳</button>
+          <button data-c="right">▶</button>
+          <button data-c="down">▼</button>
+          <button data-c="drop">⤓</button>
+        </div>
+      `;
+
+      function saveScore(score) {
+        if (score > bestBlocks()) store.set('best:' + monthKey(), score);
+        if (score > 0) {
+          const nm = name() || BRAND.user;
+          fetch('/api/scores', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: nm, score, game: 'blocks', month: monthKey() })
+          }).catch(() => {});
+        }
+      }
+
+      const ov = $('#overlay', mountPoint);
+      const showOv = (title, sub) => {
+        ov.innerHTML = `<div class="modal" style="text-align:center; padding:24px 18px; border:1px solid rgba(255,109,0,0.4); background:#0c101c;">
+          <h3 style="font-family:'Space Grotesk',sans-serif; color:var(--solar-gold); margin-bottom:8px;">${title}</h3>
+          <p class="muted" style="font-size:12.5px; margin-bottom:16px;">${sub}</p>
+          <button class="btn gold" style="padding:10px 24px; font-weight:700;">Start Game</button>
+        </div>`;
+        ov.classList.remove('hidden');
+        ov.style.display = 'flex';
+      };
+
+      const blocksGame = createBlocks($('#board', mountPoint), $('#nextC', mountPoint), {
+        update: s => {
+          if (s) {
+            if ($('#gScore', mountPoint)) $('#gScore', mountPoint).textContent = s.score || 0;
+            if ($('#gLines', mountPoint)) $('#gLines', mountPoint).textContent = s.lines || 0;
+            if ($('#gLevel', mountPoint)) $('#gLevel', mountPoint).textContent = s.level || 1;
+          }
+        },
+        state: st => { if (st === 'paused') showOv('Paused', 'Tap start to resume play'); else ov.style.display = 'none'; },
+        over: score => { saveScore(score); showOv('Game Over', `Score: ${score} · High Score: ${bestBlocks()}`); }
+      });
+
+      ov.onclick = () => {
+        if (blocksGame.state && blocksGame.state() === 'paused') {
+          blocksGame.pause();
+        } else {
+          blocksGame.start();
+        }
+        ov.style.display = 'none';
+      };
+      $('#pauseBtn', mountPoint).onclick = () => blocksGame.pause();
+      $$('.game-controls button', mountPoint).forEach(b => {
+        b.onpointerdown = e => { e.preventDefault(); blocksGame.act(b.dataset.c); };
+      });
+
+      activeGameInstance = blocksGame;
     }
   }
 
-  const ov = $('#overlay', main);
-  const showOv = (title, sub) => {
-    ov.innerHTML = `<div class="modal" style="text-align:center; padding:24px 18px; border:1px solid rgba(255,109,0,0.4); background:#0c101c;">
-      <h3 style="font-family:'Space Grotesk',sans-serif; color:var(--solar-gold); margin-bottom:8px;">${title}</h3>
-      <p class="muted" style="font-size:12.5px; margin-bottom:16px;">${sub}</p>
-      <button class="btn gold" style="padding:10px 24px; font-weight:700;">Start Game</button>
-    </div>`;
-    ov.classList.remove('hidden');
-    ov.style.display = 'flex';
-  };
+  renderView();
 
-  game = createBlocks($('#board', main), $('#nextC', main), {
-    update: s => {
-      if (s) {
-        if ($('#gScore', main)) $('#gScore', main).textContent = s.score || 0;
-        if ($('#gLines', main)) $('#gLines', main).textContent = s.lines || 0;
-        if ($('#gLevel', main)) $('#gLevel', main).textContent = s.level || 1;
-      }
-    },
-    state: st => { if (st === 'paused') showOv('Paused', 'Tap start to resume play'); else ov.style.display = 'none'; },
-    over: score => { saveScore(score); showOv('Game Over', `Score: ${score} · High Score: ${best()}`); }
-  });
-
-  ov.onclick = () => {
-    if (game.state && game.state() === 'paused') {
-      game.pause();
-    } else {
-      game.start();
+  return () => {
+    if (activeGameInstance) {
+      if (typeof activeGameInstance === 'function') activeGameInstance();
+      else if (activeGameInstance.destroy) activeGameInstance.destroy();
+      activeGameInstance = null;
     }
-    ov.style.display = 'none';
   };
-  $('#pauseBtn', main).onclick = () => game.pause();
-  $$('.game-controls button', main).forEach(b => {
-    b.onpointerdown = e => { e.preventDefault(); game.act(b.dataset.c); };
-  });
-
-  $$('.game-card-tile', main).forEach(tile => {
-    tile.onclick = () => {
-      const gId = tile.dataset.game;
-      if (gId !== 'blocks') {
-        toast(`⚠️ ${tile.querySelector('b').textContent} will unlock in the next tournament season!`);
-      }
-    };
-  });
-
-  return () => { if (game) game.destroy(); };
 }
