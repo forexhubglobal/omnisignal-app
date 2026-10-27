@@ -29,11 +29,11 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
 
 // ===== Shared TradingView Pro & Amaterasu SNR AI Configurations =====
 const tvSymbols = {
-  XAUUSD: 'OANDA:XAUUSD',
-  EURUSD: 'FX:EURUSD',
-  GBPJPY: 'FX:GBPJPY',
-  GBPUSD: 'FX:GBPUSD',
-  USDJPY: 'FX:USDJPY',
+  XAUUSD: 'PEPPERSTONE:XAUUSD',
+  EURUSD: 'PEPPERSTONE:EURUSD',
+  GBPJPY: 'PEPPERSTONE:GBPJPY',
+  GBPUSD: 'PEPPERSTONE:GBPUSD',
+  USDJPY: 'PEPPERSTONE:USDJPY',
   WTI: 'TVC:USOIL',
   BTCUSD: 'BINANCE:BTCUSDT'
 };
@@ -120,7 +120,7 @@ function showFullChartModal(initialSym = 'XAUUSD', initialTf = 'M15', onUpdate =
   const fsWrap = $('#fsCanvasWrap', modal);
   const renderFsTv = () => {
     if (!fsWrap) return;
-    const sym = tvSymbols[curInst.id] || 'OANDA:XAUUSD';
+    const sym = tvSymbols[curInst.id] || 'PEPPERSTONE:XAUUSD';
     const interval = tfToTvInterval[curTf] || '15';
     const liveP = parseFloat(Market.getLivePrice(curInst.id) || curInst.basePrice);
     const d = curInst.decimals || (curInst.id === 'XAUUSD' || curInst.id === 'WTI' ? 2 : curInst.id.includes('JPY') ? 3 : curInst.category === 'Forex' ? 4 : 1);
@@ -1094,7 +1094,7 @@ function SignalPage(main) {
 
   const renderTvChart = () => {
     if (!tvEmbedWrap) return;
-    const sym = tvSymbols[inst.id] || 'OANDA:XAUUSD';
+    const sym = tvSymbols[inst.id] || 'PEPPERSTONE:XAUUSD';
     const interval = tfToTvInterval[currentActiveTf] || '15';
     const liveP = parseFloat(Market.getLivePrice(inst.id) || inst.basePrice);
     const d = inst.decimals || (inst.id === 'XAUUSD' || inst.id === 'WTI' ? 2 : inst.id.includes('JPY') ? 3 : inst.category === 'Forex' ? 4 : 1);
@@ -1721,7 +1721,7 @@ function SignalPage(main) {
   const tvBtn = $('#btnOpenTradingView', main);
   if (tvBtn) {
     tvBtn.onclick = () => {
-      const sym = tvSymbols[inst.id] || 'OANDA:XAUUSD';
+      const sym = tvSymbols[inst.id] || 'PEPPERSTONE:XAUUSD';
       window.open(`https://www.tradingview.com/chart/?symbol=${encodeURIComponent(sym)}`, '_blank');
     };
   }
@@ -2097,7 +2097,7 @@ function AnalysisPage(main) {
 
   const renderTvChart = () => {
     if (!tvEmbedWrap) return;
-    const sym = tvSymbols['XAUUSD'] || 'OANDA:XAUUSD';
+    const sym = tvSymbols['XAUUSD'] || 'PEPPERSTONE:XAUUSD';
     const interval = tfToTvInterval[currentActiveTf] || '15';
     const liveP = getLiveP();
     const lvls = calcKeyLevels(liveP, currentActiveTf);
@@ -2277,7 +2277,7 @@ function AnalysisPage(main) {
   const tvBtn = $('#anaBtnOpenTvApp', main);
   if (tvBtn) {
     tvBtn.onclick = () => {
-      window.open('https://www.tradingview.com/chart/?symbol=OANDA%3AXAUUSD', '_blank');
+      window.open('https://www.tradingview.com/chart/?symbol=PEPPERSTONE%3AXAUUSD', '_blank');
     };
   }
 

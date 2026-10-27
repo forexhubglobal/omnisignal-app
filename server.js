@@ -191,13 +191,13 @@ function broadcastEvent(type, data) {
 // Queries TradingView's official scanners directly to achieve 100% 1:1 price synchronization
 const TV_SYMBOLS_MAP = {
   cfd: {
-    XAUUSD: 'OANDA:XAUUSD'
+    XAUUSD: 'PEPPERSTONE:XAUUSD'
   },
   forex: {
-    EURUSD: 'FX:EURUSD',
-    GBPJPY: 'FX:GBPJPY',
-    GBPUSD: 'FX:GBPUSD',
-    USDJPY: 'FX:USDJPY'
+    EURUSD: 'PEPPERSTONE:EURUSD',
+    GBPJPY: 'PEPPERSTONE:GBPJPY',
+    GBPUSD: 'PEPPERSTONE:GBPUSD',
+    USDJPY: 'PEPPERSTONE:USDJPY'
   },
   futures: {
     WTI: 'NYMEX:CL1!'
