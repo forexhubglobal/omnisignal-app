@@ -503,36 +503,43 @@ function SignalPage(main) {
         </div>
       ` : ''}
 
-      <div class="ticket-grid">
-        <div class="ticket-metric">
-          <div class="lbl">Entry Execution</div>
-          <div class="val gold">${num(currentSig.entry)}</div>
-        </div>
-        <div class="ticket-metric">
-          <div class="lbl">${isTp1 ? 'Runner Target (TP2)' : 'Primary Target'}</div>
-          <div class="val bull">${isTp1 ? num(currentSig.tp2) : num(currentSig.tp1)}</div>
-        </div>
-      </div>
+      ${(() => {
+        const pipValForSig = currentSig.symbol === 'XAUUSD' ? 0.1 : (currentSig.symbol === 'WTI' ? 0.01 : (currentSig.symbol.includes('JPY') ? 0.01 : (currentSig.symbol.includes('BTC') ? 1 : 0.0001)));
+        const tp1DiffPips = Math.abs(Math.round((currentSig.tp1 - currentSig.entry) / pipValForSig));
+        const tp2DiffPips = Math.abs(Math.round((currentSig.tp2 - currentSig.entry) / pipValForSig));
+        return `
+          <div class="ticket-grid">
+            <div class="ticket-metric">
+              <div class="lbl">Entry Execution</div>
+              <div class="val gold">${num(currentSig.entry)}</div>
+            </div>
+            <div class="ticket-metric">
+              <div class="lbl">${isTp1 ? `Runner Target (TP2 · +${tp2DiffPips}p)` : `Primary Target (TP1 · +${tp1DiffPips}p)`}</div>
+              <div class="val bull">${isTp1 ? num(currentSig.tp2) : num(currentSig.tp1)}</div>
+            </div>
+          </div>
 
-      <div class="targets-row">
-        <div class="target-box tp ${isTp1 ? 'secured' : ''}">
-          <span>TARGET 1 ${isTp1 ? '✓ HIT' : ''}</span>
-          <b>${num(currentSig.tp1)}</b>
-        </div>
-        <div class="target-box tp">
-          <span>TARGET 2 (RUNNER)</span>
-          <b>${num(currentSig.tp2)}</b>
-        </div>
-        <div class="target-box sl">
-          <span>STOP LOSS</span>
-          <b>${isTp1 ? `BE (${num(currentSig.entry)})` : num(currentSig.sl)}</b>
-        </div>
-      </div>
+          <div class="targets-row">
+            <div class="target-box tp ${isTp1 ? 'secured' : ''}">
+              <span>TARGET 1 ${isTp1 ? `✓ HIT (+${tp1DiffPips}p)` : `(+${tp1DiffPips}p)`}</span>
+              <b>${num(currentSig.tp1)}</b>
+            </div>
+            <div class="target-box tp">
+              <span>TARGET 2 (+${tp2DiffPips}p RUNNER)</span>
+              <b>${num(currentSig.tp2)}</b>
+            </div>
+            <div class="target-box sl">
+              <span>STOP LOSS</span>
+              <b>${isTp1 ? `BE (${num(currentSig.entry)})` : num(currentSig.sl)}</b>
+            </div>
+          </div>
 
-      <div class="row" style="margin-bottom: 10px; font-size: 11px;">
-        <span class="muted">Risk/Reward: <b style="color:#fff;">1 : 2.6</b></span>
-        <span class="badge gold" style="font-size: 10px;">${isTp1 ? 'PROTECTED BY BREAK-EVEN' : 'MT5 EXECUTION VERIFIED'}</span>
-      </div>
+          <div class="row" style="margin-bottom: 10px; font-size: 11px;">
+            <span class="muted">Risk/Reward: <b style="color:#fff;">1 : 2.0 (Standard SMC)</b></span>
+            <span class="badge gold" style="font-size: 10px;">${isTp1 ? 'PROTECTED BY BREAK-EVEN' : 'MT5 EXECUTION VERIFIED'}</span>
+          </div>
+        `;
+      })()}
 
       <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.45; border-top: 1px solid var(--border); padding-top: 10px;">
         ${currentSig.notes || `Amaterasu AI algorithm detected order block absorption on ${inst.name}. Follow strict SOP.`}

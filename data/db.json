@@ -1,11 +1,11 @@
 {
   "stats": {
-    "totalSignals": 62,
+    "totalSignals": 64,
     "winRate": 94,
-    "tp1Hit": 54,
-    "tp2Hit": 9,
+    "tp1Hit": 57,
+    "tp2Hit": 10,
     "slHit": 4,
-    "totalProfitToday": 670,
+    "totalProfitToday": 955,
     "last7Days": [
       {
         "day": "Wed",
@@ -38,25 +38,55 @@
     ]
   },
   "activeSignal": {
-    "id": "sig-1793081476771",
+    "id": "sig-1793084211987",
     "status": "ACTIVE",
-    "symbol": "BTCUSD",
+    "symbol": "WTI",
     "type": "SELL",
     "timeframe": "M15",
-    "entry": 80000,
-    "tp1": 79850,
-    "tp2": 79600,
-    "sl": 80180,
+    "entry": 101.61,
+    "tp1": 101.21,
+    "tp2": 100.81,
+    "sl": 102.01,
     "willWin": true,
-    "firedAt": "14:11",
-    "currentPrice": 79980,
-    "floatingPips": 20,
+    "firedAt": "14:56",
+    "currentPrice": 101.65,
+    "floatingPips": -4,
     "beLocked": false,
-    "ticks": 30,
+    "ticks": 134,
     "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.",
-    "peakPips": 20
+    "peakPips": 6
   },
   "signals": [
+    {
+      "id": "sig-wti-live",
+      "time": "14:54",
+      "date": "Oct 27",
+      "symbol": "WTI",
+      "type": "SELL",
+      "entry": 101.37,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 78
+    },
+    {
+      "id": "sig-1793081627267",
+      "time": "14:21",
+      "date": "Oct 27",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4010.31,
+      "status": "TP2",
+      "pips": 75,
+      "tags": [
+        "TP1",
+        "TP2"
+      ],
+      "peak": 83
+    },
     {
       "id": "sig-1793080273310",
       "time": "14:10",
@@ -1326,19 +1356,19 @@
     }
   ],
   "lastResolvedSignal": {
-    "id": "sig-1793080273310",
-    "time": "14:10",
+    "id": "sig-wti-live",
+    "time": "14:54",
     "date": "Oct 27",
-    "symbol": "BTCUSD",
+    "symbol": "WTI",
     "type": "SELL",
-    "entry": 79982,
+    "entry": 101.37,
     "status": "BE",
     "pips": 0,
     "tags": [
       "TP1",
       "BE"
     ],
-    "peak": 76
+    "peak": 78
   },
   "aiNewsStats": {
     "totalNewsSignals": 0,
@@ -1356,23 +1386,67 @@
   },
   "activeSignals": [
     {
-      "id": "sig-1793081476771",
+      "id": "sig-1793084211987",
       "status": "ACTIVE",
+      "symbol": "WTI",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 101.61,
+      "tp1": 101.21,
+      "tp2": 100.81,
+      "sl": 102.01,
+      "willWin": true,
+      "firedAt": "14:56",
+      "currentPrice": 101.65,
+      "floatingPips": -4,
+      "beLocked": false,
+      "ticks": 134,
+      "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.",
+      "peakPips": 6
+    },
+    {
+      "id": "sig-1793082229160",
+      "status": "TP1_HIT",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 4003.3,
+      "tp1": 4000.3,
+      "tp2": 3995.8,
+      "sl": 4003.3,
+      "willWin": true,
+      "firedAt": "14:23",
+      "currentPrice": 3999.94,
+      "floatingPips": 33.6,
+      "beLocked": true,
+      "ticks": 559,
+      "notes": "[Amaterasu SMC Scalp] Penembusan struktur pasaran (BOS) ke bawah + mitigasi Bearish FVG pada zon rintangan Malaysian SNR. Sasaran TP1 (+30p).",
+      "peakPips": 41.9,
+      "tp1Triggered": true,
+      "tp1HitAt": "14:34",
+      "tp1Pips": 30
+    },
+    {
+      "id": "sig-1793081476771",
+      "status": "TP1_HIT",
       "symbol": "BTCUSD",
       "type": "SELL",
       "timeframe": "M15",
       "entry": 80000,
       "tp1": 79850,
       "tp2": 79600,
-      "sl": 80180,
+      "sl": 80000,
       "willWin": true,
       "firedAt": "14:11",
-      "currentPrice": 79980,
-      "floatingPips": 20,
-      "beLocked": false,
-      "ticks": 30,
+      "currentPrice": 79620,
+      "floatingPips": 380,
+      "beLocked": true,
+      "ticks": 859,
       "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.",
-      "peakPips": 20
+      "peakPips": 383,
+      "tp1Triggered": true,
+      "tp1HitAt": "14:17",
+      "tp1Pips": 150
     },
     {
       "id": "sig-1793080574220",
@@ -1386,12 +1460,12 @@
       "sl": 209.965,
       "willWin": true,
       "firedAt": "13:56",
-      "currentPrice": 210.266,
-      "floatingPips": -4.9,
+      "currentPrice": 210.281,
+      "floatingPips": -3.4,
       "beLocked": false,
-      "ticks": 390,
+      "ticks": 1219,
       "notes": "[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.",
-      "peakPips": 1.1
+      "peakPips": 11.2
     },
     {
       "id": "sig-1793075488312",
@@ -1405,34 +1479,12 @@
       "sl": 157.284,
       "willWin": true,
       "firedAt": "12:31",
-      "currentPrice": 157.715,
-      "floatingPips": 13.1,
+      "currentPrice": 157.817,
+      "floatingPips": 23.3,
       "beLocked": false,
-      "ticks": 2357,
+      "ticks": 3186,
       "notes": "[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.",
-      "peakPips": 18.1
-    },
-    {
-      "id": "sig-wti-live",
-      "status": "TP1_HIT",
-      "symbol": "WTI",
-      "type": "SELL",
-      "timeframe": "M15",
-      "entry": 101.37,
-      "tp1": 100.97,
-      "tp2": 100.47,
-      "sl": 101.37,
-      "willWin": true,
-      "firedAt": "07:57",
-      "currentPrice": 101,
-      "floatingPips": 37,
-      "peakPips": 78,
-      "beLocked": true,
-      "tp1Triggered": true,
-      "tp1HitAt": "08:45",
-      "tp1Pips": 40,
-      "ticks": 6766,
-      "notes": "[Amaterasu Institutional SMC] M15 Bearish Order Block at 101.37. TP1 tercapai (+40 pip). SL dikunci ke Break-Even (Sifar Risiko)!"
+      "peakPips": 24.8
     },
     {
       "id": "sig-1793063495476",
@@ -1446,10 +1498,10 @@
       "sl": 1.114,
       "willWin": true,
       "firedAt": "09:11",
-      "currentPrice": 1.1168,
-      "floatingPips": 3,
+      "currentPrice": 1.1159,
+      "floatingPips": -6,
       "beLocked": false,
-      "ticks": 7026,
+      "ticks": 7855,
       "notes": "[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.",
       "peakPips": 10
     },
@@ -1465,12 +1517,12 @@
       "sl": 1.3359,
       "willWin": true,
       "firedAt": "09:09",
-      "currentPrice": 1.3333,
-      "floatingPips": 1,
+      "currentPrice": 1.3324,
+      "floatingPips": 10,
       "beLocked": false,
-      "ticks": 7086,
+      "ticks": 7915,
       "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.",
-      "peakPips": 4
+      "peakPips": 10
     }
   ]
 }

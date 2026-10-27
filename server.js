@@ -1073,13 +1073,13 @@ const AiEngine = {
   },
 
   assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4007.42, pipVal: 0.1, pipDec: 2, tp1Pips: 30, tp2Pips: 75, slPips: 35, bias: 'BEARISH' },
-    { symbol: 'EURUSD', name: 'Euro', base: 1.1172, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 50, slPips: 25, bias: 'BEARISH' },
-    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 210.35, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 75, slPips: 35, bias: 'BULLISH' },
-    { symbol: 'GBPUSD', name: 'Cable', base: 1.3341, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 50, slPips: 25, bias: 'BULLISH' },
-    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 157.67, pipVal: 0.01, pipDec: 3, tp1Pips: 25, tp2Pips: 60, slPips: 30, bias: 'BEARISH' },
-    { symbol: 'WTI', name: 'Crude Oil', base: 100.76, pipVal: 0.01, pipDec: 2, tp1Pips: 40, tp2Pips: 90, slPips: 50, bias: 'BEARISH' },
-    { symbol: 'BTCUSD', name: 'Bitcoin', base: 79700.0, pipVal: 1, pipDec: 0, tp1Pips: 150, tp2Pips: 400, slPips: 180, bias: 'BULLISH' }
+    { symbol: 'XAUUSD', name: 'Gold', base: 4007.42, pipVal: 0.1, pipDec: 2, tp1Pips: 30, tp2Pips: 60, slPips: 30, bias: 'BEARISH' },
+    { symbol: 'EURUSD', name: 'Euro', base: 1.1172, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' },
+    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 210.35, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, slPips: 30, bias: 'BULLISH' },
+    { symbol: 'GBPUSD', name: 'Cable', base: 1.3341, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BULLISH' },
+    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 157.67, pipVal: 0.01, pipDec: 3, tp1Pips: 25, tp2Pips: 50, slPips: 25, bias: 'BEARISH' },
+    { symbol: 'WTI', name: 'Crude Oil', base: 100.76, pipVal: 0.01, pipDec: 2, tp1Pips: 40, tp2Pips: 80, slPips: 40, bias: 'BEARISH' },
+    { symbol: 'BTCUSD', name: 'Bitcoin', base: 79700.0, pipVal: 1, pipDec: 0, tp1Pips: 150, tp2Pips: 300, slPips: 150, bias: 'BULLISH' }
   ],
 
   tick() {
