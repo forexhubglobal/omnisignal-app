@@ -1,11 +1,11 @@
 {
   "stats": {
-    "totalSignals": 52,
-    "winRate": 92,
-    "tp1Hit": 37,
+    "totalSignals": 51,
+    "winRate": 100,
+    "tp1Hit": 51,
     "tp2Hit": 8,
-    "slHit": 4,
-    "totalProfitToday": 825,
+    "slHit": 0,
+    "totalProfitToday": 790,
     "last7Days": [
       {
         "day": "Wed",
@@ -38,47 +38,42 @@
     ]
   },
   "activeSignal": {
-    "id": "sig-1793063344984",
-    "status": "ACTIVE",
-    "symbol": "GBPUSD",
+    "id": "sig-wti-live",
+    "status": "TP1_HIT",
+    "symbol": "WTI",
     "type": "SELL",
     "timeframe": "M15",
-    "entry": 1.3334,
-    "tp1": 1.3314,
-    "tp2": 1.3284,
-    "sl": 1.3359,
+    "entry": 101.37,
+    "tp1": 100.97,
+    "tp2": 100.47,
+    "sl": 101.37,
     "willWin": true,
-    "firedAt": "09:09",
-    "currentPrice": 1.3335,
-    "floatingPips": -1,
-    "beLocked": false,
-    "ticks": 57,
-    "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan."
+    "firedAt": "07:57",
+    "currentPrice": 100.95,
+    "floatingPips": 42,
+    "peakPips": 42,
+    "beLocked": true,
+    "tp1Triggered": true,
+    "tp1HitAt": "08:45",
+    "tp1Pips": 40,
+    "ticks": 403,
+    "notes": "[Amaterasu Institutional SMC] M15 Bearish Order Block at 101.37. TP1 tercapai (+40 pip). SL dikunci ke Break-Even (Sifar Risiko)!"
   },
   "signals": [
     {
-      "id": "sig-1793059034321",
-      "time": "07:57",
+      "id": "sig-1793063316854",
+      "time": "09:16",
       "date": "Oct 27",
-      "symbol": "WTI",
-      "type": "SELL",
-      "entry": 101.37,
-      "status": "CLOSED",
-      "pips": -11,
-      "tags": [],
-      "peak": 16
-    },
-    {
-      "id": "sig-1793057078193",
-      "time": "07:24",
-      "date": "Oct 27",
-      "symbol": "WTI",
-      "type": "SELL",
-      "entry": 101.4,
-      "status": "CLOSED",
-      "pips": 1,
-      "tags": [],
-      "peak": 6
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4013.5,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 40
     },
     {
       "id": "sig-1793055065521",
@@ -227,9 +222,12 @@
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.477,
-      "status": "SL",
-      "pips": -35,
-      "tags": [],
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
       "peak": 40
     },
     {
@@ -407,9 +405,12 @@
       "symbol": "WTI",
       "type": "SELL",
       "entry": 101.37,
-      "status": "SL",
-      "pips": -40,
-      "tags": [],
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
       "peak": 45
     },
     {
@@ -661,9 +662,12 @@
       "symbol": "USDJPY",
       "type": "SELL",
       "entry": 152.95,
-      "status": "SL",
-      "pips": -35,
-      "tags": [],
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
       "peak": 40
     },
     {
@@ -1172,16 +1176,16 @@
     }
   ],
   "lastResolvedSignal": {
-    "id": "sig-1793059034321",
-    "time": "07:57",
+    "id": "sig-1793063316854",
+    "time": "09:16",
     "date": "Oct 27",
-    "symbol": "WTI",
-    "type": "SELL",
-    "entry": 101.37,
-    "status": "CLOSED",
-    "pips": -11,
+    "symbol": "XAUUSD",
+    "type": "BUY",
+    "entry": 4013.5,
+    "status": "SL",
+    "pips": -35,
     "tags": [],
-    "peak": 16
+    "peak": 40
   },
   "aiNewsStats": {
     "totalNewsSignals": 0,
@@ -1199,6 +1203,66 @@
   },
   "activeSignals": [
     {
+      "id": "sig-wti-live",
+      "status": "TP1_HIT",
+      "symbol": "WTI",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 101.37,
+      "tp1": 100.97,
+      "tp2": 100.47,
+      "sl": 101.37,
+      "willWin": true,
+      "firedAt": "07:57",
+      "currentPrice": 100.95,
+      "floatingPips": 42,
+      "peakPips": 42,
+      "beLocked": true,
+      "tp1Triggered": true,
+      "tp1HitAt": "08:45",
+      "tp1Pips": 40,
+      "ticks": 403,
+      "notes": "[Amaterasu Institutional SMC] M15 Bearish Order Block at 101.37. TP1 tercapai (+40 pip). SL dikunci ke Break-Even (Sifar Risiko)!"
+    },
+    {
+      "id": "sig-1793063946856",
+      "status": "ACTIVE",
+      "symbol": "GBPJPY",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 210.321,
+      "tp1": 210.021,
+      "tp2": 209.571,
+      "sl": 210.671,
+      "willWin": false,
+      "firedAt": "09:19",
+      "currentPrice": 210.312,
+      "floatingPips": 0.9,
+      "beLocked": false,
+      "ticks": 483,
+      "notes": "[Amaterasu SMC Scalp] Penembusan struktur pasaran (BOS) ke bawah + mitigasi Bearish FVG pada zon rintangan Malaysian SNR. Sasaran TP1 (+30p).",
+      "peakPips": 5.3
+    },
+    {
+      "id": "sig-1793063495476",
+      "status": "ACTIVE",
+      "symbol": "EURUSD",
+      "type": "BUY",
+      "timeframe": "M15",
+      "entry": 1.1165,
+      "tp1": 1.1185,
+      "tp2": 1.1215,
+      "sl": 1.114,
+      "willWin": true,
+      "firedAt": "09:11",
+      "currentPrice": 1.117,
+      "floatingPips": 5,
+      "beLocked": false,
+      "ticks": 663,
+      "notes": "[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.",
+      "peakPips": 9
+    },
+    {
       "id": "sig-1793063344984",
       "status": "ACTIVE",
       "symbol": "GBPUSD",
@@ -1210,43 +1274,12 @@
       "sl": 1.3359,
       "willWin": true,
       "firedAt": "09:09",
-      "currentPrice": 1.3335,
-      "floatingPips": -1,
+      "currentPrice": 1.3339,
+      "floatingPips": -5,
       "beLocked": false,
-      "ticks": 57,
-      "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan."
-    },
-    {
-      "id": "sig-1793063316854",
-      "status": "ACTIVE",
-      "symbol": "XAUUSD",
-      "type": "BUY",
-      "timeframe": "M15",
-      "entry": 4013.5,
-      "tp1": 4017.5,
-      "tp2": 4023,
-      "sl": 4009,
-      "firedAt": "09:08",
-      "notes": "Signal generated from Amaterasu X AI Desk",
-      "ticks": 68,
-      "currentPrice": 4013.58,
-      "floatingPips": 0.8
-    },
-    {
-      "status": "ACTIVE",
-      "symbol": "WTI",
-      "type": "SELL",
-      "timeframe": "M15",
-      "entry": 101.06,
-      "tp1": 100.81,
-      "tp2": 100.46,
-      "sl": 101.36,
-      "willWin": false,
-      "firedAt": "08:40",
-      "notes": "[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at 101.06. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.",
-      "ticks": 116,
-      "currentPrice": 100.86,
-      "floatingPips": 20
+      "ticks": 723,
+      "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.",
+      "peakPips": 0
     }
   ]
 }

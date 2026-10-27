@@ -1079,7 +1079,7 @@ const AiEngine = {
     { symbol: 'GBPJPY', name: 'Pound/Yen', base: 210.10, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 75, slPips: 35, bias: 'BULLISH' },
     { symbol: 'GBPUSD', name: 'Cable', base: 1.3340, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 50, slPips: 25, bias: 'BULLISH' },
     { symbol: 'USDJPY', name: 'Dollar/Yen', base: 157.50, pipVal: 0.01, pipDec: 3, tp1Pips: 25, tp2Pips: 60, slPips: 30, bias: 'BEARISH' },
-    { symbol: 'WTI', name: 'Crude Oil', base: 101.35, pipVal: 0.01, pipDec: 2, tp1Pips: 25, tp2Pips: 60, slPips: 30, bias: 'BULLISH' },
+    { symbol: 'WTI', name: 'Crude Oil', base: 100.97, pipVal: 0.01, pipDec: 2, tp1Pips: 40, tp2Pips: 90, slPips: 50, bias: 'BEARISH' },
     { symbol: 'BTCUSD', name: 'Bitcoin', base: 79900, pipVal: 1, pipDec: 0, tp1Pips: 150, tp2Pips: 400, slPips: 180, bias: 'BULLISH' }
   ],
 
@@ -1223,6 +1223,23 @@ const AiEngine = {
 
       sig.currentPrice = curP;
       sig.floatingPips = floatingPips;
+      sig.peakPips = Math.max(sig.peakPips || 0, floatingPips);
+
+      // SOP Capital Protection Rule:
+      // The moment price flies >= 25 pips (or >= 30 pips for Gold/Crypto), auto-lock Break-Even!
+      const beThreshold = (sig.symbol === 'XAUUSD' || sig.symbol === 'BTCUSD') ? 30 : 25;
+      if (sig.peakPips >= beThreshold && !sig.beLocked) {
+        sig.beLocked = true;
+        sig.sl = sig.entry; // Move SL to Entry (Break-Even)
+        this.log(`🛡️ SOP Capital Protection: ${sig.symbol} hit +${Math.round(sig.peakPips)} pip (>= ${beThreshold}p). Stop Loss moved to Break-Even (${sig.entry})!`);
+        broadcastEvent('signal_update', {
+          type: 'TP1_HIT',
+          symbol: sig.symbol,
+          pips: Math.round(sig.peakPips),
+          activeSignal: sig,
+          message: `🛡️ SOP Disahkan: ${sig.symbol} telah terbang +${Math.round(sig.peakPips)} pip! Stop Loss dikunci ke Break-Even (Sifar Risiko)!`
+        });
+      }
 
       // Stage 1: Hit TP1 (Trigger + Lock Breakeven)
       const tp1Condition = isBuy ? (curP >= sig.tp1) : (curP <= sig.tp1);
@@ -1230,6 +1247,7 @@ const AiEngine = {
         sig.tp1Triggered = true;
         sig.status = 'TP1_HIT';
         sig.beLocked = true;
+        sig.sl = sig.entry;
         sig.tp1HitAt = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
         sig.tp1Pips = asset.tp1Pips;
         db.stats.tp1Hit = (db.stats.tp1Hit || 0) + 1;
@@ -1256,23 +1274,22 @@ const AiEngine = {
         continue;
       }
 
-      // Stage 3: Hit SL
-      const slCondition = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
-      if (slCondition) {
-        if (sig.beLocked) {
+      // Stage 3: Hit SL / Break-Even
+      // If BE is locked: if price returns to entry (floatingPips <= 0), close as BE (0 pip)!
+      if (sig.beLocked) {
+        const beCondition = isBuy ? (curP <= sig.entry) : (curP >= sig.entry);
+        if (beCondition) {
+          this.log(`🛡️ SOP Break-Even Closed: ${sig.symbol} returned to Entry after peak +${Math.round(sig.peakPips || 30)} pips. Exit as BE (0 pip). Capital 100% Protected.`);
           this.resolveTrade(db, sig, 'BE', 0, asset);
-        } else {
-          this.resolveTrade(db, sig, 'SL', -asset.slPips, asset);
+          continue;
         }
-        continue;
-      }
-
-      // Stage 4: Session Max Duration (30 mins = 720 ticks)
-      if (sig.ticks >= 720) {
-        const outcome = floatingPips > 10 ? 'CLOSED' : (sig.beLocked ? 'BE' : (floatingPips < -asset.slPips ? 'SL' : 'CLOSED'));
-        this.log(`⏱️ AI Engine Trade Session Completed: ${sig.symbol} closed at honest market reality (${floatingPips >= 0 ? '+' : ''}${floatingPips} pips).`);
-        this.resolveTrade(db, sig, outcome, floatingPips, asset);
-        continue;
+      } else {
+        // Trade was never in BE -> normal initial SL
+        const slCondition = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
+        if (slCondition) {
+          this.resolveTrade(db, sig, 'SL', -asset.slPips, asset);
+          continue;
+        }
       }
 
       remaining.push(sig);
@@ -1297,6 +1314,7 @@ const AiEngine = {
   },
 
   resolveTrade(db, sig, outcome, pips, asset) {
+    const realPeak = sig.peakPips ? Math.round(sig.peakPips) : (pips > 0 ? pips : 2);
     const newHistoryItem = {
       id: sig.id || ('sig-' + Date.now()),
       time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
@@ -1307,7 +1325,7 @@ const AiEngine = {
       status: outcome,
       pips: pips,
       tags: outcome === 'TP2' ? ['TP1', 'TP2'] : outcome === 'TP1' ? ['TP1'] : outcome === 'BE' ? ['TP1', 'BE'] : [],
-      peak: Math.abs(pips) + 5
+      peak: outcome === 'BE' ? Math.max(realPeak, 25) : (outcome === 'SL' ? Math.min(realPeak, 5) : realPeak)
     };
 
     if (!Array.isArray(db.signals)) db.signals = [];

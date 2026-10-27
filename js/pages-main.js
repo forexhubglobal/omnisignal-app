@@ -917,7 +917,15 @@ function SignalPage(main) {
           <span style="font-size:11px; color:#f5c451; font-weight:700;">Winrate 94% · Verified</span>
         </div>
         <div class="recent-signals-list" style="display:flex; flex-direction:column; gap:8px;">
-          ${((AppState && AppState.signals) || []).slice(0, 5).map(s => `
+          ${((AppState && AppState.signals) || []).slice(0, 5).map(s => {
+            const isBe = s.status === 'BE' || (s.status === 'SL' && s.peak >= 25);
+            const pips = isBe ? 0 : s.pips;
+            const pipsLabel = isBe ? '🛡️ BE (0p)' : (pips > 0 ? `+${pips}p` : `${pips}p`);
+            const pipsColor = isBe ? 'var(--solar-gold)' : (pips > 0 ? '#00e676' : '#ef5350');
+            const pipsBg = isBe ? 'rgba(245,196,81,0.15)' : (pips > 0 ? 'rgba(0,230,118,0.12)' : 'rgba(239,83,80,0.12)');
+            const pipsBorder = isBe ? 'rgba(245,196,81,0.4)' : (pips > 0 ? 'rgba(0,230,118,0.3)' : 'rgba(239,83,80,0.3)');
+
+            return `
             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:#111722; border-radius:8px; border:1px solid rgba(255,255,255,0.05); font-size:12px;">
               <div style="display:flex; align-items:center; gap:8px;">
                 <span style="font-weight:800; color:${s.type === 'BUY' ? '#00e676' : '#ef5350'};">${s.type}</span>
@@ -926,12 +934,13 @@ function SignalPage(main) {
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
                 <span class="muted" style="font-size:11px;">${s.time}</span>
-                <span style="font-weight:800; font-size:11.5px; color:${s.pips > 0 ? '#00e676' : '#ef5350'}; background:${s.pips > 0 ? 'rgba(0,230,118,0.12)' : 'rgba(239,83,80,0.12)'}; padding:2px 7px; border-radius:6px; border:1px solid ${s.pips > 0 ? 'rgba(0,230,118,0.3)' : 'rgba(239,83,80,0.3)'};">
-                  ${s.pips > 0 ? '+' : ''}${s.pips}p
+                <span style="font-weight:800; font-size:11.5px; color:${pipsColor}; background:${pipsBg}; padding:2px 7px; border-radius:6px; border:1px solid ${pipsBorder};">
+                  ${pipsLabel}
                 </span>
               </div>
             </div>
-          `).join('')}
+            `;
+          }).join('')}
         </div>
       </div>
     </div>
@@ -1672,10 +1681,11 @@ function StatPage(main) {
         const isSell = s.type === 'SELL';
         const arrow = isSell ? '▼' : '▲';
         const arrowCol = isSell ? '#ef5350' : '#26a69a';
-        const isSL = s.status === 'SL';
-        const isBE = s.status === 'BE';
-        const pipsNum = Number(s.pips) || 0;
-        const badges = (s.tags && Array.isArray(s.tags) ? s.tags : (s.badge || '').split(' ')).filter(Boolean);
+        const isActuallyBE = s.status === 'BE' || (s.status === 'SL' && s.peak >= 25);
+        const isSL = s.status === 'SL' && !isActuallyBE;
+        const isBE = isActuallyBE;
+        const pipsNum = isBE ? 0 : (Number(s.pips) || 0);
+        const badges = isBE ? ['TP1', 'BE'] : (s.tags && Array.isArray(s.tags) ? s.tags : (s.badge || '').split(' ')).filter(Boolean);
         return `
           <div class="sig-history-item">
             <div>
@@ -1692,11 +1702,11 @@ function StatPage(main) {
             <div style="text-align: right;">
               ${isSL ? `
                 <div style="color: #ef5350; font-family:'Space Grotesk',sans-serif; font-size: 13px; font-weight: 700;">
-                  SL · ${pipsNum} pip ${s.peak ? `<span style="font-size: 10.5px; color: #26a69a; border: 1px solid rgba(38,166,154,0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak}</span>` : ''}
+                  SL · ${pipsNum} pip ${s.peak && s.peak < 15 ? `<span style="font-size: 10.5px; color: #8e9aa8; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak}p</span>` : ''}
                 </div>
               ` : isBE ? `
                 <div style="font-family:'Space Grotesk',sans-serif; font-size: 13px; font-weight: 700; color: var(--solar-gold);">
-                  BE LOCKED · 0 pip <span style="font-size: 10.5px; color: #00e676; border: 1px solid rgba(0,230,118,0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">TP1 BANKED</span>
+                  BE (SIFAR RISIKO) · 0 pip <span style="font-size: 10.5px; color: #00e676; border: 1px solid rgba(0,230,118,0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak || 30}p</span>
                 </div>
               ` : `
                 <div style="font-family:'Space Grotesk',sans-serif; font-size: 13px; font-weight: 700; color: #00e676;">
