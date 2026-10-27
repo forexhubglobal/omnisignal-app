@@ -1212,17 +1212,15 @@ const AiEngine = {
       return;
     }
 
-    // Periodic broadcast of running floating PnL every 2 ticks (~5 seconds)
-    if (this.activeTradeTicks % 2 === 0) {
-      broadcastEvent('signal_active_tick', {
-        symbol: sig.symbol,
-        currentPrice: curP,
-        entry: sig.entry,
-        floatingPips: floatingPips,
-        status: sig.status,
-        beLocked: !!sig.beLocked
-      });
-    }
+    // Broadcast running floating PnL on every single tick to client
+    broadcastEvent('signal_active_tick', {
+      symbol: sig.symbol,
+      currentPrice: curP,
+      entry: sig.entry,
+      floatingPips: floatingPips,
+      status: sig.status,
+      beLocked: !!sig.beLocked
+    });
 
     // Realistic Session Max Duration (30 minutes of real time / 720 ticks)
     // If the market is completely flat/consolidating, close at the HONEST actual floating pips

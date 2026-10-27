@@ -248,7 +248,7 @@ function init() {
   applyMonitor();
   window.addEventListener('resize', applyDisplayMode);
   window.addEventListener('hashchange', route);
-  setInterval(() => Market.tick(), 2000);
+  setInterval(() => Market.tick(), 1000);
   Market.tick();
 
   // Connect to backend CRM and Server-Sent Events stream

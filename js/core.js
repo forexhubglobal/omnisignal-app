@@ -351,21 +351,10 @@ const AppState = {
           this.activeSignal.currentPrice = d.currentPrice;
           this.activeSignal.floatingPips = d.floatingPips;
           this.activeSignal.beLocked = d.beLocked;
-          const floatPipsEl = document.getElementById('liveFloatingPipsVal');
-          if (floatPipsEl) {
-            floatPipsEl.textContent = (d.floatingPips >= 0 ? '+' : '') + d.floatingPips + ' PIP';
-            floatPipsEl.style.color = d.floatingPips >= 0 ? '#00e676' : '#ef5350';
-            floatPipsEl.style.background = d.floatingPips >= 0 ? 'rgba(0,230,118,0.12)' : 'rgba(239,83,80,0.12)';
+          if (Market.quotes && Market.quotes[d.symbol]) {
+            Market.quotes[d.symbol].price = d.currentPrice;
           }
-          const livePriceEl = document.getElementById('liveSignalCurrentPrice');
-          if (livePriceEl) {
-            livePriceEl.textContent = num(d.currentPrice);
-          }
-          const topBarPipsEl = document.getElementById('topBarFloatingPips');
-          if (topBarPipsEl) {
-            topBarPipsEl.textContent = (d.floatingPips >= 0 ? '+' : '') + d.floatingPips + ' PIP';
-            topBarPipsEl.style.color = d.floatingPips >= 0 ? '#00e676' : '#ef5350';
-          }
+          Market.updateUI();
         }
       });
       s.addEventListener('signal_update', e => {
@@ -512,6 +501,44 @@ const Market = {
           inst.basePrice = this.quotes[inst.id].price;
         }
       });
+    }
+
+    // Real-Time Floating PnL Live Tick Engine (Fluctuates dynamically with live ticks)
+    if (typeof AppState !== 'undefined' && AppState.activeSignal && (AppState.activeSignal.status === 'ACTIVE' || AppState.activeSignal.status === 'TP1_HIT')) {
+      const sig = AppState.activeSignal;
+      const liveP = this.getLivePrice(sig.symbol) || sig.entry;
+      const isBuy = sig.type === 'BUY';
+      const pipValActual = sig.symbol === 'XAUUSD' ? 0.1 : (sig.symbol === 'WTI' ? 0.01 : (sig.symbol.includes('JPY') ? 0.01 : (sig.symbol.includes('BTC') ? 1 : 0.0001)));
+      const diff = isBuy ? (liveP - sig.entry) : (sig.entry - liveP);
+      const floatPips = Number((diff / pipValActual).toFixed(1));
+      
+      const floatPipsEl = document.getElementById('liveFloatingPipsVal');
+      if (floatPipsEl) {
+        const prevVal = floatPipsEl.dataset.pipVal ? parseFloat(floatPipsEl.dataset.pipVal) : null;
+        const newText = (floatPips >= 0 ? '+' : '') + floatPips + ' PIP';
+        floatPipsEl.textContent = newText;
+        floatPipsEl.style.color = floatPips >= 0 ? '#00e676' : '#ef5350';
+        floatPipsEl.style.background = floatPips >= 0 ? 'rgba(0,230,118,0.18)' : 'rgba(239,83,80,0.18)';
+        floatPipsEl.dataset.pipVal = floatPips;
+
+        // Subtle micro-pulse animation on tick change (naik/turun indicator)
+        if (prevVal !== null && prevVal !== floatPips) {
+          floatPipsEl.style.transition = 'all 0.15s ease';
+          floatPipsEl.style.transform = 'scale(1.08)';
+          setTimeout(() => { if (floatPipsEl) floatPipsEl.style.transform = 'scale(1)'; }, 150);
+        }
+      }
+
+      const livePriceEl = document.getElementById('liveSignalCurrentPrice');
+      if (livePriceEl) {
+        livePriceEl.textContent = num(liveP, q ? q.decimals : 2);
+      }
+
+      const topBarPipsEl = document.getElementById('topBarFloatingPips');
+      if (topBarPipsEl) {
+        topBarPipsEl.textContent = (floatPips >= 0 ? '+' : '') + floatPips + ' PIP';
+        topBarPipsEl.style.color = floatPips >= 0 ? '#00e676' : '#ef5350';
+      }
     }
 
     // Update active chart redraw if mounted
