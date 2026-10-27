@@ -857,8 +857,89 @@ if ($('#btnTestTgPing')) {
   };
 }
 
+// ===== AI News & Signal Synergy Manager =====
+async function loadNewsSynergy() {
+  try {
+    const res = await fetch('/api/ainews/synergy');
+    if (!res.ok) return;
+    const d = await res.json();
+    
+    if ($('#selNewsSynergyMode')) {
+      $('#selNewsSynergyMode').value = d.mode || 'AUTO';
+    }
+
+    const badge = $('#badgeNewsSynergy');
+    const info = $('#newsSynergyLiveInfo');
+
+    if (badge) {
+      if (d.mode === 'NORMAL') {
+        badge.textContent = 'MOD NORMAL (SMC SAHAJA)';
+        badge.style.background = 'rgba(255,255,255,0.08)';
+        badge.style.color = '#94a3b8';
+        badge.style.borderColor = 'rgba(255,255,255,0.2)';
+      } else if (d.isNewsActive) {
+        badge.textContent = '🔥 NEWS SEDANG AKTIF';
+        badge.style.background = 'rgba(239,83,80,0.2)';
+        badge.style.color = '#ef5350';
+        badge.style.borderColor = '#ef5350';
+      } else {
+        badge.textContent = '⚡ AUTO SYNERGY STANDBY';
+        badge.style.background = 'rgba(0,230,118,0.18)';
+        badge.style.color = '#00e676';
+        badge.style.borderColor = '#00e676';
+      }
+    }
+
+    if (info) {
+      if (d.mode === 'NORMAL') {
+        info.innerHTML = `⚙️ <b>Mod Manual: NORMAL (SMC Sahaja)</b><br>Signal AI akan mengeluarkan isyarat berpandukan analisis SMC teknikal pasaran biasa tanpa dipengaruhi kalendar AI News.`;
+      } else if (d.mode === 'USD_BUY') {
+        info.innerHTML = `⚠️ <b>Mod Manual: FORCE USD BUY</b><br>Semua isyarat USD dipaksa mengikut Bullish USD (Buy USDJPY/USDCAD/USDCHF, Sell XAUUSD/EURUSD/GBPUSD/AUDUSD).`;
+      } else if (d.mode === 'USD_SELL') {
+        info.innerHTML = `⚠️ <b>Mod Manual: FORCE USD SELL</b><br>Semua isyarat USD dipaksa mengikut Bearish USD (Sell USDJPY/USDCAD/USDCHF, Buy XAUUSD/EURUSD/GBPUSD/AUDUSD).`;
+      } else if (d.isNewsActive && d.activeEvent) {
+        info.innerHTML = `🔥 <b>NEWS SEDANG BERPENGARUH (Zon T-60m ke T+30m):</b><br>` +
+          `• News: <b>${d.activeEvent.name}</b> (${d.activeEvent.currency}) @ ${d.activeEvent.time} MYT<br>` +
+          `• Unjuran News AI: <b style="color:${d.activeEvent.bias === 'BULLISH' ? '#00e676' : '#ef5350'}">${d.activeEvent.bias}</b><br>` +
+          `• Kesan ke Signal AI: <b>Signal pair USD automatik mengikut arah unjuran News AI 100%!</b>`;
+      } else if (d.nextEvent) {
+        info.innerHTML = `🕒 <b>TIADA NEWS AKTIF SEKARANG (Status: Normal SMC Analysis)</b><br>` +
+          `• Waktu Semasa: ${d.currentMYT}<br>` +
+          `• News Seterusnya: <b>${d.nextEvent.name}</b> @ ${d.nextEvent.time} MYT (dalam tempoh ${d.nextEvent.diffMinutes} minit).<br>` +
+          `• Apabila tiba zon T-60 minit sebelum pelepasan news, Signal AI akan automatik bersinergi dengan unjuran News AI.`;
+      } else {
+        info.innerHTML = `✅ Tiada news berimpak tinggi dalam jadual hari ini. Signal AI beroperasi dalam Mod Normal SMC.`;
+      }
+    }
+  } catch(e) {}
+}
+
+if ($('#btnSaveNewsSynergy')) {
+  $('#btnSaveNewsSynergy').onclick = async () => {
+    const mode = $('#selNewsSynergyMode')?.value || 'AUTO';
+    toast('Menyimpan mod sinergi AI News...');
+    try {
+      const res = await fetch('/api/ainews/synergy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode })
+      });
+      const d = await res.json();
+      if (d.success) {
+        toast(`✅ Mod Sinergi berjaya dikemaskini ke: ${d.mode}`);
+        loadNewsSynergy();
+      } else {
+        toast('Gagal menyimpan tetapan sinergi');
+      }
+    } catch(err) {
+      toast('Ralat sambungan: ' + err.message);
+    }
+  };
+}
+
 // Boot
 startClock();
 loadData();
 loadTelegramConfig();
+loadNewsSynergy();
 initSSE();

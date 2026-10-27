@@ -569,6 +569,70 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify({ success: true, signal: db.activeSignal }));
   }
 
+  // 1c. GET /api/ainews/synergy (Get current AI News & Signal Directional Synergy status)
+  if (pathname === '/api/ainews/synergy' && req.method === 'GET') {
+    const db = getDB();
+    const synergyMode = db.newsSynergyMode || 'AUTO';
+    
+    // Check next/active event
+    const nowParts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kuala_Lumpur',
+      hour: '2-digit', minute: '2-digit', hour12: false
+    }).formatToParts(new Date());
+    const nowH = parseInt(nowParts.find(p => p.type === 'hour').value, 10);
+    const nowM = parseInt(nowParts.find(p => p.type === 'minute').value, 10);
+    const nowTotalMin = nowH * 60 + nowM;
+
+    const schedule = db.aiNewsSchedule || AiEngine.newsSchedule;
+    let activeEvent = null;
+    let nextEvent = null;
+    let minFutureDiff = Infinity;
+
+    for (const ev of schedule) {
+      const [evH, evM] = ev.time.split(':').map(Number);
+      const evTotalMin = evH * 60 + evM;
+      let diff = evTotalMin - nowTotalMin;
+      if (diff >= -30 && diff <= 60) {
+        activeEvent = { ...ev, diffMinutes: diff, isNowActive: true };
+      }
+      if (diff > 0 && diff < minFutureDiff) {
+        minFutureDiff = diff;
+        nextEvent = { ...ev, diffMinutes: diff };
+      }
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({
+      mode: synergyMode,
+      activeEvent: activeEvent,
+      nextEvent: nextEvent,
+      isNewsActive: !!activeEvent,
+      currentMYT: `${String(nowH).padStart(2,'0')}:${String(nowM).padStart(2,'0')} MYT`,
+      schedule: schedule
+    }));
+  }
+
+  // 1d. POST /api/ainews/synergy (Configure News Synergy Mode)
+  if (pathname === '/api/ainews/synergy' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      if (payload.mode) {
+        db.newsSynergyMode = payload.mode; // 'AUTO' | 'USD_BUY' | 'USD_SELL' | 'NORMAL'
+      }
+      if (Array.isArray(payload.schedule)) {
+        db.aiNewsSchedule = payload.schedule;
+      }
+      saveDB(db);
+      AiEngine.log(`⚙️ Tetapan Sinergi AI News dikemaskini: Mod ${db.newsSynergyMode}`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, mode: db.newsSynergyMode }));
+    } catch (err) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: err.message }));
+    }
+  }
+
   if (pathname === '/api/ai/config' && req.method === 'POST') {
     try {
       const payload = await parseJsonBody(req);
@@ -1178,6 +1242,86 @@ const AiEngine = {
     { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' }
   ],
 
+  // High-Impact Economic News Schedule tracked by Amaterasu AI
+  newsSchedule: [
+    { id: 'ev-1', country: 'gb', currency: 'GBP', name: 'UK Retail Sales & GDP Update', time: '14:00', bias: 'BEARISH' },
+    { id: 'ev-2', country: 'eu', currency: 'EUR', name: 'German Ifo Business Climate & CPI', time: '17:00', bias: 'NEUTRAL' },
+    { id: 'ev-3', country: 'us', currency: 'USD', name: 'US Initial Jobless Claims & Core PCE', time: '20:30', bias: 'BULLISH' },
+    { id: 'ev-4', country: 'us', currency: 'USD', name: 'US Existing Home Sales & Flash PMI', time: '22:00', bias: 'BULLISH' },
+    { id: 'ev-5', country: 'us', currency: 'USD', name: 'US ISM Manufacturing PMI & JOLTS', time: '23:00', bias: 'BULLISH' }
+  ],
+
+  // AI News Synergy: Checks if a high-impact news event is actively projecting directional bias
+  getActiveNewsBias(symbol, db) {
+    const override = db.newsSynergyMode || 'AUTO';
+    if (override === 'NORMAL') return null; // Normal SMC mode (ignore news)
+    if (override === 'USD_BUY') {
+      return this.mapCurrencyBiasToSymbol('USD', 'BUY', symbol, 'Manual AI Override (USD BUY)');
+    }
+    if (override === 'USD_SELL') {
+      return this.mapCurrencyBiasToSymbol('USD', 'SELL', symbol, 'Manual AI Override (USD SELL)');
+    }
+
+    // AUTO MODE: Check current Malaysia Time (MYT) against news schedule
+    try {
+      const nowParts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Kuala_Lumpur',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).formatToParts(new Date());
+      const nowH = parseInt(nowParts.find(p => p.type === 'hour').value, 10);
+      const nowM = parseInt(nowParts.find(p => p.type === 'minute').value, 10);
+      const nowTotalMin = nowH * 60 + nowM;
+
+      const schedule = db.aiNewsSchedule || this.newsSchedule;
+      for (const ev of schedule) {
+        const [evH, evM] = ev.time.split(':').map(Number);
+        const evTotalMin = evH * 60 + evM;
+        const diff = evTotalMin - nowTotalMin;
+        // Active News Window: 60 minutes before release until 30 minutes after release
+        if (diff >= -30 && diff <= 60) {
+          const biasDirection = (ev.bias || '').toUpperCase().includes('BULL') ? 'BUY' : 'SELL';
+          return this.mapCurrencyBiasToSymbol(ev.currency || 'USD', biasDirection, symbol, ev.name);
+        }
+      }
+    } catch (e) {
+      console.error('Error evaluating active news bias:', e);
+    }
+    return null; // No news active -> Fallback to Normal SMC
+  },
+
+  mapCurrencyBiasToSymbol(currency, bias, symbol, newsName) {
+    if (currency === 'USD') {
+      if (symbol.startsWith('USD')) {
+        // Direct USD base (USDJPY, USDCAD, USDCHF) -> follows USD bias directly
+        const type = bias === 'BUY' ? 'BUY' : 'SELL';
+        return {
+          type,
+          reason: `Unjuran News AI: ${newsName} (USD Bias ${bias}) -> ${symbol} ${type}`,
+          newsName,
+          currency,
+          bias
+        };
+      } else if (symbol.endsWith('USD') || symbol === 'XAUUSD' || symbol === 'XAGUSD' || symbol === 'BTCUSD') {
+        // Inverse USD quote (EURUSD, GBPUSD, AUDUSD, XAUUSD, XAGUSD, BTCUSD) -> inverse of USD bias
+        const invType = bias === 'BUY' ? 'SELL' : 'BUY';
+        return {
+          type: invType,
+          reason: `Unjuran News AI: ${newsName} (USD Bias ${bias} / ${bias === 'BUY' ? 'Strong USD' : 'Weak USD'}) -> ${symbol} ${invType}`,
+          newsName,
+          currency,
+          bias
+        };
+      }
+    } else if (currency === 'EUR' && symbol.includes('EUR')) {
+      const type = symbol.startsWith('EUR') ? (bias === 'BUY' ? 'BUY' : 'SELL') : (bias === 'BUY' ? 'SELL' : 'BUY');
+      return { type, reason: `Unjuran News AI: ${newsName} (EUR Bias ${bias}) -> ${symbol} ${type}`, newsName, currency, bias };
+    } else if (currency === 'GBP' && symbol.includes('GBP')) {
+      const type = symbol.startsWith('GBP') ? (bias === 'BUY' ? 'BUY' : 'SELL') : (bias === 'BUY' ? 'SELL' : 'BUY');
+      return { type, reason: `Unjuran News AI: ${newsName} (GBP Bias ${bias}) -> ${symbol} ${type}`, newsName, currency, bias };
+    }
+    return null;
+  },
+
   tick() {
     if (!this.enabled || !hasInitialLiveQuote) return;
     const db = getDB();
@@ -1251,34 +1395,47 @@ const AiEngine = {
     const asset = forceAsset || this.assets[Math.floor(Math.random() * this.assets.length)];
     const liveQ = liveMarketQuotes[asset.symbol];
     const liveP = liveQ ? liveQ.price : (asset.symbol === 'XAUUSD' ? currentMarketPrice : asset.base);
+    const entry = Number(liveP.toFixed(asset.pipDec));
 
-    let type = asset.bias === 'BULLISH' ? 'BUY' : 'SELL';
-    if (liveQ && typeof liveQ.change === 'number') {
-      if (Math.random() < 0.88) {
-        type = liveQ.change >= 0 ? 'BUY' : 'SELL';
-      } else {
-        type = liveQ.change >= 0 ? 'SELL' : 'BUY';
+    // 1. Semak sama ada ada News AI yang aktif untuk mata wang ini
+    const newsSynergy = this.getActiveNewsBias(asset.symbol, db);
+
+    let type;
+    let notes;
+
+    if (newsSynergy) {
+      // ADA NEWS AI AKTIF -> IKUT 100% NEWS AI!
+      type = newsSynergy.type;
+      notes = `[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh ${newsSynergy.reason}. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.`;
+      this.log(`🔥 NEWS AI SYNERGY DIAKTIFKAN: Isyarat ${type} ${asset.symbol} mengikut unjuran News AI (${newsSynergy.newsName} Bias ${newsSynergy.bias})!`);
+    } else {
+      // TIADA NEWS AI AKTIF -> KEMBALI KEPADA ANALISIS NORMAL SMC (Bias pasaran biasa)
+      type = asset.bias === 'BULLISH' ? 'BUY' : 'SELL';
+      if (liveQ && typeof liveQ.change === 'number') {
+        if (Math.random() < 0.88) {
+          type = liveQ.change >= 0 ? 'BUY' : 'SELL';
+        } else {
+          type = liveQ.change >= 0 ? 'SELL' : 'BUY';
+        }
       }
+
+      const amaterasuRationales = type === 'BUY' ? [
+        `[Amaterasu SMC AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.`,
+        `[Amaterasu SMC Scalp] M5 Market Structure Shift (MSS) + Fair Value Gap (FVG) retest pada zon sokongan Malaysian SNR. Momentum bersedia untuk lonjakan TP1 (+${asset.tp1Pips}p).`,
+        `[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.`
+      ] : [
+        `[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.`,
+        `[Amaterasu SMC Scalp] Penembusan struktur pasaran (BOS) ke bawah + mitigasi Bearish FVG pada zon rintangan Malaysian SNR. Sasaran TP1 (+${asset.tp1Pips}p).`,
+        `[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.`
+      ];
+      notes = amaterasuRationales[Math.floor(Math.random() * amaterasuRationales.length)];
     }
 
-    const entry = Number(liveP.toFixed(asset.pipDec));
     const sign = type === 'BUY' ? 1 : -1;
     const tp1 = Number((entry + sign * asset.tp1Pips * asset.pipVal).toFixed(asset.pipDec));
     const tp2 = Number((entry + sign * asset.tp2Pips * asset.pipVal).toFixed(asset.pipDec));
     const sl = Number((entry - sign * asset.slPips * asset.pipVal).toFixed(asset.pipDec));
-
     const willWin = Math.random() < (this.targetWinrate / 100);
-
-    const amaterasuRationales = type === 'BUY' ? [
-      `[Amaterasu SMC AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.`,
-      `[Amaterasu SMC Scalp] M5 Market Structure Shift (MSS) + Fair Value Gap (FVG) retest pada zon sokongan Malaysian SNR. Momentum bersedia untuk lonjakan TP1 (+${asset.tp1Pips}p).`,
-      `[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.`
-    ] : [
-      `[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.`,
-      `[Amaterasu SMC Scalp] Penembusan struktur pasaran (BOS) ke bawah + mitigasi Bearish FVG pada zon rintangan Malaysian SNR. Sasaran TP1 (+${asset.tp1Pips}p).`,
-      `[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.`
-    ];
-    const notes = amaterasuRationales[Math.floor(Math.random() * amaterasuRationales.length)];
 
     const newSig = {
       id: 'sig-' + Date.now(),

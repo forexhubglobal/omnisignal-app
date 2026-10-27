@@ -317,6 +317,36 @@
           </form>
         </div>
 
+        <!-- AI News & Signal Directional Synergy Control -->
+        <div class="card" style="margin-top:20px; border-left: 3px solid var(--solar-gold);">
+          <div class="card-head">
+            <div>
+              <h3>⚡ AI News & Signal Directional Synergy</h3>
+              <small class="muted">Apabila ada news berimpak tinggi berkaitan mata wang (cth: USD), Signal AI automatik mengikut unjuran News AI. Tiada news, ia kembali normal ke analisis SMC.</small>
+            </div>
+            <span id="badgeNewsSynergy" class="badge" style="background:rgba(0,230,118,0.18); color:#00e676; border:1px solid #00e676;">SYNERGY AKTIF</span>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-top:10px;">
+            <div class="form-group" style="margin:0;">
+              <label>Mod Sinergi AI News & Signal</label>
+              <select id="selNewsSynergyMode" style="width:100%;">
+                <option value="AUTO">AUTO (Ikut Jadual AI News Desk Secara Automatik)</option>
+                <option value="USD_BUY">FORCE USD BUY (Semua Pair USD: Buy USDJPY/USDCAD, Sell Gold/EUR)</option>
+                <option value="USD_SELL">FORCE USD SELL (Semua Pair USD: Sell USDJPY/USDCAD, Buy Gold/EUR)</option>
+                <option value="NORMAL">NORMAL (Abaikan News, 100% Ikut SMC Normal)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0; display:flex; align-items:flex-end;">
+              <button id="btnSaveNewsSynergy" type="button" class="btn btn-primary" style="width:100%; font-weight:700;">
+                💾 Simpan Tetapan Sinergi
+              </button>
+            </div>
+          </div>
+          <div id="newsSynergyLiveInfo" style="margin-top:12px; font-size:12px; padding:10px; border-radius:6px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); line-height:1.5;">
+            Memuatkan status sinergi AI News...
+          </div>
+        </div>
+
         <!-- AI News Release Outcome Logger -->
         <div class="card" style="margin-top:20px;">
           <div class="card-head">
