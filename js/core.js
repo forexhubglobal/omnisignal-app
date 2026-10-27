@@ -359,7 +359,8 @@ const AppState = {
           if (list.length > 0 && (!this.activeSignal || this.activeSignal.status === 'WAITING')) {
             this.activeSignal = list[0];
           }
-          if (typeof route === 'function' && location.hash === '#signal') route();
+          const isSigTab = !location.hash || location.hash === '#signal' || location.hash === '#';
+          if (typeof route === 'function' && isSigTab) route();
         }
       });
       s.addEventListener('on_pips_tick', e => {
