@@ -1,0 +1,26 @@
+{
+  "name": "AMATERASU X - AI Trading Terminal",
+  "short_name": "Amaterasu X",
+  "description": "Amaterasu X Quantitative High-Frequency Intelligence & Trading Signal Terminal",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080D14",
+  "theme_color": "#080D14",
+  "icons": [
+    {
+      "src": "/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "business", "productivity"]
+}
