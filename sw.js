@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amaterasu-x-v3';
+const CACHE_NAME = 'amaterasu-x-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -6,7 +6,6 @@ const STATIC_ASSETS = [
   '/styles.css',
   '/pages.css',
   '/js/core.js',
-  '/js/shadow-path.js',
   '/js/blocks.js',
   '/js/pages-main.js',
   '/js/pages-more.js',
