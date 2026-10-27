@@ -1,6 +1,6 @@
 {
   "server_url": "https://amaterasux.onrender.com",
-  "lot_size": 0.3,
+  "lot_size": 0.10,
   "execution_mode": "SPLIT_TP",
   "auto_breakeven": true,
   "max_slippage_pips": 5,
