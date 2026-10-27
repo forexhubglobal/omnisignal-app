@@ -231,13 +231,13 @@ function renderDashboard() {
 
 // 2. Signals
 const DEFAULT_PRICES = {
-  XAUUSD: { entry: 2738.50, tp1: 2746.50, tp2: 2758.00, sl: 2730.00, step: '0.01' },
-  EURUSD: { entry: 1.08250, tp1: 1.08650, tp2: 1.09100, sl: 1.07850, step: '0.00001' },
-  GBPJPY: { entry: 198.50, tp1: 199.20, tp2: 200.00, sl: 197.80, step: '0.01' },
-  GBPUSD: { entry: 1.29800, tp1: 1.30250, tp2: 1.30800, sl: 1.29350, step: '0.00001' },
-  USDJPY: { entry: 152.80, tp1: 152.10, tp2: 151.30, sl: 153.50, step: '0.01' },
-  WTI: { entry: 71.50, tp1: 72.60, tp2: 73.80, sl: 70.40, step: '0.01' },
-  BTCUSD: { entry: 67800, tp1: 68900, tp2: 70200, sl: 66600, step: '1' }
+  XAUUSD: { entry: 4007.42, tp1: 4015.42, tp2: 4028.00, sl: 3998.00, step: '0.01' },
+  EURUSD: { entry: 1.11720, tp1: 1.11920, tp2: 1.12220, sl: 1.11470, step: '0.00001' },
+  GBPJPY: { entry: 210.35, tp1: 210.65, tp2: 211.10, sl: 209.95, step: '0.01' },
+  GBPUSD: { entry: 1.33410, tp1: 1.33610, tp2: 1.33910, sl: 1.33160, step: '0.00001' },
+  USDJPY: { entry: 157.67, tp1: 157.92, tp2: 158.27, sl: 157.37, step: '0.01' },
+  WTI: { entry: 100.76, tp1: 101.16, tp2: 101.66, sl: 100.26, step: '0.01' },
+  BTCUSD: { entry: 79700, tp1: 79850, tp2: 80100, sl: 79520, step: '1' }
 };
 
 const sigSymbolSelect = $('#sigSymbol');
