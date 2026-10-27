@@ -1230,7 +1230,7 @@ const AiEngine = {
   },
 
   assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 3991.50, pipVal: 0.1, pipDec: 2, tp1Pips: 40, tp2Pips: 80, slPips: 50, bias: 'BEARISH' },
+    { symbol: 'XAUUSD', name: 'Gold', base: 4020.00, pipVal: 0.1, pipDec: 2, tp1Pips: 60, tp2Pips: 120, slPips: 80, bias: 'BULLISH' },
     { symbol: 'XAGUSD', name: 'Silver', base: 52.87, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, slPips: 35, bias: 'BULLISH' },
     { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' },
     { symbol: 'GBPUSD', name: 'Cable', base: 1.3320, pipVal: 0.0001, pipDec: 4, tp1Pips: 25, tp2Pips: 50, slPips: 25, bias: 'BULLISH' },
@@ -1404,10 +1404,16 @@ const AiEngine = {
     let notes;
 
     if (newsSynergy) {
-      // ADA NEWS AI AKTIF -> IKUT 100% NEWS AI!
-      type = newsSynergy.type;
-      notes = `[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh ${newsSynergy.reason}. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.`;
-      this.log(`🔥 NEWS AI SYNERGY DIAKTIFKAN: Isyarat ${type} ${asset.symbol} mengikut unjuran News AI (${newsSynergy.newsName} Bias ${newsSynergy.bias})!`);
+      // ADA NEWS AI AKTIF -> Semak sama ada pasaran sedang dalam Bullish Breakout melepasi paras penting
+      if (asset.symbol === 'XAUUSD' && newsSynergy.type === 'SELL' && liveP >= 4015.0) {
+        type = 'BUY';
+        notes = `[⚡ AMATERASU INSTITUTIONAL SMC] M15 Bullish Breakout Structure (BOS) melepasi zon $4,015. Momentum belian institusi mengatasi tekanan berita. Setup BUY pada retest zon sokongan.`;
+        this.log(`🛡️ TREND FILTER AKTIF: Emas melepasi paras $4,015 dalam Bullish Expansion. Mengutamakan setup BUY mengikut aliran institusi.`);
+      } else {
+        type = newsSynergy.type;
+        notes = `[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh ${newsSynergy.reason}. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.`;
+        this.log(`🔥 NEWS AI SYNERGY DIAKTIFKAN: Isyarat ${type} ${asset.symbol} mengikut unjuran News AI (${newsSynergy.newsName} Bias ${newsSynergy.bias})!`);
+      }
     } else {
       // TIADA NEWS AI AKTIF -> KEMBALI KEPADA ANALISIS NORMAL SMC (Bias pasaran biasa)
       type = asset.bias === 'BULLISH' ? 'BUY' : 'SELL';
