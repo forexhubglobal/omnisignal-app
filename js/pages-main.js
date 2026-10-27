@@ -2763,11 +2763,18 @@ function AiNewsPage(main) {
             </b>
           </div>
           <div>
-            <span style="font-size:10px; color:#8e9aa8; display:block;">UNJURAN BIAS AI (GOLD)</span>
+            <span style="font-size:10px; color:#8e9aa8; display:block;">UNJURAN BIAS MATA WANG (${(nextEv.country || 'us').toUpperCase()})</span>
             <b id="aiNewsTargetBias" style="font-size:12.5px; color:#00e676;">
               ${nextEv.bias}
             </b>
           </div>
+        </div>
+
+        <div style="margin-top:8px; padding:6px 10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:6px; font-size:11px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:#8e9aa8;">Kesan Langsung ke Emas (XAUUSD):</span>
+          <b id="aiNewsGoldImpact" style="font-size:11.5px; font-weight:800;">
+            ${(nextEv.bias || '').includes('BULL') ? '<span style="color:#ef5350;">🔴 BEARISH / SELL (USD Kuat = Emas Jatuh)</span>' : '<span style="color:#00e676;">🟢 BULLISH / BUY (USD Lemah = Emas Naik)</span>'}
+          </b>
         </div>
       </div>
 
@@ -3008,6 +3015,13 @@ function AiNewsPage(main) {
     if (elTargetName) elTargetName.textContent = event.name;
     if (elTargetTime) elTargetTime.textContent = `${event.time} MYT (${event.session})`;
     if (elTargetBias) elTargetBias.textContent = event.bias;
+    const elGoldImpact = $('#aiNewsGoldImpact', main);
+    if (elGoldImpact) {
+      const isBull = (event.bias || '').includes('BULL');
+      elGoldImpact.innerHTML = isBull 
+        ? '<span style="color:#ef5350;">🔴 BEARISH / SELL (USD Kuat = Emas Jatuh)</span>'
+        : '<span style="color:#00e676;">🟢 BULLISH / BUY (USD Lemah = Emas Naik)</span>';
+    }
 
     const phase = getPhaseStatus(diffSec);
     if (elPhaseStatus) {
