@@ -38,16 +38,22 @@
     ]
   },
   "activeSignal": {
-    "status": "WAITING",
-    "symbol": "USDJPY",
-    "type": "BUY",
+    "id": "sig-1793063344984",
+    "status": "ACTIVE",
+    "symbol": "GBPUSD",
+    "type": "SELL",
     "timeframe": "M15",
-    "entry": 0,
-    "tp1": 0,
-    "tp2": 0,
-    "sl": 0,
-    "firedAt": null,
-    "notes": "Amaterasu AI (Institutional SMC & Malaysian SNR Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi..."
+    "entry": 1.3334,
+    "tp1": 1.3314,
+    "tp2": 1.3284,
+    "sl": 1.3359,
+    "willWin": true,
+    "firedAt": "09:09",
+    "currentPrice": 1.3335,
+    "floatingPips": -1,
+    "beLocked": false,
+    "ticks": 57,
+    "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan."
   },
   "signals": [
     {
@@ -1190,5 +1196,57 @@
     "botToken": "",
     "chatId": "",
     "updatedAt": "2026-10-25T19:10:56.344Z"
-  }
+  },
+  "activeSignals": [
+    {
+      "id": "sig-1793063344984",
+      "status": "ACTIVE",
+      "symbol": "GBPUSD",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 1.3334,
+      "tp1": 1.3314,
+      "tp2": 1.3284,
+      "sl": 1.3359,
+      "willWin": true,
+      "firedAt": "09:09",
+      "currentPrice": 1.3335,
+      "floatingPips": -1,
+      "beLocked": false,
+      "ticks": 57,
+      "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan."
+    },
+    {
+      "id": "sig-1793063316854",
+      "status": "ACTIVE",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "timeframe": "M15",
+      "entry": 4013.5,
+      "tp1": 4017.5,
+      "tp2": 4023,
+      "sl": 4009,
+      "firedAt": "09:08",
+      "notes": "Signal generated from Amaterasu X AI Desk",
+      "ticks": 68,
+      "currentPrice": 4013.58,
+      "floatingPips": 0.8
+    },
+    {
+      "status": "ACTIVE",
+      "symbol": "WTI",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 101.06,
+      "tp1": 100.81,
+      "tp2": 100.46,
+      "sl": 101.36,
+      "willWin": false,
+      "firedAt": "08:40",
+      "notes": "[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at 101.06. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.",
+      "ticks": 116,
+      "currentPrice": 100.86,
+      "floatingPips": 20
+    }
+  ]
 }

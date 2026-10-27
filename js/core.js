@@ -281,6 +281,7 @@ function toast(msg) {
 const AppState = {
   db: null,
   activeSignal: null,
+  activeSignals: [],
   lastResolvedSignal: null,
   signals: [],
   stats: null,
@@ -293,6 +294,7 @@ const AppState = {
       const res = await fetch('/api/data');
       this.db = await res.json();
       this.activeSignal = this.db.activeSignal;
+      this.activeSignals = Array.isArray(this.db.activeSignals) ? this.db.activeSignals : (this.activeSignal && this.activeSignal.status === 'ACTIVE' ? [this.activeSignal] : []);
       this.lastResolvedSignal = this.db.lastResolvedSignal || null;
       this.signals = this.db.signals || [];
       this.stats = this.db.stats;
@@ -318,6 +320,7 @@ const AppState = {
       s.addEventListener('initial_sync', e => {
         const d = JSON.parse(e.data);
         this.activeSignal = d.activeSignal;
+        this.activeSignals = Array.isArray(d.activeSignals) ? d.activeSignals : (d.activeSignal && d.activeSignal.status === 'ACTIVE' ? [d.activeSignal] : []);
         this.lastResolvedSignal = d.lastResolvedSignal || null;
         this.signals = d.signals || [];
         if (d.marketQuotes) {
@@ -337,13 +340,35 @@ const AppState = {
         Market.updateQuotes(quotes);
       });
       s.addEventListener('signal_fired', e => {
-        this.activeSignal = JSON.parse(e.data);
-        if (this.activeSignal && this.activeSignal.symbol) {
-          store.set('selected_signal_sym', this.activeSignal.symbol);
+        const newSig = JSON.parse(e.data);
+        this.activeSignal = newSig;
+        if (!Array.isArray(this.activeSignals)) this.activeSignals = [];
+        this.activeSignals = this.activeSignals.filter(sig => sig.symbol !== newSig.symbol);
+        this.activeSignals.unshift(newSig);
+        if (this.activeSignals.length > 5) this.activeSignals.pop();
+        if (newSig && newSig.symbol) {
+          store.set('selected_signal_sym', newSig.symbol);
         }
         AmaterasuSound.sharingan();
-        toast(`⚡ AMATERASU SIGNAL: ${this.activeSignal.type} ${this.activeSignal.symbol}!`);
+        toast(`⚡ AMATERASU SIGNAL: ${newSig.type} ${newSig.symbol}!`);
         if (typeof route === 'function') route();
+      });
+      s.addEventListener('on_pips_update', e => {
+        const list = JSON.parse(e.data);
+        if (Array.isArray(list)) {
+          this.activeSignals = list;
+          if (list.length > 0 && (!this.activeSignal || this.activeSignal.status === 'WAITING')) {
+            this.activeSignal = list[0];
+          }
+          if (typeof route === 'function' && location.hash === '#signal') route();
+        }
+      });
+      s.addEventListener('on_pips_tick', e => {
+        const d = JSON.parse(e.data);
+        if (d && Array.isArray(d.activeSignals)) {
+          this.activeSignals = d.activeSignals;
+          Market.updateUI();
+        }
       });
       s.addEventListener('signal_active_tick', e => {
         const d = JSON.parse(e.data);
@@ -360,6 +385,10 @@ const AppState = {
       s.addEventListener('signal_update', e => {
         const d = JSON.parse(e.data);
         if (d.activeSignal) this.activeSignal = d.activeSignal;
+        if (Array.isArray(this.activeSignals) && d.activeSignal) {
+          const idx = this.activeSignals.findIndex(s => s.symbol === d.activeSignal.symbol);
+          if (idx !== -1) this.activeSignals[idx] = d.activeSignal;
+        }
         AmaterasuSound.tpWin();
         toast(d.message || `🎯 Target 1 Disahkan! Alih SL ke Break-Even (BE)!`);
         if (typeof route === 'function') route();
@@ -367,6 +396,11 @@ const AppState = {
       s.addEventListener('signal_resolved', e => {
         const d = JSON.parse(e.data);
         this.activeSignal = d.activeSignal;
+        if (Array.isArray(d.activeSignals)) {
+          this.activeSignals = d.activeSignals;
+        } else if (Array.isArray(this.activeSignals) && d.item) {
+          this.activeSignals = this.activeSignals.filter(s => s.symbol !== d.item.symbol);
+        }
         this.lastResolvedSignal = d.item;
         if (d.item) {
           this.signals = [d.item, ...(this.signals || [])];
@@ -539,6 +573,39 @@ const Market = {
         topBarPipsEl.textContent = (floatPips >= 0 ? '+' : '') + floatPips + ' PIP';
         topBarPipsEl.style.color = floatPips >= 0 ? '#00e676' : '#ef5350';
       }
+    }
+
+    // Real-Time Update for All Running Trades in "⚡ ON PIPS" Area
+    if (typeof AppState !== 'undefined' && Array.isArray(AppState.activeSignals)) {
+      AppState.activeSignals.forEach(sig => {
+        const liveP = this.getLivePrice(sig.symbol) || sig.entry;
+        const isBuy = sig.type === 'BUY';
+        const pipValActual = sig.symbol === 'XAUUSD' ? 0.1 : (sig.symbol === 'WTI' ? 0.01 : (sig.symbol.includes('JPY') ? 0.01 : (sig.symbol.includes('BTC') ? 1 : 0.0001)));
+        const diff = isBuy ? (liveP - sig.entry) : (sig.entry - liveP);
+        const floatPips = Number((diff / pipValActual).toFixed(1));
+        const qDec = (this.quotes[sig.symbol] && this.quotes[sig.symbol].decimals) || (sig.symbol === 'XAUUSD' || sig.symbol === 'WTI' ? 2 : sig.symbol.includes('JPY') ? 3 : sig.symbol.includes('BTC') ? 1 : 4);
+
+        const badgeEl = document.querySelector(`.on-pips-badge[data-symbol="${sig.symbol}"]`);
+        if (badgeEl) {
+          const prevVal = badgeEl.dataset.pipVal ? parseFloat(badgeEl.dataset.pipVal) : null;
+          badgeEl.textContent = (floatPips >= 0 ? '+' : '') + floatPips + ' PIP';
+          badgeEl.style.color = floatPips >= 0 ? '#00e676' : '#ef5350';
+          badgeEl.style.background = floatPips >= 0 ? 'rgba(0,230,118,0.16)' : 'rgba(239,83,80,0.16)';
+          badgeEl.style.borderColor = floatPips >= 0 ? 'rgba(0,230,118,0.35)' : 'rgba(239,83,80,0.35)';
+          badgeEl.dataset.pipVal = floatPips;
+
+          if (prevVal !== null && prevVal !== floatPips) {
+            badgeEl.style.transition = 'all 0.15s ease';
+            badgeEl.style.transform = 'scale(1.08)';
+            setTimeout(() => { if (badgeEl) badgeEl.style.transform = 'scale(1)'; }, 150);
+          }
+        }
+
+        const priceEl = document.querySelector(`.on-pips-curprice[data-symbol="${sig.symbol}"]`);
+        if (priceEl) {
+          priceEl.textContent = num(liveP, qDec);
+        }
+      });
     }
 
     // Update active chart redraw if mounted

@@ -87,15 +87,31 @@ function initSSE() {
       renderAll();
     });
     es.addEventListener('signal_fired', e => {
-      state.activeSignal = JSON.parse(e.data);
+      const sig = JSON.parse(e.data);
+      state.activeSignal = sig;
+      if (!Array.isArray(state.activeSignals)) state.activeSignals = [];
+      state.activeSignals = state.activeSignals.filter(s => s.symbol !== sig.symbol);
+      state.activeSignals.unshift(sig);
       renderDashboard();
       renderSignals();
-      logActivity(`⚡ Signal Broadcast: ${state.activeSignal.type} ${state.activeSignal.symbol} @ ${state.activeSignal.entry}`);
+      logActivity(`⚡ Signal Broadcast: ${sig.type} ${sig.symbol} @ ${sig.entry}`);
       toast('Signal broadcasted live to all nodes!');
+    });
+    es.addEventListener('on_pips_update', e => {
+      const list = JSON.parse(e.data);
+      state.activeSignals = list;
+      if (list && list.length > 0) state.activeSignal = list[0];
+      renderDashboard();
+      renderSignals();
     });
     es.addEventListener('signal_resolved', e => {
       const d = JSON.parse(e.data);
       state.activeSignal = d.activeSignal;
+      if (Array.isArray(d.activeSignals)) {
+        state.activeSignals = d.activeSignals;
+      } else if (Array.isArray(state.activeSignals) && d.item) {
+        state.activeSignals = state.activeSignals.filter(s => s.symbol !== d.item.symbol);
+      }
       state.stats = d.stats;
       state.signals.unshift(d.item);
       renderDashboard();

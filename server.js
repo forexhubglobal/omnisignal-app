@@ -159,7 +159,11 @@ function getDB() {
       return defaultDB;
     }
     const content = fs.readFileSync(DB_FILE, 'utf8');
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    if (!Array.isArray(parsed.activeSignals)) {
+      parsed.activeSignals = (parsed.activeSignal && parsed.activeSignal.status === 'ACTIVE') ? [parsed.activeSignal] : [];
+    }
+    return parsed;
   } catch (e) {
     console.error('Error reading DB, using defaults', e);
     return defaultDB;
@@ -427,6 +431,7 @@ const server = http.createServer(async (req, res) => {
     const db = getDB();
     res.write(`event: initial_sync\ndata: ${JSON.stringify({
       activeSignal: db.activeSignal,
+      activeSignals: db.activeSignals || (db.activeSignal && db.activeSignal.status === 'ACTIVE' ? [db.activeSignal] : []),
       lastResolvedSignal: db.lastResolvedSignal,
       signals: (db.signals || []).slice(0, 15),
       marketQuotes: liveMarketQuotes,
@@ -525,7 +530,9 @@ const server = http.createServer(async (req, res) => {
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
-      db.activeSignal = {
+      if (!Array.isArray(db.activeSignals)) db.activeSignals = [];
+      const newSig = {
+        id: 'sig-' + Date.now(),
         status: 'ACTIVE',
         symbol: payload.symbol || 'XAUUSD',
         type: payload.type || 'BUY',
@@ -537,11 +544,16 @@ const server = http.createServer(async (req, res) => {
         firedAt: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         notes: payload.notes || 'Signal generated from Amaterasu X AI Desk'
       };
+      db.activeSignals = db.activeSignals.filter(s => s.symbol !== newSig.symbol);
+      db.activeSignals.unshift(newSig);
+      if (db.activeSignals.length > 5) db.activeSignals.pop();
+      db.activeSignal = newSig;
       saveDB(db);
-      broadcastEvent('signal_fired', db.activeSignal);
-      TelegramNotifier.send(TelegramNotifier.formatSignalMessage(db.activeSignal)).catch(() => {});
+      broadcastEvent('signal_fired', newSig);
+      broadcastEvent('on_pips_update', db.activeSignals);
+      TelegramNotifier.send(TelegramNotifier.formatSignalMessage(newSig)).catch(() => {});
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, signal: db.activeSignal }));
+      return res.end(JSON.stringify({ success: true, signal: newSig, activeSignals: db.activeSignals }));
     } catch (e) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: e.message }));
@@ -1074,28 +1086,44 @@ const AiEngine = {
   tick() {
     if (!this.enabled || !hasInitialLiveQuote) return;
     const db = getDB();
-    const sig = db.activeSignal;
+    if (!Array.isArray(db.activeSignals)) {
+      db.activeSignals = (db.activeSignal && (db.activeSignal.status === 'ACTIVE' || db.activeSignal.status === 'TP1_HIT')) ? [db.activeSignal] : [];
+    }
 
-    if (!sig || sig.status === 'WAITING') {
-      this.secondsInState += 2.5;
+    this.secondsInState += 2.5;
 
-      // Pulse scan log every 15s
-      if (Math.floor(this.secondsInState) % 15 === 0) {
-        const randAsset = this.assets[Math.floor(Math.random() * this.assets.length)];
-        const conf = (86 + Math.random() * 9).toFixed(1);
-        this.log(`Amaterasu AI (Multi-Timeframe SMC Scanner) inspecting ${randAsset.symbol} M15 Order Block... confluence ${conf}%.`);
+    // Pulse scan log every 15s
+    if (Math.floor(this.secondsInState) % 15 === 0) {
+      const randAsset = this.assets[Math.floor(Math.random() * this.assets.length)];
+      const conf = (86 + Math.random() * 9).toFixed(1);
+      this.log(`Amaterasu AI (Multi-Timeframe SMC Scanner) inspecting ${randAsset.symbol} M15 Order Block... confluence ${conf}%.`);
+    }
+
+    // Confluence threshold reached -> Autonomous AI signal dispatch for available assets
+    // Maximum 4 simultaneous running signals across distinct pairs in On Pips!
+    if (this.secondsInState >= this.scanIntervalSec) {
+      this.secondsInState = 0;
+      const runningSymbols = new Set(db.activeSignals.map(s => s.symbol));
+      const availableAssets = this.assets.filter(a => !runningSymbols.has(a.symbol));
+      if (availableAssets.length > 0 && db.activeSignals.length < 4) {
+        this.fireAutonomousSignal(db, availableAssets[Math.floor(Math.random() * availableAssets.length)]);
       }
+    }
 
-      // Confluence threshold reached -> Autonomous AI signal dispatch
-      if (this.secondsInState >= this.scanIntervalSec) {
-        this.fireAutonomousSignal(db);
-        this.secondsInState = 0;
-        this.activeTradeTicks = 0;
-        this.tp1Triggered = false;
-      }
-    } else if (sig.status === 'ACTIVE' || sig.status === 'TP1_HIT') {
-      this.activeTradeTicks++;
-      this.monitorActiveTrade(db, sig);
+    // Monitor ALL active trades in On Pips
+    if (db.activeSignals.length > 0) {
+      this.monitorActiveTrades(db);
+    } else {
+      db.activeSignal = {
+        status: 'WAITING',
+        symbol: 'XAUUSD',
+        type: 'BUY',
+        timeframe: 'M15',
+        entry: 0, tp1: 0, tp2: 0, sl: 0,
+        firedAt: null,
+        notes: 'Amaterasu AI mengimbas zon kecairan pasaran untuk setup seterusnya...'
+      };
+      saveDB(db);
     }
   },
 
@@ -1104,8 +1132,6 @@ const AiEngine = {
     const liveQ = liveMarketQuotes[asset.symbol];
     const liveP = liveQ ? liveQ.price : (asset.symbol === 'XAUUSD' ? currentMarketPrice : asset.base);
 
-    // High-Winrate Confluence Model:
-    // Respect dominant macro trend for 85-90% institutional accuracy
     let type = asset.bias === 'BULLISH' ? 'BUY' : 'SELL';
     if (liveQ && typeof liveQ.change === 'number') {
       if (Math.random() < 0.88) {
@@ -1121,7 +1147,6 @@ const AiEngine = {
     const tp2 = Number((entry + sign * asset.tp2Pips * asset.pipVal).toFixed(asset.pipDec));
     const sl = Number((entry - sign * asset.slPips * asset.pipVal).toFixed(asset.pipDec));
 
-    // Internal cohort calibration: 88% probability to capture TP1/TP2
     const willWin = Math.random() < (this.targetWinrate / 100);
 
     const amaterasuRationales = type === 'BUY' ? [
@@ -1135,7 +1160,8 @@ const AiEngine = {
     ];
     const notes = amaterasuRationales[Math.floor(Math.random() * amaterasuRationales.length)];
 
-    db.activeSignal = {
+    const newSig = {
+      id: 'sig-' + Date.now(),
       status: 'ACTIVE',
       symbol: asset.symbol,
       type: type,
@@ -1146,104 +1172,133 @@ const AiEngine = {
       sl: sl,
       willWin: willWin,
       firedAt: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+      currentPrice: entry,
+      floatingPips: 0,
+      beLocked: false,
+      ticks: 0,
       notes: notes
     };
 
+    if (!Array.isArray(db.activeSignals)) db.activeSignals = [];
+    const existingIdx = db.activeSignals.findIndex(s => s.symbol === asset.symbol);
+    if (existingIdx !== -1) {
+      db.activeSignals[existingIdx] = newSig;
+    } else {
+      db.activeSignals.unshift(newSig);
+    }
+    if (db.activeSignals.length > 5) db.activeSignals.pop();
+
+    db.activeSignal = db.activeSignals[0];
     saveDB(db);
-    broadcastEvent('signal_fired', db.activeSignal);
-    TelegramNotifier.send(TelegramNotifier.formatSignalMessage(db.activeSignal)).catch(() => {});
-    this.log(`⚡ AI SIGNAL AUTO-FIRED: ${type} ${asset.symbol} @ ${entry.toFixed(asset.pipDec)} (TP1: ${tp1}, TP2: ${tp2}, SL: ${sl}) · Amaterasu 88% Winrate Edge`);
+
+    broadcastEvent('signal_fired', newSig);
+    broadcastEvent('on_pips_update', db.activeSignals);
+    TelegramNotifier.send(TelegramNotifier.formatSignalMessage(newSig)).catch(() => {});
+    this.log(`⚡ AI SIGNAL AUTO-FIRED: ${type} ${asset.symbol} @ ${entry.toFixed(asset.pipDec)} (TP1: ${tp1}, TP2: ${tp2}, SL: ${sl}) · Masuk ke senarai On Pips`);
   },
 
-  monitorActiveTrade(db, sig) {
-    const asset = this.assets.find(a => a.symbol === sig.symbol) || this.assets[0];
-    const liveQ = liveMarketQuotes[sig.symbol];
-    if (!liveQ || typeof liveQ.price !== 'number' || !hasInitialLiveQuote) return;
+  monitorActiveTrades(db) {
+    if (!Array.isArray(db.activeSignals) || db.activeSignals.length === 0) return;
 
-    // Use authentic live price from real-world market feed (TradingView)
-    const curP = liveQ.price;
-
-    // Sanity Protection Guard: Price deviation cannot exceed 2.5% on an active scalp
-    // Prevents uninitialized seeds or cold-start anomalies from falsely triggering SL or TP!
-    const deviationPct = Math.abs(curP - sig.entry) / sig.entry;
-    if (deviationPct > 0.025) {
-      return;
-    }
-    const isBuy = sig.type === 'BUY';
-
-    // Calculate actual real-world floating pips against live MT5 / TradingView price
-    const diff = isBuy ? (curP - sig.entry) : (sig.entry - curP);
-    const floatingPips = Math.round(diff / asset.pipVal);
-
-    sig.currentPrice = curP;
-    sig.floatingPips = floatingPips;
-
-    // Stage 1: Hit TP1 (Trigger + Lock Breakeven) ONLY when real market reaches or crosses TP1
-    const tp1Condition = isBuy ? (curP >= sig.tp1) : (curP <= sig.tp1);
-    if (!this.tp1Triggered && sig.status === 'ACTIVE' && tp1Condition) {
-      this.tp1Triggered = true;
-      sig.status = 'TP1_HIT';
-      sig.beLocked = true;
-      sig.tp1HitAt = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-      sig.tp1Pips = asset.tp1Pips;
-      db.stats.tp1Hit = (db.stats.tp1Hit || 0) + 1;
-      db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + asset.tp1Pips;
-      saveDB(db);
-
-      this.log(`🎯 AI Engine: Target 1 Hit for ${sig.symbol} (+${asset.tp1Pips} pips)! Trailing stop locked to Breakeven.`);
-      broadcastEvent('signal_update', {
-        type: 'TP1_HIT',
-        symbol: sig.symbol,
-        pips: asset.tp1Pips,
-        activeSignal: sig,
-        message: `🎯 Target 1 Disahkan (+${asset.tp1Pips} pip)! Alih SL ke Break-Even (BE)!`
-      });
-      broadcastEvent('signal_fired', sig);
-      TelegramNotifier.send(TelegramNotifier.formatTp1Message(sig, asset.tp1Pips)).catch(() => {});
-      return;
-    }
-
-    // Stage 2: Hit TP2 (Full Target Reached) ONLY when real market reaches or crosses TP2
-    const tp2Condition = isBuy ? (curP >= sig.tp2) : (curP <= sig.tp2);
-    if (tp2Condition) {
-      TelegramNotifier.send(TelegramNotifier.formatTp2Message(sig, asset.tp2Pips)).catch(() => {});
-      this.resolveTrade(db, sig, 'TP2', asset.tp2Pips, asset);
-      return;
-    }
-
-    // Stage 3: Hit SL ONLY when real market reaches or crosses Stop Loss
-    const slCondition = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
-    if (slCondition) {
-      if (sig.beLocked) {
-        this.resolveTrade(db, sig, 'BE', 0, asset);
-      } else {
-        this.resolveTrade(db, sig, 'SL', -asset.slPips, asset);
+    const remaining = [];
+    for (const sig of db.activeSignals) {
+      sig.ticks = (sig.ticks || 0) + 1;
+      const asset = this.assets.find(a => a.symbol === sig.symbol) || this.assets[0];
+      const liveQ = liveMarketQuotes[sig.symbol];
+      if (!liveQ || typeof liveQ.price !== 'number' || !hasInitialLiveQuote) {
+        remaining.push(sig);
+        continue;
       }
-      return;
+
+      const curP = liveQ.price;
+      const deviationPct = Math.abs(curP - sig.entry) / sig.entry;
+      if (deviationPct > 0.025) {
+        remaining.push(sig);
+        continue;
+      }
+
+      const isBuy = sig.type === 'BUY';
+      const diff = isBuy ? (curP - sig.entry) : (sig.entry - curP);
+      const floatingPips = Number((diff / asset.pipVal).toFixed(1));
+
+      sig.currentPrice = curP;
+      sig.floatingPips = floatingPips;
+
+      // Stage 1: Hit TP1 (Trigger + Lock Breakeven)
+      const tp1Condition = isBuy ? (curP >= sig.tp1) : (curP <= sig.tp1);
+      if (!sig.tp1Triggered && sig.status === 'ACTIVE' && tp1Condition) {
+        sig.tp1Triggered = true;
+        sig.status = 'TP1_HIT';
+        sig.beLocked = true;
+        sig.tp1HitAt = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+        sig.tp1Pips = asset.tp1Pips;
+        db.stats.tp1Hit = (db.stats.tp1Hit || 0) + 1;
+        db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + asset.tp1Pips;
+
+        this.log(`🎯 AI Engine: Target 1 Hit for ${sig.symbol} (+${asset.tp1Pips} pips)! Trailing stop locked to Breakeven.`);
+        broadcastEvent('signal_update', {
+          type: 'TP1_HIT',
+          symbol: sig.symbol,
+          pips: asset.tp1Pips,
+          activeSignal: sig,
+          message: `🎯 Target 1 Disahkan (+${asset.tp1Pips} pip)! Alih SL ke Break-Even (BE)!`
+        });
+        TelegramNotifier.send(TelegramNotifier.formatTp1Message(sig, asset.tp1Pips)).catch(() => {});
+        remaining.push(sig);
+        continue;
+      }
+
+      // Stage 2: Hit TP2 (Full Target Reached)
+      const tp2Condition = isBuy ? (curP >= sig.tp2) : (curP <= sig.tp2);
+      if (tp2Condition) {
+        TelegramNotifier.send(TelegramNotifier.formatTp2Message(sig, asset.tp2Pips)).catch(() => {});
+        this.resolveTrade(db, sig, 'TP2', asset.tp2Pips, asset);
+        continue;
+      }
+
+      // Stage 3: Hit SL
+      const slCondition = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
+      if (slCondition) {
+        if (sig.beLocked) {
+          this.resolveTrade(db, sig, 'BE', 0, asset);
+        } else {
+          this.resolveTrade(db, sig, 'SL', -asset.slPips, asset);
+        }
+        continue;
+      }
+
+      // Stage 4: Session Max Duration (30 mins = 720 ticks)
+      if (sig.ticks >= 720) {
+        const outcome = floatingPips > 10 ? 'CLOSED' : (sig.beLocked ? 'BE' : (floatingPips < -asset.slPips ? 'SL' : 'CLOSED'));
+        this.log(`⏱️ AI Engine Trade Session Completed: ${sig.symbol} closed at honest market reality (${floatingPips >= 0 ? '+' : ''}${floatingPips} pips).`);
+        this.resolveTrade(db, sig, outcome, floatingPips, asset);
+        continue;
+      }
+
+      remaining.push(sig);
     }
 
-    // Broadcast running floating PnL on every single tick to client
-    broadcastEvent('signal_active_tick', {
-      symbol: sig.symbol,
-      currentPrice: curP,
-      entry: sig.entry,
-      floatingPips: floatingPips,
-      status: sig.status,
-      beLocked: !!sig.beLocked
+    db.activeSignals = remaining;
+    db.activeSignal = remaining[0] || {
+      status: 'WAITING',
+      symbol: 'XAUUSD',
+      type: 'BUY',
+      timeframe: 'M15',
+      entry: 0, tp1: 0, tp2: 0, sl: 0,
+      firedAt: null,
+      notes: 'Amaterasu AI mengimbas zon kecairan pasaran untuk setup seterusnya...'
+    };
+    saveDB(db);
+
+    broadcastEvent('on_pips_tick', {
+      activeSignals: db.activeSignals,
+      count: db.activeSignals.length
     });
-
-    // Realistic Session Max Duration (30 minutes of real time / 720 ticks)
-    // If the market is completely flat/consolidating, close at the HONEST actual floating pips
-    if (this.activeTradeTicks >= 720) {
-      const outcome = floatingPips > 10 ? 'CLOSED' : (sig.beLocked ? 'BE' : (floatingPips < -asset.slPips ? 'SL' : 'CLOSED'));
-      this.log(`⏱️ AI Engine Trade Session Completed: ${sig.symbol} closed at honest market reality (${floatingPips >= 0 ? '+' : ''}${floatingPips} pips).`);
-      this.resolveTrade(db, sig, outcome, floatingPips, asset);
-    }
   },
 
   resolveTrade(db, sig, outcome, pips, asset) {
     const newHistoryItem = {
-      id: 'sig-' + Date.now(),
+      id: sig.id || ('sig-' + Date.now()),
       time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       symbol: sig.symbol,
@@ -1255,8 +1310,22 @@ const AiEngine = {
       peak: Math.abs(pips) + 5
     };
 
+    if (!Array.isArray(db.signals)) db.signals = [];
     db.signals.unshift(newHistoryItem);
     db.lastResolvedSignal = { ...newHistoryItem };
+
+    if (Array.isArray(db.activeSignals)) {
+      db.activeSignals = db.activeSignals.filter(s => s.symbol !== sig.symbol && s.id !== sig.id);
+    }
+    db.activeSignal = (db.activeSignals && db.activeSignals[0]) || {
+      status: 'WAITING',
+      symbol: 'XAUUSD',
+      type: 'BUY',
+      timeframe: 'M15',
+      entry: 0, tp1: 0, tp2: 0, sl: 0,
+      firedAt: null,
+      notes: 'Amaterasu AI mengimbas zon kecairan pasaran untuk setup seterusnya...'
+    };
 
     db.stats.totalSignals = (db.stats.totalSignals || 0) + 1;
     if (pips > 0) {
@@ -1269,26 +1338,10 @@ const AiEngine = {
     const wins = db.signals.filter(s => s.pips > 0 || (s.tags && s.tags.includes('TP1')) || s.status === 'BE').length;
     db.stats.winRate = db.signals.length > 0 ? Math.round((wins / db.signals.length) * 100) : 0;
 
-    // Reset active signal to WAITING
-    db.activeSignal = {
-      status: 'WAITING',
-      symbol: 'XAUUSD',
-      type: 'BUY',
-      timeframe: 'M15',
-      entry: 0,
-      tp1: 0,
-      tp2: 0,
-      sl: 0,
-      firedAt: null,
-      notes: `Amaterasu AI (Institutional SMC & Malaysian SNR Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi...`
-    };
-
     saveDB(db);
-    broadcastEvent('signal_resolved', { item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal });
+    broadcastEvent('signal_resolved', { item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal, activeSignals: db.activeSignals });
+    broadcastEvent('on_pips_update', db.activeSignals);
     this.log(`🏁 AI Engine Trade Closed: ${sig.symbol} hit ${outcome} (${pips > 0 ? '+' : ''}${pips} pips)! Telemetry Winrate: ${db.stats.winRate}%.`);
-    this.secondsInState = 0;
-    this.activeTradeTicks = 0;
-    this.tp1Triggered = false;
   }
 };
 

@@ -434,16 +434,22 @@ function SignalPage(main) {
   const globalSig = (AppState && AppState.activeSignal) || { status: 'WAITING', type: 'BUY', symbol: 'XAUUSD', entry: 4013.00, tp1: 4016.00, tp2: 4020.50, sl: 4009.50 };
 
   const isLiveOrTp1 = globalSig.status === 'ACTIVE' || globalSig.status === 'TP1_HIT';
-  const isCurrentAssetActive = isLiveOrTp1 && globalSig.symbol === inst.id;
-  const isAnyActive = isLiveOrTp1;
-  const isTp1 = globalSig.status === 'TP1_HIT';
+  const activeList = (AppState && Array.isArray(AppState.activeSignals) && AppState.activeSignals.length > 0)
+    ? AppState.activeSignals
+    : (isLiveOrTp1 ? [globalSig] : []);
+
+  const matchedActiveSig = activeList.find(s => s.symbol === inst.id);
+  const isCurrentAssetActive = !!matchedActiveSig && (matchedActiveSig.status === 'ACTIVE' || matchedActiveSig.status === 'TP1_HIT');
+  const isAnyActive = activeList.length > 0;
+  const currentSig = matchedActiveSig || (isCurrentAssetActive ? globalSig : (activeList[0] || globalSig));
+  const isTp1 = currentSig.status === 'TP1_HIT' || currentSig.beLocked;
 
   const curLivePrice = parseFloat(Market.getLivePrice(inst.id) || inst.basePrice);
-  const isBuy = globalSig && globalSig.type === 'BUY';
+  const isBuy = currentSig && currentSig.type === 'BUY';
   let liveFloatingPips = 0;
-  if (globalSig && globalSig.entry && curLivePrice) {
+  if (currentSig && currentSig.entry && curLivePrice) {
     const pipValActual = inst.id === 'XAUUSD' ? 0.1 : (inst.id === 'WTI' ? 0.01 : (inst.category === 'Forex' && !inst.id.includes('JPY') ? 0.0001 : (inst.id.includes('JPY') ? 0.01 : 1)));
-    const diff = isBuy ? (curLivePrice - globalSig.entry) : (globalSig.entry - curLivePrice);
+    const diff = isBuy ? (curLivePrice - currentSig.entry) : (currentSig.entry - curLivePrice);
     liveFloatingPips = Math.round(diff / pipValActual);
   }
 
@@ -459,10 +465,10 @@ function SignalPage(main) {
   const ticketHtml = isCurrentAssetActive ? `
     <div class="solar-ticket ${isTp1 ? 'tp1-secured' : ''}">
       <div class="solar-ticket-head">
-        <span class="signal-type-badge ${isTp1 ? 'tp1' : globalSig.type.toLowerCase()}" style="${isTp1 ? 'background:rgba(0,230,118,0.18); color:#00e676; border:1px solid #00e676;' : ''}">
-          ${isTp1 ? `🎯 TARGET 1 HIT (+${globalSig.tp1Pips || 25} PIPS) · BE LOCKED` : `● RUNNING (${globalSig.type} ${globalSig.symbol})`}
+        <span class="signal-type-badge ${isTp1 ? 'tp1' : currentSig.type.toLowerCase()}" style="${isTp1 ? 'background:rgba(0,230,118,0.18); color:#00e676; border:1px solid #00e676;' : ''}">
+          ${isTp1 ? `🎯 TARGET 1 HIT (+${currentSig.tp1Pips || 25} PIPS) · BE LOCKED` : `● RUNNING (${currentSig.type} ${currentSig.symbol})`}
         </span>
-        <span class="muted" style="font-size: 11.5px;">Triggered: ${globalSig.firedAt || 'Live'}</span>
+        <span class="muted" style="font-size: 11.5px;">Triggered: ${currentSig.firedAt || 'Live'}</span>
       </div>
 
       <!-- Real-Time Floating PnL Live Card (100% Synced to MT5 Price) -->
@@ -488,7 +494,7 @@ function SignalPage(main) {
           <div>
             <b style="color:#00e676; font-size:12px; display:block;">STATUS: SIFAR RISIKO (100% RISK-FREE)</b>
             <span style="font-size:11px; color:#f1f5f9; line-height:1.35; display:block;">
-              SOP Wajib: Ambil 50% partial profit & <b>pastikan Stop Loss diubah ke harga Entry (${num(globalSig.entry)})</b>. Baki posisi sasarkan TP2!
+              SOP Wajib: Ambil 50% partial profit & <b>pastikan Stop Loss diubah ke harga Entry (${num(currentSig.entry)})</b>. Baki posisi sasarkan TP2!
             </span>
           </div>
         </div>
@@ -497,26 +503,26 @@ function SignalPage(main) {
       <div class="ticket-grid">
         <div class="ticket-metric">
           <div class="lbl">Entry Execution</div>
-          <div class="val gold">${num(globalSig.entry)}</div>
+          <div class="val gold">${num(currentSig.entry)}</div>
         </div>
         <div class="ticket-metric">
           <div class="lbl">${isTp1 ? 'Runner Target (TP2)' : 'Primary Target'}</div>
-          <div class="val bull">${isTp1 ? num(globalSig.tp2) : num(globalSig.tp1)}</div>
+          <div class="val bull">${isTp1 ? num(currentSig.tp2) : num(currentSig.tp1)}</div>
         </div>
       </div>
 
       <div class="targets-row">
         <div class="target-box tp ${isTp1 ? 'secured' : ''}">
           <span>TARGET 1 ${isTp1 ? '✓ HIT' : ''}</span>
-          <b>${num(globalSig.tp1)}</b>
+          <b>${num(currentSig.tp1)}</b>
         </div>
         <div class="target-box tp">
           <span>TARGET 2 (RUNNER)</span>
-          <b>${num(globalSig.tp2)}</b>
+          <b>${num(currentSig.tp2)}</b>
         </div>
         <div class="target-box sl">
           <span>STOP LOSS</span>
-          <b>${isTp1 ? `BE (${num(globalSig.entry)})` : num(globalSig.sl)}</b>
+          <b>${isTp1 ? `BE (${num(currentSig.entry)})` : num(currentSig.sl)}</b>
         </div>
       </div>
 
@@ -526,7 +532,7 @@ function SignalPage(main) {
       </div>
 
       <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.45; border-top: 1px solid var(--border); padding-top: 10px;">
-        ${globalSig.notes || `Amaterasu AI algorithm detected order block absorption on ${inst.name}. Follow strict SOP.`}
+        ${currentSig.notes || `Amaterasu AI algorithm detected order block absorption on ${inst.name}. Follow strict SOP.`}
       </p>
 
       <!-- AI Confluence Institutional Checklist -->
@@ -562,16 +568,16 @@ function SignalPage(main) {
     <div class="solar-active-alert-card" style="background: linear-gradient(135deg, rgba(255, 160, 0, 0.15) 0%, rgba(13, 20, 30, 0.95) 100%); border: 1px solid var(--solar-gold); border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; text-align: center; box-shadow: 0 4px 24px rgba(255, 160, 0, 0.2);">
       <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
         <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#00e676; animation:pulseDot 1.2s infinite;"></span>
-        <span style="font-size:11.5px; font-weight:800; color:#f5c451; letter-spacing:0.8px; text-transform:uppercase;">AI SIGNAL SEDANG AKTIF PADA ${globalSig.symbol}!</span>
+        <span style="font-size:11.5px; font-weight:800; color:#f5c451; letter-spacing:0.8px; text-transform:uppercase;">${activeList.length} AI SIGNAL SEDANG BERJALAN (ON PIPS)!</span>
       </div>
       <div style="font-size:20px; font-weight:800; color:#fff; margin-bottom:4px; font-family:'Space Grotesk',sans-serif;">
-        ${globalSig.type === 'BUY' ? '🟢 BUY' : '🔴 SELL'} ${globalSig.symbol} @ ${num(globalSig.entry)}
+        ${activeList[0].type === 'BUY' ? '🟢 BUY' : '🔴 SELL'} ${activeList[0].symbol} @ ${num(activeList[0].entry)}
       </div>
       <div style="font-size:12px; color:#94a3b8; margin-bottom:14px;">
-        TP1: <b style="color:#00e676;">${num(globalSig.tp1)}</b> · TP2: <b style="color:#00e676;">${num(globalSig.tp2)}</b> · SL: <b style="color:#ef5350;">${num(globalSig.sl)}</b>
+        TP1: <b style="color:#00e676;">${num(activeList[0].tp1)}</b> · TP2: <b style="color:#00e676;">${num(activeList[0].tp2)}</b> · SL: <b style="color:#ef5350;">${num(activeList[0].sl)}</b>
       </div>
-      <button class="btn gold" id="btnGoToActiveSignal" style="width:100%; padding:11px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 15px rgba(255,160,0,0.3);">
-        <span>Buka Chart & Live Signal ${globalSig.symbol}</span> ➔
+      <button class="btn gold" id="btnGoToActiveSignal" data-sym="${activeList[0].symbol}" style="width:100%; padding:11px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 15px rgba(255,160,0,0.3);">
+        <span>Buka Chart & Pantau ${activeList[0].symbol}</span> ➔
       </button>
     </div>
   ` : `
@@ -643,16 +649,125 @@ function SignalPage(main) {
     </div>
   `;
 
+  const onPipsHtml = `
+    <!-- ⚡ ON PIPS: LIVE RUNNING SIGNALS SUITE -->
+    <div class="on-pips-container" id="onPipsSection" style="margin-top:16px; background:#0b1118; border:1px solid rgba(239,45,61,0.35); border-radius:12px; padding:14px 16px; box-shadow:0 6px 24px rgba(0,0,0,0.4);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">⚡</span>
+          <div>
+            <b style="font-family:'Space Grotesk',sans-serif; font-size:13.5px; color:#f1f5f9; letter-spacing:0.5px;">ON PIPS (SIGNAL RUNNING LIVE)</b>
+            <span style="display:block; font-size:10.5px; color:#8e9aa8;">Pantau semua posisi aktif tanpa hilang bila signal baru keluar</span>
+          </div>
+        </div>
+        <span style="background:${activeList.length > 0 ? 'rgba(0,230,118,0.18)' : 'rgba(255,255,255,0.06)'}; border:1px solid ${activeList.length > 0 ? '#00e676' : 'rgba(255,255,255,0.15)'}; color:${activeList.length > 0 ? '#00e676' : '#8e9aa8'}; font-size:10.5px; font-weight:800; padding:3px 9px; border-radius:12px; display:flex; align-items:center; gap:5px;">
+          <span style="width:6px; height:6px; border-radius:50%; background:${activeList.length > 0 ? '#00e676' : '#64748b'}; ${activeList.length > 0 ? 'animation:pulseDot 1.2s infinite;' : ''}"></span>
+          ${activeList.length} POSISI AKTIF
+        </span>
+      </div>
+
+      ${activeList.length > 0 ? `
+        <div class="on-pips-list" style="display:flex; flex-direction:column; gap:10px;">
+          ${activeList.map(sig => {
+            const symInst = ALL_INSTRUMENTS.find(i => i.id === sig.symbol) || { id: sig.symbol, icon: '📊', name: sig.symbol, basePrice: sig.entry };
+            const liveP = parseFloat(Market.getLivePrice(sig.symbol) || sig.entry);
+            const isBuySig = sig.type === 'BUY';
+            const pipVal = sig.symbol === 'XAUUSD' ? 0.1 : (sig.symbol === 'WTI' ? 0.01 : (sig.symbol.includes('JPY') ? 0.01 : (sig.symbol.includes('BTC') ? 1 : 0.0001)));
+            const diff = isBuySig ? (liveP - sig.entry) : (sig.entry - liveP);
+            const floatPips = Number((diff / pipVal).toFixed(1));
+            const isSigTp1 = sig.status === 'TP1_HIT' || sig.beLocked;
+            const dec = (Market.quotes[sig.symbol] && Market.quotes[sig.symbol].decimals) || (sig.symbol === 'XAUUSD' || sig.symbol === 'WTI' ? 2 : sig.symbol.includes('JPY') ? 3 : sig.symbol.includes('BTC') ? 1 : 4);
+
+            return `
+              <div class="on-pips-card" data-sym="${sig.symbol}" style="background:#111722; border:1px solid ${isSigTp1 ? 'rgba(0,230,118,0.4)' : 'rgba(255,255,255,0.08)'}; border-radius:10px; padding:12px; position:relative; overflow:hidden;">
+                ${isSigTp1 ? '<div style="position:absolute; top:0; left:0; width:4px; height:100%; background:#00e676;"></div>' : '<div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--solar-gold);"></div>'}
+                
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; padding-left:6px;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:16px;">${symInst.icon}</span>
+                    <div>
+                      <div style="display:flex; align-items:center; gap:6px;">
+                        <b style="color:#fff; font-size:14px; letter-spacing:0.3px;">${sig.symbol}</b>
+                        <span style="font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; background:${isBuySig ? 'rgba(0,230,118,0.15)' : 'rgba(239,83,80,0.15)'}; color:${isBuySig ? '#00e676' : '#ef5350'}; border:1px solid ${isBuySig ? '#00e676' : '#ef5350'};">
+                          ${sig.type} ${sig.timeframe || 'M15'}
+                        </span>
+                      </div>
+                      <span class="muted" style="font-size:10px;">Triggered: ${sig.firedAt || 'Live'}</span>
+                    </div>
+                  </div>
+
+                  <div style="text-align:right;">
+                    <b class="on-pips-badge" data-symbol="${sig.symbol}" data-pip-val="${floatPips}" style="font-size:13.5px; font-weight:800; color:${floatPips >= 0 ? '#00e676' : '#ef5350'}; background:${floatPips >= 0 ? 'rgba(0,230,118,0.16)' : 'rgba(239,83,80,0.16)'}; padding:2px 8px; border-radius:6px; display:inline-block; border:1px solid ${floatPips >= 0 ? 'rgba(0,230,118,0.3)' : 'rgba(239,83,80,0.3)'};">
+                      ${floatPips >= 0 ? '+' : ''}${floatPips} PIP
+                    </b>
+                    <span style="display:block; font-size:10px; color:#8e9aa8; margin-top:2px;">
+                      Live: <b class="on-pips-curprice" data-symbol="${sig.symbol}" style="color:#f5c451;">${num(liveP, dec)}</b>
+                    </span>
+                  </div>
+                </div>
+
+                ${isSigTp1 ? `
+                  <div style="background:rgba(0,230,118,0.1); border:1px solid rgba(0,230,118,0.3); border-radius:6px; padding:4px 8px; margin:6px 0 8px 6px; font-size:10.5px; color:#00e676; display:flex; align-items:center; gap:6px;">
+                    <span>🛡️</span>
+                    <span><b>TARGET 1 HIT!</b> Stop Loss dikunci ke Break-Even (Sifar Risiko)</span>
+                  </div>
+                ` : ''}
+
+                <!-- Price Levels Mini Grid -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; background:#080c14; border-radius:6px; padding:6px 8px; margin:6px 0 10px 6px; font-size:11px;">
+                  <div>
+                    <span style="color:#8e9aa8; font-size:9.5px; display:block;">ENTRY</span>
+                    <b style="color:#fff;">${num(sig.entry, dec)}</b>
+                  </div>
+                  <div>
+                    <span style="color:#00e676; font-size:9.5px; display:block;">TP1</span>
+                    <b style="color:#00e676;">${num(sig.tp1, dec)}</b>
+                  </div>
+                  <div>
+                    <span style="color:#00e676; font-size:9.5px; display:block;">TP2</span>
+                    <b style="color:#00e676;">${num(sig.tp2, dec)}</b>
+                  </div>
+                  <div>
+                    <span style="color:#ef5350; font-size:9.5px; display:block;">SL</span>
+                    <b style="color:#ef5350;">${isSigTp1 ? 'BE' : num(sig.sl, dec)}</b>
+                  </div>
+                </div>
+
+                <!-- Action Controls for this active running trade -->
+                <div style="display:flex; gap:8px; padding-left:6px;">
+                  <button class="btn btn-outline btn-watch-chart" data-sym="${sig.symbol}" style="flex:1; padding:6px 10px; font-size:11px; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:5px; border-color:rgba(255,255,255,0.18);">
+                    <span>🔍</span> Pantau Chart
+                  </button>
+                  <button class="btn btn-outline btn-copy-card-setup" data-sig='${JSON.stringify({ symbol: sig.symbol, type: sig.type, entry: sig.entry, tp1: sig.tp1, tp2: sig.tp2, sl: isSigTp1 ? sig.entry : sig.sl })}' style="flex:1; padding:6px 10px; font-size:11px; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:5px; border-color:rgba(245,196,81,0.3); color:#f5c451;">
+                    <span>📋</span> Salin Setup
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : `
+        <div style="text-align:center; padding:18px 12px; background:#111722; border-radius:8px; border:1px dashed rgba(255,255,255,0.1);">
+          <div style="font-size:24px; margin-bottom:6px;">📡</div>
+          <b style="color:#f1f5f9; font-size:12.5px; display:block; margin-bottom:4px;">Tiada Posisi Running Buat Masa Ini</b>
+          <p style="font-size:11px; color:#8e9aa8; margin:0; line-height:1.4;">
+            Enjin Amaterasu AI sedang mengimbas zon kecairan Order Block. Sebaik sahaja signal baru dicetuskan, ia akan kekal dipaparkan di sini sehingga mencapai TP2 atau SL.
+          </p>
+        </div>
+      `}
+    </div>
+  `;
+
   main.innerHTML = `<section class="page" style="padding-top: 4px;">
     ${solarGlow()}
 
     ${isAnyActive ? `
-      <div class="top-active-signal-bar" id="topActiveSignalBar" style="background: linear-gradient(90deg, rgba(0, 230, 118, 0.16) 0%, rgba(255, 160, 0, 0.16) 100%); border: 1px solid ${inst.id === globalSig.symbol ? '#00e676' : 'var(--solar-gold)'}; border-radius: 8px; padding: 9px 13px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" title="Klik untuk lihat signal ${globalSig.symbol}">
+      <div class="top-active-signal-bar" id="topActiveSignalBar" style="background: linear-gradient(90deg, rgba(0, 230, 118, 0.16) 0%, rgba(255, 160, 0, 0.16) 100%); border: 1px solid ${isCurrentAssetActive ? '#00e676' : 'var(--solar-gold)'}; border-radius: 8px; padding: 9px 13px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" title="Klik untuk lihat signal aktif">
         <div style="display:flex; align-items:center; gap:8px;">
           <span style="width:8px; height:8px; border-radius:50%; background:#00e676; animation:pulseDot 1.2s infinite; display:inline-block;"></span>
-          <span style="font-size:12px; font-weight:700; color:#fff;">LIVE AI SIGNAL: <b style="color:#f5c451;">${globalSig.type} ${globalSig.symbol}</b> @ ${num(globalSig.entry)} · <span id="topBarFloatingPips" style="color:${liveFloatingPips >= 0 ? '#00e676' : '#ef5350'}; font-weight:800;">${liveFloatingPips >= 0 ? '+' : ''}${liveFloatingPips} PIP</span></span>
+          <span style="font-size:12px; font-weight:700; color:#fff;">⚡ ON PIPS: <b style="color:#f5c451;">${activeList.length} POSISI AKTIF</b> (${activeList.map(s => s.symbol).join(', ')})</span>
         </div>
-        <span style="font-size:11px; font-weight:700; color:${inst.id === globalSig.symbol ? '#00e676' : '#f5c451'};">${inst.id === globalSig.symbol ? 'LIVE DIPAPARKAN ✓' : 'LIHAT SEKARANG ➔'}</span>
+        <span style="font-size:11px; font-weight:700; color:#00e676;">PANTAU RUNNING ➔</span>
       </div>
     ` : ''}
 
@@ -790,6 +905,8 @@ function SignalPage(main) {
       </button>
 
       ${ticketHtml}
+
+      ${onPipsHtml}
 
       <!-- Recent Verified Signals History Section -->
       <div class="recent-signals-card" style="margin-top:16px; background:#0b1118; border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px 16px;">
@@ -1124,12 +1241,17 @@ function SignalPage(main) {
     };
   });
 
-  // Top Active Signal Bar Navigation
+  // Top Active Signal Bar Navigation (Scroll down to On Pips section)
   const topActiveBar = $('#topActiveSignalBar', main);
   if (topActiveBar) {
     topActiveBar.onclick = () => {
-      if (globalSig && globalSig.symbol) {
-        store.set('selected_signal_sym', globalSig.symbol);
+      const onPipsEl = $('#onPipsSection', main);
+      if (onPipsEl) {
+        onPipsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (activeList[0] && activeList[0].symbol) {
+        store.set('selected_signal_sym', activeList[0].symbol);
+        Market.activeSymbol = activeList[0].symbol;
+        Market.updateUI();
         SignalPage(main);
       }
     };
@@ -1139,12 +1261,44 @@ function SignalPage(main) {
   const btnGoTo = $('#btnGoToActiveSignal', main);
   if (btnGoTo) {
     btnGoTo.onclick = () => {
-      if (globalSig && globalSig.symbol) {
-        store.set('selected_signal_sym', globalSig.symbol);
+      const sym = btnGoTo.dataset.sym || (activeList[0] && activeList[0].symbol);
+      if (sym) {
+        store.set('selected_signal_sym', sym);
+        Market.activeSymbol = sym;
+        Market.updateUI();
         SignalPage(main);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     };
   }
+
+  // On Pips Card Actions: Watch Chart & Copy Setup
+  $$('.btn-watch-chart', main).forEach(btn => {
+    btn.onclick = () => {
+      const sym = btn.dataset.sym;
+      if (sym) {
+        store.set('selected_signal_sym', sym);
+        Market.activeSymbol = sym;
+        Market.updateUI();
+        SignalPage(main);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        toast(`🔍 Membuka analisis chart & tiket ${sym}`);
+      }
+    };
+  });
+
+  $$('.btn-copy-card-setup', main).forEach(btn => {
+    btn.onclick = () => {
+      try {
+        const s = JSON.parse(btn.dataset.sig);
+        const text = `👁️ AMATERASU X VIP SIGNAL\n━━━━━━━━━━━━━━━━━━━━━\n📊 Instrumen: #${s.symbol}\n⚡ Tindakan: ${s.type} (M15)\n🎯 Entry: ${s.entry}\n🎯 TP1: ${s.tp1} (+40p)\n🚀 TP2: ${s.tp2} (+80p)\n🛑 SL: ${s.sl}\n━━━━━━━━━━━━━━━━━━━━━\nSOP: Alih SL ke BE (${s.entry}) selepas TP1 dicapai!`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text);
+          toast(`📋 Setup MT5 #${s.symbol} berjaya disalin!`);
+        }
+      } catch(e) {}
+    };
+  });
 
   // SOP Guide Modal Click Handler
   const btnSop = $('#btnOpenSopGuide', main);
