@@ -11,6 +11,33 @@ if (!fs.existsSync(path.join(__dirname, 'data'))) {
   fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
 }
 
+// Malaysia Timezone (MYT / UTC+8) Formatter Helpers
+function getMYTTime(options = { hour12: false, hour: '2-digit', minute: '2-digit' }) {
+  try {
+    return new Date().toLocaleTimeString('en-US', { ...options, timeZone: 'Asia/Kuala_Lumpur' });
+  } catch (e) {
+    const d = new Date(Date.now() + 8 * 3600 * 1000);
+    return d.toISOString().substr(11, 5);
+  }
+}
+
+function getMYTTimeWithSeconds() {
+  try {
+    return new Date().toLocaleTimeString('en-US', { hour12: false, timeZone: 'Asia/Kuala_Lumpur' });
+  } catch (e) {
+    const d = new Date(Date.now() + 8 * 3600 * 1000);
+    return d.toISOString().substr(11, 8);
+  }
+}
+
+function getMYTDate(options = { month: 'short', day: 'numeric' }) {
+  try {
+    return new Date().toLocaleDateString('en-US', { ...options, timeZone: 'Asia/Kuala_Lumpur' });
+  } catch (e) {
+    return new Date().toLocaleDateString('en-US', options);
+  }
+}
+
 // Initial Database Seeds
 const defaultDB = {
   stats: {
@@ -378,13 +405,15 @@ const TelegramNotifier = {
   formatSignalMessage(sig) {
     const isBuy = sig.type === 'BUY';
     const arrow = isBuy ? '🟢 BUY' : '🔴 SELL';
+    const timeStr = sig.firedAt || getMYTTime();
     return `👁️ <b>AMATERASU X · AI INSTITUTIONAL SIGNAL</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
       `📊 <b>Instrumen:</b> #${sig.symbol}\n` +
       `⚡ <b>Tindakan:</b> ${arrow} (${sig.timeframe || 'M15'})\n` +
+      `🕒 <b>Masa:</b> <code>${timeStr} MYT</code>\n` +
       `🎯 <b>Entry:</b> <code>${sig.entry}</code>\n\n` +
-      `🎯 <b>Take Profit 1:</b> <code>${sig.tp1}</code> (+40 pips)\n` +
-      `🚀 <b>Take Profit 2:</b> <code>${sig.tp2}</code> (+80 pips)\n` +
+      `🎯 <b>Take Profit 1:</b> <code>${sig.tp1}</code>\n` +
+      `🚀 <b>Take Profit 2:</b> <code>${sig.tp2}</code>\n` +
       `🛑 <b>Stop Loss:</b> <code>${sig.sl}</code>\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
       `💡 <b>AI Confluence:</b> ${sig.notes || 'Amaterasu Institutional SMC & Malaysian SNR'}\n` +
@@ -551,7 +580,7 @@ const server = http.createServer(async (req, res) => {
         tp1: Number(payload.tp1) || 3994.50,
         tp2: Number(payload.tp2) || 4005.00,
         sl: Number(payload.sl) || 3978.00,
-        firedAt: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+        firedAt: getMYTTime(),
         notes: payload.notes || 'Signal generated from Amaterasu X AI Desk'
       };
       db.activeSignals = db.activeSignals.filter(s => s.symbol !== newSig.symbol);
@@ -581,7 +610,7 @@ const server = http.createServer(async (req, res) => {
       if (payload.status === 'TP1') {
         db.activeSignal.status = 'TP1_HIT';
         db.activeSignal.beLocked = true;
-        db.activeSignal.tp1HitAt = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+        db.activeSignal.tp1HitAt = getMYTTime();
         db.activeSignal.tp1Pips = pips || 40;
         db.stats.tp1Hit = (db.stats.tp1Hit || 0) + 1;
         db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + (pips || 40);
@@ -602,8 +631,8 @@ const server = http.createServer(async (req, res) => {
       // Outcome is TP2, SL, or CLOSED -> Finalize and archive to history
       const newHistoryItem = {
         id: 'sig-' + Date.now(),
-        time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        time: getMYTTime(),
+        date: getMYTDate(),
         symbol: current.symbol || 'XAUUSD',
         type: current.type || 'BUY',
         entry: current.entry,
@@ -1060,7 +1089,7 @@ const AiEngine = {
   maxTradeTicks: 45, // Fast resolution (~1.5 to 2 mins) so signals cycle frequently
   tp1Triggered: false,
   logHistory: [
-    `[${new Date().toLocaleTimeString('en-US', { hour12: false })}] Amaterasu Neural Core v4.3 Initialized: High-Winrate Model (88%) & Ultra-Scalp Scanner Active.`
+    `[${getMYTTimeWithSeconds()}] Amaterasu Neural Core v4.3 Initialized: High-Winrate Model (88%) & Ultra-Scalp Scanner Active.`
   ],
 
   tradingHours: {
@@ -1105,7 +1134,7 @@ const AiEngine = {
   },
 
   log(msg) {
-    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const time = getMYTTimeWithSeconds();
     const entry = `[${time}] ${msg}`;
     this.logHistory.unshift(entry);
     if (this.logHistory.length > 50) this.logHistory.pop();
@@ -1238,7 +1267,7 @@ const AiEngine = {
       tp2: tp2,
       sl: sl,
       willWin: willWin,
-      firedAt: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+      firedAt: getMYTTime(),
       currentPrice: entry,
       floatingPips: 0,
       beLocked: false,
@@ -1314,7 +1343,7 @@ const AiEngine = {
         sig.status = 'TP1_HIT';
         sig.beLocked = true;
         sig.sl = sig.entry;
-        sig.tp1HitAt = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+        sig.tp1HitAt = getMYTTime();
         sig.tp1Pips = asset.tp1Pips;
         db.stats.tp1Hit = (db.stats.tp1Hit || 0) + 1;
         db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + asset.tp1Pips;
@@ -1383,8 +1412,8 @@ const AiEngine = {
     const realPeak = sig.peakPips ? Math.round(sig.peakPips) : (pips > 0 ? pips : 2);
     const newHistoryItem = {
       id: sig.id || ('sig-' + Date.now()),
-      time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      time: getMYTTime(),
+      date: getMYTDate(),
       symbol: sig.symbol,
       type: sig.type,
       entry: sig.entry,
