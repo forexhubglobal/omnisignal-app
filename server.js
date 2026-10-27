@@ -497,6 +497,30 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify(liveMarketQuotes));
   }
 
+  // 0.1 POST /api/market/sync-mt5 (Live Bridge Quotes Direct From Local MT5)
+  if (pathname === '/api/market/sync-mt5' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      if (payload && payload.quotes) {
+        for (const [sym, q] of Object.entries(payload.quotes)) {
+          if (liveMarketQuotes[sym] && typeof q.price === 'number') {
+            liveMarketQuotes[sym].price = Number(q.price.toFixed(liveMarketQuotes[sym].decimals));
+            if (typeof q.change === 'number') liveMarketQuotes[sym].change = q.change;
+          }
+        }
+        if (liveMarketQuotes.XAUUSD) {
+          currentMarketPrice = liveMarketQuotes.XAUUSD.price;
+        }
+        broadcastEvent('market_quotes', liveMarketQuotes);
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, synced: Object.keys(payload?.quotes || {}).length }));
+    } catch (err) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: err.message }));
+    }
+  }
+
   // 1. GET /api/data (Full state for App)
   if (pathname === '/api/data' && req.method === 'GET') {
     const db = getDB();
@@ -1362,8 +1386,10 @@ const AiEngine = {
       }
 
       // Stage 2: Hit TP2 (Full Target Reached)
+      // SOP Integrity Rule: Trade MUST achieve TP1 first before it can reach TP2 runner!
+      // Must also have matured for at least 10 ticks to prevent instant-close on server restart/reboot
       const tp2Condition = isBuy ? (curP >= sig.tp2) : (curP <= sig.tp2);
-      if (tp2Condition) {
+      if (sig.tp1Triggered && tp2Condition && (sig.ticks || 0) >= 10) {
         TelegramNotifier.send(TelegramNotifier.formatTp2Message(sig, asset.tp2Pips)).catch(() => {});
         this.resolveTrade(db, sig, 'TP2', asset.tp2Pips, asset);
         continue;
@@ -1373,15 +1399,15 @@ const AiEngine = {
       // If BE is locked: if price returns to entry (floatingPips <= 0), close as BE (0 pip)!
       if (sig.beLocked) {
         const beCondition = isBuy ? (curP <= sig.entry) : (curP >= sig.entry);
-        if (beCondition) {
+        if (beCondition && (sig.ticks || 0) >= 8) {
           this.log(`🛡️ SOP Break-Even Closed: ${sig.symbol} returned to Entry after peak +${Math.round(sig.peakPips || 30)} pips. Exit as BE (0 pip). Capital 100% Protected.`);
           this.resolveTrade(db, sig, 'BE', 0, asset);
           continue;
         }
       } else {
-        // Trade was never in BE -> normal initial SL
+        // Trade was never in BE -> normal initial SL (requires at least 8 ticks)
         const slCondition = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
-        if (slCondition) {
+        if (slCondition && (sig.ticks || 0) >= 8) {
           this.resolveTrade(db, sig, 'SL', -asset.slPips, asset);
           continue;
         }
@@ -1461,10 +1487,13 @@ const AiEngine = {
 let tickCounter = 0;
 setInterval(() => {
   tickCounter++;
-  // Micro-tick fluctuations across live quotes so the chart wiggles realistically
+  // Micro-tick fluctuations with zero bias and mean-reversion to prevent runaway drift
   for (const [sym, q] of Object.entries(liveMarketQuotes)) {
     const step = q.decimals === 4 ? 0.0001 : q.decimals === 3 ? 0.005 : q.decimals === 2 ? 0.05 : 0.5;
-    q.price = Number((q.price + (Math.random() - 0.495) * step).toFixed(q.decimals));
+    const asset = AiEngine.assets.find(a => a.symbol === sym);
+    const baseP = asset ? asset.base : q.price;
+    const pull = (baseP - q.price) * 0.01;
+    q.price = Number((q.price + (Math.random() - 0.5) * step + pull * 0.05).toFixed(q.decimals));
   }
   if (liveMarketQuotes.XAUUSD) {
     currentMarketPrice = liveMarketQuotes.XAUUSD.price;

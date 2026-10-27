@@ -519,12 +519,40 @@ class AmaterasuBridge:
             except Exception:
                 pass
 
+    def sync_quotes_loop(self):
+        """Menghantar harga tick live daripada terminal MT5 ke server Amaterasu X setiap 2.5 saat"""
+        symbols_to_sync = ["XAUUSD", "XAGUSD", "EURUSD", "GBPUSD", "USDJPY", "GBPJPY", "EURJPY", "AUDUSD", "USDCAD", "USDCHF", "WTI", "BTCUSD"]
+        while self.running:
+            try:
+                quotes = {}
+                for raw_sym in symbols_to_sync:
+                    broker_sym = self.resolve_symbol(raw_sym)
+                    if broker_sym:
+                        tick = mt5.symbol_info_tick(broker_sym)
+                        if tick and tick.bid > 0:
+                            mid_price = (tick.bid + tick.ask) / 2
+                            quotes[raw_sym] = {
+                                "price": mid_price,
+                                "bid": tick.bid,
+                                "ask": tick.ask
+                            }
+                if quotes:
+                    url = f"{self.server_url}/api/market/sync-mt5"
+                    requests.post(url, json={"quotes": quotes}, timeout=2)
+            except Exception:
+                pass
+            time.sleep(2.5)
+
     def start(self):
         self.banner()
         if not self.init_mt5():
             print(f"\n{Colors.RED}Sila buka MT5 anda dan jalankan skrip ini semula.{Colors.RESET}")
             input("\nTekan Enter untuk keluar...")
             return
+
+        # Start MT5 Real-Time Quote Sync thread
+        sync_thread = threading.Thread(target=self.sync_quotes_loop, daemon=True)
+        sync_thread.start()
 
         # Start Fallback Polling thread
         poll_thread = threading.Thread(target=self.polling_fallback_loop, daemon=True)
