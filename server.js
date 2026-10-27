@@ -191,13 +191,18 @@ function broadcastEvent(type, data) {
 // Queries TradingView's official scanners directly to achieve 100% 1:1 price synchronization
 const TV_SYMBOLS_MAP = {
   cfd: {
-    XAUUSD: 'PEPPERSTONE:XAUUSD'
+    XAUUSD: 'PEPPERSTONE:XAUUSD',
+    XAGUSD: 'PEPPERSTONE:XAGUSD'
   },
   forex: {
     EURUSD: 'PEPPERSTONE:EURUSD',
     GBPJPY: 'PEPPERSTONE:GBPJPY',
     GBPUSD: 'PEPPERSTONE:GBPUSD',
-    USDJPY: 'PEPPERSTONE:USDJPY'
+    USDJPY: 'PEPPERSTONE:USDJPY',
+    EURJPY: 'PEPPERSTONE:EURJPY',
+    AUDUSD: 'PEPPERSTONE:AUDUSD',
+    USDCAD: 'PEPPERSTONE:USDCAD',
+    USDCHF: 'PEPPERSTONE:USDCHF'
   },
   futures: {
     WTI: 'NYMEX:CL1!'
@@ -208,11 +213,16 @@ const TV_SYMBOLS_MAP = {
 };
 
 const liveMarketQuotes = {
-  XAUUSD: { price: 4007.42, change: -0.10, decimals: 2 },
-  EURUSD: { price: 1.1172, change: 0.01, decimals: 4 },
-  GBPJPY: { price: 210.35, change: 0.05, decimals: 3 },
-  GBPUSD: { price: 1.3341, change: 0.03, decimals: 4 },
-  USDJPY: { price: 157.67, change: 0.02, decimals: 3 },
+  XAUUSD: { price: 3991.50, change: 0.12, decimals: 2 },
+  XAGUSD: { price: 52.87, change: 0.25, decimals: 3 },
+  EURUSD: { price: 1.1152, change: -0.05, decimals: 4 },
+  GBPUSD: { price: 1.3320, change: 0.08, decimals: 4 },
+  USDJPY: { price: 157.74, change: 0.15, decimals: 3 },
+  GBPJPY: { price: 210.15, change: 0.20, decimals: 3 },
+  EURJPY: { price: 175.95, change: 0.10, decimals: 3 },
+  AUDUSD: { price: 0.7023, change: -0.04, decimals: 4 },
+  USDCAD: { price: 1.4016, change: 0.06, decimals: 4 },
+  USDCHF: { price: 0.8283, change: -0.02, decimals: 4 },
   WTI: { price: 100.76, change: -0.45, decimals: 2 },
   BTCUSD: { price: 79700.0, change: 0.15, decimals: 0 }
 };
@@ -1103,13 +1113,16 @@ const AiEngine = {
   },
 
   assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4007.42, pipVal: 0.1, pipDec: 2, tp1Pips: 40, tp2Pips: 80, slPips: 50, bias: 'BEARISH' },
-    { symbol: 'EURUSD', name: 'Euro', base: 1.1172, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' },
-    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 210.35, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, slPips: 30, bias: 'BULLISH' },
-    { symbol: 'GBPUSD', name: 'Cable', base: 1.3341, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BULLISH' },
-    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 157.67, pipVal: 0.01, pipDec: 3, tp1Pips: 25, tp2Pips: 50, slPips: 25, bias: 'BEARISH' },
-    { symbol: 'WTI', name: 'Crude Oil', base: 100.76, pipVal: 0.01, pipDec: 2, tp1Pips: 40, tp2Pips: 80, slPips: 40, bias: 'BEARISH' },
-    { symbol: 'BTCUSD', name: 'Bitcoin', base: 79700.0, pipVal: 1, pipDec: 0, tp1Pips: 150, tp2Pips: 300, slPips: 150, bias: 'BULLISH' }
+    { symbol: 'XAUUSD', name: 'Gold', base: 3991.50, pipVal: 0.1, pipDec: 2, tp1Pips: 40, tp2Pips: 80, slPips: 50, bias: 'BEARISH' },
+    { symbol: 'XAGUSD', name: 'Silver', base: 52.87, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, slPips: 35, bias: 'BULLISH' },
+    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' },
+    { symbol: 'GBPUSD', name: 'Cable', base: 1.3320, pipVal: 0.0001, pipDec: 4, tp1Pips: 25, tp2Pips: 50, slPips: 25, bias: 'BULLISH' },
+    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 157.74, pipVal: 0.01, pipDec: 3, tp1Pips: 25, tp2Pips: 50, slPips: 25, bias: 'BEARISH' },
+    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 210.15, pipVal: 0.01, pipDec: 3, tp1Pips: 35, tp2Pips: 70, slPips: 35, bias: 'BULLISH' },
+    { symbol: 'EURJPY', name: 'Euro/Yen', base: 175.95, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, slPips: 30, bias: 'BULLISH' },
+    { symbol: 'AUDUSD', name: 'Aussie', base: 0.7023, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' },
+    { symbol: 'USDCAD', name: 'Loonie', base: 1.4016, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BULLISH' },
+    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' }
   ],
 
   tick() {

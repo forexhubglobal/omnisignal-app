@@ -1,13 +1,16 @@
 // ===== Amaterasu AI Pages: Signal, Stat, Analysis, Screener, News, AI News =====
 
 const ALL_INSTRUMENTS = [
-  { id: 'XAUUSD', name: 'XAUUSD', category: 'Metals', icon: '🥇', label: 'Gold', basePrice: 4007.42, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'SIDE' },
-  { id: 'EURUSD', name: 'EURUSD', category: 'Forex', icon: '💶', label: 'Euro', basePrice: 1.1172, bias: 'BEARISH', m1: 'DOWN', m5: 'SIDE', m15: 'DOWN' },
-  { id: 'GBPJPY', name: 'GBPJPY', category: 'Forex', icon: '💷', label: 'Pound / Yen', basePrice: 210.35, bias: 'NEUTRAL', m1: 'SIDE', m5: 'DOWN', m15: 'UP' },
-  { id: 'GBPUSD', name: 'GBPUSD', category: 'Forex', icon: '💷', label: 'Cable', basePrice: 1.3341, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'SIDE' },
-  { id: 'USDJPY', name: 'USDJPY', category: 'Forex', icon: '💴', label: 'Dollar / Yen', basePrice: 157.67, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'DOWN' },
-  { id: 'WTI', name: 'WTI', category: 'Commodities', icon: '🛢', label: 'Crude Oil', basePrice: 100.76, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'UP' },
-  { id: 'BTCUSD', name: 'BTCUSD', category: 'Crypto', icon: '₿', label: 'Bitcoin', basePrice: 79700.0, bias: 'BULLISH', m1: 'SIDE', m5: 'UP', m15: 'UP' }
+  { id: 'XAUUSD', name: 'XAUUSD', category: 'Metals', icon: '🥇', label: 'Gold', basePrice: 3991.50, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'SIDE' },
+  { id: 'XAGUSD', name: 'XAGUSD', category: 'Metals', icon: '🥈', label: 'Silver', basePrice: 52.87, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'SIDE' },
+  { id: 'EURUSD', name: 'EURUSD', category: 'Forex', icon: '💶', label: 'Euro', basePrice: 1.1152, bias: 'BEARISH', m1: 'DOWN', m5: 'SIDE', m15: 'DOWN' },
+  { id: 'GBPUSD', name: 'GBPUSD', category: 'Forex', icon: '💷', label: 'Cable', basePrice: 1.3320, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'SIDE' },
+  { id: 'USDJPY', name: 'USDJPY', category: 'Forex', icon: '💴', label: 'Dollar / Yen', basePrice: 157.74, bias: 'BEARISH', m1: 'DOWN', m5: 'DOWN', m15: 'DOWN' },
+  { id: 'GBPJPY', name: 'GBPJPY', category: 'Forex', icon: '🐉', label: 'Dragon (Pound/Yen)', basePrice: 210.15, bias: 'BULLISH', m1: 'SIDE', m5: 'DOWN', m15: 'UP' },
+  { id: 'EURJPY', name: 'EURJPY', category: 'Forex', icon: '⚡', label: 'Euro / Yen', basePrice: 175.95, bias: 'BULLISH', m1: 'UP', m5: 'SIDE', m15: 'UP' },
+  { id: 'AUDUSD', name: 'AUDUSD', category: 'Forex', icon: '🦘', label: 'Aussie', basePrice: 0.7023, bias: 'BEARISH', m1: 'DOWN', m5: 'SIDE', m15: 'DOWN' },
+  { id: 'USDCAD', name: 'USDCAD', category: 'Forex', icon: '🍁', label: 'Loonie', basePrice: 1.4016, bias: 'BULLISH', m1: 'UP', m5: 'UP', m15: 'SIDE' },
+  { id: 'USDCHF', name: 'USDCHF', category: 'Forex', icon: '🏔', label: 'Swissie', basePrice: 0.8283, bias: 'BEARISH', m1: 'SIDE', m5: 'DOWN', m15: 'DOWN' }
 ];
 
 // Canvas rounded rectangle helper
@@ -30,11 +33,16 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
 // ===== Shared TradingView Pro & Amaterasu SNR AI Configurations =====
 const tvSymbols = {
   XAUUSD: 'PEPPERSTONE:XAUUSD',
+  XAGUSD: 'PEPPERSTONE:XAGUSD',
   EURUSD: 'PEPPERSTONE:EURUSD',
-  GBPJPY: 'PEPPERSTONE:GBPJPY',
   GBPUSD: 'PEPPERSTONE:GBPUSD',
   USDJPY: 'PEPPERSTONE:USDJPY',
-  WTI: 'TVC:USOIL',
+  GBPJPY: 'PEPPERSTONE:GBPJPY',
+  EURJPY: 'PEPPERSTONE:EURJPY',
+  AUDUSD: 'PEPPERSTONE:AUDUSD',
+  USDCAD: 'PEPPERSTONE:USDCAD',
+  USDCHF: 'PEPPERSTONE:USDCHF',
+  WTI: 'NYMEX:CL1!',
   BTCUSD: 'BINANCE:BTCUSDT'
 };
 
