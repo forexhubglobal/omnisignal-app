@@ -204,14 +204,16 @@ const TV_SYMBOLS_MAP = {
 };
 
 const liveMarketQuotes = {
-  XAUUSD: { price: 3986.50, change: -0.42, decimals: 2 },
-  EURUSD: { price: 1.0825, change: -0.11, decimals: 4 },
-  GBPJPY: { price: 198.50, change: -0.16, decimals: 3 },
-  GBPUSD: { price: 1.2980, change: -0.22, decimals: 4 },
-  USDJPY: { price: 152.80, change: 0.03, decimals: 3 },
-  WTI: { price: 71.50, change: 0.82, decimals: 2 },
-  BTCUSD: { price: 67800.0, change: 1.45, decimals: 0 }
+  XAUUSD: { price: 4013.00, change: -0.10, decimals: 2 },
+  EURUSD: { price: 1.1175, change: 0.01, decimals: 4 },
+  GBPJPY: { price: 210.25, change: 0.05, decimals: 3 },
+  GBPUSD: { price: 1.3350, change: 0.03, decimals: 4 },
+  USDJPY: { price: 157.55, change: 0.02, decimals: 3 },
+  WTI: { price: 101.35, change: -0.45, decimals: 2 },
+  BTCUSD: { price: 80250.0, change: 0.15, decimals: 0 }
 };
+
+let hasInitialLiveQuote = false;
 
 function queryTradingViewScanner(scannerName, tickers) {
   return new Promise((resolve) => {
@@ -278,6 +280,7 @@ async function refreshAllLiveQuotes() {
       }
     }
 
+    hasInitialLiveQuote = true;
     if (liveMarketQuotes.XAUUSD) {
       currentMarketPrice = liveMarketQuotes.XAUUSD.price;
     }
@@ -1069,7 +1072,7 @@ const AiEngine = {
   ],
 
   tick() {
-    if (!this.enabled) return;
+    if (!this.enabled || !hasInitialLiveQuote) return;
     const db = getDB();
     const sig = db.activeSignal;
 
@@ -1155,10 +1158,17 @@ const AiEngine = {
   monitorActiveTrade(db, sig) {
     const asset = this.assets.find(a => a.symbol === sig.symbol) || this.assets[0];
     const liveQ = liveMarketQuotes[sig.symbol];
-    if (!liveQ || typeof liveQ.price !== 'number') return;
+    if (!liveQ || typeof liveQ.price !== 'number' || !hasInitialLiveQuote) return;
 
     // Use authentic live price from real-world market feed (TradingView)
     const curP = liveQ.price;
+
+    // Sanity Protection Guard: Price deviation cannot exceed 2.5% on an active scalp
+    // Prevents uninitialized seeds or cold-start anomalies from falsely triggering SL or TP!
+    const deviationPct = Math.abs(curP - sig.entry) / sig.entry;
+    if (deviationPct > 0.025) {
+      return;
+    }
     const isBuy = sig.type === 'BUY';
 
     // Calculate actual real-world floating pips against live MT5 / TradingView price

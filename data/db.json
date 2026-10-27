@@ -38,17 +38,16 @@
     ]
   },
   "activeSignal": {
-    "status": "ACTIVE",
+    "status": "WAITING",
     "symbol": "USDJPY",
     "type": "BUY",
     "timeframe": "M15",
-    "entry": 157.539,
-    "tp1": 157.789,
-    "tp2": 158.139,
-    "sl": 157.239,
-    "willWin": true,
-    "firedAt": "07:59",
-    "notes": "[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh."
+    "entry": 0,
+    "tp1": 0,
+    "tp2": 0,
+    "sl": 0,
+    "firedAt": null,
+    "notes": "Amaterasu AI (Institutional SMC & Malaysian SNR Model) mengimbas zon kecairan Order Block & Malaysian SNR untuk setup berkebarangkalian tinggi..."
   },
   "signals": [
     {
