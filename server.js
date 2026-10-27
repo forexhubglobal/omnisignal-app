@@ -1053,6 +1053,33 @@ const AiEngine = {
     `[${new Date().toLocaleTimeString('en-US', { hour12: false })}] Amaterasu Neural Core v4.3 Initialized: High-Winrate Model (88%) & Ultra-Scalp Scanner Active.`
   ],
 
+  tradingHours: {
+    enabled: true,
+    startHour: 8, // 08:00 AM MYT
+    endHour: 23,  // 11:00 PM (23:00) MYT
+    timezone: 'Asia/Kuala_Lumpur'
+  },
+
+  isMarketSessionActive() {
+    if (!this.tradingHours.enabled) return true;
+    try {
+      const mytStr = new Date().toLocaleTimeString('en-US', { timeZone: this.tradingHours.timezone, hour12: false, hour: '2-digit' });
+      const h = parseInt(mytStr, 10);
+      return h >= this.tradingHours.startHour && h < this.tradingHours.endHour;
+    } catch (e) {
+      const h = (new Date().getUTCHours() + 8) % 24;
+      return h >= this.tradingHours.startHour && h < this.tradingHours.endHour;
+    }
+  },
+
+  getCurrentMYTString() {
+    try {
+      return new Date().toLocaleTimeString('en-US', { timeZone: this.tradingHours.timezone, hour12: true, hour: '2-digit', minute: '2-digit' }) + ' MYT';
+    } catch (e) {
+      return new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }) + ' MYT';
+    }
+  },
+
   getStatus() {
     return {
       enabled: this.enabled,
@@ -1060,6 +1087,9 @@ const AiEngine = {
       targetWinrate: this.targetWinrate,
       scanIntervalSec: this.scanIntervalSec,
       secondsInState: this.secondsInState,
+      tradingHours: this.tradingHours,
+      sessionActive: this.isMarketSessionActive(),
+      currentMYT: this.getCurrentMYTString(),
       logHistory: this.logHistory.slice(0, 20)
     };
   },
@@ -1090,6 +1120,31 @@ const AiEngine = {
     }
 
     this.secondsInState += 2.5;
+
+    const sessionActive = this.isMarketSessionActive();
+
+    // Rehat Pasaran (11:00 PM - 08:00 AM MYT): Tiada signal baru dikeluarkan
+    if (!sessionActive) {
+      if (Math.floor(this.secondsInState) % 60 === 0) {
+        this.log(`[Rehat Pasaran] Sesi aktif Amaterasu AI ditutup (11:00 PM - 08:00 AM MYT). Pasaran Asia kurang likuiditi & spread melebar. Sesi seterusnya bermula 08:00 AM.`);
+      }
+      // Tetap urus baki posisi aktif jika ada sehingga selesai TP/SL
+      if (db.activeSignals.length > 0) {
+        this.monitorActiveTrades(db);
+      } else {
+        db.activeSignal = {
+          status: 'WAITING',
+          symbol: 'XAUUSD',
+          type: 'BUY',
+          timeframe: 'M15',
+          entry: 0, tp1: 0, tp2: 0, sl: 0,
+          firedAt: null,
+          notes: '🌙 Sesi Rehat Pasaran Amaterasu AI (11:00 PM - 08:00 AM MYT). Tiada signal dikeluarkan dalam zon ini bagi melindungi modal daripada spread melebar & kecairan rendah. Sesi aktif bermula jam 08:00 AM.'
+        };
+        saveDB(db);
+      }
+      return;
+    }
 
     // Pulse scan log every 15s
     if (Math.floor(this.secondsInState) % 15 === 0) {

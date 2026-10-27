@@ -145,8 +145,16 @@ function initSSE() {
       const badge = $('#aiEngineBadge');
       const btn = $('#btnToggleAi');
       if (badge) {
-        badge.textContent = d.enabled ? '● AUTONOMOUS AI ACTIVE' : '⏸ AI ENGINE PAUSED';
-        badge.className = d.enabled ? 'badge-live' : 'badge next';
+        if (!d.enabled) {
+          badge.textContent = '⏸ AI ENGINE PAUSED';
+          badge.className = 'badge next';
+        } else if (d.sessionActive === false) {
+          badge.textContent = '🌙 REHAT PASARAN (11PM - 8AM MYT)';
+          badge.className = 'badge next';
+        } else {
+          badge.textContent = '● AUTONOMOUS AI ACTIVE (08:00 - 23:00 MYT)';
+          badge.className = 'badge-live';
+        }
       }
       if (btn) btn.textContent = d.enabled ? '⏸ Pause AI Engine' : '▶ Resume AI Engine';
     });
