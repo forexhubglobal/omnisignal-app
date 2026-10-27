@@ -2415,6 +2415,81 @@ function AiNewsPage(main) {
   const nwStats = (AppState && AppState.aiNewsStats) || { totalNewsSignals: 0, winRate: 0, tpHit: 0, slHit: 0, totalPips: 0 };
   const nwHistory = (AppState && Array.isArray(AppState.aiNewsHistory)) ? AppState.aiNewsHistory : [];
 
+  // High-impact economic calendar events tracked by Amaterasu AI
+  const upcomingEvents = [
+    { id: 'ev-1', country: 'gb', flag: '🇬🇧', name: 'UK Retail Sales & GDP Update', time: '14:00', session: 'Sesi London', impact: 'HIGH', bias: 'BEARISH PULLBACK ▼', pips: '+45 - +80 pip' },
+    { id: 'ev-2', country: 'eu', flag: '🇪🇺', name: 'German Ifo Business Climate & CPI', time: '17:00', session: 'Sesi Eropah', impact: 'MEDIUM', bias: 'CONSOLIDATION ⬌', pips: '+35 - +60 pip' },
+    { id: 'ev-3', country: 'us', flag: '🇺🇸', name: 'US Initial Jobless Claims & Core PCE', time: '20:30', session: 'Sesi New York (Peak Volatility)', impact: 'HIGH', bias: 'BULLISH ACCUMULATION ▲', pips: '+60 - +110 pip' },
+    { id: 'ev-4', country: 'us', flag: '🇺🇸', name: 'US Existing Home Sales & Flash PMI', time: '22:00', session: 'Sesi New York', impact: 'HIGH', bias: 'VOLATILE EXPANSION ⚡', pips: '+50 - +85 pip' },
+    { id: 'ev-5', country: 'us', flag: '🇺🇸', name: 'US ISM Manufacturing PMI & JOLTS', time: '23:00', session: 'Sesi New York', impact: 'HIGH', bias: 'BULLISH SWEEP ▲', pips: '+70 - +120 pip' }
+  ];
+
+  // Helper to calculate seconds until given HH:MM (MYT / local time)
+  function getSecondsUntil(timeStr) {
+    const now = new Date();
+    const [h, m] = timeStr.split(':').map(Number);
+    const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const targetSec = h * 3600 + m * 60;
+    let diff = targetSec - nowSec;
+    if (diff < 0) diff += 24 * 3600; // cycle to tomorrow
+    return diff;
+  }
+
+  // Find next upcoming high impact event
+  function getNextEvent() {
+    const sorted = [...upcomingEvents].sort((a, b) => getSecondsUntil(a.time) - getSecondsUntil(b.time));
+    const next = sorted[0];
+    const diffSec = getSecondsUntil(next.time);
+    return { event: next, diffSec };
+  }
+
+  function getPhaseStatus(diffSec) {
+    if (diffSec <= 60) {
+      return {
+        text: '⚡ NEWS SEDANG DILEPASKAN: Volatility Tertinggi Sedang Berlaku!',
+        badgeColor: '#ef5350',
+        bgColor: 'rgba(239,83,80,0.18)',
+        borderColor: '#ef5350'
+      };
+    }
+    if (diffSec <= 15 * 60) {
+      return {
+        text: '🔥 FASA T-15 MINIT: Signal Live Sedang Dikeluarkan! Sedia untuk Eksekusi!',
+        badgeColor: '#ef5350',
+        bgColor: 'rgba(239,83,80,0.18)',
+        borderColor: '#ef5350'
+      };
+    }
+    if (diffSec <= 4 * 3600) {
+      return {
+        text: '⚠️ FASA T-4 JAM: Pengesahan Arah AI & Order Block Semasa Aktif',
+        badgeColor: '#ffa000',
+        bgColor: 'rgba(255,160,0,0.12)',
+        borderColor: '#ffa000'
+      };
+    }
+    if (diffSec <= 8 * 3600) {
+      return {
+        text: '⏳ FASA T-8 JAM: Unjuran Awal AI Aktif (Early Directional Bias)',
+        badgeColor: '#00e676',
+        bgColor: 'rgba(0,230,118,0.12)',
+        borderColor: '#00e676'
+      };
+    }
+    return {
+      text: '🕒 MONITORING: Enjin AI Memantau Aliran Kecairan Pasaran Sebelum Unjuran',
+      badgeColor: '#94a3b8',
+      bgColor: 'rgba(255,255,255,0.05)',
+      borderColor: 'rgba(255,255,255,0.1)'
+    };
+  }
+
+  const { event: nextEv, diffSec: initialDiff } = getNextEvent();
+  const initH = Math.floor(initialDiff / 3600);
+  const initM = Math.floor((initialDiff % 3600) / 60);
+  const initS = initialDiff % 60;
+  const initPhase = getPhaseStatus(initialDiff);
+
   main.innerHTML = `<section class="page">
     ${pageHead('AI News', 'High-impact news + AI directional bias (bullish/bearish)')}
 
@@ -2428,6 +2503,94 @@ function AiNewsPage(main) {
         <span>📈</span>
         <span>Gold Analysis</span>
       </a>
+    </div>
+
+    <!-- HERO: LIVE COUNTDOWN TIMER TO NEXT HIGH-IMPACT NEWS -->
+    <div class="card" style="margin-bottom:16px; padding:18px 16px; border:1px solid rgba(255,160,0,0.4); background:linear-gradient(180deg, rgba(255,160,0,0.12) 0%, rgba(8,12,20,0.95) 100%); box-shadow:0 6px 24px rgba(0,0,0,0.45);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <span style="font-size:10px; font-weight:800; color:var(--solar-gold); letter-spacing:1px; text-transform:uppercase;">
+            ⏱️ COUNTDOWN PELEPASAN BERITA
+          </span>
+          <h3 style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:800; color:#fff; margin:2px 0;">
+            Pelepasan AI News Seterusnya
+          </h3>
+        </div>
+        <span class="badge" style="background:rgba(239,83,80,0.18); border:1px solid #ef5350; color:#ef5350; font-size:10px; font-weight:800; display:inline-flex; align-items:center; gap:5px;">
+          <span style="display:inline-block; width:6px; height:6px; background:#ef5350; border-radius:50%; box-shadow:0 0 6px #ef5350;"></span>
+          LIVE TIMER
+        </span>
+      </div>
+
+      <!-- Glowing Digital LED 3-Box Countdown Display -->
+      <div style="background:#04070c; border:1px solid rgba(255,179,0,0.25); border-radius:12px; padding:14px 10px; margin-bottom:12px; box-shadow:inset 0 0 20px rgba(0,0,0,0.7);">
+        <div style="display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center; gap:6px; text-align:center;">
+          <!-- Hours Box -->
+          <div style="background:rgba(255,179,0,0.06); border:1px solid rgba(255,179,0,0.2); border-radius:8px; padding:10px 4px;">
+            <span id="aiNewsTimerHrs" style="font-family:'Space Grotesk',sans-serif; font-size:34px; font-weight:900; color:#ffb300; display:block; line-height:1; text-shadow:0 0 14px rgba(255,179,0,0.45);">
+              ${String(initH).padStart(2, '0')}
+            </span>
+            <span style="font-size:9.5px; font-weight:800; color:#94a3b8; letter-spacing:1px; margin-top:4px; display:block;">JAM</span>
+          </div>
+
+          <b style="font-family:'Space Grotesk',sans-serif; font-size:24px; color:rgba(255,179,0,0.6);">:</b>
+
+          <!-- Minutes Box -->
+          <div style="background:rgba(255,179,0,0.06); border:1px solid rgba(255,179,0,0.2); border-radius:8px; padding:10px 4px;">
+            <span id="aiNewsTimerMins" style="font-family:'Space Grotesk',sans-serif; font-size:34px; font-weight:900; color:#ffb300; display:block; line-height:1; text-shadow:0 0 14px rgba(255,179,0,0.45);">
+              ${String(initM).padStart(2, '0')}
+            </span>
+            <span style="font-size:9.5px; font-weight:800; color:#94a3b8; letter-spacing:1px; margin-top:4px; display:block;">MINIT</span>
+          </div>
+
+          <b style="font-family:'Space Grotesk',sans-serif; font-size:24px; color:rgba(255,179,0,0.6);">:</b>
+
+          <!-- Seconds Box -->
+          <div style="background:rgba(255,179,0,0.06); border:1px solid rgba(255,179,0,0.2); border-radius:8px; padding:10px 4px;">
+            <span id="aiNewsTimerSecs" style="font-family:'Space Grotesk',sans-serif; font-size:34px; font-weight:900; color:#ffb300; display:block; line-height:1; text-shadow:0 0 14px rgba(255,179,0,0.45);">
+              ${String(initS).padStart(2, '0')}
+            </span>
+            <span style="font-size:9.5px; font-weight:800; color:#94a3b8; letter-spacing:1px; margin-top:4px; display:block;">SAAT</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Target News Snapshot Banner -->
+      <div style="background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px 14px; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="aiNewsTargetFlag" style="display:inline-flex; align-items:center;">${flag(nextEv.country)}</span>
+            <b id="aiNewsTargetName" style="font-size:13.5px; color:#fff;">${nextEv.name}</b>
+          </div>
+          <span class="badge" style="background:rgba(239,83,80,0.2); border:1px solid #ef5350; color:#ef5350; font-size:9.5px; font-weight:800;">
+            🔴 ${nextEv.impact}
+          </span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.08);">
+          <div>
+            <span style="font-size:10px; color:#8e9aa8; display:block;">MASA PELEPASAN</span>
+            <b id="aiNewsTargetTime" style="font-size:12.5px; color:var(--solar-gold); font-family:'Space Grotesk',sans-serif;">
+              ${nextEv.time} MYT (${nextEv.session})
+            </b>
+          </div>
+          <div>
+            <span style="font-size:10px; color:#8e9aa8; display:block;">UNJURAN BIAS AI (GOLD)</span>
+            <b id="aiNewsTargetBias" style="font-size:12.5px; color:#00e676;">
+              ${nextEv.bias}
+            </b>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Dynamic AI SOP Phase Status -->
+      <div id="aiNewsPhaseStatus" style="background:${initPhase.bgColor}; border:1px solid ${initPhase.borderColor}; border-radius:8px; padding:10px 12px; font-size:11.5px; font-weight:700; color:${initPhase.badgeColor}; display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+        <span>${initPhase.text}</span>
+      </div>
+
+      <button class="btn gold" id="btnCheckAiNewsNow" style="width:100%; padding:11px; font-weight:700; font-size:12.5px; border-radius:8px;">
+        ⚡ Semak Unjuran Terkini AI Directional Bias
+      </button>
     </div>
 
     <!-- DEDICATED AI NEWS PERFORMANCE STATS SECTION -->
@@ -2584,46 +2747,116 @@ function AiNewsPage(main) {
       </div>
     </div>
 
-    <!-- Upcoming High-Impact Release Live Card -->
+    <!-- JADUAL & COUNTDOWN BERITA BERIMPAK TINGGI HARI INI -->
     <div class="card" style="padding:18px 16px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <div>
-          <span style="font-size:11px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.8px;">BERITA BERIMPAK TINGGI TERDEKAT</span>
-          <h4 style="font-size:16px; font-weight:700; color:#fff; margin:2px 0;">US ISM Manufacturing PMI & JOLTS</h4>
+          <span style="font-size:11px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.8px;">JADUAL PELEPASAN & COUNTDOWN</span>
+          <h4 style="font-size:16px; font-weight:700; color:#fff; margin:2px 0;">Kalendar Berita Berimpak Tinggi AI</h4>
         </div>
-        <span class="badge" style="background:rgba(239,83,80,0.2); border:1px solid #ef5350; color:#ef5350; font-weight:800;">🔴 HIGH IMPACT</span>
+        <span class="badge" style="background:rgba(255,160,0,0.18); border:1px solid var(--solar-gold); color:var(--solar-gold); font-weight:800;">
+          5 ACARA AKTIF
+        </span>
       </div>
 
-      <div style="background:#07090e; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 14px; margin-bottom:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span style="font-size:12px; color:#cbd5e1;">Masa Pelepasan Rasmi:</span>
-          <b style="font-family:'Space Grotesk',sans-serif; color:var(--solar-gold); font-size:13px;">23:00 MYT (US Session)</b>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span style="font-size:12px; color:#cbd5e1;">Unjuran Bias AI (Gold):</span>
-          <b style="color:#00e676; font-size:13px;">BULLISH ACCUMULATION ▲</b>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:12px; color:#cbd5e1;">Sasaran Lonjakan News:</span>
-          <b style="color:#fff; font-size:13px;">+60 ke +110 pips</b>
-        </div>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;">
+        ${upcomingEvents.map(ev => {
+          const diff = getSecondsUntil(ev.time);
+          const h = Math.floor(diff / 3600);
+          const m = Math.floor((diff % 3600) / 60);
+          const s = diff % 60;
+          return `
+            <div style="background:#07090e; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                  <span style="display:inline-flex; align-items:center;">${flag(ev.country)}</span>
+                  <b style="font-size:13px; color:#fff;">${ev.name}</b>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#94a3b8;">
+                  <span>${ev.time} MYT · ${ev.session}</span>
+                  <span style="color:#00e676; font-weight:700;">${ev.pips}</span>
+                </div>
+              </div>
+              <div style="text-align:right; white-space:nowrap;">
+                <span class="badge news-row-timer" data-time="${ev.time}" style="background:rgba(255,160,0,0.15); border:1px solid rgba(255,160,0,0.4); color:var(--solar-gold); font-size:10.5px; font-weight:800; font-family:'Space Grotesk',sans-serif;">
+                  ⏱️ ${h}j ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s
+                </span>
+                <span style="display:block; font-size:9.5px; color:${ev.impact === 'HIGH' ? '#ef5350' : '#ffa000'}; font-weight:700; margin-top:3px;">
+                  ${ev.impact}
+                </span>
+              </div>
+            </div>
+          `;
+        }).join('')}
       </div>
 
-      <p style="font-size:12px; color:#8e9aa8; line-height:1.45; margin-bottom:14px;">
+      <p style="font-size:12px; color:#8e9aa8; line-height:1.45; margin:0;">
         Enjin AI sentiasa menyaring data kalendar berimpak 3-bintang. Di luar waktu berita berimpak tinggi, sistem menumpukan signal teknikal Order Block di tab <a href="#signal" style="color:var(--solar-gold); font-weight:700;">Signal</a>.
       </p>
-
-      <button class="btn gold" id="btnCheckAiNewsNow" style="width:100%; padding:11px; font-weight:700; font-size:13px; border-radius:8px;">
-        ⚡ Semak Unjuran Terkini AI Directional Bias
-      </button>
     </div>
   </section>`;
+
+  // Live Timer Interval Handler
+  const elHrs = $('#aiNewsTimerHrs', main);
+  const elMins = $('#aiNewsTimerMins', main);
+  const elSecs = $('#aiNewsTimerSecs', main);
+  const elTargetFlag = $('#aiNewsTargetFlag', main);
+  const elTargetName = $('#aiNewsTargetName', main);
+  const elTargetTime = $('#aiNewsTargetTime', main);
+  const elTargetBias = $('#aiNewsTargetBias', main);
+  const elPhaseStatus = $('#aiNewsPhaseStatus', main);
+
+  function updateLiveCountdown() {
+    const { event, diffSec } = getNextEvent();
+    const h = Math.floor(diffSec / 3600);
+    const m = Math.floor((diffSec % 3600) / 60);
+    const s = diffSec % 60;
+
+    if (elHrs) elHrs.textContent = String(h).padStart(2, '0');
+    if (elMins) elMins.textContent = String(m).padStart(2, '0');
+    if (elSecs) elSecs.textContent = String(s).padStart(2, '0');
+
+    if (elTargetFlag) elTargetFlag.innerHTML = flag(event.country);
+    if (elTargetName) elTargetName.textContent = event.name;
+    if (elTargetTime) elTargetTime.textContent = `${event.time} MYT (${event.session})`;
+    if (elTargetBias) elTargetBias.textContent = event.bias;
+
+    const phase = getPhaseStatus(diffSec);
+    if (elPhaseStatus) {
+      elPhaseStatus.innerHTML = `<span>${phase.text}</span>`;
+      elPhaseStatus.style.background = phase.bgColor;
+      elPhaseStatus.style.borderColor = phase.borderColor;
+      elPhaseStatus.style.color = phase.badgeColor;
+    }
+
+    // Update row badges
+    $$('.news-row-timer', main).forEach(tag => {
+      const t = tag.dataset.time;
+      if (t) {
+        const rowDiff = getSecondsUntil(t);
+        const rh = Math.floor(rowDiff / 3600);
+        const rm = Math.floor((rowDiff % 3600) / 60);
+        const rs = rowDiff % 60;
+        tag.textContent = `⏱️ ${rh}j ${String(rm).padStart(2, '0')}m ${String(rs).padStart(2, '0')}s`;
+      }
+    });
+  }
+
+  const timerInterval = setInterval(updateLiveCountdown, 1000);
 
   const btnCheck = $('#btnCheckAiNewsNow', main);
   if (btnCheck) {
     btnCheck.onclick = () => {
-      toast('⚡ AI News Directional Bias disahkan: XAUUSD Bullish Bias disokong oleh aliran Order Block M15.');
+      const { event, diffSec } = getNextEvent();
+      const h = Math.floor(diffSec / 3600);
+      const m = Math.floor((diffSec % 3600) / 60);
+      toast(`⚡ AI News Desk: Unjuran untuk ${event.name} (${event.time} MYT) adalah ${event.bias}. Pelepasan dalam ${h} jam ${m} minit!`);
     };
   }
+
+  // Return router cleanup callback
+  return () => {
+    clearInterval(timerInterval);
+  };
 }
 

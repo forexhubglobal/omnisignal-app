@@ -49,14 +49,14 @@
     "sl": 101.37,
     "willWin": true,
     "firedAt": "07:57",
-    "currentPrice": 100.95,
-    "floatingPips": 42,
-    "peakPips": 42,
+    "currentPrice": 100.77,
+    "floatingPips": 60,
+    "peakPips": 66,
     "beLocked": true,
     "tp1Triggered": true,
     "tp1HitAt": "08:45",
     "tp1Pips": 40,
-    "ticks": 403,
+    "ticks": 1796,
     "notes": "[Amaterasu Institutional SMC] M15 Bearish Order Block at 101.37. TP1 tercapai (+40 pip). SL dikunci ke Break-Even (Sifar Risiko)!"
   },
   "signals": [
@@ -1214,14 +1214,14 @@
       "sl": 101.37,
       "willWin": true,
       "firedAt": "07:57",
-      "currentPrice": 100.95,
-      "floatingPips": 42,
-      "peakPips": 42,
+      "currentPrice": 100.77,
+      "floatingPips": 60,
+      "peakPips": 66,
       "beLocked": true,
       "tp1Triggered": true,
       "tp1HitAt": "08:45",
       "tp1Pips": 40,
-      "ticks": 403,
+      "ticks": 1796,
       "notes": "[Amaterasu Institutional SMC] M15 Bearish Order Block at 101.37. TP1 tercapai (+40 pip). SL dikunci ke Break-Even (Sifar Risiko)!"
     },
     {
@@ -1236,12 +1236,12 @@
       "sl": 210.671,
       "willWin": false,
       "firedAt": "09:19",
-      "currentPrice": 210.312,
-      "floatingPips": 0.9,
+      "currentPrice": 210.344,
+      "floatingPips": -2.3,
       "beLocked": false,
-      "ticks": 483,
+      "ticks": 1876,
       "notes": "[Amaterasu SMC Scalp] Penembusan struktur pasaran (BOS) ke bawah + mitigasi Bearish FVG pada zon rintangan Malaysian SNR. Sasaran TP1 (+30p).",
-      "peakPips": 5.3
+      "peakPips": 8.5
     },
     {
       "id": "sig-1793063495476",
@@ -1255,12 +1255,12 @@
       "sl": 1.114,
       "willWin": true,
       "firedAt": "09:11",
-      "currentPrice": 1.117,
-      "floatingPips": 5,
+      "currentPrice": 1.1174,
+      "floatingPips": 9,
       "beLocked": false,
-      "ticks": 663,
+      "ticks": 2056,
       "notes": "[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.",
-      "peakPips": 9
+      "peakPips": 10
     },
     {
       "id": "sig-1793063344984",
@@ -1274,10 +1274,10 @@
       "sl": 1.3359,
       "willWin": true,
       "firedAt": "09:09",
-      "currentPrice": 1.3339,
-      "floatingPips": -5,
+      "currentPrice": 1.3344,
+      "floatingPips": -10,
       "beLocked": false,
-      "ticks": 723,
+      "ticks": 2116,
       "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.",
       "peakPips": 0
     }
