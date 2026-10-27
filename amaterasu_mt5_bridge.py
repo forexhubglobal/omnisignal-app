@@ -208,15 +208,22 @@ class AmaterasuBridge:
 
         return raw_symbol
 
-    def get_fill_type(self, symbol_info):
-        """Tentukan filling mode yang disokong oleh broker (IOC, FOK, RETURN)"""
-        modes = symbol_info.filling_mode
-        if modes & mt5.ORDER_FILLING_IOC:
-            return mt5.ORDER_FILLING_IOC
-        elif modes & mt5.ORDER_FILLING_FOK:
-            return mt5.ORDER_FILLING_FOK
-        else:
-            return mt5.ORDER_FILLING_RETURN
+    def get_fill_type(self, symbol, order_type, price):
+        """Uji filling mode yang sah untuk broker menggunakan order_check"""
+        for fill in [mt5.ORDER_FILLING_FOK, mt5.ORDER_FILLING_RETURN, mt5.ORDER_FILLING_IOC]:
+            test_req = {
+                "action": mt5.TRADE_ACTION_DEAL,
+                "symbol": symbol,
+                "volume": self.lot_size,
+                "type": order_type,
+                "price": price,
+                "type_filling": fill,
+                "type_time": mt5.ORDER_TIME_GTC,
+            }
+            res = mt5.order_check(test_req)
+            if res and res.retcode == mt5.TRADE_RETCODE_DONE:
+                return fill
+        return mt5.ORDER_FILLING_FOK
 
     def execute_order(self, signal, tp_target=1):
         symbol_raw = signal.get("symbol", "XAUUSD")
@@ -245,19 +252,31 @@ class AmaterasuBridge:
         digits = sym_info.digits
         point = sym_info.point
 
-        # Entry slippage check
+        # Entry & distance calculation
         signal_entry = float(signal.get("entry", price))
-        max_slip = self.max_slippage_pips * 10 * point
-        diff = abs(price - signal_entry)
-        if diff > max_slip:
-            print(f"{Colors.YELLOW}[SLIPPAGE AMARAN] Harga pasaran semasa ({price:.{digits}f}) berbeza {diff/point/10:.1f} pips dari entry signal ({signal_entry:.{digits}f}). Melebihi had {self.max_slippage_pips} pips.{Colors.RESET}")
+        raw_tp = float(signal.get("tp2" if tp_target == 2 else "tp1", 0.0))
+        raw_sl = float(signal.get("sl", 0.0))
 
-        sl = float(signal.get("sl", 0.0))
-        tp = float(signal.get("tp2" if tp_target == 2 else "tp1", 0.0))
+        # Kira jarak TP & SL dari harga signal asal (pip distance)
+        tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else 3.0
+        sl_dist = abs(raw_sl - signal_entry) if raw_sl > 0 else 3.0
+
+        # Gunakan jarak relatif dari harga kemasukan sebenar (Market Price)
+        # Ini mengelakkan ralat 'Invalid Stops' jika harga sudah bergerak
+        if is_buy:
+            tp = round(price + tp_dist, digits)
+            sl = round(price - sl_dist, digits)
+        else:
+            tp = round(price - tp_dist, digits)
+            sl = round(price + sl_dist, digits)
+
+        diff = abs(price - signal_entry)
+        if diff > (self.max_slippage_pips * 10 * point):
+            print(f"{Colors.YELLOW}[PASARAN BERGERAK] Harga semasa ({price:.{digits}f}) vs Signal ({signal_entry:.{digits}f}). TP/SL diselaraskan secara dinamik: TP{tp_target}={tp:.{digits}f}, SL={sl:.{digits}f}.{Colors.RESET}")
 
         # Deviation in points
         deviation = int(self.max_slippage_pips * 10)
-        filling = self.get_fill_type(sym_info)
+        filling = self.get_fill_type(symbol, order_type, price)
 
         comment = f"AmaterasuX-TP{tp_target}"
 
@@ -277,9 +296,18 @@ class AmaterasuBridge:
         }
 
         print(f"\n{Colors.CYAN}⚡ [MENGHANTAR ORDER] {order_type_str} {self.lot_size} lot #{symbol} @ {price:.{digits}f}{Colors.RESET}")
-        print(f"   SL: {sl:.{digits}f} | TP{tp_target}: {tp:.{digits}f} | Filling: {filling}")
+        print(f"   SL: {sl:.{digits}f} | TP{tp_target}: {tp:.{digits}f} | Filling Mode: {filling}")
 
-        result = mt5.order_send(request)
+        # Cuba hantar order dengan auto-fallback jika broker memerlukan filling mode lain
+        result = None
+        for candidate_fill in [filling, mt5.ORDER_FILLING_FOK, mt5.ORDER_FILLING_RETURN, mt5.ORDER_FILLING_IOC]:
+            request["type_filling"] = candidate_fill
+            result = mt5.order_send(request)
+            if result and result.retcode == mt5.TRADE_RETCODE_DONE:
+                break
+            if not result or result.retcode != 10030: # 10030 = Unsupported filling mode
+                break
+
         if not result or result.retcode != mt5.TRADE_RETCODE_DONE:
             err_code = result.retcode if result else mt5.last_error()
             err_comment = result.comment if result else ""
