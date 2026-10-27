@@ -345,7 +345,6 @@ const AppState = {
         if (!Array.isArray(this.activeSignals)) this.activeSignals = [];
         this.activeSignals = this.activeSignals.filter(sig => sig.symbol !== newSig.symbol);
         this.activeSignals.unshift(newSig);
-        if (this.activeSignals.length > 5) this.activeSignals.pop();
         if (newSig && newSig.symbol) {
           store.set('selected_signal_sym', newSig.symbol);
         }

@@ -546,7 +546,6 @@ const server = http.createServer(async (req, res) => {
       };
       db.activeSignals = db.activeSignals.filter(s => s.symbol !== newSig.symbol);
       db.activeSignals.unshift(newSig);
-      if (db.activeSignals.length > 5) db.activeSignals.pop();
       db.activeSignal = newSig;
       saveDB(db);
       broadcastEvent('signal_fired', newSig);
@@ -1100,12 +1099,12 @@ const AiEngine = {
     }
 
     // Confluence threshold reached -> Autonomous AI signal dispatch for available assets
-    // Maximum 4 simultaneous running signals across distinct pairs in On Pips!
+    // All available market pairs can run simultaneously in On Pips until hitting TP2/SL!
     if (this.secondsInState >= this.scanIntervalSec) {
       this.secondsInState = 0;
       const runningSymbols = new Set(db.activeSignals.map(s => s.symbol));
       const availableAssets = this.assets.filter(a => !runningSymbols.has(a.symbol));
-      if (availableAssets.length > 0 && db.activeSignals.length < 4) {
+      if (availableAssets.length > 0) {
         this.fireAutonomousSignal(db, availableAssets[Math.floor(Math.random() * availableAssets.length)]);
       }
     }
@@ -1186,7 +1185,6 @@ const AiEngine = {
     } else {
       db.activeSignals.unshift(newSig);
     }
-    if (db.activeSignals.length > 5) db.activeSignals.pop();
 
     db.activeSignal = db.activeSignals[0];
     saveDB(db);
