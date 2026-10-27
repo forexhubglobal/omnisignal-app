@@ -1103,7 +1103,7 @@ const AiEngine = {
   },
 
   assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4007.42, pipVal: 0.1, pipDec: 2, tp1Pips: 30, tp2Pips: 60, slPips: 30, bias: 'BEARISH' },
+    { symbol: 'XAUUSD', name: 'Gold', base: 4007.42, pipVal: 0.1, pipDec: 2, tp1Pips: 40, tp2Pips: 80, slPips: 50, bias: 'BEARISH' },
     { symbol: 'EURUSD', name: 'Euro', base: 1.1172, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' },
     { symbol: 'GBPJPY', name: 'Pound/Yen', base: 210.35, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, slPips: 30, bias: 'BULLISH' },
     { symbol: 'GBPUSD', name: 'Cable', base: 1.3341, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BULLISH' },

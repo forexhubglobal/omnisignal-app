@@ -239,7 +239,7 @@ function renderDashboard() {
 
 // 2. Signals
 const DEFAULT_PRICES = {
-  XAUUSD: { entry: 4007.42, tp1: 4010.42, tp2: 4013.42, sl: 4004.42, step: '0.01' },
+  XAUUSD: { entry: 4007.42, tp1: 4011.42, tp2: 4015.42, sl: 4002.42, step: '0.01' },
   EURUSD: { entry: 1.11720, tp1: 1.11920, tp2: 1.12120, sl: 1.11520, step: '0.00001' },
   GBPJPY: { entry: 210.35, tp1: 210.65, tp2: 210.95, sl: 210.05, step: '0.01' },
   GBPUSD: { entry: 1.33410, tp1: 1.33610, tp2: 1.33810, sl: 1.33210, step: '0.00001' },

@@ -258,8 +258,8 @@ class AmaterasuBridge:
         raw_sl = float(signal.get("sl", 0.0))
 
         # Kira jarak TP & SL dari harga signal asal (pip distance)
-        tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else 3.0
-        sl_dist = abs(raw_sl - signal_entry) if raw_sl > 0 else 3.0
+        tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (8.0 if tp_target == 2 else 4.0)
+        sl_dist = abs(raw_sl - signal_entry) if raw_sl > 0 else 5.0
 
         # Gunakan jarak relatif dari harga kemasukan sebenar (Market Price)
         # Ini mengelakkan ralat 'Invalid Stops' jika harga sudah bergerak
