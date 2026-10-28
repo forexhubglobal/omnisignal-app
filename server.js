@@ -513,6 +513,9 @@ const server = http.createServer(async (req, res) => {
         }
         broadcastEvent('market_quotes', liveMarketQuotes);
       }
+      if (payload && Array.isArray(payload.openPositions)) {
+        AiEngine.liveMT5Positions = payload.openPositions;
+      }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: true, synced: Object.keys(payload?.quotes || {}).length }));
     } catch (err) {
@@ -1232,6 +1235,8 @@ const AiEngine = {
   logHistory: [
     `[${getMYTTimeWithSeconds()}] Amaterasu Neural Core v4.3 Initialized: High-Winrate Model (88%) & Ultra-Scalp Scanner Active.`
   ],
+  assetCooldowns: {},
+  liveMT5Positions: [],
 
   tradingHours: {
     enabled: true,
@@ -1424,11 +1429,18 @@ const AiEngine = {
       const activePendingSymbols = new Set(
         db.activeSignals.filter(s => s.status === 'ACTIVE').map(s => s.symbol)
       );
-      const availableAssets = this.assets.filter(a => !activePendingSymbols.has(a.symbol));
+      if (Array.isArray(this.liveMT5Positions)) {
+        for (const p of this.liveMT5Positions) {
+          if (p.symbol) activePendingSymbols.add(p.symbol);
+        }
+      }
+      const nowMs = Date.now();
+      const availableAssets = this.assets.filter(a => 
+        !activePendingSymbols.has(a.symbol) &&
+        (!this.assetCooldowns[a.symbol] || nowMs > this.assetCooldowns[a.symbol])
+      );
       if (availableAssets.length > 0) {
-        // Prioritize Gold (XAUUSD) if available for morning session, else select available confluence asset
-        const goldAsset = availableAssets.find(a => a.symbol === 'XAUUSD');
-        const targetAsset = goldAsset || availableAssets[Math.floor(Math.random() * availableAssets.length)];
+        const targetAsset = availableAssets[Math.floor(Math.random() * availableAssets.length)];
         this.fireAutonomousSignal(db, targetAsset);
       }
     }
@@ -1453,10 +1465,16 @@ const AiEngine = {
   fireAutonomousSignal(db, forceAsset = null) {
     const asset = forceAsset || this.assets[Math.floor(Math.random() * this.assets.length)];
 
-    // 0. Anti-Hedging Guard:
-    // Sekiranya simbol ini sudah ada trade yang sedang ACTIVE, jangan buka trade bertentangan!
+    // 0. Anti-Hedging & MT5 Open Position Guard:
+    // Sekiranya simbol ini sudah ada trade yang sedang ACTIVE di web atau MT5, jangan buka trade!
     const existingActive = (db.activeSignals || []).find(s => s.symbol === asset.symbol && s.status === 'ACTIVE');
     if (existingActive) {
+      return;
+    }
+    if (Array.isArray(this.liveMT5Positions) && this.liveMT5Positions.some(p => p.symbol === asset.symbol)) {
+      return;
+    }
+    if (this.assetCooldowns && this.assetCooldowns[asset.symbol] && Date.now() < this.assetCooldowns[asset.symbol]) {
       return;
     }
 
@@ -1762,6 +1780,8 @@ const AiEngine = {
     if (Array.isArray(db.activeSignals)) {
       db.activeSignals = db.activeSignals.filter(s => s.symbol !== sig.symbol && s.id !== sig.id);
     }
+    if (!this.assetCooldowns) this.assetCooldowns = {};
+    this.assetCooldowns[sig.symbol] = Date.now() + (25 * 60 * 1000); // 25 min institutional cooldown
     db.activeSignal = (db.activeSignals && db.activeSignals[0]) || {
       status: 'WAITING',
       symbol: 'XAUUSD',

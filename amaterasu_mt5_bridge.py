@@ -642,9 +642,23 @@ class AmaterasuBridge:
                                 "bid": tick.bid,
                                 "ask": tick.ask
                             }
-                if quotes:
-                    url = f"{self.server_url}/api/market/sync-mt5"
-                    requests.post(url, json={"quotes": quotes}, timeout=2)
+                pos_list = []
+                all_pos = mt5.positions_get()
+                if all_pos:
+                    for p in all_pos:
+                        pos_list.append({
+                            "ticket": p.ticket,
+                            "symbol": p.symbol.split('.')[0].upper(),
+                            "type": "BUY" if p.type == 0 else "SELL",
+                            "openPrice": p.price_open,
+                            "profit": p.profit
+                        })
+                urls = [self.server_url, "http://localhost:3000", "https://amaterasu-x.vercel.app"]
+                for u in urls:
+                    try:
+                        requests.post(f"{u.rstrip('/')}/api/market/sync-mt5", json={"quotes": quotes, "openPositions": pos_list}, timeout=2)
+                    except Exception:
+                        pass
             except Exception:
                 pass
             time.sleep(2.5)
