@@ -1,5 +1,5 @@
 {
-  "server_url": "https://amaterasux.onrender.com",
+  "server_url": "https://amaterasu-x.vercel.app",
   "lot_size": 0.10,
   "execution_mode": "SPLIT_TP",
   "auto_breakeven": true,

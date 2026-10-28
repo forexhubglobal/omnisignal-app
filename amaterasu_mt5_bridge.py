@@ -369,36 +369,53 @@ class AmaterasuBridge:
         if order_records:
             self.active_positions[sig_id] = order_records
 
-    def apply_breakeven_for_signal(self, sig_id, entry_price=None):
-        """Alih Stop Loss ke Break-Even bagi semua posisi runner yang masih terbuka di bawah signal_id ini"""
-        if sig_id not in self.active_positions:
+    def apply_breakeven_for_symbol(self, raw_symbol, sig_data=None):
+        """Kunci Stop Loss ke Break-Even bagi semua posisi terbuka broker bagi simbol ini"""
+        if not self.auto_be:
             return
 
-        orders = self.active_positions[sig_id]
-        print(f"\n{Colors.YELLOW}🛡️ [AUTO-BREAKEVEN] Mengaktifkan perlindungan Break-Even bagi Signal {sig_id}...{Colors.RESET}")
+        broker_sym = self.resolve_symbol(raw_symbol)
+        all_positions = mt5.positions_get()
+        if not all_positions:
+            return
 
-        for rec in orders:
-            ticket = rec["ticket"]
-            # Semak sama ada posisi masih hidup di MT5
-            pos = mt5.positions_get(ticket=ticket)
-            if not pos:
-                continue
-            
-            p = pos[0]
-            open_price = entry_price or p.price_open
+        matching_positions = [
+            p for p in all_positions 
+            if (p.symbol == broker_sym or p.symbol.split('.')[0].upper() == raw_symbol.upper())
+            and (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
+        ]
+
+        if not matching_positions:
+            return
+
+        for p in matching_positions:
+            open_price = p.price_open
             sym_info = mt5.symbol_info(p.symbol)
             digits = sym_info.digits if sym_info else 2
+            point = sym_info.point if sym_info else 0.0001
+            is_buy = (p.type == mt5.POSITION_TYPE_BUY)
 
             # Jika SL sudah berada pada atau melebihi open price, langkau
-            is_buy = (p.type == mt5.POSITION_TYPE_BUY)
             if is_buy and p.sl >= open_price:
                 continue
             if not is_buy and p.sl <= open_price and p.sl > 0:
                 continue
 
+            tick = mt5.symbol_info_tick(p.symbol)
+            if not tick:
+                continue
+
+            # Elak ralat 10016 (Invalid Stops) di MT5:
+            # BUY: Bid mesti >= Open price
+            # SELL: Ask mesti <= Open price
+            if is_buy and tick.bid < (open_price - 2 * point):
+                continue
+            if not is_buy and tick.ask > (open_price + 2 * point):
+                continue
+
             mod_request = {
                 "action": mt5.TRADE_ACTION_SLTP,
-                "position": ticket,
+                "position": p.ticket,
                 "symbol": p.symbol,
                 "sl": round(open_price, digits),
                 "tp": round(p.tp, digits),
@@ -406,10 +423,32 @@ class AmaterasuBridge:
 
             res = mt5.order_send(mod_request)
             if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-                print(f"{Colors.GREEN}🛡️ [BE BERJAYA] Ticket #{ticket} ({p.symbol}) SL dialih ke Break-Even @ {open_price:.{digits}f}! Posisi kini bebas risiko.{Colors.RESET}")
+                print(f"{Colors.GREEN}🛡️ [BE BERJAYA] Ticket #{p.ticket} ({p.symbol}) SL dialih ke Break-Even @ {open_price:.{digits}f}! Posisi kini bebas risiko.{Colors.RESET}")
             else:
                 code = res.retcode if res else mt5.last_error()
-                print(f"{Colors.YELLOW}[BE NOTA] Ticket #{ticket} modifikasi SL: {code}{Colors.RESET}")
+                # Print hanya jika kod bukan retcode biasa
+                if code != 10016:
+                    print(f"{Colors.YELLOW}[BE NOTA] Ticket #{p.ticket} ({p.symbol}) modifikasi SL: {code}{Colors.RESET}")
+
+    def apply_breakeven_for_signal(self, sig_id, entry_price=None, raw_symbol=None):
+        """Alih Stop Loss ke Break-Even bagi semua posisi runner yang masih terbuka"""
+        if raw_symbol:
+            self.apply_breakeven_for_symbol(raw_symbol)
+            return
+
+        # Semak memory map jika ada
+        if sig_id in self.active_positions:
+            orders = self.active_positions[sig_id]
+            for rec in orders:
+                sym = rec.get("symbol")
+                if sym:
+                    self.apply_breakeven_for_symbol(sym)
+        else:
+            # Fallback scan semua posisi MT5
+            all_pos = mt5.positions_get()
+            for p in (all_pos or []):
+                if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")):
+                    self.apply_breakeven_for_symbol(p.symbol)
 
     def handle_signal_resolution(self, resolved_data):
         item = resolved_data.get("item", {})
@@ -422,10 +461,8 @@ class AmaterasuBridge:
 
         # Jika TP1 dicapai atau signal umumkan BE, segera kunci BE untuk layer seterusnya!
         if outcome in ["TP1", "BE"] or (item.get("tags") and "TP1" in item["tags"]):
-            if self.auto_be:
-                # Cari entry price
-                entry = item.get("entry")
-                self.apply_breakeven_for_signal(sig_id, entry)
+            if self.auto_be and symbol:
+                self.apply_breakeven_for_symbol(symbol, item)
 
         if outcome in ["TP2", "SL"]:
             # Posisi telah selesai
@@ -486,6 +523,13 @@ class AmaterasuBridge:
         elif event_name == "signal_fired":
             self.process_new_signal(payload)
 
+        elif event_name == "signal_update":
+            # Event signal_update dihantar apabila TP1 dicapai atau SL dialih ke BE
+            sig = payload.get("activeSignal", {})
+            sym = payload.get("symbol") or sig.get("symbol")
+            if sym:
+                self.apply_breakeven_for_symbol(sym, sig)
+
         elif event_name == "signal_resolved":
             self.handle_signal_resolution(payload)
 
@@ -495,6 +539,42 @@ class AmaterasuBridge:
                 for s in payload:
                     if s.get("status") == "ACTIVE" and s.get("id") not in self.executed_signal_ids:
                         self.process_new_signal(s)
+                    elif s.get("status") == "TP1_HIT" or s.get("beLocked") or s.get("tp1Triggered"):
+                        sym = s.get("symbol")
+                        if sym:
+                            self.apply_breakeven_for_symbol(sym, s)
+
+    def breakeven_guardian_loop(self):
+        """Guardian berterusan setiap 2.5 saat memeriksa tiket MT5 untuk kunci BE serta-merta apabila TP1 dicapai"""
+        urls = [self.server_url, "https://amaterasu-x.vercel.app", "http://localhost:3000"]
+        while self.running:
+            try:
+                time.sleep(2.5)
+                if not self.auto_be:
+                    continue
+
+                active_signals = []
+                for u in urls:
+                    try:
+                        r = requests.get(f"{u.rstrip('/')}/api/data", timeout=3)
+                        if r.status_code == 200:
+                            d = r.json()
+                            active_signals = d.get("activeSignals", [])
+                            if not active_signals and d.get("activeSignal"):
+                                active_signals = [d["activeSignal"]]
+                            if active_signals:
+                                break
+                    except Exception:
+                        continue
+
+                for sig in active_signals:
+                    if sig.get("status") == "TP1_HIT" or sig.get("beLocked") or sig.get("tp1Triggered"):
+                        sym = sig.get("symbol")
+                        if sym:
+                            self.apply_breakeven_for_symbol(sym, sig)
+
+            except Exception:
+                pass
 
     def polling_fallback_loop(self):
         """Fallback polling setiap 4 saat untuk memastikan tiada signal terlepas"""
@@ -510,12 +590,16 @@ class AmaterasuBridge:
                     if act and act.get("status") == "ACTIVE":
                         if act.get("id") not in self.executed_signal_ids:
                             self.process_new_signal(act)
+                    elif act and (act.get("status") == "TP1_HIT" or act.get("beLocked")):
+                        self.apply_breakeven_for_symbol(act.get("symbol"), act)
                             
                     # Semak activeSignals jika server return
                     acts = data.get("activeSignals", [])
                     for s in acts:
                         if s.get("status") == "ACTIVE" and s.get("id") not in self.executed_signal_ids:
                             self.process_new_signal(s)
+                        elif s.get("status") == "TP1_HIT" or s.get("beLocked"):
+                            self.apply_breakeven_for_symbol(s.get("symbol"), s)
             except Exception:
                 pass
 
@@ -557,6 +641,10 @@ class AmaterasuBridge:
         # Start Fallback Polling thread
         poll_thread = threading.Thread(target=self.polling_fallback_loop, daemon=True)
         poll_thread.start()
+
+        # Start Autonomous Auto-BreakEven Guardian thread
+        guardian_thread = threading.Thread(target=self.breakeven_guardian_loop, daemon=True)
+        guardian_thread.start()
 
         # Run SSE listener on main thread
         try:
