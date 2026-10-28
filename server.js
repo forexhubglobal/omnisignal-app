@@ -531,7 +531,7 @@ const server = http.createServer(async (req, res) => {
       
       const sig = (db.activeSignals || []).find(s => s.symbol === rawSymbol);
       if (sig) {
-        const asset = AIAutonomousEngine.assets.find(a => a.symbol === rawSymbol) || AIAutonomousEngine.assets[0];
+        const asset = AiEngine.assets.find(a => a.symbol === rawSymbol) || AiEngine.assets[0];
         let outcome = 'CLOSED';
         let resolvedPips = Number(pips) || 0;
         
@@ -549,7 +549,7 @@ const server = http.createServer(async (req, res) => {
           resolvedPips = 0;
         }
 
-        AIAutonomousEngine.resolveTrade(db, sig, outcome, resolvedPips, asset);
+        AiEngine.resolveTrade(db, sig, outcome, resolvedPips, asset);
         broadcastEvent('on_pips_update', db.activeSignals);
         console.log(`[MT5 SYNC] ${rawSymbol} selesai di MT5 sebagai ${outcome} (${resolvedPips > 0 ? '+' : ''}${resolvedPips}p). Diselaraskan serta-merta.`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
