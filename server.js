@@ -1367,10 +1367,16 @@ const AiEngine = {
     // All available market pairs can run simultaneously in On Pips until hitting TP2/SL!
     if (this.secondsInState >= this.scanIntervalSec) {
       this.secondsInState = 0;
-      const runningSymbols = new Set(db.activeSignals.map(s => s.symbol));
-      const availableAssets = this.assets.filter(a => !runningSymbols.has(a.symbol));
+      // Only strictly ACTIVE signals (still pending TP1) block new setups for that pair
+      const activePendingSymbols = new Set(
+        db.activeSignals.filter(s => s.status === 'ACTIVE').map(s => s.symbol)
+      );
+      const availableAssets = this.assets.filter(a => !activePendingSymbols.has(a.symbol));
       if (availableAssets.length > 0) {
-        this.fireAutonomousSignal(db, availableAssets[Math.floor(Math.random() * availableAssets.length)]);
+        // Prioritize Gold (XAUUSD) if available for morning session, else select available confluence asset
+        const goldAsset = availableAssets.find(a => a.symbol === 'XAUUSD');
+        const targetAsset = goldAsset || availableAssets[Math.floor(Math.random() * availableAssets.length)];
+        this.fireAutonomousSignal(db, targetAsset);
       }
     }
 
@@ -1465,6 +1471,23 @@ const AiEngine = {
     if (!Array.isArray(db.activeSignals)) db.activeSignals = [];
     const existingIdx = db.activeSignals.findIndex(s => s.symbol === asset.symbol);
     if (existingIdx !== -1) {
+      const oldSig = db.activeSignals[existingIdx];
+      if (oldSig.status === 'TP1_HIT' || oldSig.beLocked) {
+        const oldHistoryItem = {
+          id: oldSig.id || ('sig-' + Date.now()),
+          time: getMYTTime(),
+          date: getMYTDate(),
+          symbol: oldSig.symbol,
+          type: oldSig.type,
+          entry: oldSig.entry,
+          status: 'TP1',
+          pips: asset.tp1Pips,
+          tags: ['TP1'],
+          peak: asset.tp1Pips
+        };
+        if (!Array.isArray(db.signals)) db.signals = [];
+        db.signals.unshift(oldHistoryItem);
+      }
       db.activeSignals[existingIdx] = newSig;
     } else {
       db.activeSignals.unshift(newSig);
