@@ -521,6 +521,53 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // 0.2 POST /api/mt5/sync-event (Bidirectional MT5 execution feedback: SL, TP, closed positions)
+  if (pathname === '/api/mt5/sync-event' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const { symbol, event, price, pips, comment, ticket } = payload;
+      const db = getDB();
+      const rawSymbol = (symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase();
+      
+      const sig = (db.activeSignals || []).find(s => s.symbol === rawSymbol);
+      if (sig) {
+        const asset = AIAutonomousEngine.assets.find(a => a.symbol === rawSymbol) || AIAutonomousEngine.assets[0];
+        let outcome = 'CLOSED';
+        let resolvedPips = Number(pips) || 0;
+        
+        if (event === 'SL' || (comment && comment.toLowerCase().includes('sl'))) {
+          outcome = 'SL';
+          resolvedPips = resolvedPips !== 0 ? (resolvedPips > 0 ? -resolvedPips : resolvedPips) : -asset.slPips;
+        } else if (event === 'TP1') {
+          outcome = 'TP1';
+          resolvedPips = resolvedPips > 0 ? resolvedPips : asset.tp1Pips;
+        } else if (event === 'TP2' || (comment && comment.toLowerCase().includes('tp'))) {
+          outcome = 'TP2';
+          resolvedPips = resolvedPips > 0 ? resolvedPips : asset.tp2Pips;
+        } else if (event === 'BE') {
+          outcome = 'BE';
+          resolvedPips = 0;
+        }
+
+        AIAutonomousEngine.resolveTrade(db, sig, outcome, resolvedPips, asset);
+        broadcastEvent('on_pips_update', db.activeSignals);
+        console.log(`[MT5 SYNC] ${rawSymbol} selesai di MT5 sebagai ${outcome} (${resolvedPips > 0 ? '+' : ''}${resolvedPips}p). Diselaraskan serta-merta.`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, symbol: rawSymbol, outcome, resolvedPips, activeSignalsCount: db.activeSignals.length }));
+      } else {
+        if (db.activeSignal && db.activeSignal.symbol === rawSymbol && db.activeSignal.status === 'ACTIVE') {
+          db.activeSignal.status = 'WAITING';
+          saveDB(db);
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, message: 'Symbol was not in activeSignals' }));
+      }
+    } catch (err) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: err.message }));
+    }
+  }
+
   // 1. GET /api/data (Full state for App)
   if (pathname === '/api/data' && req.method === 'GET') {
     const db = getDB();
@@ -763,10 +810,16 @@ const server = http.createServer(async (req, res) => {
         notes: `Amaterasu AI Neural Core scanning order book clusters for next high-probability setup...`
       };
 
+      if (Array.isArray(db.activeSignals)) {
+        const targetSym = payload.symbol || current.symbol || 'XAUUSD';
+        db.activeSignals = db.activeSignals.filter(s => s.symbol !== targetSym && s.id !== current.id);
+      }
+
       saveDB(db);
       broadcastEvent('signal_resolved', { item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal, lastResolvedSignal: db.lastResolvedSignal });
+      broadcastEvent('on_pips_update', db.activeSignals);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal }));
+      return res.end(JSON.stringify({ success: true, item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal, activeSignals: db.activeSignals }));
     } catch (e) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: e.message }));

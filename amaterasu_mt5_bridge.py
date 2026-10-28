@@ -96,6 +96,7 @@ class AmaterasuBridge:
         # active_positions map: signal_id -> list of MT5 tickets: [{'ticket': 123, 'tp_level': 1, 'entry': 2738.5, 'symbol': 'XAUUSD'}]
         self.active_positions = {}
         self.broker_symbols = {} # cache available broker symbols
+        self.synced_deal_tickets = set()
         
     def banner(self):
         print(f"{Colors.RED}{Colors.BOLD}")
@@ -648,6 +649,92 @@ class AmaterasuBridge:
                 pass
             time.sleep(2.5)
 
+    def sync_closed_deals_loop(self):
+        """Memantau deal MT5 yang ditutup (SL, TP, Close Manual) dan menyelaraskan status kembali ke pelayan Amaterasu X"""
+        from datetime import timedelta
+        urls = [self.server_url, "https://amaterasu-x.vercel.app", "http://localhost:3000"]
+        # Seed initial deal tickets from past 2 days so we don't spam old closures on boot
+        try:
+            from_date = datetime.now() - timedelta(days=2)
+            to_date = datetime.now() + timedelta(days=2)
+            init_deals = mt5.history_deals_get(from_date, to_date)
+            if init_deals:
+                for d in init_deals:
+                    if d.entry == 1:
+                        self.synced_deal_tickets.add(d.ticket)
+        except Exception:
+            pass
+
+        while self.running:
+            try:
+                time.sleep(2.5)
+                from_date = datetime.now() - timedelta(days=1)
+                to_date = datetime.now() + timedelta(days=1)
+                deals = mt5.history_deals_get(from_date, to_date)
+                if deals:
+                    for d in deals:
+                        if d.entry == 1 and d.ticket not in self.synced_deal_tickets:
+                            self.synced_deal_tickets.add(d.ticket)
+                            raw_sym = d.symbol.split('.')[0].upper()
+                            comment = str(d.comment or '')
+                            
+                            # Tentukan outcome: SL vs TP vs Closed
+                            event = 'CLOSED'
+                            if '[sl' in comment.lower() or d.profit < 0:
+                                event = 'SL'
+                            elif '[tp' in comment.lower() or d.profit > 0:
+                                event = 'TP1' if 'tp1' in comment.lower() else 'TP2'
+                            
+                            print(f"{Colors.YELLOW}🔔 [MT5 DEAL DITUTUP] #{d.ticket} {raw_sym} ({event}) @ {d.price} | Profit: ${d.profit:.2f} [{comment}]{Colors.RESET}")
+                            
+                            payload = {
+                                "symbol": raw_sym,
+                                "event": event,
+                                "price": d.price,
+                                "comment": comment,
+                                "ticket": d.order,
+                                "profit": d.profit
+                            }
+                            for u in urls:
+                                try:
+                                    requests.post(f"{u.rstrip('/')}/api/mt5/sync-event", json=payload, timeout=3)
+                                except Exception:
+                                    pass
+
+                # Autosync Cleanup: Semak jika ada signal di web yang sudah TIADA posisi di MT5
+                for u in urls:
+                    try:
+                        r = requests.get(f"{u.rstrip('/')}/api/data", timeout=3)
+                        if r.status_code == 200:
+                            data = r.json()
+                            active_list = data.get("activeSignals", [])
+                            all_mt5_pos = mt5.positions_get() or []
+                            open_symbols = set(p.symbol.split('.')[0].upper() for p in all_mt5_pos)
+                            
+                            for act_sig in active_list:
+                                sym = act_sig.get("symbol", "").upper()
+                                if sym and sym not in open_symbols and act_sig.get("status") == "ACTIVE":
+                                    recent_deals = [d for d in (deals or []) if d.symbol.split('.')[0].upper() == sym and d.entry == 1]
+                                    if recent_deals:
+                                        last_deal = recent_deals[-1]
+                                        comm = str(last_deal.comment or '')
+                                        evt = 'SL' if ('[sl' in comm.lower() or last_deal.profit < 0) else 'TP2'
+                                        print(f"{Colors.CYAN}🔄 [AUTOSYNC CLEANUP] Menyelesaikan isyarat tergantung {sym} ({evt}) mengikut rekod MT5...{Colors.RESET}")
+                                        requests.post(f"{u.rstrip('/')}/api/mt5/sync-event", json={
+                                            "symbol": sym,
+                                            "event": evt,
+                                            "price": last_deal.price,
+                                            "comment": comm,
+                                            "ticket": last_deal.order,
+                                            "profit": last_deal.profit
+                                        }, timeout=3)
+                        break
+                    except Exception:
+                        continue
+
+            except Exception:
+                pass
+
     def start(self):
         self.banner()
         if not self.init_mt5():
@@ -658,6 +745,10 @@ class AmaterasuBridge:
         # Start MT5 Real-Time Quote Sync thread
         sync_thread = threading.Thread(target=self.sync_quotes_loop, daemon=True)
         sync_thread.start()
+
+        # Start Two-Way MT5 Deal & Position Sync thread
+        deal_sync_thread = threading.Thread(target=self.sync_closed_deals_loop, daemon=True)
+        deal_sync_thread.start()
 
         # Start Fallback Polling thread
         poll_thread = threading.Thread(target=self.polling_fallback_loop, daemon=True)
