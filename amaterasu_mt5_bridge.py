@@ -395,10 +395,19 @@ class AmaterasuBridge:
             point = sym_info.point if sym_info else 0.0001
             is_buy = (p.type == mt5.POSITION_TYPE_BUY)
 
-            # Jika SL sudah berada pada atau melebihi open price, langkau
-            if is_buy and p.sl >= open_price:
+            # Tentukan sasaran SL: Jika signal ada paras Trailing Escalator, gunakan paras untung terjamin
+            target_sl = open_price
+            if sig_data and "sl" in sig_data:
+                server_sl = float(sig_data["sl"])
+                if is_buy and server_sl >= open_price:
+                    target_sl = server_sl
+                elif not is_buy and server_sl <= open_price and server_sl > 0:
+                    target_sl = server_sl
+
+            # Jika SL sudah berada pada atau melebihi sasaran, langkau
+            if is_buy and p.sl >= target_sl:
                 continue
-            if not is_buy and p.sl <= open_price and p.sl > 0:
+            if not is_buy and p.sl <= target_sl and p.sl > 0:
                 continue
 
             tick = mt5.symbol_info_tick(p.symbol)
@@ -406,27 +415,29 @@ class AmaterasuBridge:
                 continue
 
             # Elak ralat 10016 (Invalid Stops) di MT5:
-            # BUY: Bid mesti >= Open price
-            # SELL: Ask mesti <= Open price
-            if is_buy and tick.bid < (open_price - 2 * point):
+            # BUY: Bid mesti >= target_sl + min distance
+            # SELL: Ask mesti <= target_sl - min distance
+            if is_buy and tick.bid < (target_sl + 2 * point):
                 continue
-            if not is_buy and tick.ask > (open_price + 2 * point):
+            if not is_buy and tick.ask > (target_sl - 2 * point):
                 continue
 
             mod_request = {
                 "action": mt5.TRADE_ACTION_SLTP,
                 "position": p.ticket,
                 "symbol": p.symbol,
-                "sl": round(open_price, digits),
+                "sl": round(target_sl, digits),
                 "tp": round(p.tp, digits),
             }
 
             res = mt5.order_send(mod_request)
             if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-                print(f"{Colors.GREEN}🛡️ [BE BERJAYA] Ticket #{p.ticket} ({p.symbol}) SL dialih ke Break-Even @ {open_price:.{digits}f}! Posisi kini bebas risiko.{Colors.RESET}")
+                if (is_buy and target_sl > open_price) or (not is_buy and target_sl < open_price):
+                    print(f"{Colors.GREEN}🚀 [TRAILING PROFIT KUNCI] Ticket #{p.ticket} ({p.symbol}) SL dinaikkan ke paras UNTUNG TERJAMIN @ {target_sl:.{digits}f}!{Colors.RESET}")
+                else:
+                    print(f"{Colors.GREEN}🛡️ [BE BERJAYA] Ticket #{p.ticket} ({p.symbol}) SL dialih ke Break-Even @ {open_price:.{digits}f}! Posisi kini bebas risiko.{Colors.RESET}")
             else:
                 code = res.retcode if res else mt5.last_error()
-                # Print hanya jika kod bukan retcode biasa
                 if code != 10016:
                     print(f"{Colors.YELLOW}[BE NOTA] Ticket #{p.ticket} ({p.symbol}) modifikasi SL: {code}{Colors.RESET}")
 

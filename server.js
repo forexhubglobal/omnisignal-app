@@ -1443,10 +1443,25 @@ const AiEngine = {
       notes = amaterasuRationales[Math.floor(Math.random() * amaterasuRationales.length)];
     }
 
+    // Dynamic ATR Session Volatility Adaptation
+    const nowH = parseInt(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: '2-digit', hour12: false }).format(new Date()), 10);
+    let volMult = 1.0;
+    if (nowH >= 8 && nowH < 14) {
+      volMult = 0.85; // Sesi Pagi Asia: Volatiliti kemas & jimat SL
+    } else if (nowH >= 14 && nowH < 20) {
+      volMult = 1.0;  // Sesi London: Standard SMC
+    } else if (nowH >= 20 && nowH < 23) {
+      volMult = 1.15; // Sesi New York: Volatiliti lonjakan maksima
+    }
+
+    const dynTp1Pips = Math.round(asset.tp1Pips * volMult);
+    const dynTp2Pips = Math.round(asset.tp2Pips * volMult);
+    const dynSlPips = Math.round(asset.slPips * volMult);
+
     const sign = type === 'BUY' ? 1 : -1;
-    const tp1 = Number((entry + sign * asset.tp1Pips * asset.pipVal).toFixed(asset.pipDec));
-    const tp2 = Number((entry + sign * asset.tp2Pips * asset.pipVal).toFixed(asset.pipDec));
-    const sl = Number((entry - sign * asset.slPips * asset.pipVal).toFixed(asset.pipDec));
+    const tp1 = Number((entry + sign * dynTp1Pips * asset.pipVal).toFixed(asset.pipDec));
+    const tp2 = Number((entry + sign * dynTp2Pips * asset.pipVal).toFixed(asset.pipDec));
+    const sl = Number((entry - sign * dynSlPips * asset.pipVal).toFixed(asset.pipDec));
     const willWin = Math.random() < (this.targetWinrate / 100);
 
     const newSig = {
@@ -1459,6 +1474,11 @@ const AiEngine = {
       tp1: tp1,
       tp2: tp2,
       sl: sl,
+      tp1Pips: dynTp1Pips,
+      tp2Pips: dynTp2Pips,
+      slPips: dynSlPips,
+      trailingStage: 0,
+      lockedProfitPips: 0,
       willWin: willWin,
       firedAt: getMYTTime(),
       currentPrice: entry,
@@ -1573,7 +1593,6 @@ const AiEngine = {
 
       // Stage 2: Hit TP2 (Full Target Reached)
       // SOP Integrity Rule: Trade MUST achieve TP1 first before it can reach TP2 runner!
-      // Must also have matured for at least 10 ticks to prevent instant-close on server restart/reboot
       const tp2Condition = isBuy ? (curP >= sig.tp2) : (curP <= sig.tp2);
       if (sig.tp1Triggered && tp2Condition && (sig.ticks || 0) >= 10) {
         TelegramNotifier.send(TelegramNotifier.formatTp2Message(sig, asset.tp2Pips)).catch(() => {});
@@ -1581,14 +1600,57 @@ const AiEngine = {
         continue;
       }
 
-      // Stage 3: Hit SL / Break-Even
-      // If BE is locked: if price returns to entry (floatingPips <= 0), close as BE (0 pip)!
+      // Stage 2.5: Trailing Profit Escalator (Kunci Untung Bertangga)
+      // When price flies past TP1 towards TP2, dynamically escalate SL into guaranteed profit!
+      const tp1Pips = sig.tp1Pips || asset.tp1Pips;
+      const tp2Pips = sig.tp2Pips || asset.tp2Pips;
+      const tier1Trigger = Math.round(tp1Pips + (tp2Pips - tp1Pips) * 0.45); // e.g. +87p for Gold
+      const tier2Trigger = Math.round(tp1Pips + (tp2Pips - tp1Pips) * 0.80); // e.g. +108p for Gold
+      const tier1Lock = Math.round(tp1Pips * 0.65); // e.g. +40p for Gold, +15p for FX
+      const tier2Lock = Math.round(tp1Pips * 1.35); // e.g. +80p for Gold, +30p for FX
+
       if (sig.beLocked) {
-        const beCondition = isBuy ? (curP <= sig.entry) : (curP >= sig.entry);
-        if (beCondition && (sig.ticks || 0) >= 8) {
-          this.log(`🛡️ SOP Break-Even Closed: ${sig.symbol} returned to Entry after peak +${Math.round(sig.peakPips || 30)} pips. Exit as BE (0 pip). Capital 100% Protected.`);
-          this.resolveTrade(db, sig, 'BE', 0, asset);
-          continue;
+        if (sig.peakPips >= tier2Trigger && (sig.trailingStage || 1) < 3) {
+          sig.trailingStage = 3;
+          sig.lockedProfitPips = tier2Lock;
+          sig.sl = Number((sig.entry + (isBuy ? 1 : -1) * tier2Lock * asset.pipVal).toFixed(asset.pipDec));
+          this.log(`💎 [TRAILING ESCALATOR TIER 2] ${sig.symbol} cecah +${Math.round(sig.peakPips)} pip! Stop Loss dikunci ke +${tier2Lock} pip UNTUNG MAKSIMA!`);
+          broadcastEvent('signal_update', {
+            type: 'TRAILING_LOCK',
+            symbol: sig.symbol,
+            lockedPips: tier2Lock,
+            activeSignal: sig,
+            message: `💎 Trailing Escalator: ${sig.symbol} mengunci +${tier2Lock} pip keuntungan maksima!`
+          });
+        } else if (sig.peakPips >= tier1Trigger && (sig.trailingStage || 1) < 2) {
+          sig.trailingStage = 2;
+          sig.lockedProfitPips = tier1Lock;
+          sig.sl = Number((sig.entry + (isBuy ? 1 : -1) * tier1Lock * asset.pipVal).toFixed(asset.pipDec));
+          this.log(`🚀 [TRAILING ESCALATOR TIER 1] ${sig.symbol} cecah +${Math.round(sig.peakPips)} pip! Stop Loss dikunci ke +${tier1Lock} pip UNTUNG TERJAMIN!`);
+          broadcastEvent('signal_update', {
+            type: 'TRAILING_LOCK',
+            symbol: sig.symbol,
+            lockedPips: tier1Lock,
+            activeSignal: sig,
+            message: `🚀 Trailing Escalator: ${sig.symbol} mengunci +${tier1Lock} pip keuntungan terjamin!`
+          });
+        }
+      }
+
+      // Stage 3: Hit SL / Break-Even / Trailing Exit
+      if (sig.beLocked) {
+        const trailingHit = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
+        if (trailingHit && (sig.ticks || 0) >= 8) {
+          if ((sig.trailingStage || 1) >= 2) {
+            const lockedWin = sig.lockedProfitPips || (sig.trailingStage === 3 ? tier2Lock : tier1Lock);
+            this.log(`🏁 [TRAILING PROFIT SECURED] ${sig.symbol} terkena Trailing Stop pada keuntungan +${lockedWin} pip! Modal & untung selamat.`);
+            this.resolveTrade(db, sig, 'TP_TRAIL', lockedWin, asset);
+            continue;
+          } else {
+            this.log(`🛡️ SOP Break-Even Closed: ${sig.symbol} returned to Entry after peak +${Math.round(sig.peakPips || 30)} pips. Exit as BE (0 pip). Capital 100% Protected.`);
+            this.resolveTrade(db, sig, 'BE', 0, asset);
+            continue;
+          }
         }
       } else {
         // Trade was never in BE -> normal initial SL (requires at least 8 ticks)
@@ -1631,7 +1693,7 @@ const AiEngine = {
       entry: sig.entry,
       status: outcome,
       pips: pips,
-      tags: outcome === 'TP2' ? ['TP1', 'TP2'] : outcome === 'TP1' ? ['TP1'] : outcome === 'BE' ? ['TP1', 'BE'] : [],
+      tags: outcome === 'TP2' ? ['TP1', 'TP2'] : outcome === 'TP_TRAIL' ? ['TP1', 'TRAIL'] : outcome === 'TP1' ? ['TP1'] : outcome === 'BE' ? ['TP1', 'BE'] : [],
       peak: outcome === 'BE' ? Math.max(realPeak, 25) : (outcome === 'SL' ? Math.min(realPeak, 5) : realPeak)
     };
 
@@ -1660,7 +1722,7 @@ const AiEngine = {
       db.stats.slHit = (db.stats.slHit || 0) + 1;
       db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + pips;
     }
-    const wins = db.signals.filter(s => s.pips > 0 || (s.tags && s.tags.includes('TP1')) || s.status === 'BE').length;
+    const wins = db.signals.filter(s => s.pips > 0 || (s.tags && s.tags.includes('TP1')) || s.status === 'BE' || s.status === 'TP_TRAIL').length;
     db.stats.winRate = db.signals.length > 0 ? Math.round((wins / db.signals.length) * 100) : 0;
 
     saveDB(db);
