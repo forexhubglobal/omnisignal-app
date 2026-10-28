@@ -244,6 +244,31 @@ class AmaterasuBridge:
         is_buy = (order_type_str == "BUY")
         order_type = mt5.ORDER_TYPE_BUY if is_buy else mt5.ORDER_TYPE_SELL
 
+        # 0. Risk & Margin Safety Guards:
+        acc = mt5.account_info()
+        if not acc:
+            print(f"{Colors.RED}[RISK GUARD] Gagal membaca maklumat akaun MT5.{Colors.RESET}")
+            return None
+
+        margin_level = (acc.equity / acc.margin * 100) if (acc.margin and acc.margin > 0) else 99999.0
+        if acc.margin and acc.margin > 0 and margin_level < 250.0:
+            print(f"{Colors.RED}🛑 [RISK GUARD] Margin Level akaun terlalu rendah ({margin_level:.1f}% < 250%). Menolak order baru bagi mengelakkan Stop Out!{Colors.RESET}")
+            return None
+
+        if acc.margin_free < 5.0 and acc.balance > 5.0:
+            print(f"{Colors.RED}🛑 [RISK GUARD] Margin Bebas tidak mencukupi ({acc.margin_free:.2f} < 5.0). Order ditolak.{Colors.RESET}")
+            return None
+
+        all_active_pos = mt5.positions_get() or []
+        open_unique_symbols = set(p.symbol.split('.')[0].upper() for p in all_active_pos)
+        clean_raw_sym = symbol.split('.')[0].upper()
+
+        # Maksimum 3 pasaran aktif serentak bagi melindungi akaun klien
+        max_pairs = int(self.config.get("max_concurrent_pairs", 3))
+        if len(open_unique_symbols) >= max_pairs and clean_raw_sym not in open_unique_symbols:
+            print(f"{Colors.YELLOW}🛡️ [RISK GUARD] Had {max_pairs} Pair serentak telah dicapai ({', '.join(open_unique_symbols)}). Order #{clean_raw_sym} ditolak bagi melindungi modal.{Colors.RESET}")
+            return None
+
         # Anti-Hedging check: Elak buka posisi bertentangan jika sudah ada posisi aktif untuk simbol ini di MT5
         all_sym_pos = mt5.positions_get(symbol=symbol)
         if all_sym_pos:
