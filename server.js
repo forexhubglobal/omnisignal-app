@@ -178,30 +178,34 @@ const defaultDB = {
   ]
 };
 
-// Load or initialize DB
+// Load or initialize DB with in-memory caching
+let inMemoryDB = null;
 function getDB() {
+  if (inMemoryDB) return inMemoryDB;
   try {
     if (!fs.existsSync(DB_FILE)) {
-      fs.writeFileSync(DB_FILE, JSON.stringify(defaultDB, null, 2), 'utf8');
-      return defaultDB;
+      inMemoryDB = JSON.parse(JSON.stringify(defaultDB));
+      return inMemoryDB;
     }
     const content = fs.readFileSync(DB_FILE, 'utf8');
-    const parsed = JSON.parse(content);
-    if (!Array.isArray(parsed.activeSignals)) {
-      parsed.activeSignals = (parsed.activeSignal && parsed.activeSignal.status === 'ACTIVE') ? [parsed.activeSignal] : [];
+    inMemoryDB = JSON.parse(content);
+    if (!Array.isArray(inMemoryDB.activeSignals)) {
+      inMemoryDB.activeSignals = (inMemoryDB.activeSignal && inMemoryDB.activeSignal.status === 'ACTIVE') ? [inMemoryDB.activeSignal] : [];
     }
-    return parsed;
+    return inMemoryDB;
   } catch (e) {
     console.error('Error reading DB, using defaults', e);
-    return defaultDB;
+    inMemoryDB = JSON.parse(JSON.stringify(defaultDB));
+    return inMemoryDB;
   }
 }
 
 function saveDB(db) {
+  inMemoryDB = db;
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
   } catch (e) {
-    console.error('Error saving DB', e);
+    // Tolerated on read-only serverless lambdas (inMemoryDB retains updates)
   }
 }
 

@@ -268,7 +268,16 @@ function playChime(type = 'bell') {
   else AmaterasuSound.alert();
 }
 
+let _lastGlobalToastMsg = '';
+let _lastGlobalToastTime = 0;
 function toast(msg) {
+  const now = Date.now();
+  if (_lastGlobalToastMsg === msg && (now - _lastGlobalToastTime) < 15000) {
+    return; // Block identical toast within 15 seconds!
+  }
+  _lastGlobalToastMsg = msg;
+  _lastGlobalToastTime = now;
+
   $$('.toast').forEach(t => t.remove());
   const t = document.createElement('div');
   t.className = 'toast';
@@ -348,6 +357,15 @@ const AppState = {
         if (newSig && newSig.symbol) {
           store.set('selected_signal_sym', newSig.symbol);
         }
+
+        // Deduplication Guard: Never fire toast/sound twice for the same signal ID
+        if (!this._seenSignalFired) this._seenSignalFired = new Set();
+        if (newSig.id && this._seenSignalFired.has(newSig.id)) {
+          if (typeof route === 'function') route();
+          return;
+        }
+        if (newSig.id) this._seenSignalFired.add(newSig.id);
+
         AmaterasuSound.sharingan();
         toast(`⚡ AMATERASU SIGNAL: ${newSig.type} ${newSig.symbol}!`);
         if (typeof route === 'function') route();
@@ -389,6 +407,16 @@ const AppState = {
           const idx = this.activeSignals.findIndex(s => s.symbol === d.activeSignal.symbol);
           if (idx !== -1) this.activeSignals[idx] = d.activeSignal;
         }
+
+        // Deduplication Guard: Never fire toast/sound repeatedly for the same update
+        const updateKey = `${d.symbol || (d.activeSignal && d.activeSignal.symbol) || ''}_${d.type || ''}_${(d.activeSignal && d.activeSignal.id) || ''}`;
+        if (!this._seenSignalUpdates) this._seenSignalUpdates = new Set();
+        if (this._seenSignalUpdates.has(updateKey)) {
+          if (typeof route === 'function') route();
+          return;
+        }
+        this._seenSignalUpdates.add(updateKey);
+
         AmaterasuSound.tpWin();
         toast(d.message || `🎯 Target 1 Disahkan! Alih SL ke Break-Even (BE)!`);
         if (typeof route === 'function') route();
