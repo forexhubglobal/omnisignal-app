@@ -403,13 +403,20 @@ const AppState = {
         }
         this.lastResolvedSignal = d.item;
         if (d.item) {
+          const itemKey = `${d.item.symbol || ''}_${d.item.id || ''}_${d.item.status || ''}`;
+          if (this._lastToastKey === itemKey && Date.now() - (this._lastToastTime || 0) < 60000) {
+            return;
+          }
+          this._lastToastKey = itemKey;
+          this._lastToastTime = Date.now();
+
           this.signals = [d.item, ...(this.signals || [])];
           if (d.item.status === 'TP2' || (d.item.pips && d.item.pips > 0)) {
             AmaterasuSound.tpWin();
           }
+          this.stats = d.stats;
+          toast(`🎯 Signal ${d.item.status}: ${d.item.pips > 0 ? '+' : ''}${d.item.pips} pip!`);
         }
-        this.stats = d.stats;
-        toast(`🎯 Signal ${d.item.status}: ${d.item.pips > 0 ? '+' : ''}${d.item.pips} pip!`);
         if (typeof route === 'function') route();
       });
       s.addEventListener('stats_reset', e => {

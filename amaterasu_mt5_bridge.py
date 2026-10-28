@@ -714,38 +714,6 @@ class AmaterasuBridge:
                                     requests.post(f"{u.rstrip('/')}/api/mt5/sync-event", json=payload, timeout=3)
                                 except Exception:
                                     pass
-
-                # Autosync Cleanup: Semak jika ada signal di web yang sudah TIADA posisi di MT5
-                for u in urls:
-                    try:
-                        r = requests.get(f"{u.rstrip('/')}/api/data", timeout=3)
-                        if r.status_code == 200:
-                            data = r.json()
-                            active_list = data.get("activeSignals", [])
-                            all_mt5_pos = mt5.positions_get() or []
-                            open_symbols = set(p.symbol.split('.')[0].upper() for p in all_mt5_pos)
-                            
-                            for act_sig in active_list:
-                                sym = act_sig.get("symbol", "").upper()
-                                if sym and sym not in open_symbols and act_sig.get("status") == "ACTIVE":
-                                    recent_deals = [d for d in (deals or []) if d.symbol.split('.')[0].upper() == sym and d.entry == 1]
-                                    if recent_deals:
-                                        last_deal = recent_deals[-1]
-                                        comm = str(last_deal.comment or '')
-                                        evt = 'SL' if ('[sl' in comm.lower() or last_deal.profit < 0) else 'TP2'
-                                        print(f"{Colors.CYAN}🔄 [AUTOSYNC CLEANUP] Menyelesaikan isyarat tergantung {sym} ({evt}) mengikut rekod MT5...{Colors.RESET}")
-                                        requests.post(f"{u.rstrip('/')}/api/mt5/sync-event", json={
-                                            "symbol": sym,
-                                            "event": evt,
-                                            "price": last_deal.price,
-                                            "comment": comm,
-                                            "ticket": last_deal.order,
-                                            "profit": last_deal.profit
-                                        }, timeout=3)
-                        break
-                    except Exception:
-                        continue
-
             except Exception:
                 pass
 
