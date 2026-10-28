@@ -1399,6 +1399,14 @@ const AiEngine = {
 
   fireAutonomousSignal(db, forceAsset = null) {
     const asset = forceAsset || this.assets[Math.floor(Math.random() * this.assets.length)];
+
+    // 0. Anti-Hedging Guard:
+    // Sekiranya simbol ini sudah ada trade yang sedang ACTIVE, jangan buka trade bertentangan!
+    const existingActive = (db.activeSignals || []).find(s => s.symbol === asset.symbol && s.status === 'ACTIVE');
+    if (existingActive) {
+      return;
+    }
+
     const liveQ = liveMarketQuotes[asset.symbol];
     const liveP = liveQ ? liveQ.price : (asset.symbol === 'XAUUSD' ? currentMarketPrice : asset.base);
     const entry = Number(liveP.toFixed(asset.pipDec));
@@ -1421,14 +1429,11 @@ const AiEngine = {
         this.log(`🔥 NEWS AI SYNERGY DIAKTIFKAN: Isyarat ${type} ${asset.symbol} mengikut unjuran News AI (${newsSynergy.newsName} Bias ${newsSynergy.bias})!`);
       }
     } else {
-      // TIADA NEWS AI AKTIF -> KEMBALI KEPADA ANALISIS NORMAL SMC (Bias pasaran biasa)
+      // TIADA NEWS AI AKTIF -> Kekal stabil mengikut Trend Institusi SMC
+      // Elak flip-flop antara BUY dan SELL secara rawak pada pair yang sama
       type = asset.bias === 'BULLISH' ? 'BUY' : 'SELL';
-      if (liveQ && typeof liveQ.change === 'number') {
-        if (Math.random() < 0.88) {
-          type = liveQ.change >= 0 ? 'BUY' : 'SELL';
-        } else {
-          type = liveQ.change >= 0 ? 'SELL' : 'BUY';
-        }
+      if (asset.symbol !== 'XAUUSD' && liveQ && typeof liveQ.change === 'number') {
+        type = liveQ.change >= 0 ? 'BUY' : 'SELL';
       }
 
       const amaterasuRationales = type === 'BUY' ? [

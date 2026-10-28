@@ -243,6 +243,16 @@ class AmaterasuBridge:
         is_buy = (order_type_str == "BUY")
         order_type = mt5.ORDER_TYPE_BUY if is_buy else mt5.ORDER_TYPE_SELL
 
+        # Anti-Hedging check: Elak buka posisi bertentangan jika sudah ada posisi aktif untuk simbol ini di MT5
+        all_sym_pos = mt5.positions_get(symbol=symbol)
+        if all_sym_pos:
+            for ep in all_sym_pos:
+                if ep.magic == self.magic_number or (ep.comment and ep.comment.startswith("AmaterasuX")):
+                    if (order_type == mt5.ORDER_TYPE_BUY and ep.type == mt5.POSITION_TYPE_SELL) or \
+                       (order_type == mt5.ORDER_TYPE_SELL and ep.type == mt5.POSITION_TYPE_BUY):
+                        print(f"{Colors.YELLOW}[ANTI-HEDGE] Menolak order {order_type_str} #{symbol} kerana sudah ada posisi bertentangan yang sedang aktif di MT5 (Ticket #{ep.ticket}). Menunggu selesai dahulu.{Colors.RESET}")
+                        return None
+
         tick = mt5.symbol_info_tick(symbol)
         if not tick:
             print(f"{Colors.RED}[ORDER] Gagal membaca harga tick semasa bagi {symbol}.{Colors.RESET}")
