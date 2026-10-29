@@ -41,12 +41,12 @@ function getMYTDate(options = { month: 'short', day: 'numeric' }) {
 // Initial Database Seeds
 const defaultDB = {
   stats: {
-    totalSignals: 156,
-    winRate: 88,
-    tp1Hit: 114,
-    tp2Hit: 28,
-    slHit: 14,
-    totalProfitToday: 2680,
+    totalSignals: 0,
+    winRate: 0,
+    tp1Hit: 0,
+    tp2Hit: 0,
+    slHit: 0,
+    totalProfitToday: 0,
     last7Days: [
       { day: 'Wed', pips: 480 },
       { day: 'Thu', pips: 540 },
@@ -1898,7 +1898,7 @@ const AiEngine = {
       db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + pips;
     }
     const wins = db.signals.filter(s => s.pips > 0 || (s.tags && s.tags.includes('TP1')) || s.status === 'BE' || s.status === 'TP_TRAIL').length;
-    db.stats.winRate = db.signals.length > 0 ? Math.min(92, Math.max(86, Math.round((wins / db.signals.length) * 100))) : 88;
+    db.stats.winRate = db.signals.length > 0 ? Math.round((wins / db.signals.length) * 100) : 0;
 
     saveDB(db);
     broadcastEvent('signal_resolved', { item: newHistoryItem, stats: db.stats, activeSignal: db.activeSignal, activeSignals: db.activeSignals });
