@@ -51,7 +51,7 @@ CONFIG_FILE = "bridge_config.json"
 DEFAULT_CONFIG = {
     "server_url": "https://amaterasu-x.vercel.app",
     "lot_size": 0.20,
-    "execution_mode": "SPLIT_TP", # "SPLIT_TP", "SINGLE_TP1", "SINGLE_TP2"
+    "execution_mode": "SPLIT_TP", # "SPLIT_TP" (TP1, TP2, TP3), "SINGLE_TP1", "SINGLE_TP2", "SINGLE_TP3"
     "auto_breakeven": True,
     "max_slippage_pips": 5,
     "magic_number": 888999,
@@ -107,7 +107,7 @@ class AmaterasuBridge:
         print(f"{Colors.RESET}")
         print(f" {Colors.CYAN}* Server Target   :{Colors.RESET} {self.server_url}")
         print(f" {Colors.CYAN}* Base Lot Size   :{Colors.RESET} {self.lot_size}")
-        print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2)")
+        print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2/TP3)")
         print(f" {Colors.CYAN}* Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
         print(f" {Colors.CYAN}* Magic Number    :{Colors.RESET} {self.magic_number}")
         print("  -------------------------------------------------------------------")
@@ -397,17 +397,20 @@ class AmaterasuBridge:
 
         print(f"\n{Colors.BOLD}{Colors.GREEN}═════════════════════════════════════════════════════════════════════{Colors.RESET}")
         print(f" {Colors.GREEN}🚀 SIGNAL BARU DIKESAN DARI AMATERASU X!{Colors.RESET}")
-        print(f" • Simbol    : #{sig.get('symbol')} ({sig.get('type')})")
-        print(f" • Entry Ref : {sig.get('entry')}")
-        print(f" • TP1 / TP2 : {sig.get('tp1')} / {sig.get('tp2')}")
-        print(f" • Stop Loss : {sig.get('sl')}")
-        print(f" • Confluence: {sig.get('notes', 'Amaterasu Institutional Flow')[:75]}...")
+        print(f" • Simbol          : #{sig.get('symbol')} ({sig.get('type')})")
+        print(f" • Entry Ref       : {sig.get('entry')}")
+        print(f" • TP1 / TP2 / TP3 : {sig.get('tp1')} / {sig.get('tp2')} / {sig.get('tp3')}")
+        print(f" • Stop Loss       : {sig.get('sl')}")
+        print(f" • Confluence      : {sig.get('notes', 'Amaterasu Institutional Flow')[:75]}...")
         print(f"{Colors.BOLD}{Colors.GREEN}═════════════════════════════════════════════════════════════════════{Colors.RESET}")
 
         order_records = []
         if self.execution_mode == "SPLIT_TP":
-            # Buka 2 layer: Layer 1 untuk TP1, Layer 2 untuk TP2 Runner
-            print(f"{Colors.CYAN}[AMATERASU SOP] Membuka 2 Layer (Layer 1 -> TP1, Layer 2 -> TP2 Runner)...{Colors.RESET}")
+            # Buka 3 layer mengikut Amaterasu Institutional SOP:
+            # Layer 1 -> TP1 (Quick Profit)
+            # Layer 2 -> TP2 (Mid Swing)
+            # Layer 3 -> TP3 (Big Trend Runner)
+            print(f"{Colors.CYAN}[AMATERASU SOP] Membuka 3 Layer (Layer 1 -> TP1, Layer 2 -> TP2, Layer 3 -> TP3 Runner)...{Colors.RESET}")
             ord1 = self.execute_order(sig, tp_target=1)
             if ord1:
                 order_records.append(ord1)
@@ -415,6 +418,14 @@ class AmaterasuBridge:
             ord2 = self.execute_order(sig, tp_target=2)
             if ord2:
                 order_records.append(ord2)
+            time.sleep(0.3)
+            ord3 = self.execute_order(sig, tp_target=3)
+            if ord3:
+                order_records.append(ord3)
+        elif self.execution_mode == "SINGLE_TP3":
+            ord3 = self.execute_order(sig, tp_target=3)
+            if ord3:
+                order_records.append(ord3)
         elif self.execution_mode == "SINGLE_TP2":
             ord2 = self.execute_order(sig, tp_target=2)
             if ord2:
