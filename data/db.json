@@ -1,12 +1,12 @@
 {
   "stats": {
-    "totalSignals": 17,
-    "winRate": 100,
-    "tp1Hit": 65,
-    "tp2Hit": 26,
+    "totalSignals": 28,
+    "winRate": 94,
+    "tp1Hit": 130,
+    "tp2Hit": 33,
     "tp3Hit": 0,
-    "slHit": 0,
-    "totalProfitToday": 2565,
+    "slHit": 6,
+    "totalProfitToday": 5250,
     "last7Days": [
       {
         "day": "Wed",
@@ -39,32 +39,935 @@
     ]
   },
   "activeSignal": {
-    "id": "sig-1793275956492",
+    "id": "sig-1793289545537",
     "status": "ACTIVE",
-    "symbol": "GBPJPY",
-    "type": "BUY",
+    "symbol": "GBPUSD",
+    "type": "SELL",
     "timeframe": "M15",
-    "entry": 210.502,
-    "tp1": 210.902,
-    "tp2": 211.312,
-    "tp3": 211.762,
-    "sl": 210.102,
-    "tp1Pips": 40,
-    "tp2Pips": 81,
-    "tp3Pips": 126,
-    "slPips": 40,
+    "entry": 1.3373,
+    "tp1": 1.3348,
+    "tp2": 1.3323,
+    "tp3": 1.3293,
+    "sl": 1.3398,
+    "tp1Pips": 25,
+    "tp2Pips": 50,
+    "tp3Pips": 80,
+    "slPips": 25,
     "trailingStage": 0,
     "lockedProfitPips": 0,
-    "willWin": true,
-    "firedAt": "20:12",
-    "currentPrice": 210.571,
-    "floatingPips": 6.9,
+    "willWin": false,
+    "firedAt": "23:59",
+    "currentPrice": 1.3372,
+    "floatingPips": 1,
     "beLocked": false,
-    "ticks": 109,
-    "notes": "[Amaterasu SMC AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at 210.502. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.",
-    "peakPips": 6.9
+    "ticks": 492,
+    "notes": "[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at 1.3373. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.",
+    "peakPips": 2
   },
   "signals": [
+    {
+      "id": "sig-1793290448195",
+      "time": "00:19",
+      "date": "Oct 30",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4012.95,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793290147298",
+      "time": "00:14",
+      "date": "Oct 30",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4018.83,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793289996892",
+      "time": "00:11",
+      "date": "Oct 30",
+      "symbol": "GBPJPY",
+      "type": "SELL",
+      "entry": 211.128,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793289846479",
+      "time": "00:09",
+      "date": "Oct 30",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4020.7,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793289395072",
+      "time": "00:06",
+      "date": "Oct 30",
+      "symbol": "USDCHF",
+      "type": "SELL",
+      "entry": 0.8268,
+      "status": "TP_TRAIL",
+      "pips": 20,
+      "tags": [
+        "TP1",
+        "TRAIL"
+      ],
+      "peak": 1
+    },
+    {
+      "id": "sig-1793289696003",
+      "time": "00:06",
+      "date": "Oct 30",
+      "symbol": "GBPJPY",
+      "type": "SELL",
+      "entry": 211.096,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793289244608",
+      "time": "00:04",
+      "date": "Oct 30",
+      "symbol": "USDCAD",
+      "type": "SELL",
+      "entry": 1.3978,
+      "status": "TP_TRAIL",
+      "pips": 20,
+      "tags": [
+        "TP1",
+        "TRAIL"
+      ],
+      "peak": 2
+    },
+    {
+      "id": "sig-1793285885812",
+      "time": "00:04",
+      "date": "Oct 30",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4027.56,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793283177684",
+      "time": "00:01",
+      "date": "Oct 30",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 210.515,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793283027185",
+      "time": "23:05",
+      "date": "Oct 29",
+      "symbol": "GBPUSD",
+      "type": "SELL",
+      "entry": 1.3335,
+      "status": "SL",
+      "pips": -25,
+      "tags": [],
+      "peak": 5
+    },
+    {
+      "id": "sig-1793270389975",
+      "time": "23:03",
+      "date": "Oct 29",
+      "symbol": "USDCHF",
+      "type": "BUY",
+      "entry": 0.8287,
+      "status": "SL",
+      "pips": -20,
+      "tags": [],
+      "peak": 5
+    },
+    {
+      "id": "sig-1793285434433",
+      "time": "22:58",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4030.13,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793285283968",
+      "time": "22:53",
+      "date": "Oct 29",
+      "symbol": "EURJPY",
+      "type": "SELL",
+      "entry": 176.007,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 30
+    },
+    {
+      "id": "sig-1793281823760",
+      "time": "22:52",
+      "date": "Oct 29",
+      "symbol": "USDCAD",
+      "type": "BUY",
+      "entry": 1.4008,
+      "status": "SL",
+      "pips": -20,
+      "tags": [],
+      "peak": 2
+    },
+    {
+      "id": "sig-1793285133450",
+      "time": "22:50",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4035.12,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793284832603",
+      "time": "22:45",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4031.32,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793284531695",
+      "time": "22:40",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4028.3,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793284230807",
+      "time": "22:35",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4030.67,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793283929883",
+      "time": "22:30",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4023.83,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793283628956",
+      "time": "22:25",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4026.08,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793280018493",
+      "time": "22:22",
+      "date": "Oct 29",
+      "symbol": "EURJPY",
+      "type": "SELL",
+      "entry": 175.694,
+      "status": "SL",
+      "pips": -30,
+      "tags": [],
+      "peak": 5
+    },
+    {
+      "id": "sig-1793280469815",
+      "time": "22:21",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1125,
+      "status": "SL",
+      "pips": -20,
+      "tags": [],
+      "peak": 5
+    },
+    {
+      "id": "sig-1793283328059",
+      "time": "22:20",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4021.31,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793282876753",
+      "time": "22:15",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4023.17,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793282726300",
+      "time": "22:12",
+      "date": "Oct 29",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 210.29,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793282575909",
+      "time": "22:07",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4025.92,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793282275152",
+      "time": "22:02",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4022.52,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793281974212",
+      "time": "21:57",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4023.64,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793281673325",
+      "time": "21:52",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4024.8,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793281522908",
+      "time": "21:50",
+      "date": "Oct 29",
+      "symbol": "USDCAD",
+      "type": "BUY",
+      "entry": 1.4014,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793281372443",
+      "time": "21:47",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4029.91,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793280921198",
+      "time": "21:45",
+      "date": "Oct 29",
+      "symbol": "GBPUSD",
+      "type": "SELL",
+      "entry": 1.3327,
+      "status": "TP_TRAIL",
+      "pips": 25,
+      "tags": [
+        "TP1",
+        "TRAIL"
+      ],
+      "peak": 10
+    },
+    {
+      "id": "sig-1793281222026",
+      "time": "21:45",
+      "date": "Oct 29",
+      "symbol": "USDCAD",
+      "type": "BUY",
+      "entry": 1.4009,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793281071597",
+      "time": "21:42",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4029.28,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793276106959",
+      "time": "21:40",
+      "date": "Oct 29",
+      "symbol": "USDCAD",
+      "type": "BUY",
+      "entry": 1.3986,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793277310554",
+      "time": "21:39",
+      "date": "Oct 29",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 210.585,
+      "status": "SL",
+      "pips": -35,
+      "tags": [],
+      "peak": 5
+    },
+    {
+      "id": "sig-1793280770761",
+      "time": "21:37",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4025.87,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793280620282",
+      "time": "21:35",
+      "date": "Oct 29",
+      "symbol": "GBPUSD",
+      "type": "SELL",
+      "entry": 1.3317,
+      "status": "TP1",
+      "pips": 25,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793280319368",
+      "time": "21:32",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4025.02,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793280168916",
+      "time": "21:27",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1119,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793279717632",
+      "time": "21:25",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4024.96,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793279868109",
+      "time": "21:22",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1121,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793269487297",
+      "time": "21:20",
+      "date": "Oct 29",
+      "symbol": "EURJPY",
+      "type": "SELL",
+      "entry": 175.993,
+      "status": "TP1",
+      "pips": 30,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 30
+    },
+    {
+      "id": "sig-1793279567257",
+      "time": "21:17",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.113,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793279416842",
+      "time": "21:15",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4023.45,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793279266405",
+      "time": "21:12",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.113,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793279115964",
+      "time": "21:10",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4025.3,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793278965502",
+      "time": "21:07",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1125,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793278815052",
+      "time": "21:05",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4020.05,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793278664588",
+      "time": "21:02",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1132,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793278213201",
+      "time": "21:00",
+      "date": "Oct 29",
+      "symbol": "GBPUSD",
+      "type": "SELL",
+      "entry": 1.3325,
+      "status": "TP_TRAIL",
+      "pips": 25,
+      "tags": [
+        "TP1",
+        "TRAIL"
+      ],
+      "peak": 7
+    },
+    {
+      "id": "sig-1793278514153",
+      "time": "21:00",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4018.59,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793278363698",
+      "time": "20:57",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.114,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793278062742",
+      "time": "20:52",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1142,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793277611443",
+      "time": "20:50",
+      "date": "Oct 29",
+      "symbol": "GBPUSD",
+      "type": "SELL",
+      "entry": 1.3335,
+      "status": "TP1",
+      "pips": 25,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793277761840",
+      "time": "20:47",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1147,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793277461025",
+      "time": "20:45",
+      "date": "Oct 29",
+      "symbol": "AUDUSD",
+      "type": "SELL",
+      "entry": 0.7034,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793277160121",
+      "time": "20:37",
+      "date": "Oct 29",
+      "symbol": "AUDUSD",
+      "type": "SELL",
+      "entry": 0.7035,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793277009627",
+      "time": "20:35",
+      "date": "Oct 29",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 210.605,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793276859193",
+      "time": "20:32",
+      "date": "Oct 29",
+      "symbol": "AUDUSD",
+      "type": "SELL",
+      "entry": 0.703,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793276407745",
+      "time": "20:30",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4029.5,
+      "status": "TP_TRAIL",
+      "pips": 60,
+      "tags": [
+        "TP1",
+        "TRAIL"
+      ],
+      "peak": 69
+    },
+    {
+      "id": "sig-1793276708731",
+      "time": "20:30",
+      "date": "Oct 29",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 210.611,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793276558269",
+      "time": "20:27",
+      "date": "Oct 29",
+      "symbol": "AUDUSD",
+      "type": "SELL",
+      "entry": 0.7031,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793276257351",
+      "time": "20:25",
+      "date": "Oct 29",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 210.56,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
+    {
+      "id": "sig-1793275956492",
+      "time": "20:17",
+      "date": "Oct 29",
+      "symbol": "GBPJPY",
+      "type": "BUY",
+      "entry": 210.502,
+      "status": "TP1",
+      "pips": 35,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 35
+    },
     {
       "id": "sig-1793275505120",
       "time": "20:15",
@@ -1197,14 +2100,14 @@
     }
   ],
   "lastResolvedSignal": {
-    "id": "sig-1793275505120",
-    "time": "20:15",
-    "date": "Oct 29",
-    "symbol": "GBPUSD",
+    "id": "sig-1793289395072",
+    "time": "00:06",
+    "date": "Oct 30",
+    "symbol": "USDCHF",
     "type": "SELL",
-    "entry": 1.3318,
+    "entry": 0.8268,
     "status": "TP_TRAIL",
-    "pips": 25,
+    "pips": 20,
     "tags": [
       "TP1",
       "TRAIL"
@@ -1212,13 +2115,49 @@
     "peak": 1
   },
   "aiNewsStats": {
-    "totalNewsSignals": 2,
+    "totalNewsSignals": 5,
     "winRate": 100,
-    "tpHit": 2,
+    "tpHit": 5,
     "slHit": 0,
-    "totalPips": 99
+    "totalPips": 375
   },
   "aiNewsHistory": [
+    {
+      "id": "nws-1793286302070",
+      "date": "Oct 29",
+      "time": "23:00",
+      "event": "US ISM Manufacturing PMI & JOLTS",
+      "symbol": "XAUUSD",
+      "bias": "BULLISH",
+      "entry": 4025.16,
+      "status": "TP2_HIT",
+      "pips": 91,
+      "notes": "Unjuran AI (BULLISH) bertepatan dengan data pasaran. Pasaran bergerak +91 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1793282701243",
+      "date": "Oct 29",
+      "time": "22:00",
+      "event": "US Existing Home Sales & Flash PMI",
+      "symbol": "XAUUSD",
+      "bias": "BULLISH",
+      "entry": 4027.12,
+      "status": "TP2_HIT",
+      "pips": 88,
+      "notes": "Unjuran AI (BULLISH) bertepatan dengan data pasaran. Pasaran bergerak +88 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1793277300512",
+      "date": "Oct 29",
+      "time": "20:30",
+      "event": "US Initial Jobless Claims & Core PCE",
+      "symbol": "XAUUSD",
+      "bias": "BULLISH",
+      "entry": 4026.7,
+      "status": "TP2_HIT",
+      "pips": 97,
+      "notes": "Unjuran AI (BULLISH) bertepatan dengan data pasaran. Pasaran bergerak +97 pip melepasi zon sasaran."
+    },
     {
       "id": "nws-1793267985358",
       "date": "Oct 29",
@@ -1252,34 +2191,164 @@
   },
   "activeSignals": [
     {
-      "id": "sig-1793275956492",
+      "id": "sig-1793289545537",
       "status": "ACTIVE",
-      "symbol": "GBPJPY",
-      "type": "BUY",
+      "symbol": "GBPUSD",
+      "type": "SELL",
       "timeframe": "M15",
-      "entry": 210.502,
-      "tp1": 210.902,
-      "tp2": 211.312,
-      "tp3": 211.762,
-      "sl": 210.102,
-      "tp1Pips": 40,
-      "tp2Pips": 81,
-      "tp3Pips": 126,
-      "slPips": 40,
+      "entry": 1.3373,
+      "tp1": 1.3348,
+      "tp2": 1.3323,
+      "tp3": 1.3293,
+      "sl": 1.3398,
+      "tp1Pips": 25,
+      "tp2Pips": 50,
+      "tp3Pips": 80,
+      "slPips": 25,
       "trailingStage": 0,
       "lockedProfitPips": 0,
-      "willWin": true,
-      "firedAt": "20:12",
-      "currentPrice": 210.571,
-      "floatingPips": 6.9,
+      "willWin": false,
+      "firedAt": "23:59",
+      "currentPrice": 1.3372,
+      "floatingPips": 1,
       "beLocked": false,
-      "ticks": 109,
-      "notes": "[Amaterasu SMC AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at 210.502. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.",
-      "peakPips": 6.9
+      "ticks": 492,
+      "notes": "[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at 1.3373. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.",
+      "peakPips": 2
+    },
+    {
+      "id": "sig-1793285735368",
+      "status": "ACTIVE",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 1.1165,
+      "tp1": 1.1142,
+      "tp2": 1.1119,
+      "tp3": 1.109,
+      "sl": 1.1188,
+      "tp1Pips": 23,
+      "tp2Pips": 46,
+      "tp3Pips": 75,
+      "slPips": 23,
+      "trailingStage": 0,
+      "lockedProfitPips": 0,
+      "willWin": false,
+      "firedAt": "22:55",
+      "currentPrice": 1.1163,
+      "floatingPips": 2,
+      "beLocked": false,
+      "ticks": 1999,
+      "notes": "[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh Unjuran News AI: US ISM Manufacturing PMI & JOLTS (USD Bias BUY / Strong USD) -> EURUSD SELL. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.",
+      "peakPips": 9
+    },
+    {
+      "id": "sig-1793285584872",
+      "status": "ACTIVE",
+      "symbol": "EURJPY",
+      "type": "BUY",
+      "timeframe": "M15",
+      "entry": 176.218,
+      "tp1": 176.568,
+      "tp2": 176.908,
+      "tp3": 177.308,
+      "sl": 175.868,
+      "tp1Pips": 35,
+      "tp2Pips": 69,
+      "tp3Pips": 109,
+      "slPips": 35,
+      "trailingStage": 0,
+      "lockedProfitPips": 0,
+      "willWin": false,
+      "firedAt": "22:53",
+      "currentPrice": 176.188,
+      "floatingPips": -3,
+      "beLocked": false,
+      "ticks": 2059,
+      "notes": "[Amaterasu SMC AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at 176.218. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.",
+      "peakPips": 14.9
+    },
+    {
+      "id": "sig-1793290297762",
+      "status": "ACTIVE",
+      "symbol": "GBPJPY",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 211.101,
+      "tp1": 210.751,
+      "tp2": 210.401,
+      "tp3": 210.001,
+      "sl": 211.451,
+      "tp1Pips": 35,
+      "tp2Pips": 70,
+      "tp3Pips": 110,
+      "slPips": 35,
+      "trailingStage": 0,
+      "lockedProfitPips": 0,
+      "willWin": false,
+      "firedAt": "00:11",
+      "currentPrice": 211.039,
+      "floatingPips": 6.2,
+      "beLocked": false,
+      "ticks": 192,
+      "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.",
+      "peakPips": 6.4
+    },
+    {
+      "id": "sig-1793290749025",
+      "status": "ACTIVE",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "timeframe": "M15",
+      "entry": 4015.49,
+      "tp1": 4021.49,
+      "tp2": 4027.49,
+      "tp3": 4033.49,
+      "sl": 4007.49,
+      "tp1Pips": 60,
+      "tp2Pips": 120,
+      "tp3Pips": 180,
+      "slPips": 80,
+      "trailingStage": 0,
+      "lockedProfitPips": 0,
+      "willWin": false,
+      "firedAt": "00:19",
+      "currentPrice": 4015.94,
+      "floatingPips": 4.5,
+      "beLocked": false,
+      "ticks": 12,
+      "notes": "[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.",
+      "peakPips": 6.3
+    },
+    {
+      "id": "sig-1793277912284",
+      "status": "ACTIVE",
+      "symbol": "AUDUSD",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 0.7033,
+      "tp1": 0.701,
+      "tp2": 0.6987,
+      "tp3": 0.6958,
+      "sl": 0.7056,
+      "tp1Pips": 23,
+      "tp2Pips": 46,
+      "tp3Pips": 75,
+      "slPips": 23,
+      "trailingStage": 0,
+      "lockedProfitPips": 0,
+      "willWin": false,
+      "firedAt": "20:45",
+      "currentPrice": 0.7037,
+      "floatingPips": -4,
+      "beLocked": false,
+      "ticks": 5119,
+      "notes": "[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh Unjuran News AI: US Initial Jobless Claims & Core PCE (USD Bias BUY / Strong USD) -> AUDUSD SELL. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.",
+      "peakPips": 17
     },
     {
       "id": "sig-1793274151009",
-      "status": "ACTIVE",
+      "status": "TP1_HIT",
       "symbol": "XAGUSD",
       "type": "SELL",
       "timeframe": "M15",
@@ -1287,21 +2356,23 @@
       "tp1": 52.606,
       "tp2": 52.306,
       "tp3": 51.906,
-      "sl": 53.256,
+      "sl": 52.706,
       "tp1Pips": 30,
       "tp2Pips": 60,
       "tp3Pips": 100,
       "slPips": 35,
-      "trailingStage": 0,
-      "lockedProfitPips": 0,
+      "trailingStage": 2,
+      "lockedProfitPips": 20,
       "willWin": false,
       "firedAt": "19:42",
-      "currentPrice": 52.851,
-      "floatingPips": 5.5,
-      "beLocked": false,
-      "ticks": 829,
+      "currentPrice": 52.45,
+      "floatingPips": 45.6,
+      "beLocked": true,
+      "ticks": 6619,
       "notes": "[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh Unjuran News AI: US Initial Jobless Claims & Core PCE (USD Bias BUY / Strong USD) -> XAGUSD SELL. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.",
-      "peakPips": 6.5
+      "peakPips": 49.3,
+      "tp1Triggered": true,
+      "tp1HitAt": "00:18"
     },
     {
       "id": "sig-1793274752787",
@@ -1322,90 +2393,12 @@
       "lockedProfitPips": 0,
       "willWin": false,
       "firedAt": "19:52",
-      "currentPrice": 158.04,
-      "floatingPips": 7.2,
+      "currentPrice": 157.824,
+      "floatingPips": -14.4,
       "beLocked": false,
-      "ticks": 589,
+      "ticks": 6379,
       "notes": "[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh Unjuran News AI: US Initial Jobless Claims & Core PCE (USD Bias BUY) -> USDJPY BUY. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.",
-      "peakPips": 11
-    },
-    {
-      "id": "sig-1793270389975",
-      "status": "ACTIVE",
-      "symbol": "USDCHF",
-      "type": "BUY",
-      "timeframe": "M15",
-      "entry": 0.8287,
-      "tp1": 0.8307,
-      "tp2": 0.8327,
-      "tp3": 0.8352,
-      "sl": 0.8267,
-      "tp1Pips": 20,
-      "tp2Pips": 40,
-      "tp3Pips": 65,
-      "slPips": 20,
-      "trailingStage": 0,
-      "lockedProfitPips": 0,
-      "willWin": false,
-      "firedAt": "18:39",
-      "currentPrice": 0.8286,
-      "floatingPips": -1,
-      "beLocked": false,
-      "ticks": 2329,
-      "notes": "[White House Malaysian SNR] Rejection kukuh pada Key Support Level 0.8287 + M15 Bullish Pinbar. Confluence Score: 95.4%. Sasaran TP1 (+20p).",
-      "peakPips": 1
-    },
-    {
-      "id": "sig-1793269487297",
-      "status": "ACTIVE",
-      "symbol": "EURJPY",
-      "type": "SELL",
-      "timeframe": "M15",
-      "entry": 175.993,
-      "tp1": 175.693,
-      "tp2": 175.393,
-      "tp3": 175.043,
-      "sl": 176.293,
-      "tp1Pips": 30,
-      "tp2Pips": 60,
-      "tp3Pips": 95,
-      "slPips": 30,
-      "trailingStage": 0,
-      "lockedProfitPips": 0,
-      "willWin": false,
-      "firedAt": "18:24",
-      "currentPrice": 176.051,
-      "floatingPips": -5.8,
-      "beLocked": false,
-      "ticks": 2689,
-      "notes": "[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at 175.993. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.",
-      "peakPips": 0.2
-    },
-    {
-      "id": "sig-1793276106959",
-      "status": "ACTIVE",
-      "symbol": "USDCAD",
-      "type": "BUY",
-      "timeframe": "M15",
-      "entry": 1.3986,
-      "tp1": 1.4009,
-      "tp2": 1.4032,
-      "tp3": 1.4061,
-      "sl": 1.3963,
-      "tp1Pips": 23,
-      "tp2Pips": 46,
-      "tp3Pips": 75,
-      "slPips": 23,
-      "trailingStage": 0,
-      "lockedProfitPips": 0,
-      "willWin": false,
-      "firedAt": "20:15",
-      "currentPrice": 1.3983,
-      "floatingPips": -3,
-      "beLocked": false,
-      "ticks": 49,
-      "notes": "[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh Unjuran News AI: US Initial Jobless Claims & Core PCE (USD Bias BUY) -> USDCAD BUY. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.",
-      "peakPips": 0
+      "peakPips": 14.9
     }
   ],
   "newsSynergyMode": "AUTO"

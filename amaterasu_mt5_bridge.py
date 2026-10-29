@@ -190,13 +190,13 @@ class AmaterasuBridge:
         # 3. Cari variasi simbol biasa
         variations = []
         if s_upper == 'XAUUSD':
-            variations = ['GOLD', 'XAUUSD.M', 'XAUUSD.A', 'XAUUSD.PRO', 'XAUUSDM', 'XAUUSD_M', 'GOLD.M']
+            variations = ['XAUUSD.C', 'GOLD', 'XAUUSD.M', 'XAUUSD.A', 'XAUUSD.PRO', 'XAUUSDM', 'XAUUSD_M', 'GOLD.M', 'GOLD.C']
         elif s_upper == 'WTI':
-            variations = ['USOIL', 'USOUSD', 'CL', 'OIL', 'WTI.M', 'CRUDE', 'WTI_OIL', 'USOIL.M']
+            variations = ['USOIL', 'USOIL.C', 'USOUSD', 'CL', 'OIL', 'WTI.M', 'CRUDE', 'WTI_OIL', 'USOIL.M']
         elif s_upper == 'BTCUSD':
-            variations = ['BTCUSD.M', 'BTCUSDT', 'BITCOIN', 'BTCUSD.PRO', 'BTCUSDM']
+            variations = ['BTCUSD.C', 'BTCUSD.M', 'BTCUSDT', 'BITCOIN', 'BTCUSD.PRO', 'BTCUSDM']
         else:
-            variations = [f"{s_upper}.M", f"{s_upper}.A", f"{s_upper}.PRO", f"{s_upper}M", f"{s_upper}_M"]
+            variations = [f"{s_upper}.C", f"{s_upper}.M", f"{s_upper}.A", f"{s_upper}.PRO", f"{s_upper}M", f"{s_upper}_M", f"{s_upper}C", f"{s_upper}_C"]
 
         for v in variations:
             if v in self.broker_symbols:
@@ -231,11 +231,12 @@ class AmaterasuBridge:
         symbol = self.resolve_symbol(symbol_raw)
         
         # Pastikan simbol aktif dalam MarketWatch
-        if not mt5.symbol_select(symbol, True):
+        sym_selected = mt5.symbol_select(symbol, True)
+        sym_info = mt5.symbol_info(symbol)
+        if not sym_selected and not (sym_info and sym_info.visible):
             print(f"{Colors.RED}[ORDER] Gagal aktifkan simbol {symbol} di MarketWatch MT5.{Colors.RESET}")
             return None
 
-        sym_info = mt5.symbol_info(symbol)
         if not sym_info:
             print(f"{Colors.RED}[ORDER] Maklumat simbol {symbol} tidak ditemui.{Colors.RESET}")
             return None
