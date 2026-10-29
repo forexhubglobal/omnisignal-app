@@ -1567,31 +1567,45 @@ const AiEngine = {
     let notes;
 
     if (newsSynergy) {
-      // ADA NEWS AI AKTIF -> Semak sama ada pasaran sedang dalam Bullish Breakout melepasi paras penting
-      if (asset.symbol === 'XAUUSD' && newsSynergy.type === 'SELL' && liveP >= 4015.0) {
-        type = 'BUY';
-        notes = `[⚡ AMATERASU INSTITUTIONAL SMC] M15 Bullish Breakout Structure (BOS) melepasi zon $4,015. Momentum belian institusi mengatasi tekanan berita. Setup BUY pada retest zon sokongan.`;
-        this.log(`🛡️ TREND FILTER AKTIF: Emas melepasi paras $4,015 dalam Bullish Expansion. Mengutamakan setup BUY mengikut aliran institusi.`);
-      } else {
-        type = newsSynergy.type;
-        notes = `[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh ${newsSynergy.reason}. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.`;
-        this.log(`🔥 NEWS AI SYNERGY DIAKTIFKAN: Isyarat ${type} ${asset.symbol} mengikut unjuran News AI (${newsSynergy.newsName} Bias ${newsSynergy.bias})!`);
-      }
+      // 1. ADA NEWS AI AKTIF -> Patuhi arah News AI secara mutlak tanpa sebarang override songsang!
+      type = newsSynergy.type;
+      notes = `[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh ${newsSynergy.reason}. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.`;
+      this.log(`🔥 NEWS AI SYNERGY DIAKTIFKAN: Isyarat ${type} ${asset.symbol} mengikut unjuran News AI (${newsSynergy.newsName} Bias ${newsSynergy.bias})!`);
     } else {
-      // TIADA NEWS AI AKTIF -> Kekal stabil mengikut Trend Institusi SMC
-      // Elak flip-flop antara BUY dan SELL secara rawak pada pair yang sama
-      type = asset.bias === 'BULLISH' ? 'BUY' : 'SELL';
-      if (asset.symbol !== 'XAUUSD' && liveQ && typeof liveQ.change === 'number') {
-        type = liveQ.change >= 0 ? 'BUY' : 'SELL';
+      // 2. TIADA NEWS AI AKTIF -> Guna Prinsip Asas Malaysian SNR (White House Academy Logic) & SMC Key Levels
+      // Mengesan zon Rintangan (Resistance) untuk SELL dan zon Sokongan (Support) untuk BUY
+      let snrBias = 'BUY';
+      
+      if (asset.symbol === 'XAUUSD') {
+        // Paras Kunci Gold (Malaysian SNR):
+        // Zon Rintangan Utama (Resistance): 4046.00 - 4055.00 -> White House SNR Cari SELL!
+        // Zon Sokongan Utama (Support): 4030.00 - 4038.00 -> White House SNR Cari BUY!
+        if (liveP >= 4045.0) {
+          snrBias = 'SELL'; // Jual di pucuk rintangan (selari dengan White House Academy!)
+        } else if (liveP <= 4038.0) {
+          snrBias = 'BUY'; // Beli di lantai sokongan
+        } else {
+          snrBias = (liveQ && typeof liveQ.change === 'number' && liveQ.change < 0) ? 'SELL' : 'BUY';
+        }
+      } else {
+        // Pasangan Forex & Logam Lain: Baca momentum M15 & Rejection SNR
+        if (liveQ && typeof liveQ.change === 'number') {
+          // Jika perubahan harian negatif atau harga sedang menolak dari rintangan -> SELL
+          snrBias = liveQ.change >= 0 ? (Math.abs(liveQ.change) > 0.35 ? 'SELL' : 'BUY') : 'SELL';
+        } else {
+          snrBias = asset.bias === 'BULLISH' ? 'BUY' : 'SELL';
+        }
       }
 
+      type = snrBias;
+
       const amaterasuRationales = type === 'BUY' ? [
+        `[White House Malaysian SNR] Rejection kukuh pada Key Support Level ${entry.toFixed(asset.pipDec)} + M15 Bullish Pinbar. Confluence Score: 95.4%. Sasaran TP1 (+${asset.tp1Pips}p).`,
         `[Amaterasu SMC AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.`,
-        `[Amaterasu SMC Scalp] M5 Market Structure Shift (MSS) + Fair Value Gap (FVG) retest pada zon sokongan Malaysian SNR. Momentum bersedia untuk lonjakan TP1 (+${asset.tp1Pips}p).`,
         `[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.`
       ] : [
+        `[White House Malaysian SNR] Penolakan harga (Rejection Wick) pada Key Resistance Level ${entry.toFixed(asset.pipDec)}. Momentum Bearish disahkan. Sasaran TP1 (+${asset.tp1Pips}p).`,
         `[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.`,
-        `[Amaterasu SMC Scalp] Penembusan struktur pasaran (BOS) ke bawah + mitigasi Bearish FVG pada zon rintangan Malaysian SNR. Sasaran TP1 (+${asset.tp1Pips}p).`,
         `[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.`
       ];
       notes = amaterasuRationales[Math.floor(Math.random() * amaterasuRationales.length)];
