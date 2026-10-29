@@ -231,8 +231,9 @@ function openShareWinModal(sig, isWin = false) {
   const entry = num(sig.entry || Market.price);
   const tp1 = num(sig.tp1 || (sig.entry ? sig.entry + 4 : 4004));
   const tp2 = num(sig.tp2 || (sig.entry ? sig.entry + 12 : 4015));
+  const tp3 = num(sig.tp3 || (sig.entry ? (sig.type === 'BUY' ? sig.entry + 20 : sig.entry - 20) : 4022));
   const sl = num(sig.sl || (sig.entry ? sig.entry - 5 : 3989));
-  const pips = sig.pips || (isWin ? (sig.status === 'TP2' ? 80 : 40) : 0);
+  const pips = sig.pips || (isWin ? (sig.status === 'TP3' ? 120 : (sig.status === 'TP2' ? 80 : 40)) : 0);
   const outcomeText = isWin ? (pips > 0 ? `+${pips} PIPS SECURED 🎯` : 'TARGET 1 SECURED 🎯') : 'HIGH PROBABILITY SETUP';
 
   const m = modal(`
@@ -367,6 +368,7 @@ function openShareWinModal(sig, isWin = false) {
       { label: 'ENTRY PRICE', val: entry },
       { label: 'TARGET 1', val: tp1 + ' (+40p)' },
       { label: 'TARGET 2', val: tp2 + ' (+80p)' },
+      { label: 'TARGET 3', val: tp3 + ' (+120p)' },
       { label: 'STOP LOSS', val: isWin ? `BE (${entry})` : sl }
     ];
 
@@ -423,7 +425,7 @@ function openShareWinModal(sig, isWin = false) {
   const copyBtn = $('#btnCopyShareText', m.el);
   if (copyBtn) {
     copyBtn.onclick = () => {
-      const shareText = `👁️ AMATERASU X · AI SIGNAL UPDATE\n━━━━━━━━━━━━━━━━━━━━━\n📊 Instrumen: #${symbol}\n⚡ Tindakan: ${type} (M15)\n🎯 Entry: ${entry}\n🎯 TP1: ${tp1} (+40p)\n🚀 TP2: ${tp2} (+80p)\n🛑 SL: ${sl}\n━━━━━━━━━━━━━━━━━━━━━\n${isWin ? '🏆 ' + outcomeText : '💡 High Probability Setup'}\n⚖️ Risk/Reward 1:2.5 · Amaterasu X Institutional SMC AI\n🔥 Precision Signals. Smarter Decisions. Your Trading Edge.`;
+      const shareText = `👁️ AMATERASU X · AI SIGNAL UPDATE\n━━━━━━━━━━━━━━━━━━━━━\n📊 Instrumen: #${symbol}\n⚡ Tindakan: ${type} (M15)\n🎯 Entry: ${entry}\n🎯 TP1: ${tp1} (+40p)\n🚀 TP2: ${tp2} (+80p)\n🏆 TP3: ${tp3} (+120p)\n🛑 SL: ${sl}\n━━━━━━━━━━━━━━━━━━━━━\n${isWin ? '🏆 ' + outcomeText : '💡 High Probability Setup'}\n⚖️ Risk/Reward 1:3.0 · Amaterasu X Institutional SMC AI\n🔥 Precision Signals. Smarter Decisions. Your Trading Edge.`;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(shareText);
         toast('📋 Teks format VIP disalin ke clipboard!');
@@ -515,6 +517,9 @@ function SignalPage(main) {
         const pipValForSig = currentSig.symbol === 'XAUUSD' ? 0.1 : (currentSig.symbol === 'WTI' ? 0.01 : (currentSig.symbol.includes('JPY') ? 0.01 : (currentSig.symbol.includes('BTC') ? 1 : 0.0001)));
         const tp1DiffPips = Math.abs(Math.round((currentSig.tp1 - currentSig.entry) / pipValForSig));
         const tp2DiffPips = Math.abs(Math.round((currentSig.tp2 - currentSig.entry) / pipValForSig));
+        const tp3Val = currentSig.tp3 || (currentSig.entry ? (currentSig.type === 'BUY' ? currentSig.entry + (currentSig.tp2 - currentSig.entry) * 1.5 : currentSig.entry - (currentSig.entry - currentSig.tp2) * 1.5) : currentSig.tp2);
+        const tp3DiffPips = Math.abs(Math.round((tp3Val - currentSig.entry) / pipValForSig));
+        const isTp2Hit = currentSig.status === 'TP2_HIT';
         return `
           <div class="ticket-grid">
             <div class="ticket-metric">
@@ -522,23 +527,27 @@ function SignalPage(main) {
               <div class="val gold">${num(currentSig.entry)}</div>
             </div>
             <div class="ticket-metric">
-              <div class="lbl">${isTp1 ? `Runner Target (TP2 · +${tp2DiffPips}p)` : `Primary Target (TP1 · +${tp1DiffPips}p)`}</div>
-              <div class="val bull">${isTp1 ? num(currentSig.tp2) : num(currentSig.tp1)}</div>
+              <div class="lbl">${isTp2Hit ? `Ultimate Target (TP3 · +${tp3DiffPips}p)` : (isTp1 ? `Runner Target (TP2 · +${tp2DiffPips}p)` : `Primary Target (TP1 · +${tp1DiffPips}p)`)}</div>
+              <div class="val bull">${isTp2Hit ? num(tp3Val) : (isTp1 ? num(currentSig.tp2) : num(currentSig.tp1))}</div>
             </div>
           </div>
 
-          <div class="targets-row">
+          <div class="targets-row" style="grid-template-columns: repeat(4, 1fr); gap: 6px;">
             <div class="target-box tp ${isTp1 ? 'secured' : ''}">
-              <span>TARGET 1 ${isTp1 ? `✓ HIT (+${tp1DiffPips}p)` : `(+${tp1DiffPips}p)`}</span>
+              <span>TARGET 1 ${isTp1 ? `✓ HIT` : `(+${tp1DiffPips}p)`}</span>
               <b>${num(currentSig.tp1)}</b>
             </div>
-            <div class="target-box tp">
-              <span>TARGET 2 (+${tp2DiffPips}p RUNNER)</span>
+            <div class="target-box tp ${isTp2Hit ? 'secured' : ''}">
+              <span>TARGET 2 ${isTp2Hit ? `✓ HIT` : `(+${tp2DiffPips}p)`}</span>
               <b>${num(currentSig.tp2)}</b>
+            </div>
+            <div class="target-box tp">
+              <span>TARGET 3 (+${tp3DiffPips}p)</span>
+              <b>${num(tp3Val)}</b>
             </div>
             <div class="target-box sl">
               <span>STOP LOSS</span>
-              <b>${isTp1 ? `BE (${num(currentSig.entry)})` : num(currentSig.sl)}</b>
+              <b>${isTp2Hit ? `TP1 (${num(currentSig.tp1)})` : (isTp1 ? `BE (${num(currentSig.entry)})` : num(currentSig.sl))}</b>
             </div>
           </div>
 
@@ -628,7 +637,7 @@ function SignalPage(main) {
           ${activeList[0].type === 'BUY' ? '🟢 BUY' : '🔴 SELL'} ${activeList[0].symbol} @ ${num(activeList[0].entry)}
         </div>
         <div style="font-size:12px; color:#94a3b8; margin-bottom:14px;">
-          TP1: <b style="color:#00e676;">${num(activeList[0].tp1)}</b> · TP2: <b style="color:#00e676;">${num(activeList[0].tp2)}</b> · SL: <b style="color:#ef5350;">${num(activeList[0].sl)}</b>
+          TP1: <b style="color:#00e676;">${num(activeList[0].tp1)}</b> · TP2: <b style="color:#00e676;">${num(activeList[0].tp2)}</b> · TP3: <b style="color:#00e676;">${num(activeList[0].tp3 || (activeList[0].entry ? (activeList[0].type === 'BUY' ? activeList[0].entry + (activeList[0].tp2 - activeList[0].entry) * 1.5 : activeList[0].entry - (activeList[0].entry - activeList[0].tp2) * 1.5) : activeList[0].tp2))}</b> · SL: <b style="color:#ef5350;">${num(activeList[0].sl)}</b>
         </div>
         <button class="btn gold" id="btnGoToActiveSignal" data-sym="${activeList[0].symbol}" style="width:100%; padding:11px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 15px rgba(255,160,0,0.3);">
           <span>Buka Chart & Pantau ${activeList[0].symbol}</span> ➔
@@ -778,23 +787,27 @@ function SignalPage(main) {
                     </div>
                   ` : ''}
 
-                  <!-- Price Levels Mini Grid -->
-                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; background:#080c14; border-radius:6px; padding:6px 8px; margin:6px 0 10px 6px; font-size:11px;">
+                  <!-- Price Levels Mini Grid (5 Columns) -->
+                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:4px; background:#080c14; border-radius:6px; padding:6px 6px; margin:6px 0 10px 6px; font-size:10.5px;">
                     <div>
-                      <span style="color:#8e9aa8; font-size:9.5px; display:block;">ENTRY</span>
+                      <span style="color:#8e9aa8; font-size:9px; display:block;">ENTRY</span>
                       <b style="color:#fff;">${num(sig.entry, dec)}</b>
                     </div>
                     <div>
-                      <span style="color:#00e676; font-size:9.5px; display:block;">TP1</span>
+                      <span style="color:#00e676; font-size:9px; display:block;">TP1</span>
                       <b style="color:#00e676;">${num(sig.tp1, dec)}</b>
                     </div>
                     <div>
-                      <span style="color:#00e676; font-size:9.5px; display:block;">TP2</span>
+                      <span style="color:#00e676; font-size:9px; display:block;">TP2</span>
                       <b style="color:#00e676;">${num(sig.tp2, dec)}</b>
                     </div>
                     <div>
-                      <span style="color:#ef5350; font-size:9.5px; display:block;">SL</span>
-                      <b style="color:#ef5350;">${isSigTp1 ? 'BE' : num(sig.sl, dec)}</b>
+                      <span style="color:#00e676; font-size:9px; display:block;">TP3</span>
+                      <b style="color:#00e676;">${num(sig.tp3 || (sig.entry ? (sig.type === 'BUY' ? sig.entry + (sig.tp2 - sig.entry) * 1.5 : sig.entry - (sig.entry - sig.tp2) * 1.5) : 0), dec)}</b>
+                    </div>
+                    <div>
+                      <span style="color:#ef5350; font-size:9px; display:block;">SL</span>
+                      <b style="color:#ef5350;">${isSigTp1 ? (sig.status === 'TP2_HIT' ? 'TP1' : 'BE') : num(sig.sl, dec)}</b>
                     </div>
                   </div>
 
@@ -803,7 +816,7 @@ function SignalPage(main) {
                     <button class="btn btn-outline btn-watch-chart" data-sym="${sig.symbol}" style="flex:1; padding:6px 10px; font-size:11px; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:5px; border-color:rgba(255,255,255,0.18);">
                       <span>🔍</span> Pantau Chart
                     </button>
-                    <button class="btn btn-outline btn-copy-card-setup" data-sig='${JSON.stringify({ symbol: sig.symbol, type: sig.type, entry: sig.entry, tp1: sig.tp1, tp2: sig.tp2, sl: isSigTp1 ? sig.entry : sig.sl })}' style="flex:1; padding:6px 10px; font-size:11px; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:5px; border-color:rgba(245,196,81,0.3); color:#f5c451;">
+                    <button class="btn btn-outline btn-copy-card-setup" data-sig='${JSON.stringify({ symbol: sig.symbol, type: sig.type, entry: sig.entry, tp1: sig.tp1, tp2: sig.tp2, tp3: sig.tp3 || (sig.entry ? (sig.type === 'BUY' ? sig.entry + (sig.tp2 - sig.entry) * 1.5 : sig.entry - (sig.entry - sig.tp2) * 1.5) : 0), sl: isSigTp1 ? sig.entry : sig.sl })}' style="flex:1; padding:6px 10px; font-size:11px; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:5px; border-color:rgba(245,196,81,0.3); color:#f5c451;">
                       <span>📋</span> Salin Setup
                     </button>
                   </div>
@@ -1812,8 +1825,8 @@ function StatPage(main) {
         <div class="val">${st.totalSignals || 0}</div>
       </div>
       <div class="stat-box-small">
-        <div class="lbl">TP1 / TP2 HIT</div>
-        <div class="val green">${st.tp1Hit || 0} / ${st.tp2Hit || 0}</div>
+        <div class="lbl">TP1 / TP2 / TP3 HIT</div>
+        <div class="val green">${st.tp1Hit || 0} / ${st.tp2Hit || 0} / ${st.tp3Hit || 0}</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">SL HIT</div>

@@ -1,11 +1,11 @@
 {
   "stats": {
-    "totalSignals": 0,
-    "winRate": 0,
-    "tp1Hit": 0,
+    "totalSignals": 11,
+    "winRate": 100,
+    "tp1Hit": 12,
     "tp2Hit": 0,
     "slHit": 0,
-    "totalProfitToday": 0,
+    "totalProfitToday": 390,
     "last7Days": [
       {
         "day": "Wed",
@@ -38,18 +38,210 @@
     ]
   },
   "activeSignal": {
-    "status": "WAITING",
+    "id": "sig-1793255726059",
+    "status": "ACTIVE",
     "symbol": "XAUUSD",
     "type": "BUY",
     "timeframe": "M15",
-    "entry": 0,
-    "tp1": 0,
-    "tp2": 0,
-    "sl": 0,
-    "firedAt": null,
-    "notes": "Amaterasu AI mengimbas zon kecairan pasaran untuk setup seterusnya..."
+    "entry": 4028.37,
+    "tp1": 4034.37,
+    "tp2": 4040.37,
+    "sl": 4020.37,
+    "tp1Pips": 60,
+    "tp2Pips": 120,
+    "slPips": 80,
+    "trailingStage": 0,
+    "lockedProfitPips": 0,
+    "willWin": false,
+    "firedAt": "14:35",
+    "currentPrice": 4027.28,
+    "floatingPips": -10.9,
+    "beLocked": false,
+    "ticks": 22,
+    "notes": "[White House Malaysian SNR] Rejection kukuh pada Key Support Level 4028.37 + M15 Bullish Pinbar. Confluence Score: 95.4%. Sasaran TP1 (+60p).",
+    "peakPips": 0
   },
-  "signals": [],
+  "signals": [
+    {
+      "id": "sig-1793255575608",
+      "time": "14:35",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4026.88,
+      "status": "TP1",
+      "pips": 60,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793255425157",
+      "time": "14:32",
+      "date": "Oct 29",
+      "symbol": "EURJPY",
+      "type": "SELL",
+      "entry": 175.783,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793255274688",
+      "time": "14:28",
+      "date": "Oct 29",
+      "symbol": "GBPJPY",
+      "type": "SELL",
+      "entry": 210.092,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793254823450",
+      "time": "14:21",
+      "date": "Oct 29",
+      "symbol": "GBPUSD",
+      "type": "SELL",
+      "entry": 1.3307,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793254673063",
+      "time": "14:18",
+      "date": "Oct 29",
+      "symbol": "USDCHF",
+      "type": "BUY",
+      "entry": 0.8294,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793254522576",
+      "time": "14:16",
+      "date": "Oct 29",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1133,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793254372121",
+      "time": "14:13",
+      "date": "Oct 29",
+      "symbol": "AUDUSD",
+      "type": "SELL",
+      "entry": 0.7042,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793254221668",
+      "time": "14:11",
+      "date": "Oct 29",
+      "symbol": "USDJPY",
+      "type": "BUY",
+      "entry": 157.882,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793254071188",
+      "time": "14:08",
+      "date": "Oct 29",
+      "symbol": "XAGUSD",
+      "type": "BUY",
+      "entry": 52.9,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793253920746",
+      "time": "14:07",
+      "date": "Oct 29",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 4027.38,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793253770405",
+      "time": "14:03",
+      "date": "Oct 29",
+      "symbol": "EURJPY",
+      "type": "SELL",
+      "entry": 175.788,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1793253619904",
+      "time": "14:01",
+      "date": "Oct 29",
+      "symbol": "GBPJPY",
+      "type": "SELL",
+      "entry": 210.102,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    }
+  ],
   "analysis": {
     "symbol": "XAUUSD",
     "date": "26 October 2026, 07:15",
@@ -491,21 +683,97 @@
       "month": "2026-10"
     }
   ],
-  "lastResolvedSignal": null,
-  "aiNewsStats": {
-    "totalNewsSignals": 0,
-    "winRate": 0,
-    "tpHit": 0,
-    "slHit": 0,
-    "totalPips": 0
+  "lastResolvedSignal": {
+    "id": "sig-1793255425157",
+    "time": "14:32",
+    "date": "Oct 29",
+    "symbol": "EURJPY",
+    "type": "SELL",
+    "entry": 175.783,
+    "status": "BE",
+    "pips": 0,
+    "tags": [
+      "TP1",
+      "BE"
+    ],
+    "peak": 25
   },
-  "aiNewsHistory": [],
+  "aiNewsStats": {
+    "totalNewsSignals": 1,
+    "winRate": 100,
+    "tpHit": 1,
+    "slHit": 0,
+    "totalPips": 41
+  },
+  "aiNewsHistory": [
+    {
+      "id": "nws-1793253900684",
+      "date": "Oct 29",
+      "time": "14:00",
+      "event": "UK Retail Sales & GDP Update",
+      "symbol": "GBPUSD",
+      "bias": "BEARISH",
+      "entry": 1.3313,
+      "status": "TP1_HIT",
+      "pips": 41,
+      "notes": "Unjuran AI (BEARISH) bertepatan dengan data pasaran. Pasaran bergerak +41 pip melepasi zon sasaran."
+    }
+  ],
   "telegramConfig": {
     "enabled": false,
     "botToken": "",
     "chatId": "",
     "updatedAt": "2026-10-25T19:10:56.344Z"
   },
-  "activeSignals": [],
+  "activeSignals": [
+    {
+      "id": "sig-1793255726059",
+      "status": "ACTIVE",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "timeframe": "M15",
+      "entry": 4028.37,
+      "tp1": 4034.37,
+      "tp2": 4040.37,
+      "sl": 4020.37,
+      "tp1Pips": 60,
+      "tp2Pips": 120,
+      "slPips": 80,
+      "trailingStage": 0,
+      "lockedProfitPips": 0,
+      "willWin": false,
+      "firedAt": "14:35",
+      "currentPrice": 4027.28,
+      "floatingPips": -10.9,
+      "beLocked": false,
+      "ticks": 22,
+      "notes": "[White House Malaysian SNR] Rejection kukuh pada Key Support Level 4028.37 + M15 Bullish Pinbar. Confluence Score: 95.4%. Sasaran TP1 (+60p).",
+      "peakPips": 0
+    },
+    {
+      "id": "sig-1793253469468",
+      "status": "ACTIVE",
+      "symbol": "USDCAD",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 1.3989,
+      "tp1": 1.3972,
+      "tp2": 1.3955,
+      "sl": 1.4006,
+      "tp1Pips": 17,
+      "tp2Pips": 34,
+      "slPips": 17,
+      "trailingStage": 0,
+      "lockedProfitPips": 0,
+      "willWin": false,
+      "firedAt": "13:57",
+      "currentPrice": 1.3991,
+      "floatingPips": -2,
+      "beLocked": false,
+      "ticks": 922,
+      "notes": "[White House Malaysian SNR] Penolakan harga (Rejection Wick) pada Key Resistance Level 1.3989. Momentum Bearish disahkan. Sasaran TP1 (+20p).",
+      "peakPips": 1
+    }
+  ],
   "newsSynergyMode": "AUTO"
 }

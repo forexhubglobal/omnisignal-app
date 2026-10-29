@@ -188,7 +188,7 @@ function renderDashboard() {
   $('#mWinRate').textContent = (state.stats.winRate || 93) + '%';
   $('#mPips').textContent = (state.stats.totalProfitToday > 0 ? '+' : '') + (state.stats.totalProfitToday || 979);
   $('#mTotalSignals').textContent = state.stats.totalSignals || 17;
-  $('#mHits').textContent = `${state.stats.tp1Hit || 13} TP1 · ${state.stats.tp2Hit || 7} TP2 · ${state.stats.slHit || 1} SL`;
+  $('#mHits').textContent = `${state.stats.tp1Hit || 0} TP1 · ${state.stats.tp2Hit || 0} TP2 · ${state.stats.tp3Hit || 0} TP3 · ${state.stats.slHit || 0} SL`;
   $('#mOnlineUsers').textContent = (state.users || []).filter(u => u.status === 'online').length || 24;
 
   const sig = state.activeSignal || {};
@@ -239,16 +239,16 @@ function renderDashboard() {
 
 // 2. Signals
 const DEFAULT_PRICES = {
-  XAUUSD: { entry: 3991.50, tp1: 3995.50, tp2: 3999.50, sl: 3986.50, step: '0.01' },
-  XAGUSD: { entry: 52.87, tp1: 53.17, tp2: 53.47, sl: 52.52, step: '0.001' },
-  EURUSD: { entry: 1.11520, tp1: 1.11720, tp2: 1.11920, sl: 1.11320, step: '0.00001' },
-  GBPUSD: { entry: 1.33200, tp1: 1.33450, tp2: 1.33700, sl: 1.32950, step: '0.00001' },
-  USDJPY: { entry: 157.74, tp1: 157.99, tp2: 158.24, sl: 157.49, step: '0.01' },
-  GBPJPY: { entry: 210.15, tp1: 210.50, tp2: 210.85, sl: 209.80, step: '0.01' },
-  EURJPY: { entry: 175.95, tp1: 176.25, tp2: 176.55, sl: 175.65, step: '0.01' },
-  AUDUSD: { entry: 0.70230, tp1: 0.70430, tp2: 0.70630, sl: 0.70030, step: '0.00001' },
-  USDCAD: { entry: 1.40160, tp1: 1.40360, tp2: 1.40560, sl: 1.39960, step: '0.00001' },
-  USDCHF: { entry: 0.82830, tp1: 0.83030, tp2: 0.83230, sl: 0.82630, step: '0.00001' }
+  XAUUSD: { entry: 3991.50, tp1: 3995.50, tp2: 3999.50, tp3: 4005.50, sl: 3986.50, step: '0.01' },
+  XAGUSD: { entry: 52.87, tp1: 53.17, tp2: 53.47, tp3: 53.87, sl: 52.52, step: '0.001' },
+  EURUSD: { entry: 1.11520, tp1: 1.11720, tp2: 1.11920, tp3: 1.12170, sl: 1.11320, step: '0.00001' },
+  GBPUSD: { entry: 1.33200, tp1: 1.33450, tp2: 1.33700, tp3: 1.34000, sl: 1.32950, step: '0.00001' },
+  USDJPY: { entry: 157.74, tp1: 157.99, tp2: 158.24, tp3: 158.54, sl: 157.49, step: '0.01' },
+  GBPJPY: { entry: 210.15, tp1: 210.50, tp2: 210.85, tp3: 211.25, sl: 209.80, step: '0.01' },
+  EURJPY: { entry: 175.95, tp1: 176.25, tp2: 176.55, tp3: 176.90, sl: 175.65, step: '0.01' },
+  AUDUSD: { entry: 0.70230, tp1: 0.70430, tp2: 0.70630, tp3: 0.70880, sl: 0.70030, step: '0.00001' },
+  USDCAD: { entry: 1.40160, tp1: 1.40360, tp2: 1.40560, tp3: 1.40810, sl: 1.39960, step: '0.00001' },
+  USDCHF: { entry: 0.82830, tp1: 0.83030, tp2: 0.83230, tp3: 0.83480, sl: 0.82630, step: '0.00001' }
 };
 
 const sigSymbolSelect = $('#sigSymbol');
@@ -262,6 +262,10 @@ if (sigSymbolSelect) {
       $('#sigTP1').step = p.step;
       $('#sigTP2').value = p.tp2;
       $('#sigTP2').step = p.step;
+      if ($('#sigTP3')) {
+        $('#sigTP3').value = p.tp3;
+        $('#sigTP3').step = p.step;
+      }
       $('#sigSL').value = p.sl;
       $('#sigSL').step = p.step;
     }
@@ -278,6 +282,7 @@ if (manualForm) {
       entry: Number($('#sigEntry').value),
       tp1: Number($('#sigTP1').value),
       tp2: Number($('#sigTP2').value),
+      tp3: $('#sigTP3') ? Number($('#sigTP3').value) : Number($('#sigTP2').value),
       sl: Number($('#sigSL').value),
       notes: ($('#sigNotes').value || '').trim() || 'Manual Operator Setup'
     };
@@ -448,6 +453,7 @@ function renderSignals() {
         <div class="resolution-actions">
           ${!isTp1 ? '<button class="btn btn-success" data-act="TP1">🎯 Hit TP1 (+40p)</button>' : ''}
           <button class="btn btn-success" data-act="TP2">🎯 Hit TP2 (+95p)</button>
+          <button class="btn btn-success" data-act="TP3" style="background:#f5c451; color:#000;">🏆 Hit TP3 (+150p)</button>
           <button class="btn btn-danger" data-act="SL">🛑 Hit SL (-50p)</button>
           <button class="btn btn-ghost" data-act="CLOSED">Manual Close</button>
         </div>
@@ -460,6 +466,7 @@ function renderSignals() {
         let pips = 0;
         if (act === 'TP1') pips = 40;
         else if (act === 'TP2') pips = 95;
+        else if (act === 'TP3') pips = 150;
         else if (act === 'SL') pips = -50;
         else pips = prompt('Enter realized pips:', '35') || 35;
 

@@ -290,11 +290,11 @@ class AmaterasuBridge:
 
         # Entry & distance calculation
         signal_entry = float(signal.get("entry", price))
-        raw_tp = float(signal.get("tp2" if tp_target == 2 else "tp1", 0.0))
+        raw_tp = float(signal.get("tp3" if tp_target == 3 else ("tp2" if tp_target == 2 else "tp1"), 0.0))
         raw_sl = float(signal.get("sl", 0.0))
 
         # Kira jarak TP & SL dari harga signal asal (pip distance)
-        tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (8.0 if tp_target == 2 else 4.0)
+        tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (12.0 if tp_target == 3 else (8.0 if tp_target == 2 else 4.0))
         sl_dist = abs(raw_sl - signal_entry) if raw_sl > 0 else 5.0
 
         # Gunakan jarak relatif dari harga kemasukan sebenar (Market Price)

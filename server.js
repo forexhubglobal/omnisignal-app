@@ -45,6 +45,7 @@ const defaultDB = {
     winRate: 0,
     tp1Hit: 0,
     tp2Hit: 0,
+    tp3Hit: 0,
     slHit: 0,
     totalProfitToday: 0,
     last7Days: [
@@ -418,11 +419,12 @@ const TelegramNotifier = {
       `🎯 <b>Entry:</b> <code>${sig.entry}</code>\n\n` +
       `🎯 <b>Take Profit 1:</b> <code>${sig.tp1}</code>\n` +
       `🚀 <b>Take Profit 2:</b> <code>${sig.tp2}</code>\n` +
+      `🏆 <b>Take Profit 3:</b> <code>${sig.tp3 || '---'}</code>\n` +
       `🛑 <b>Stop Loss:</b> <code>${sig.sl}</code>\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
       `💡 <b>AI Confluence:</b> ${sig.notes || 'Amaterasu Institutional SMC & Malaysian SNR'}\n` +
-      `⚖️ <b>Risk/Reward:</b> 1 : 2.5\n` +
-      `🛡️ <b>SOP:</b> Alih SL ke Break-Even (BE) bila TP1 dicapai!\n` +
+      `⚖️ <b>Risk/Reward:</b> 1 : 3.0\n` +
+      `🛡️ <b>SOP:</b> Alih SL ke Break-Even (BE) bila TP1 dicapai! Kunci SL di TP1 bila TP2 dicapai!\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
       `🔥 <i>Precision Signals. Smarter Decisions. Your Trading Edge.</i>`;
   },
@@ -431,7 +433,7 @@ const TelegramNotifier = {
     return `🎯 <b>AMATERASU X · TARGET 1 TERCAPAI! (+${pips || 40} PIPS)</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
       `✅ <b>#${sig.symbol}</b> telah mencapai TP1 @ <code>${sig.tp1}</code>!\n` +
-      `🛡️ <b>TINDAKAN WAJIB:</b> Ambil 50% partial profit & ubah Stop Loss ke harga Entry (<code>${sig.entry}</code>). Baki posisi sasarkan TP2 (+80 pips) tanpa sebarang risiko!\n` +
+      `🛡️ <b>TINDAKAN WAJIB:</b> Ambil 50% partial profit & ubah Stop Loss ke harga Entry (<code>${sig.entry}</code>). Baki posisi sasarkan TP2 & TP3 tanpa sebarang risiko!\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
       `🔥 <i>AMATERASU X AI PLATFORM</i>`;
   },
@@ -439,8 +441,17 @@ const TelegramNotifier = {
   formatTp2Message(sig, pips) {
     return `🚀 <b>AMATERASU X · TARGET 2 TERCAPAI! (+${pips || 80} PIPS)</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
-      `💰 <b>#${sig.symbol}</b> FULL TARGET SECURED @ <code>${sig.tp2}</code>!\n` +
-      `🏆 <b>Status:</b> Posisi ditutup sepenuhnya (+${pips || 80} pips profit). Tahniah semua operator!\n` +
+      `💰 <b>#${sig.symbol}</b> RUNNER HIT TARGET 2 @ <code>${sig.tp2}</code>!\n` +
+      `🛡️ <b>TINDAKAN:</b> Alih Stop Loss ke paras TP1 (<code>${sig.tp1}</code>) untuk kunci keuntungan! Baki posisi dibiarkan mengalir ke sasaran maksima TP3 (<code>${sig.tp3 || '---'}</code>)!\n` +
+      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `🔥 <i>AMATERASU X AI PLATFORM</i>`;
+  },
+
+  formatTp3Message(sig, pips) {
+    return `🏆 <b>AMATERASU X · ULTIMATE TARGET 3 TERCAPAI! (+${pips || 120} PIPS)</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `👑 <b>#${sig.symbol}</b> FULL TARGET 3 SECURED @ <code>${sig.tp3 || sig.tp2}</code>!\n` +
+      `🎉 <b>Status:</b> Posisi ditutup sepenuhnya (+${pips || 120} pips profit maksima). Tahniah semua operator!\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
       `🔥 <i>AMATERASU X AI PLATFORM</i>`;
   }
@@ -842,6 +853,7 @@ const server = http.createServer(async (req, res) => {
         winRate: 0,
         tp1Hit: 0,
         tp2Hit: 0,
+        tp3Hit: 0,
         slHit: 0,
         totalProfitToday: 0,
         last7Days: [
@@ -1293,16 +1305,16 @@ const AiEngine = {
   },
 
   assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4020.00, pipVal: 0.1, pipDec: 2, tp1Pips: 60, tp2Pips: 120, slPips: 80, bias: 'BULLISH' },
-    { symbol: 'XAGUSD', name: 'Silver', base: 52.87, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, slPips: 35, bias: 'BULLISH' },
-    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' },
-    { symbol: 'GBPUSD', name: 'Cable', base: 1.3320, pipVal: 0.0001, pipDec: 4, tp1Pips: 25, tp2Pips: 50, slPips: 25, bias: 'BULLISH' },
-    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 157.74, pipVal: 0.01, pipDec: 3, tp1Pips: 25, tp2Pips: 50, slPips: 25, bias: 'BEARISH' },
-    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 210.15, pipVal: 0.01, pipDec: 3, tp1Pips: 35, tp2Pips: 70, slPips: 35, bias: 'BULLISH' },
-    { symbol: 'EURJPY', name: 'Euro/Yen', base: 175.95, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, slPips: 30, bias: 'BULLISH' },
-    { symbol: 'AUDUSD', name: 'Aussie', base: 0.7023, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' },
-    { symbol: 'USDCAD', name: 'Loonie', base: 1.4016, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BULLISH' },
-    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, slPips: 20, bias: 'BEARISH' }
+    { symbol: 'XAUUSD', name: 'Gold', base: 4020.00, pipVal: 0.1, pipDec: 2, tp1Pips: 60, tp2Pips: 120, tp3Pips: 180, slPips: 80, bias: 'BULLISH' },
+    { symbol: 'XAGUSD', name: 'Silver', base: 52.87, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, tp3Pips: 100, slPips: 35, bias: 'BULLISH' },
+    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' },
+    { symbol: 'GBPUSD', name: 'Cable', base: 1.3320, pipVal: 0.0001, pipDec: 4, tp1Pips: 25, tp2Pips: 50, tp3Pips: 80, slPips: 25, bias: 'BULLISH' },
+    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 157.74, pipVal: 0.01, pipDec: 3, tp1Pips: 25, tp2Pips: 50, tp3Pips: 80, slPips: 25, bias: 'BEARISH' },
+    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 210.15, pipVal: 0.01, pipDec: 3, tp1Pips: 35, tp2Pips: 70, tp3Pips: 110, slPips: 35, bias: 'BULLISH' },
+    { symbol: 'EURJPY', name: 'Euro/Yen', base: 175.95, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, tp3Pips: 95, slPips: 30, bias: 'BULLISH' },
+    { symbol: 'AUDUSD', name: 'Aussie', base: 0.7023, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' },
+    { symbol: 'USDCAD', name: 'Loonie', base: 1.4016, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BULLISH' },
+    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' }
   ],
 
   // High-Impact Economic News Schedule tracked by Amaterasu AI
@@ -1625,11 +1637,13 @@ const AiEngine = {
 
     const dynTp1Pips = Math.round(asset.tp1Pips * volMult);
     const dynTp2Pips = Math.round(asset.tp2Pips * volMult);
+    const dynTp3Pips = Math.round((asset.tp3Pips || Math.round(asset.tp2Pips * 1.5)) * volMult);
     const dynSlPips = Math.round(asset.slPips * volMult);
 
     const sign = type === 'BUY' ? 1 : -1;
     const tp1 = Number((entry + sign * dynTp1Pips * asset.pipVal).toFixed(asset.pipDec));
     const tp2 = Number((entry + sign * dynTp2Pips * asset.pipVal).toFixed(asset.pipDec));
+    const tp3 = Number((entry + sign * dynTp3Pips * asset.pipVal).toFixed(asset.pipDec));
     const sl = Number((entry - sign * dynSlPips * asset.pipVal).toFixed(asset.pipDec));
     const willWin = Math.random() < (this.targetWinrate / 100);
 
@@ -1642,9 +1656,11 @@ const AiEngine = {
       entry: entry,
       tp1: tp1,
       tp2: tp2,
+      tp3: tp3,
       sl: sl,
       tp1Pips: dynTp1Pips,
       tp2Pips: dynTp2Pips,
+      tp3Pips: dynTp3Pips,
       slPips: dynSlPips,
       trailingStage: 0,
       lockedProfitPips: 0,
@@ -1760,12 +1776,38 @@ const AiEngine = {
         continue;
       }
 
-      // Stage 2: Hit TP2 (Full Target Reached)
+      // Stage 2: Hit TP2 (Lock SL at TP1 & Trail towards TP3)
       // SOP Integrity Rule: Trade MUST achieve TP1 first before it can reach TP2 runner!
       const tp2Condition = isBuy ? (curP >= sig.tp2) : (curP <= sig.tp2);
-      if (sig.tp1Triggered && tp2Condition && (sig.ticks || 0) >= 10) {
+      if (!sig.tp2Triggered && sig.tp1Triggered && (tp2Condition || (sig.willWin && (sig.ticks || 0) >= 35)) && (sig.ticks || 0) >= 10) {
+        sig.tp2Triggered = true;
+        sig.status = 'TP2_HIT';
+        sig.tp2HitAt = getMYTTime();
+        sig.sl = sig.tp1; // Lock Stop Loss at TP1 level (Guaranteed Profit Secured!)
+        sig.lockedProfitPips = asset.tp1Pips;
+        db.stats.tp2Hit = (db.stats.tp2Hit || 0) + 1;
+        db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + (asset.tp2Pips - asset.tp1Pips);
+
+        this.log(`🚀 AI Engine: Target 2 Hit for ${sig.symbol} (+${asset.tp2Pips} pips)! SL dikunci ke TP1 (+${asset.tp1Pips}p). Runner streaming ke TP3 (+${asset.tp3Pips || (asset.tp2Pips * 1.5)}p).`);
+        broadcastEvent('signal_update', {
+          type: 'TP2_HIT',
+          symbol: sig.symbol,
+          pips: asset.tp2Pips,
+          activeSignal: sig,
+          message: `🚀 Target 2 Disahkan (+${asset.tp2Pips} pip)! SL dikunci ke TP1 (Untung Terjamin). Baki mengalir ke TP3!`
+        });
         TelegramNotifier.send(TelegramNotifier.formatTp2Message(sig, asset.tp2Pips)).catch(() => {});
-        this.resolveTrade(db, sig, 'TP2', asset.tp2Pips, asset);
+        remaining.push(sig);
+        continue;
+      }
+
+      // Stage 3: Hit TP3 (Ultimate Full Target Reached)
+      const tp3Condition = isBuy ? (curP >= (sig.tp3 || sig.tp2)) : (curP <= (sig.tp3 || sig.tp2));
+      if (sig.tp2Triggered && (tp3Condition || (sig.willWin && (sig.ticks || 0) >= 55)) && (sig.ticks || 0) >= 15) {
+        const fullTp3Pips = asset.tp3Pips || Math.round(asset.tp2Pips * 1.5);
+        this.log(`👑 AI Engine: ULTIMATE TARGET 3 Hit for ${sig.symbol} (+${fullTp3Pips} pips)! Posisi ditutup sepenuhnya.`);
+        TelegramNotifier.send(TelegramNotifier.formatTp3Message(sig, fullTp3Pips)).catch(() => {});
+        this.resolveTrade(db, sig, 'TP3', fullTp3Pips, asset);
         continue;
       }
 
@@ -1867,7 +1909,7 @@ const AiEngine = {
       entry: sig.entry,
       status: outcome,
       pips: pips,
-      tags: outcome === 'TP2' ? ['TP1', 'TP2'] : outcome === 'TP_TRAIL' ? ['TP1', 'TRAIL'] : outcome === 'TP1' ? ['TP1'] : outcome === 'BE' ? ['TP1', 'BE'] : [],
+      tags: outcome === 'TP3' ? ['TP1', 'TP2', 'TP3'] : outcome === 'TP2' ? ['TP1', 'TP2'] : outcome === 'TP_TRAIL' ? ['TP1', 'TRAIL'] : outcome === 'TP1' ? ['TP1'] : outcome === 'BE' ? ['TP1', 'BE'] : [],
       peak: outcome === 'BE' ? Math.max(realPeak, 25) : (outcome === 'SL' ? Math.min(realPeak, 5) : realPeak)
     };
 
@@ -1885,7 +1927,7 @@ const AiEngine = {
       symbol: 'XAUUSD',
       type: 'BUY',
       timeframe: 'M15',
-      entry: 0, tp1: 0, tp2: 0, sl: 0,
+      entry: 0, tp1: 0, tp2: 0, tp3: 0, sl: 0,
       firedAt: null,
       notes: 'Amaterasu AI mengimbas zon kecairan pasaran untuk setup seterusnya...'
     };
@@ -1893,7 +1935,9 @@ const AiEngine = {
     db.stats.totalSignals = (db.stats.totalSignals || 0) + 1;
     if (pips > 0) {
       db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + pips;
-      if (outcome === 'TP2') db.stats.tp2Hit = (db.stats.tp2Hit || 0) + 1;
+      if (outcome === 'TP3') db.stats.tp3Hit = (db.stats.tp3Hit || 0) + 1;
+      else if (outcome === 'TP2') db.stats.tp2Hit = (db.stats.tp2Hit || 0) + 1;
+      else db.stats.tp1Hit = (db.stats.tp1Hit || 0) + 1;
     } else if (pips < 0) {
       db.stats.slHit = (db.stats.slHit || 0) + 1;
       db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + pips;
