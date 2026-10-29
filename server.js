@@ -855,6 +855,7 @@ const server = http.createServer(async (req, res) => {
         ]
       };
       db.signals = [];
+      db.activeSignals = [];
       db.lastResolvedSignal = null;
       db.aiNewsStats = {
         totalNewsSignals: 0,
