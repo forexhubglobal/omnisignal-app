@@ -1735,35 +1735,20 @@ const AiEngine = {
       sig.floatingPips = floatingPips;
       sig.peakPips = Math.max(sig.peakPips || 0, floatingPips);
 
-      // SOP Capital Protection Rule:
-      // The moment price flies >= 25 pips (or >= 30 pips for Gold/Crypto), auto-lock Break-Even!
-      const beThreshold = (sig.symbol === 'XAUUSD' || sig.symbol === 'BTCUSD') ? 30 : 25;
-      if (sig.peakPips >= beThreshold && !sig.beLocked) {
-        sig.beLocked = true;
-        sig.sl = sig.entry; // Move SL to Entry (Break-Even)
-        this.log(`🛡️ SOP Capital Protection: ${sig.symbol} hit +${Math.round(sig.peakPips)} pip (>= ${beThreshold}p). Stop Loss moved to Break-Even (${sig.entry})!`);
-        broadcastEvent('signal_update', {
-          type: 'TP1_HIT',
-          symbol: sig.symbol,
-          pips: Math.round(sig.peakPips),
-          activeSignal: sig,
-          message: `🛡️ SOP Disahkan: ${sig.symbol} telah terbang +${Math.round(sig.peakPips)} pip! Stop Loss dikunci ke Break-Even (Sifar Risiko)!`
-        });
-      }
-
       // Stage 1: Hit TP1 (Trigger + Lock Breakeven)
+      // SOP: Trade must develop for at least 40 ticks (~1.5 mins) and reach TP1 price or maturity
       const tp1Condition = isBuy ? (curP >= sig.tp1) : (curP <= sig.tp1);
-      if (!sig.tp1Triggered && sig.status === 'ACTIVE' && (tp1Condition || (sig.willWin && (sig.ticks || 0) >= 18)) && (sig.ticks || 0) >= 5) {
+      if (!sig.tp1Triggered && sig.status === 'ACTIVE' && (tp1Condition || (sig.willWin && (sig.ticks || 0) >= 120)) && (sig.ticks || 0) >= 40) {
         sig.tp1Triggered = true;
         sig.status = 'TP1_HIT';
         sig.beLocked = true;
-        sig.sl = sig.entry;
+        sig.sl = sig.entry; // Move SL to Entry (Break-Even)
         sig.tp1HitAt = getMYTTime();
         sig.tp1Pips = asset.tp1Pips;
         db.stats.tp1Hit = (db.stats.tp1Hit || 0) + 1;
         db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + asset.tp1Pips;
 
-        this.log(`🎯 AI Engine: Target 1 Hit for ${sig.symbol} (+${asset.tp1Pips} pips)! Trailing stop locked to Breakeven.`);
+        this.log(`🎯 AI Engine: Target 1 Hit for ${sig.symbol} (+${asset.tp1Pips} pips)! Stop Loss dialih ke Break-Even (Sifar Risiko).`);
         broadcastEvent('signal_update', {
           type: 'TP1_HIT',
           symbol: sig.symbol,
@@ -1779,7 +1764,7 @@ const AiEngine = {
       // Stage 2: Hit TP2 (Lock SL at TP1 & Trail towards TP3)
       // SOP Integrity Rule: Trade MUST achieve TP1 first before it can reach TP2 runner!
       const tp2Condition = isBuy ? (curP >= sig.tp2) : (curP <= sig.tp2);
-      if (!sig.tp2Triggered && sig.tp1Triggered && (tp2Condition || (sig.willWin && (sig.ticks || 0) >= 35)) && (sig.ticks || 0) >= 10) {
+      if (!sig.tp2Triggered && sig.tp1Triggered && (tp2Condition || (sig.willWin && (sig.ticks || 0) >= 240)) && (sig.ticks || 0) >= 80) {
         sig.tp2Triggered = true;
         sig.status = 'TP2_HIT';
         sig.tp2HitAt = getMYTTime();
@@ -1803,7 +1788,7 @@ const AiEngine = {
 
       // Stage 3: Hit TP3 (Ultimate Full Target Reached)
       const tp3Condition = isBuy ? (curP >= (sig.tp3 || sig.tp2)) : (curP <= (sig.tp3 || sig.tp2));
-      if (sig.tp2Triggered && (tp3Condition || (sig.willWin && (sig.ticks || 0) >= 55)) && (sig.ticks || 0) >= 15) {
+      if (sig.tp2Triggered && (tp3Condition || (sig.willWin && (sig.ticks || 0) >= 360)) && (sig.ticks || 0) >= 120) {
         const fullTp3Pips = asset.tp3Pips || Math.round(asset.tp2Pips * 1.5);
         this.log(`👑 AI Engine: ULTIMATE TARGET 3 Hit for ${sig.symbol} (+${fullTp3Pips} pips)! Posisi ditutup sepenuhnya.`);
         TelegramNotifier.send(TelegramNotifier.formatTp3Message(sig, fullTp3Pips)).catch(() => {});
@@ -1811,14 +1796,13 @@ const AiEngine = {
         continue;
       }
 
-      // Stage 2.5: Trailing Profit Escalator (Kunci Untung Bertangga)
-      // When price flies past TP1 towards TP2, dynamically escalate SL into guaranteed profit!
+      // Stage 4: Trailing Profit Escalator (Kunci Untung Bertangga)
       const tp1Pips = sig.tp1Pips || asset.tp1Pips;
       const tp2Pips = sig.tp2Pips || asset.tp2Pips;
-      const tier1Trigger = Math.round(tp1Pips + (tp2Pips - tp1Pips) * 0.45); // e.g. +87p for Gold
-      const tier2Trigger = Math.round(tp1Pips + (tp2Pips - tp1Pips) * 0.80); // e.g. +108p for Gold
-      const tier1Lock = Math.round(tp1Pips * 0.65); // e.g. +40p for Gold, +15p for FX
-      const tier2Lock = Math.round(tp1Pips * 1.35); // e.g. +80p for Gold, +30p for FX
+      const tier1Trigger = Math.round(tp1Pips + (tp2Pips - tp1Pips) * 0.45);
+      const tier2Trigger = Math.round(tp1Pips + (tp2Pips - tp1Pips) * 0.80);
+      const tier1Lock = Math.round(tp1Pips * 0.65);
+      const tier2Lock = Math.round(tp1Pips * 1.35);
 
       if (sig.beLocked) {
         if (sig.peakPips >= tier2Trigger && (sig.trailingStage || 1) < 3) {
@@ -1848,27 +1832,33 @@ const AiEngine = {
         }
       }
 
-      // Stage 3: Hit SL / Break-Even / Trailing Exit
+      // Stage 5: Exit on Trailing Stop or Break-Even (Only after maturing!)
       if (sig.beLocked) {
-        const trailingHit = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
-        if (trailingHit && (sig.ticks || 0) >= 8) {
-          if ((sig.trailingStage || 1) >= 2) {
-            const lockedWin = sig.lockedProfitPips || (sig.trailingStage === 3 ? tier2Lock : tier1Lock);
+        // Jika SL sudah dinaikkan melepasi entry (Trailing Profit)
+        if ((sig.trailingStage || 1) >= 2 || sig.tp2Triggered) {
+          const trailingHit = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
+          if (trailingHit && (sig.ticks || 0) >= 100) {
+            const lockedWin = sig.lockedProfitPips || (sig.tp2Triggered ? asset.tp1Pips : tier1Lock);
             this.log(`🏁 [TRAILING PROFIT SECURED] ${sig.symbol} terkena Trailing Stop pada keuntungan +${lockedWin} pip! Modal & untung selamat.`);
             this.resolveTrade(db, sig, 'TP_TRAIL', lockedWin, asset);
             continue;
-          } else {
-            this.log(`🛡️ SOP Break-Even Closed: ${sig.symbol} returned to Entry after peak +${Math.round(sig.peakPips || 30)} pips. Exit as BE (0 pip). Capital 100% Protected.`);
+          }
+        } else {
+          // Break-Even Exit: Hanya jika trade telah melepasi TP1 dan kemudian patah balik penuh melepasi entry
+          const beBuffer = 1.5 * asset.pipVal;
+          const beExitHit = isBuy ? (curP <= (sig.entry - beBuffer)) : (curP >= (sig.entry + beBuffer));
+          if (beExitHit && (sig.ticks || 0) >= 150 && !sig.willWin) {
+            this.log(`🛡️ SOP Break-Even Closed: ${sig.symbol} returned to Entry after securing TP1. Exit as BE (0 pip). Capital 100% Protected.`);
             this.resolveTrade(db, sig, 'BE', 0, asset);
             continue;
           }
         }
       } else {
-        // Trade was never in BE -> normal initial SL
+        // Trade belum capai BE -> normal initial SL (perlu sekurang-kurangnya 80 ticks / ~3.5 minit)
         const slCondition = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
-        if (slCondition && (sig.ticks || 0) >= 15) {
+        if (slCondition && (sig.ticks || 0) >= 80) {
           if (sig.willWin) {
-            // Setup berkualiti tinggi (Institutional SMC): Beri ruang bernafas M15 candle dan elak premature SL akibat spread noise
+            // Setup SMC berkualiti tinggi: Jangan potong pramatang, beri ruang bernafas
             remaining.push(sig);
             continue;
           }
