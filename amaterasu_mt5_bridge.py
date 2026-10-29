@@ -53,6 +53,7 @@ DEFAULT_CONFIG = {
     "lot_size": 0.20,
     "execution_mode": "SPLIT_TP", # "SPLIT_TP" (TP1, TP2, TP3), "SINGLE_TP1", "SINGLE_TP2", "SINGLE_TP3"
     "auto_breakeven": True,
+    "max_concurrent_pairs": 10,
     "max_slippage_pips": 5,
     "magic_number": 888999,
     "mt5_terminal_path": "",
@@ -109,6 +110,7 @@ class AmaterasuBridge:
         print(f" {Colors.CYAN}* Base Lot Size   :{Colors.RESET} {self.lot_size}")
         print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2/TP3)")
         print(f" {Colors.CYAN}* Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
+        print(f" {Colors.CYAN}* Max Open Pairs  :{Colors.RESET} {self.config.get('max_concurrent_pairs', 10)}")
         print(f" {Colors.CYAN}* Magic Number    :{Colors.RESET} {self.magic_number}")
         print("  -------------------------------------------------------------------")
 
