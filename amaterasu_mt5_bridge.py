@@ -426,57 +426,89 @@ class AmaterasuBridge:
             return
 
         for p in matching_positions:
-            open_price = p.price_open
-            sym_info = mt5.symbol_info(p.symbol)
-            digits = sym_info.digits if sym_info else 2
-            point = sym_info.point if sym_info else 0.0001
-            is_buy = (p.type == mt5.POSITION_TYPE_BUY)
+            self.check_and_apply_position_be(p, sig_data)
 
-            # Tentukan sasaran SL: Jika signal ada paras Trailing Escalator, gunakan paras untung terjamin
-            target_sl = open_price
-            if sig_data and "sl" in sig_data:
-                server_sl = float(sig_data["sl"])
-                if is_buy and server_sl >= open_price:
-                    target_sl = server_sl
-                elif not is_buy and server_sl <= open_price and server_sl > 0:
-                    target_sl = server_sl
+    def check_and_apply_position_be(self, p, sig_data=None):
+        """Kunci Stop Loss ke Break-Even (Sifar Risiko) untuk satu posisi MT5 secara pintar"""
+        if not self.auto_be:
+            return
 
-            # Jika SL sudah berada pada atau melebihi sasaran, langkau
-            if is_buy and p.sl >= target_sl:
-                continue
-            if not is_buy and p.sl <= target_sl and p.sl > 0:
-                continue
+        sym_info = mt5.symbol_info(p.symbol)
+        if not sym_info:
+            return
 
-            tick = mt5.symbol_info_tick(p.symbol)
-            if not tick:
-                continue
+        digits = sym_info.digits
+        point = sym_info.point
+        is_buy = (p.type == mt5.POSITION_TYPE_BUY)
+        open_price = p.price_open
 
-            # Elak ralat 10016 (Invalid Stops) di MT5:
-            # BUY: Bid mesti >= target_sl + min distance
-            # SELL: Ask mesti <= target_sl - min distance
-            if is_buy and tick.bid < (target_sl + 2 * point):
-                continue
-            if not is_buy and tick.ask > (target_sl - 2 * point):
-                continue
+        tick = mt5.symbol_info_tick(p.symbol)
+        if not tick:
+            return
 
-            mod_request = {
-                "action": mt5.TRADE_ACTION_SLTP,
-                "position": p.ticket,
-                "symbol": p.symbol,
-                "sl": round(target_sl, digits),
-                "tp": round(p.tp, digits),
-            }
+        # Tentukan saiz 1 pip untuk pengiraan untung semasa
+        sym_upper = p.symbol.upper()
+        if "XAU" in sym_upper or "GOLD" in sym_upper:
+            pip_size = 0.10
+            min_be_pips = 20.0 # Emas gerak laju: kunci BE apabila cecah +20 pip
+        elif "JPY" in sym_upper or "WTI" in sym_upper or "XAG" in sym_upper or "SILVER" in sym_upper:
+            pip_size = 0.01
+            min_be_pips = 15.0
+        else:
+            pip_size = 0.0001
+            min_be_pips = 15.0
 
-            res = mt5.order_send(mod_request)
-            if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-                if (is_buy and target_sl > open_price) or (not is_buy and target_sl < open_price):
-                    print(f"{Colors.GREEN}🚀 [TRAILING PROFIT KUNCI] Ticket #{p.ticket} ({p.symbol}) SL dinaikkan ke paras UNTUNG TERJAMIN @ {target_sl:.{digits}f}!{Colors.RESET}")
-                else:
-                    print(f"{Colors.GREEN}🛡️ [BE BERJAYA] Ticket #{p.ticket} ({p.symbol}) SL dialih ke Break-Even @ {open_price:.{digits}f}! Posisi kini bebas risiko.{Colors.RESET}")
-            else:
-                code = res.retcode if res else mt5.last_error()
-                if code != 10016:
-                    print(f"{Colors.YELLOW}[BE NOTA] Ticket #{p.ticket} ({p.symbol}) modifikasi SL: {code}{Colors.RESET}")
+        cur_price = tick.bid if is_buy else tick.ask
+        floating_pips = ((cur_price - open_price) / pip_size) if is_buy else ((open_price - cur_price) / pip_size)
+
+        # Semak sama ada SL sudah berada di paras BE atau lebih baik
+        if is_buy and p.sl >= open_price:
+            return
+        if not is_buy and p.sl <= open_price and p.sl > 0:
+            return
+
+        # Syarat Kunci BE:
+        # 1. Posisi MT5 sendiri sudah untung >= min_be_pips (cth: +15p atau +20p untuk Gold)
+        # 2. ATAU server Amaterasu X melaporkan TP1 dicapai / beLocked untuk simbol & arah yang sama
+        server_be = False
+        if sig_data:
+            sig_type = str(sig_data.get("type", "")).upper()
+            sig_matches_direction = (is_buy and sig_type == "BUY") or (not is_buy and sig_type == "SELL")
+            if sig_matches_direction and (sig_data.get("status") == "TP1_HIT" or sig_data.get("beLocked") or sig_data.get("tp1Triggered")):
+                server_be = True
+
+        profit_be = (floating_pips >= min_be_pips)
+
+        if not (server_be or profit_be):
+            return
+
+        # Validasi MT5 Stop Level:
+        # Untuk BUY: harga pasaran (bid) mesti melebihi open_price sekurang-kurangnya 2 point
+        # Untuk SELL: harga pasaran (ask) mesti di bawah open_price sekurang-kurangnya 2 point
+        if is_buy and tick.bid <= (open_price + 2 * point):
+            return
+        if not is_buy and tick.ask >= (open_price - 2 * point):
+            return
+
+        # Letakkan buffer 1-2 point di atas entry (BUY) atau di bawah entry (SELL) untuk cover spread & komisen
+        target_sl = (open_price + 2 * point) if is_buy else (open_price - 2 * point)
+
+        mod_request = {
+            "action": mt5.TRADE_ACTION_SLTP,
+            "position": p.ticket,
+            "symbol": p.symbol,
+            "sl": round(target_sl, digits),
+            "tp": round(p.tp, digits),
+        }
+
+        res = mt5.order_send(mod_request)
+        if res and res.retcode == mt5.TRADE_RETCODE_DONE:
+            reason = f"Untung +{floating_pips:.1f}p" if profit_be else "Amaterasu TP1 Hit"
+            print(f"{Colors.GREEN}🛡️ [AUTO-BE BERJAYA] Ticket #{p.ticket} ({p.symbol}) SL dialih ke Break-Even @ {target_sl:.{digits}f} ({reason})! Posisi kini 100% BEBAS RISIKO.{Colors.RESET}")
+        else:
+            err = res.retcode if res else mt5.last_error()
+            if err != 10016:
+                print(f"{Colors.YELLOW}[BE NOTA] Ticket #{p.ticket} ({p.symbol}) modifikasi SL: {err}{Colors.RESET}")
 
     def apply_breakeven_for_signal(self, sig_id, entry_price=None, raw_symbol=None):
         """Alih Stop Loss ke Break-Even bagi semua posisi runner yang masih terbuka"""
@@ -615,11 +647,13 @@ class AmaterasuBridge:
                     except Exception:
                         continue
 
-                for sig in active_signals:
-                    if sig.get("status") == "TP1_HIT" or sig.get("beLocked") or sig.get("tp1Triggered"):
-                        sym = sig.get("symbol")
-                        if sym:
-                            self.apply_breakeven_for_symbol(sym, sig)
+                # Semak setiap posisi MT5 aktif secara langsung untuk perlindungan BE
+                all_pos = mt5.positions_get()
+                if all_pos:
+                    for p in all_pos:
+                        if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")):
+                            matched_sig = next((s for s in active_signals if s.get("symbol") == p.symbol.split('.')[0].upper()), None)
+                            self.check_and_apply_position_be(p, matched_sig)
 
             except Exception:
                 pass
