@@ -49,7 +49,7 @@ class Colors:
 CONFIG_FILE = "bridge_config.json"
 
 DEFAULT_CONFIG = {
-    "server_url": "https://amaterasux.onrender.com",
+    "server_url": "https://amaterasu-x.vercel.app",
     "lot_size": 0.01,
     "execution_mode": "SPLIT_TP", # "SPLIT_TP", "SINGLE_TP1", "SINGLE_TP2"
     "auto_breakeven": True,
@@ -336,6 +336,22 @@ class AmaterasuBridge:
             "type_time": mt5.ORDER_TIME_GTC,
             "type_filling": filling,
         }
+
+        # HARD DIRECTION & INTEGRITY GUARD (Fail-safe Direction Lock):
+        if is_buy:
+            if order_type != mt5.ORDER_TYPE_BUY or request["type"] != mt5.ORDER_TYPE_BUY:
+                print(f"{Colors.RED}❌ [FATAL INTEGRITY ERROR] Signal adalah BUY tetapi order_type bukan ORDER_TYPE_BUY! Execution dibatalkan serta-merta.{Colors.RESET}")
+                return None
+            if request["tp"] <= request["price"]:
+                print(f"{Colors.RED}❌ [INVALID TP] TP bagi BUY mestilah di atas harga semasa! Order dibatalkan.{Colors.RESET}")
+                return None
+        else:
+            if order_type != mt5.ORDER_TYPE_SELL or request["type"] != mt5.ORDER_TYPE_SELL:
+                print(f"{Colors.RED}❌ [FATAL INTEGRITY ERROR] Signal adalah SELL tetapi order_type bukan ORDER_TYPE_SELL! Execution dibatalkan serta-merta.{Colors.RESET}")
+                return None
+            if request["tp"] >= request["price"]:
+                print(f"{Colors.RED}❌ [INVALID TP] TP bagi SELL mestilah di bawah harga semasa! Order dibatalkan.{Colors.RESET}")
+                return None
 
         print(f"\n{Colors.CYAN}⚡ [MENGHANTAR ORDER] {order_type_str} {self.lot_size} lot #{symbol} @ {price:.{digits}f}{Colors.RESET}")
         print(f"   SL: {sl:.{digits}f} | TP{tp_target}: {tp:.{digits}f} | Filling Mode: {filling}")
