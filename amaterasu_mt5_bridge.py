@@ -50,7 +50,7 @@ CONFIG_FILE = "bridge_config.json"
 
 DEFAULT_CONFIG = {
     "server_url": "https://amaterasu-x.vercel.app",
-    "lot_size": 0.01,
+    "lot_size": 0.20,
     "execution_mode": "SPLIT_TP", # "SPLIT_TP", "SINGLE_TP1", "SINGLE_TP2"
     "auto_breakeven": True,
     "max_slippage_pips": 5,
