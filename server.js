@@ -1598,21 +1598,22 @@ const AiEngine = {
       let snrBias = 'BUY';
       
       if (asset.symbol === 'XAUUSD') {
-        // Paras Kunci Gold (Malaysian SNR):
-        // Zon Rintangan Utama (Resistance): 4046.00 - 4055.00 -> White House SNR Cari SELL!
-        // Zon Sokongan Utama (Support): 4030.00 - 4038.00 -> White House SNR Cari BUY!
-        if (liveP >= 4045.0) {
-          snrBias = 'SELL'; // Jual di pucuk rintangan (selari dengan White House Academy!)
-        } else if (liveP <= 4038.0) {
-          snrBias = 'BUY'; // Beli di lantai sokongan
+        // Paras Kunci Gold (Malaysian SNR & SMC Market Structure):
+        // Zon Penolakan Rintangan (Resistance / Breakdown): 4010.00 - 4045.00 -> White House SNR Cari SELL!
+        // Zon Sokongan Lantai Utama (Major Support): <= 3975.00 -> White House SNR Cari BUY!
+        if (liveP >= 4010.0) {
+          snrBias = 'SELL'; // Penolakan harga ke bawah / Trend Bearish (selari dengan White House Academy!)
+        } else if (liveP <= 3975.0) {
+          snrBias = 'BUY';  // Lantai sokongan kukuh
         } else {
-          snrBias = (liveQ && typeof liveQ.change === 'number' && liveQ.change < 0) ? 'SELL' : 'BUY';
+          snrBias = 'SELL'; // Trend menurun
         }
       } else {
-        // Pasangan Forex & Logam Lain: Baca momentum M15 & Rejection SNR
-        if (liveQ && typeof liveQ.change === 'number') {
-          // Jika perubahan harian negatif atau harga sedang menolak dari rintangan -> SELL
-          snrBias = liveQ.change >= 0 ? (Math.abs(liveQ.change) > 0.35 ? 'SELL' : 'BUY') : 'SELL';
+        // Pasangan Forex & Logam Lain: Patuhi momentum pasaran semasa
+        if (asset.symbol === 'GBPJPY' || asset.symbol === 'EURUSD' || asset.symbol === 'GBPUSD' || asset.symbol === 'AUDUSD' || asset.symbol === 'XAGUSD') {
+          snrBias = 'SELL'; // Momentum Bearish / Pengukuhan Dolar
+        } else if (asset.symbol === 'USDJPY' || asset.symbol === 'USDCAD' || asset.symbol === 'USDCHF') {
+          snrBias = 'BUY';  // Dolar Mengukuh
         } else {
           snrBias = asset.bias === 'BULLISH' ? 'BUY' : 'SELL';
         }

@@ -241,9 +241,14 @@ class AmaterasuBridge:
             print(f"{Colors.RED}[ORDER] Maklumat simbol {symbol} tidak ditemui.{Colors.RESET}")
             return None
 
-        order_type_str = signal.get("type", "BUY").upper()
+        order_type_str = str(signal.get("type", "")).upper().strip()
+        if order_type_str not in ["BUY", "SELL"]:
+            print(f"{Colors.RED}[ORDER DITOLAK] Jenis order '{order_type_str}' tidak sah.{Colors.RESET}")
+            return None
+
         is_buy = (order_type_str == "BUY")
         order_type = mt5.ORDER_TYPE_BUY if is_buy else mt5.ORDER_TYPE_SELL
+        print(f"{Colors.BOLD}{Colors.YELLOW}🎯 [PENGESAHAN ARAH] Amaterasu X AI: #{signal.get('symbol')} {order_type_str} ➔ MT5 Action: {'BUY (ORDER_TYPE_BUY)' if is_buy else 'SELL (ORDER_TYPE_SELL)'}{Colors.RESET}")
 
         # 0. Risk & Margin Safety Guards:
         acc = mt5.account_info()
@@ -626,7 +631,7 @@ class AmaterasuBridge:
 
     def breakeven_guardian_loop(self):
         """Guardian berterusan setiap 2.5 saat memeriksa tiket MT5 untuk kunci BE serta-merta apabila TP1 dicapai"""
-        urls = [self.server_url, "https://amaterasu-x.vercel.app", "http://localhost:3000"]
+        urls = [self.server_url]
         while self.running:
             try:
                 time.sleep(2.5)
@@ -663,7 +668,7 @@ class AmaterasuBridge:
         while self.running:
             try:
                 time.sleep(4)
-                url = f"{self.server_url}/api/signals/active"
+                url = f"{self.server_url}/api/data"
                 r = requests.get(url, timeout=5)
                 if r.status_code == 200:
                     data = r.json()
@@ -713,7 +718,7 @@ class AmaterasuBridge:
                             "openPrice": p.price_open,
                             "profit": p.profit
                         })
-                urls = [self.server_url, "http://localhost:3000", "https://amaterasu-x.vercel.app"]
+                urls = [self.server_url]
                 for u in urls:
                     try:
                         requests.post(f"{u.rstrip('/')}/api/market/sync-mt5", json={"quotes": quotes, "openPositions": pos_list}, timeout=2)
@@ -726,7 +731,7 @@ class AmaterasuBridge:
     def sync_closed_deals_loop(self):
         """Memantau deal MT5 yang ditutup (SL, TP, Close Manual) dan menyelaraskan status kembali ke pelayan Amaterasu X"""
         from datetime import timedelta
-        urls = [self.server_url, "https://amaterasu-x.vercel.app", "http://localhost:3000"]
+        urls = [self.server_url]
         # Seed initial deal tickets from past 2 days so we don't spam old closures on boot
         try:
             from_date = datetime.now() - timedelta(days=2)
