@@ -149,10 +149,10 @@ function initSSE() {
           badge.textContent = '⏸ AI ENGINE PAUSED';
           badge.className = 'badge next';
         } else if (d.sessionActive === false) {
-          badge.textContent = '🌙 REHAT PASARAN (11PM - 8AM MYT)';
+          badge.textContent = '🌙 PASARAN HUJUNG MINGGU (SABTU-AHAD)';
           badge.className = 'badge next';
         } else {
-          badge.textContent = '● AUTONOMOUS AI ACTIVE (08:00 - 23:00 MYT)';
+          badge.textContent = '● AUTONOMOUS AI ACTIVE (24/5 NON-STOP)';
           badge.className = 'badge-live';
         }
       }

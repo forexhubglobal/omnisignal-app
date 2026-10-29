@@ -1257,20 +1257,28 @@ const AiEngine = {
 
   tradingHours: {
     enabled: true,
-    startHour: 8, // 08:00 AM MYT
-    endHour: 23,  // 11:00 PM (23:00) MYT
+    mode: '24/5', // 24 jam sehari, 5 hari seminggu (Isnin - Jumaat penuh)
     timezone: 'Asia/Kuala_Lumpur'
   },
 
   isMarketSessionActive() {
     if (!this.tradingHours.enabled) return true;
     try {
-      const mytStr = new Date().toLocaleTimeString('en-US', { timeZone: this.tradingHours.timezone, hour12: false, hour: '2-digit' });
-      const h = parseInt(mytStr, 10);
-      return h >= this.tradingHours.startHour && h < this.tradingHours.endHour;
+      // Waktu Tempatan Malaysia (MYT = UTC+8)
+      const mytDate = new Date(new Date().toLocaleString('en-US', { timeZone: this.tradingHours.timezone }));
+      const day = mytDate.getDay();   // 0 = Ahad, 1 = Isnin, ..., 5 = Jumaat, 6 = Sabtu
+      const hour = mytDate.getHours();
+
+      // Pasaran Forex Global 24/5:
+      // Beroperasi 24 JAM SEHARI bermula Isnin jam 06:00 AM MYT sehingga Sabtu jam 06:00 AM MYT.
+      // Sabtu 06:00 AM MYT hingga Isnin 06:00 AM MYT adalah rehat pasaran global (Hujung Minggu).
+      if (day === 6 && hour >= 6) return false; // Tutup Sabtu selepas jam 06:00 AM MYT
+      if (day === 0) return false;              // Tutup sepanjang hari Ahad
+      if (day === 1 && hour < 6) return false;  // Dibuka semula Isnin jam 06:00 AM MYT
+
+      return true; // 24 JAM PENUH Isnin - Jumaat (tiada lagi rehat 11:00 PM - 08:00 AM)
     } catch (e) {
-      const h = (new Date().getUTCHours() + 8) % 24;
-      return h >= this.tradingHours.startHour && h < this.tradingHours.endHour;
+      return true;
     }
   },
 
@@ -1482,10 +1490,10 @@ const AiEngine = {
 
     const sessionActive = this.isMarketSessionActive();
 
-    // Rehat Pasaran (11:00 PM - 08:00 AM MYT): Tiada signal baru dikeluarkan
+    // Hujung Minggu (Sabtu 06:00 AM - Isnin 06:00 AM MYT): Pasaran Forex Global Tutup
     if (!sessionActive) {
       if (Math.floor(this.secondsInState) % 60 === 0) {
-        this.log(`[Rehat Pasaran] Sesi aktif Amaterasu AI ditutup (11:00 PM - 08:00 AM MYT). Pasaran Asia kurang likuiditi & spread melebar. Sesi seterusnya bermula 08:00 AM.`);
+        this.log(`[Pasaran Hujung Minggu] Pasaran Forex & Komoditi Global ditutup. Amaterasu AI 24/5 akan aktif semula pada sesi pembukaan awal Isnin 06:00 AM MYT.`);
       }
       // Tetap urus baki posisi aktif jika ada sehingga selesai TP/SL
       if (db.activeSignals.length > 0) {
@@ -1498,7 +1506,7 @@ const AiEngine = {
           timeframe: 'M15',
           entry: 0, tp1: 0, tp2: 0, sl: 0,
           firedAt: null,
-          notes: '🌙 Sesi Rehat Pasaran Amaterasu AI (11:00 PM - 08:00 AM MYT). Tiada signal dikeluarkan dalam zon ini bagi melindungi modal daripada spread melebar & kecairan rendah. Sesi aktif bermula jam 08:00 AM.'
+          notes: '🏖️ Pasaran Forex Global Tutup (Hujung Minggu). Amaterasu AI beroperasi penuh 24 jam x 5 hari tanpa henti bermula Isnin jam 06:00 AM MYT.'
         };
         saveDB(db);
       }
