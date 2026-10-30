@@ -53,6 +53,7 @@ DEFAULT_CONFIG = {
     "lot_size": 0.20,
     "execution_mode": "SPLIT_TP", # "SPLIT_TP" (TP1, TP2, TP3), "SINGLE_TP1", "SINGLE_TP2", "SINGLE_TP3"
     "auto_breakeven": True,
+    "gold_min_be_pips": 50.0,
     "max_concurrent_pairs": 10,
     "max_slippage_pips": 5,
     "magic_number": 888999,
@@ -110,6 +111,7 @@ class AmaterasuBridge:
         print(f" {Colors.CYAN}* Base Lot Size   :{Colors.RESET} {self.lot_size}")
         print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2/TP3)")
         print(f" {Colors.CYAN}* Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
+        print(f" {Colors.CYAN}* Gold BE Trigger :{Colors.RESET} +{self.config.get('gold_min_be_pips', 50.0)} pips (Anti-Pullback Buffer)")
         print(f" {Colors.CYAN}* Max Open Pairs  :{Colors.RESET} {self.config.get('max_concurrent_pairs', 10)}")
         print(f" {Colors.CYAN}* Magic Number    :{Colors.RESET} {self.magic_number}")
         print("  -------------------------------------------------------------------")
@@ -482,15 +484,17 @@ class AmaterasuBridge:
 
         # Tentukan saiz 1 pip untuk pengiraan untung semasa
         sym_upper = p.symbol.upper()
-        if "XAU" in sym_upper or "GOLD" in sym_upper:
+        is_gold = ("XAU" in sym_upper or "GOLD" in sym_upper)
+        if is_gold:
             pip_size = 0.10
-            min_be_pips = 20.0 # Emas gerak laju: kunci BE apabila cecah +20 pip
+            # PILIHAN A: Beri ruang nafas Emas (min +50 pips / $5.00) agar tidak tersapu oleh normal pullback
+            min_be_pips = float(self.config.get("gold_min_be_pips", 50.0))
         elif "JPY" in sym_upper or "WTI" in sym_upper or "XAG" in sym_upper or "SILVER" in sym_upper:
             pip_size = 0.01
-            min_be_pips = 15.0
+            min_be_pips = 18.0
         else:
             pip_size = 0.0001
-            min_be_pips = 15.0
+            min_be_pips = 18.0
 
         cur_price = tick.bid if is_buy else tick.ask
         floating_pips = ((cur_price - open_price) / pip_size) if is_buy else ((open_price - cur_price) / pip_size)
@@ -502,7 +506,7 @@ class AmaterasuBridge:
             return
 
         # Syarat Kunci BE:
-        # 1. Posisi MT5 sendiri sudah untung >= min_be_pips (cth: +15p atau +20p untuk Gold)
+        # 1. Posisi MT5 sendiri sudah untung >= min_be_pips (+50p untuk Gold, +18p untuk forex)
         # 2. ATAU server Amaterasu X melaporkan TP1 dicapai / beLocked untuk simbol & arah yang sama
         server_be = False
         if sig_data:
@@ -516,16 +520,15 @@ class AmaterasuBridge:
         if not (server_be or profit_be):
             return
 
-        # Validasi MT5 Stop Level:
-        # Untuk BUY: harga pasaran (bid) mesti melebihi open_price sekurang-kurangnya 2 point
-        # Untuk SELL: harga pasaran (ask) mesti di bawah open_price sekurang-kurangnya 2 point
-        if is_buy and tick.bid <= (open_price + 2 * point):
+        # Validasi MT5 Stop Level dengan buffer selamat:
+        buffer_pts = 6 * point if is_gold else 2 * point
+        if is_buy and tick.bid <= (open_price + buffer_pts + 2 * point):
             return
-        if not is_buy and tick.ask >= (open_price - 2 * point):
+        if not is_buy and tick.ask >= (open_price - buffer_pts - 2 * point):
             return
 
-        # Letakkan buffer 1-2 point di atas entry (BUY) atau di bawah entry (SELL) untuk cover spread & komisen
-        target_sl = (open_price + 2 * point) if is_buy else (open_price - 2 * point)
+        # Letakkan buffer di atas entry (BUY) atau di bawah entry (SELL) untuk cover spread & komisen
+        target_sl = (open_price + buffer_pts) if is_buy else (open_price - buffer_pts)
 
         mod_request = {
             "action": mt5.TRADE_ACTION_SLTP,
