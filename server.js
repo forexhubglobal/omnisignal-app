@@ -1358,8 +1358,9 @@ const AiEngine = {
     { id: 'ev-1', country: 'gb', currency: 'GBP', name: 'UK Retail Sales & GDP Update', time: '14:00', bias: 'BEARISH' },
     { id: 'ev-2', country: 'eu', currency: 'EUR', name: 'German Ifo Business Climate & CPI', time: '17:00', bias: 'NEUTRAL' },
     { id: 'ev-3', country: 'us', currency: 'USD', name: 'US Initial Jobless Claims & Core PCE', time: '20:30', bias: 'BULLISH' },
-    { id: 'ev-4', country: 'us', currency: 'USD', name: 'US Existing Home Sales & Flash PMI', time: '22:00', bias: 'BULLISH' },
-    { id: 'ev-5', country: 'us', currency: 'USD', name: 'US ISM Manufacturing PMI & JOLTS', time: '23:00', bias: 'BULLISH' }
+    { id: 'ev-4', country: 'ca', currency: 'CAD', name: 'Canada Core CPI & BoC Policy Outlook', time: '21:30', bias: 'BEARISH' },
+    { id: 'ev-5', country: 'us', currency: 'USD', name: 'US Existing Home Sales & Flash PMI', time: '22:00', bias: 'BULLISH' },
+    { id: 'ev-6', country: 'us', currency: 'USD', name: 'US ISM Manufacturing PMI & JOLTS', time: '23:00', bias: 'BULLISH' }
   ],
 
   // AI News Synergy: Checks if a high-impact news event is actively projecting directional bias
@@ -1388,8 +1389,8 @@ const AiEngine = {
         const [evH, evM] = ev.time.split(':').map(Number);
         const evTotalMin = evH * 60 + evM;
         const diff = evTotalMin - nowTotalMin;
-        // Active News Window: 60 minutes before release until 30 minutes after release
-        if (diff >= -30 && diff <= 60) {
+        // Active News Window: 60 min sebelum hingga 45 min selepas pengumuman (105 minit Zon Sinergi Penuh)
+        if (diff >= -45 && diff <= 60) {
           const biasDirection = (ev.bias || '').toUpperCase().includes('BULL') ? 'BUY' : 'SELL';
           return this.mapCurrencyBiasToSymbol(ev.currency || 'USD', biasDirection, symbol, ev.name);
         }
@@ -1423,6 +1424,39 @@ const AiEngine = {
           bias
         };
       }
+    } else if (currency === 'CAD' && symbol.includes('CAD')) {
+      // Canadian Dollar (CAD): Dalam USDCAD, CAD adalah quote currency.
+      // CAD Bullish (Kuat) -> USDCAD SELL! CAD Bearish (Lemah) -> USDCAD BUY!
+      const type = bias === 'BUY' ? 'SELL' : 'BUY';
+      return {
+        type,
+        reason: `Unjuran News AI: ${newsName} (CAD Bias ${bias} / ${bias === 'BUY' ? 'Strong CAD' : 'Weak CAD'}) -> ${symbol} ${type}`,
+        newsName,
+        currency,
+        bias
+      };
+    } else if (currency === 'JPY' && symbol.includes('JPY')) {
+      // Japanese Yen (JPY): Dalam USDJPY, JPY adalah quote currency.
+      // JPY Bullish (Kuat) -> USDJPY SELL! JPY Bearish (Lemah) -> USDJPY BUY!
+      const type = bias === 'BUY' ? 'SELL' : 'BUY';
+      return {
+        type,
+        reason: `Unjuran News AI: ${newsName} (JPY Bias ${bias} / ${bias === 'BUY' ? 'Strong JPY' : 'Weak JPY'}) -> ${symbol} ${type}`,
+        newsName,
+        currency,
+        bias
+      };
+    } else if (currency === 'CHF' && symbol.includes('CHF')) {
+      // Swiss Franc (CHF): Dalam USDCHF, CHF adalah quote currency.
+      // CHF Bullish (Kuat) -> USDCHF SELL! CHF Bearish (Lemah) -> USDCHF BUY!
+      const type = bias === 'BUY' ? 'SELL' : 'BUY';
+      return {
+        type,
+        reason: `Unjuran News AI: ${newsName} (CHF Bias ${bias} / ${bias === 'BUY' ? 'Strong CHF' : 'Weak CHF'}) -> ${symbol} ${type}`,
+        newsName,
+        currency,
+        bias
+      };
     } else if (currency === 'EUR' && symbol.includes('EUR')) {
       const type = symbol.startsWith('EUR') ? (bias === 'BUY' ? 'BUY' : 'SELL') : (bias === 'BUY' ? 'SELL' : 'BUY');
       return { type, reason: `Unjuran News AI: ${newsName} (EUR Bias ${bias}) -> ${symbol} ${type}`, newsName, currency, bias };
