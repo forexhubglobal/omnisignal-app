@@ -645,6 +645,37 @@ class AmaterasuBridge:
             if err != 10016:
                 print(f"{Colors.YELLOW}[BE NOTA] Ticket #{p.ticket} ({p.symbol}) modifikasi SL: {err}{Colors.RESET}")
 
+    def close_position_market(self, p, reason=""):
+        """Tutup satu posisi pasaran serta-merta (cth: Pre-News Safety Cutoff)"""
+        sym_info = mt5.symbol_info(p.symbol)
+        if not sym_info:
+            return False
+        tick = mt5.symbol_info_tick(p.symbol)
+        if not tick:
+            return False
+        is_buy = (p.type == mt5.POSITION_TYPE_BUY)
+        price = tick.bid if is_buy else tick.ask
+        close_type = mt5.ORDER_TYPE_SELL if is_buy else mt5.ORDER_TYPE_BUY
+        filling = self.get_fill_type(p.symbol, close_type, price)
+        req = {
+            "action": mt5.TRADE_ACTION_DEAL,
+            "position": p.ticket,
+            "symbol": p.symbol,
+            "volume": p.volume,
+            "type": close_type,
+            "price": round(price, sym_info.digits),
+            "deviation": int(self.max_slippage_pips * 10),
+            "magic": self.magic_number,
+            "comment": f"Close-{reason[:16]}",
+            "type_time": mt5.ORDER_TIME_GTC,
+            "type_filling": filling,
+        }
+        res = mt5.order_send(req)
+        if res and res.retcode == mt5.TRADE_RETCODE_DONE:
+            print(f"{Colors.GREEN}🛡️ [PRE-NEWS CUTOFF] Berjaya menutup posisi #{p.ticket} {p.symbol} ({reason}) bagi mengelak risiko lonjakan news 20:30!{Colors.RESET}")
+            return True
+        return False
+
     def apply_breakeven_for_signal(self, sig_id, entry_price=None, raw_symbol=None):
         """Alih Stop Loss ke Break-Even bagi semua posisi runner yang masih terbuka"""
         if raw_symbol:
@@ -789,6 +820,15 @@ class AmaterasuBridge:
                         if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")):
                             matched_sig = next((s for s in active_signals if s.get("symbol") == p.symbol.split('.')[0].upper()), None)
                             self.check_and_apply_position_be(p, matched_sig)
+
+                            # PRE-NEWS 20:15 MYT SAFETY CUTOFF:
+                            # Tutup sebarang posisi Scalp BUY bagi XAUUSD paling lewat jam 20:15 MYT
+                            # agar modal selamat dan tidak terperangkap dalam lonjakan/junaman berita 20:30!
+                            if "XAU" in p.symbol.upper() and p.type == mt5.POSITION_TYPE_BUY:
+                                from datetime import timezone, timedelta
+                                now_myt = datetime.now(timezone(timedelta(hours=8)))
+                                if now_myt.hour == 20 and 15 <= now_myt.minute <= 29:
+                                    self.close_position_market(p, "Pre-News 20:15 Cutoff")
 
             except Exception:
                 pass
