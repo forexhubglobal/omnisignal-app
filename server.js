@@ -1577,6 +1577,14 @@ const AiEngine = {
       return;
     }
 
+    // London Trap Zone Guard (14:00 - 16:00 MYT):
+    // Data sejarah membuktikan pembukaan London penuh manipulasi Judas Swing. XAUUSD dilarang masuk!
+    const nowH = parseInt(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: '2-digit', hour12: false }).format(new Date()), 10);
+    if (asset.symbol === 'XAUUSD' && nowH >= 14 && nowH < 16) {
+      this.log(`🛡️ [LONDON TRAP ZONE] Isyarat XAUUSD disekat antara 14:00 - 16:00 MYT bagi melindungi modal daripada manipulasi Judas Swing.`);
+      return;
+    }
+
     const liveQ = liveMarketQuotes[asset.symbol];
     const liveP = liveQ ? liveQ.price : (asset.symbol === 'XAUUSD' ? currentMarketPrice : asset.base);
     const entry = Number(liveP.toFixed(asset.pipDec));
@@ -1634,7 +1642,6 @@ const AiEngine = {
     }
 
     // Dynamic ATR Session Volatility Adaptation
-    const nowH = parseInt(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: '2-digit', hour12: false }).format(new Date()), 10);
     let volMult = 1.0;
     if (nowH >= 8 && nowH < 14) {
       volMult = 0.85; // Sesi Pagi Asia: Volatiliti kemas & jimat SL

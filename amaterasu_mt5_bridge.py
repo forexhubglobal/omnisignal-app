@@ -122,6 +122,7 @@ class AmaterasuBridge:
         print(f" {Colors.CYAN}* JPY/CHF Lot Size:{Colors.RESET} 0.20 lot (Penstabil Portfolio)")
         print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2/TP3)")
         print(f" {Colors.CYAN}* Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
+        print(f" {Colors.CYAN}* Gold Trap Zone  :{Colors.RESET} 14:00 - 16:00 MYT (London Trap DIBLOK)")
         print(f" {Colors.CYAN}* Max Open Pairs  :{Colors.RESET} {self.config.get('max_concurrent_pairs', 4)}")
         print(f" {Colors.CYAN}* Magic Number    :{Colors.RESET} {self.magic_number}")
         print("  -------------------------------------------------------------------")
@@ -261,6 +262,16 @@ class AmaterasuBridge:
             rem_min = int((cooldown_sec - elapsed) / 60)
             print(f"{Colors.YELLOW}🛡️ [POST-SL LIQUIDITY SWEEP GUARD] Menolak re-entry #{clean_raw_sym}. Baru terkena SL {int(elapsed/60)} minit lepas. Baki bertenang: {rem_min} minit bagi memastikan sweep reda sepenuhnya.{Colors.RESET}")
             return None
+
+        # 0.2 LONDON TRAP ZONE GUARD (14:00 - 16:00 MYT):
+        # Data sejarah 2,732 trade membuktikan 14:00 - 16:00 MYT penuh manipulasi Judas Swing.
+        # XAUUSD DILARANG MASUK sepanjang 2 jam ini demi melindungi modal!
+        if clean_raw_sym == "XAUUSD":
+            from datetime import timezone, timedelta
+            now_myt = datetime.now(timezone(timedelta(hours=8)))
+            if 14 <= now_myt.hour < 16:
+                print(f"{Colors.YELLOW}🛡️ [LONDON TRAP ZONE] Menolak order XAUUSD pada jam {now_myt.strftime('%H:%M')} MYT. Zon 14:00 - 16:00 disekat bagi mengelak manipulasi Judas Swing.{Colors.RESET}")
+                return None
         
         # Pastikan simbol aktif dalam MarketWatch
         sym_selected = mt5.symbol_select(symbol, True)
@@ -443,6 +454,14 @@ class AmaterasuBridge:
         clean_sym = str(sig.get("symbol", "")).split('.')[0].upper()
         if allowed_pairs and clean_sym not in [p.upper() for p in allowed_pairs]:
             return
+
+        # LONDON TRAP ZONE GUARD (14:00 - 16:00 MYT):
+        if clean_sym == "XAUUSD":
+            from datetime import timezone, timedelta
+            now_myt = datetime.now(timezone(timedelta(hours=8)))
+            if 14 <= now_myt.hour < 16:
+                print(f"{Colors.YELLOW}🛡️ [LONDON TRAP ZONE] Signal #{clean_sym} ditolak pada jam {now_myt.strftime('%H:%M')} MYT. Zon 14:00 - 16:00 disekat bagi mengelak manipulasi Judas Swing.{Colors.RESET}")
+                return
 
         self.executed_signal_ids.add(sig_id)
 
