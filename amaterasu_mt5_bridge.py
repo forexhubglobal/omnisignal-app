@@ -647,15 +647,7 @@ class AmaterasuBridge:
         cur_price = tick.bid if is_buy else tick.ask
         floating_pips = ((cur_price - open_price) / pip_size) if is_buy else ((open_price - cur_price) / pip_size)
 
-        # Semak sama ada SL sudah berada di paras BE atau lebih baik
-        if is_buy and p.sl >= open_price:
-            return
-        if not is_buy and p.sl <= open_price and p.sl > 0:
-            return
-
-        # Syarat Kunci BE:
-        # 1. Posisi MT5 sendiri sudah untung >= min_be_pips (+50p untuk Gold, +18p untuk forex)
-        # 2. ATAU server Amaterasu X melaporkan TP1 dicapai / beLocked untuk simbol & arah yang sama
+        # Semak maklumat daripada server Amaterasu X
         server_be = False
         if sig_data:
             sig_type = str(sig_data.get("type", "")).upper()
@@ -663,33 +655,72 @@ class AmaterasuBridge:
             if sig_matches_direction and (sig_data.get("status") == "TP1_HIT" or sig_data.get("beLocked") or sig_data.get("tp1Triggered")):
                 server_be = True
 
-        profit_be = (floating_pips >= min_be_pips)
-
-        if not (server_be or profit_be):
-            return
-
-        # Validasi MT5 Stop Level dengan buffer selamat:
         buffer_pts = 6 * point if is_gold else 2 * point
-        if is_buy and tick.bid <= (open_price + buffer_pts + 2 * point):
-            return
-        if not is_buy and tick.ask >= (open_price - buffer_pts - 2 * point):
+
+        # MULTI-STAGE DYNAMIC TRAILING PROFIT LOCK (PINTAR & BERAKAL):
+        # Tahap 1: BE (+50p Gold / +18p Forex) -> Kunci ke paras Entri + buffer
+        # Tahap 2: Menghampiri TP2 (+80p Gold / +30p Forex) -> Kunci untung kekal +40p Gold / +15p Forex!
+        # Tahap 3: Melepasi TP2 (+120p Gold / +45p Forex) -> Kunci untung kekal +80p Gold / +30p Forex!
+        # Tahap 4: Menghampiri TP3 (+160p Gold / +65p Forex) -> Kunci untung kekal +120p Gold / +45p Forex!
+        lock_pips = 0.0
+        stage_name = ""
+
+        if is_gold:
+            if floating_pips >= 160.0:
+                lock_pips = 120.0
+                stage_name = "Tahap 4 Trailing (Kunci Untung +120p)"
+            elif floating_pips >= 120.0:
+                lock_pips = 80.0
+                stage_name = "Tahap 3 Trailing (Kunci Untung +80p)"
+            elif floating_pips >= 80.0:
+                lock_pips = 40.0
+                stage_name = "Tahap 2 Trailing (Kunci Untung +40p)"
+            elif floating_pips >= min_be_pips or server_be:
+                lock_pips = (buffer_pts / pip_size)
+                stage_name = "Tahap 1 Break-Even (Sifar Risiko)"
+        else:
+            if floating_pips >= 65.0:
+                lock_pips = 45.0
+                stage_name = "Tahap 4 Trailing (Kunci Untung +45p)"
+            elif floating_pips >= 45.0:
+                lock_pips = 30.0
+                stage_name = "Tahap 3 Trailing (Kunci Untung +30p)"
+            elif floating_pips >= 30.0:
+                lock_pips = 15.0
+                stage_name = "Tahap 2 Trailing (Kunci Untung +15p)"
+            elif floating_pips >= min_be_pips or server_be:
+                lock_pips = (buffer_pts / pip_size)
+                stage_name = "Tahap 1 Break-Even (Sifar Risiko)"
+
+        if lock_pips <= 0.0:
             return
 
-        # Letakkan buffer di atas entry (BUY) atau di bawah entry (SELL) untuk cover spread & komisen
-        target_sl = (open_price + buffer_pts) if is_buy else (open_price - buffer_pts)
+        cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
+        target_sl = round(cand_sl, digits)
+
+        # Semak sama ada SL baharu lebih menguntungkan daripada SL semasa
+        if is_buy:
+            if p.sl >= target_sl:
+                return
+            if tick.bid <= (target_sl + 2 * point):
+                return
+        else:
+            if p.sl > 0 and p.sl <= target_sl:
+                return
+            if tick.ask >= (target_sl - 2 * point):
+                return
 
         mod_request = {
             "action": mt5.TRADE_ACTION_SLTP,
             "position": p.ticket,
             "symbol": p.symbol,
-            "sl": round(target_sl, digits),
+            "sl": target_sl,
             "tp": round(p.tp, digits),
         }
 
         res = mt5.order_send(mod_request)
         if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-            reason = f"Untung +{floating_pips:.1f}p" if profit_be else "Amaterasu TP1 Hit"
-            print(f"{Colors.GREEN}🛡️ [AUTO-BE BERJAYA] Ticket #{p.ticket} ({p.symbol}) SL dialih ke Break-Even @ {target_sl:.{digits}f} ({reason})! Posisi kini 100% BEBAS RISIKO.{Colors.RESET}")
+            print(f"{Colors.GREEN}🛡️ [DYNAMIC TRAILING LOCK] Ticket #{p.ticket} ({p.symbol}) SL dialih ke {target_sl:.{digits}f} ({stage_name} | Untung Semasa: +{floating_pips:.1f}p)! Keuntungan dipelihara sepenuhnya.{Colors.RESET}")
         else:
             err = res.retcode if res else mt5.last_error()
             if err != 10016:
