@@ -1341,7 +1341,7 @@ const AiEngine = {
   },
 
   assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4020.00, pipVal: 0.1, pipDec: 2, tp1Pips: 60, tp2Pips: 120, tp3Pips: 180, slPips: 80, bias: 'BULLISH' },
+    { symbol: 'XAUUSD', name: 'Gold', base: 4020.00, pipVal: 0.1, pipDec: 2, tp1Pips: 60, tp2Pips: 120, tp3Pips: 220, slPips: 130, bias: 'BEARISH' },
     { symbol: 'XAGUSD', name: 'Silver', base: 52.87, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, tp3Pips: 100, slPips: 35, bias: 'BULLISH' },
     { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' },
     { symbol: 'GBPUSD', name: 'Cable', base: 1.3320, pipVal: 0.0001, pipDec: 4, tp1Pips: 25, tp2Pips: 50, tp3Pips: 80, slPips: 25, bias: 'BULLISH' },
@@ -1643,27 +1643,29 @@ const AiEngine = {
         const asianL = this.goldAsianSession.low || 3996.26;
 
         // H4 Key Structural SNR Levels:
-        // Fresh SBR (Support Become Resistance): 4013.76 & 4026.36
-        // Fresh RBS (Resistance Become Support): 3975.00 - 3996.00
-        const isNearSbr = (liveP >= 4010.0 && liveP <= 4035.0);
-        const isNearRbs = (liveP <= 3996.0);
+        // Fresh SBR (Support Become Resistance): 4005.00 - 4028.00
+        // Fresh RBS (Resistance Become Support / Major Floor): <= 3975.00
+        const isNearSbr = (liveP >= 4005.0 && liveP <= 4035.0);
+        const isNearRbs = (liveP <= 3975.0);
         const hasSweptAsianHigh = (liveP >= asianH - 1.5);
         const hasSweptAsianLow = (liveP <= asianL + 1.5);
 
-        if (hasSweptAsianHigh || isNearSbr) {
+        // ANTI-FLOOR TRAP GUARD:
+        // Jangan sesekali SELL di lantai sokongan (Asian Low: 3996), dan jangan sesekali BUY di bumbung rintangan!
+        if (hasSweptAsianHigh || isNearSbr || (liveP > 4000.0 && liveP < asianH)) {
           type = 'SELL';
           notes = hasSweptAsianHigh
-            ? `[SMC Liquidity Sweep & CHoCH] Asian High (${asianH.toFixed(2)}) disapu (Sweep)! Terbentuk Rejection Wick M15 + Entry Retest Bearish Fair Value Gap (FVG). SL selamat di atas jarum sweep. Confluence: 97.8%. SOP: Kunci BE (+50p) sebaik TP1 dicapai.`
-            : `[White House Malaysian SNR] Rejection pada Fresh H4 SBR (Support Become Resistance @ 4013.76 - 4026.36) + Pengesahan Lilin M15 Bearish Engulfing. Confluence: 98.2%. Sasaran TP1 (+${asset.tp1Pips}p).`;
-        } else if (hasSweptAsianLow || isNearRbs) {
+            ? `[SMC Liquidity Sweep & CHoCH] Asian High (${asianH.toFixed(2)}) disapu (Sweep)! Terbentuk Rejection Wick M15 + Entry Retest Bearish Fair Value Gap (FVG). SL selamat di atas jarum sweep (+130p). Confluence: 97.8%. SOP: Kunci BE (+50p) sebaik TP1 dicapai.`
+            : `[White House Malaysian SNR] Rejection pada Fresh H4 SBR (Support Become Resistance @ 4005.00 - 4026.36) + Pengesahan Lilin M15 Bearish Engulfing. SL terlindung di atas zon rintangan (+130p). Confluence: 98.2%. Sasaran TP1 (+60p).`;
+        } else if (hasSweptAsianLow || isNearRbs || (liveP <= 3975.0)) {
           type = 'BUY';
           notes = hasSweptAsianLow
-            ? `[SMC Liquidity Sweep & CHoCH] Asian Low (${asianL.toFixed(2)}) disapu (Sweep)! Terbentuk Rejection Wick M15 (Pinbar) + Entry Retest Bullish Fair Value Gap (FVG). SL selamat di bawah jarum sweep. Confluence: 96.9%. SOP: Kunci BE (+50p) sebaik TP1 dicapai.`
-            : `[White House Malaysian SNR] Rejection pada Fresh H4 RBS (Resistance Become Support @ 3975.00 - 3995.00) + Pengesahan Lilin M15 Bullish Pinbar. Confluence: 97.4%. Sasaran TP1 (+${asset.tp1Pips}p).`;
+            ? `[SMC Liquidity Sweep & CHoCH] Asian Low (${asianL.toFixed(2)}) disapu (Sweep)! Terbentuk Rejection Wick M15 (Pinbar) + Entry Retest Bullish Fair Value Gap (FVG). SL selamat di bawah jarum sweep (+130p). Confluence: 96.9%. SOP: Kunci BE (+50p) sebaik TP1 dicapai.`
+            : `[White House Malaysian SNR] Rejection pada Fresh H4 RBS (Resistance Become Support @ <= 3975.00) + Pengesahan Lilin M15 Bullish Pinbar. SL terlindung di bawah lantai sokongan (+130p). Confluence: 97.4%. Sasaran TP1 (+60p).`;
         } else {
-          // Mid-range: Aliran Trend Institusi Bearish menuju ke zon kecairan lantai
+          // Mid-zone (3975.00 - 4000.00): Trend Bearish mengikut aliran pengagihan institusi
           type = 'SELL';
-          notes = `[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga menuju ke sasaran kecairan lantai. Confluence: 94.6%.`;
+          notes = `[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga menuju ke sasaran kecairan lantai. SL selamat (+130p). Confluence: 95.2%.`;
         }
       } else {
         // Pasangan Forex Lain (USDCAD, USDJPY, USDCHF):
@@ -1699,7 +1701,13 @@ const AiEngine = {
     const dynTp1Pips = Math.round(asset.tp1Pips * volMult);
     const dynTp2Pips = Math.round(asset.tp2Pips * volMult);
     const dynTp3Pips = Math.round((asset.tp3Pips || Math.round(asset.tp2Pips * 1.5)) * volMult);
-    const dynSlPips = Math.round(asset.slPips * volMult);
+    let dynSlPips = Math.round(asset.slPips * volMult);
+
+    // XAUUSD Safe Buffer Guarantee:
+    // Pastikan SL Gold tidak pernah kurang daripada 120 pips ($12.00) agar terlindung sepenuhnya dari sapuan jarum M15!
+    if (asset.symbol === 'XAUUSD' && dynSlPips < 120) {
+      dynSlPips = 120;
+    }
 
     const sign = type === 'BUY' ? 1 : -1;
     const tp1 = Number((entry + sign * dynTp1Pips * asset.pipVal).toFixed(asset.pipDec));

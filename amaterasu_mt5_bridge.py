@@ -310,12 +310,17 @@ class AmaterasuBridge:
             return None
 
         all_active_pos = mt5.positions_get() or []
-        open_unique_symbols = set(p.symbol.split('.')[0].upper() for p in all_active_pos)
+        # Hanya kira simbol aktif yang dibuka oleh Amaterasu X dan dalam senarai allowed_pairs
+        open_unique_symbols = set(
+            p.symbol.split('.')[0].upper() for p in all_active_pos 
+            if (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
+            and (not allowed_pairs or p.symbol.split('.')[0].upper() in [a.upper() for a in allowed_pairs])
+        )
         clean_raw_sym = symbol.split('.')[0].upper()
 
-        # Maksimum 3 pasaran aktif serentak bagi melindungi akaun klien
-        max_pairs = int(self.config.get("max_concurrent_pairs", 3))
-        if len(open_unique_symbols) >= max_pairs and clean_raw_sym not in open_unique_symbols:
+        # XAUUSD ialah Aset Keutamaan (VIP Asset). Jangan sekat XAUUSD melainkan margin tidak mencukupi!
+        max_pairs = int(self.config.get("max_concurrent_pairs", 4))
+        if clean_raw_sym != "XAUUSD" and len(open_unique_symbols) >= max_pairs and clean_raw_sym not in open_unique_symbols:
             print(f"{Colors.YELLOW}🛡️ [RISK GUARD] Had {max_pairs} Pair serentak telah dicapai ({', '.join(open_unique_symbols)}). Order #{clean_raw_sym} ditolak bagi melindungi modal.{Colors.RESET}")
             return None
 
@@ -344,8 +349,14 @@ class AmaterasuBridge:
         raw_sl = float(signal.get("sl", 0.0))
 
         # Kira jarak TP & SL dari harga signal asal (pip distance)
-        tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (12.0 if tp_target == 3 else (8.0 if tp_target == 2 else 4.0))
-        sl_dist = abs(raw_sl - signal_entry) if raw_sl > 0 else 5.0
+        tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (18.0 if tp_target == 3 else (12.0 if tp_target == 2 else 6.0))
+        sl_dist = abs(raw_sl - signal_entry) if raw_sl > 0 else (13.0 if clean_raw_sym == "XAUUSD" else 5.0)
+
+        # Jaminan Penimbal Selamat XAUUSD:
+        # Minimum Stop Loss bagi Gold mestilah sekurang-kurangnya 12.0 mata ($12 / 120 pips)
+        # untuk memastikan terlindung di luar jarum M15 Liquidity Sweep!
+        if clean_raw_sym == "XAUUSD" and sl_dist < 12.0:
+            sl_dist = 13.0
 
         # Gunakan jarak relatif dari harga kemasukan sebenar (Market Price)
         # Ini mengelakkan ralat 'Invalid Stops' jika harga sudah bergerak
