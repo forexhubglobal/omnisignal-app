@@ -1320,7 +1320,7 @@ const AiEngine = {
     { symbol: 'USDJPY', name: 'Dollar/Yen', base: 157.74, pipVal: 0.01, pipDec: 3, tp1Pips: 25, tp2Pips: 50, tp3Pips: 80, slPips: 25, bias: 'BEARISH' },
     { symbol: 'GBPJPY', name: 'Pound/Yen', base: 210.15, pipVal: 0.01, pipDec: 3, tp1Pips: 35, tp2Pips: 70, tp3Pips: 110, slPips: 35, bias: 'BULLISH' },
     { symbol: 'EURJPY', name: 'Euro/Yen', base: 175.95, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, tp3Pips: 95, slPips: 30, bias: 'BULLISH' },
-    { symbol: 'AUDUSD', name: 'Aussie', base: 0.7023, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' },
+    { symbol: 'AUDUSD', name: 'Aussie', base: 0.7023, pipVal: 0.0001, pipDec: 4, tp1Pips: 15, tp2Pips: 30, tp3Pips: 50, slPips: 20, bias: 'BEARISH' },
     { symbol: 'USDCAD', name: 'Loonie', base: 1.4016, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BULLISH' },
     { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' }
   ],

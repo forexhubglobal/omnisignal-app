@@ -54,10 +54,15 @@ DEFAULT_CONFIG = {
     "execution_mode": "SPLIT_TP", # "SPLIT_TP" (TP1, TP2, TP3), "SINGLE_TP1", "SINGLE_TP2", "SINGLE_TP3"
     "auto_breakeven": True,
     "gold_min_be_pips": 50.0,
+    "gbpjpy_min_be_pips": 28.0,
     "max_concurrent_pairs": 10,
     "max_slippage_pips": 5,
     "magic_number": 888999,
     "mt5_terminal_path": "",
+    "custom_lot_map": {
+        "XAGUSD": 0.05,
+        "SILVER": 0.05
+    },
     "custom_symbol_map": {
         "WTI": "USOIL",
         "BTCUSD": "BTCUSD"
@@ -112,6 +117,8 @@ class AmaterasuBridge:
         print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2/TP3)")
         print(f" {Colors.CYAN}* Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
         print(f" {Colors.CYAN}* Gold BE Trigger :{Colors.RESET} +{self.config.get('gold_min_be_pips', 50.0)} pips (Anti-Pullback Buffer)")
+        print(f" {Colors.CYAN}* GBPJPY BE Trig  :{Colors.RESET} +{self.config.get('gbpjpy_min_be_pips', 28.0)} pips (M15 ATR Guard)")
+        print(f" {Colors.CYAN}* Silver Lot Size :{Colors.RESET} 0.05 lot (Auto Risk Balancing)")
         print(f" {Colors.CYAN}* Max Open Pairs  :{Colors.RESET} {self.config.get('max_concurrent_pairs', 10)}")
         print(f" {Colors.CYAN}* Magic Number    :{Colors.RESET} {self.magic_number}")
         print("  -------------------------------------------------------------------")
@@ -320,6 +327,14 @@ class AmaterasuBridge:
         if diff > (self.max_slippage_pips * 10 * point):
             print(f"{Colors.YELLOW}[PASARAN BERGERAK] Harga semasa ({price:.{digits}f}) vs Signal ({signal_entry:.{digits}f}). TP/SL diselaraskan secara dinamik: TP{tp_target}={tp:.{digits}f}, SL={sl:.{digits}f}.{Colors.RESET}")
 
+        # Saiz lot: Semak jika simbol mempunyai custom lot (cth: Silver 0.05 lot demi mengimbangi saiz kontrak 50x)
+        exec_lot = self.lot_size
+        custom_lots = self.config.get("custom_lot_map", {"XAGUSD": 0.05, "SILVER": 0.05})
+        for c_sym, c_lot in custom_lots.items():
+            if c_sym.upper() in symbol.upper():
+                exec_lot = float(c_lot)
+                break
+
         # Deviation in points
         deviation = int(self.max_slippage_pips * 10)
         filling = self.get_fill_type(symbol, order_type, price)
@@ -329,7 +344,7 @@ class AmaterasuBridge:
         request = {
             "action": mt5.TRADE_ACTION_DEAL,
             "symbol": symbol,
-            "volume": self.lot_size,
+            "volume": exec_lot,
             "type": order_type,
             "price": round(price, digits),
             "sl": round(sl, digits),
@@ -489,6 +504,10 @@ class AmaterasuBridge:
             pip_size = 0.10
             # PILIHAN A: Beri ruang nafas Emas (min +50 pips / $5.00) agar tidak tersapu oleh normal pullback
             min_be_pips = float(self.config.get("gold_min_be_pips", 50.0))
+        elif "GBPJPY" in sym_upper:
+            pip_size = 0.01
+            # Bedah Siasat GBPJPY: Volatiliti 16p M15 ATR, perlukan ruang nafas +28 pip
+            min_be_pips = float(self.config.get("gbpjpy_min_be_pips", 28.0))
         elif "JPY" in sym_upper or "WTI" in sym_upper or "XAG" in sym_upper or "SILVER" in sym_upper:
             pip_size = 0.01
             min_be_pips = 18.0
