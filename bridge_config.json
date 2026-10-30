@@ -23,5 +23,7 @@
   "custom_symbol_map": {
     "WTI": "USOIL",
     "BTCUSD": "BTCUSD"
-  }
+  },
+  "ny_gold_multiplier_active": true,
+  "ny_gold_lot_size": 0.35
 }

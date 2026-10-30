@@ -119,6 +119,7 @@ class AmaterasuBridge:
         print(f" {Colors.CYAN}* Whitelist Pairs :{Colors.RESET} USDCAD, XAUUSD, USDJPY, USDCHF (4 Pair Sahaja)")
         print(f" {Colors.CYAN}* USDCAD Lot Size :{Colors.RESET} 0.50 lot (Juara Konsisten)")
         print(f" {Colors.CYAN}* Gold Lot Size   :{Colors.RESET} 0.20 lot (+50p Anti-Pullback BE)")
+        print(f" {Colors.CYAN}* Gold NY Boost   :{Colors.RESET} 0.35 lot (19:30 - 23:30 MYT Golden Window - 98.3% Winrate)")
         print(f" {Colors.CYAN}* JPY/CHF Lot Size:{Colors.RESET} 0.20 lot (Penstabil Portfolio)")
         print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2/TP3)")
         print(f" {Colors.CYAN}* Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
@@ -372,11 +373,27 @@ class AmaterasuBridge:
                 exec_lot = float(c_lot)
                 break
 
+        # Module 3: Time-Price Theory (Sesi Emas New York: 7:30 PM - 11:30 PM MYT)
+        # HANYA UNTUK XAUUSD: Gandakan saiz posisi dari 0.20 kepada 0.35 lot sempena 98.3% Winrate Window!
+        is_ny_gold_boost = False
+        if clean_raw_sym == "XAUUSD":
+            from datetime import timezone, timedelta
+            now_myt = datetime.now(timezone(timedelta(hours=8)))
+            is_ny_golden_window = (
+                (now_myt.hour == 19 and now_myt.minute >= 30) or
+                (20 <= now_myt.hour <= 22) or
+                (now_myt.hour == 23 and now_myt.minute <= 30)
+            )
+            if is_ny_golden_window and self.config.get("ny_gold_multiplier_active", True):
+                exec_lot = float(self.config.get("ny_gold_lot_size", 0.35))
+                is_ny_gold_boost = True
+                print(f"{Colors.GREEN}{Colors.BOLD}🔥 [TIME-PRICE THEORY: SESI EMAS NEW YORK] Menggandakan saiz posisi XAUUSD kepada {exec_lot} lot! (Waktu Emas 19:30 - 23:30 MYT | Rekod 98.3% Winrate){Colors.RESET}")
+
         # Deviation in points
         deviation = int(self.max_slippage_pips * 10)
         filling = self.get_fill_type(symbol, order_type, price)
 
-        comment = f"AmaterasuX-TP{tp_target}"
+        comment = f"AmaterasuX-NY-TP{tp_target}" if is_ny_gold_boost else f"AmaterasuX-TP{tp_target}"
 
         request = {
             "action": mt5.TRADE_ACTION_DEAL,

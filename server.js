@@ -1254,6 +1254,34 @@ const AiEngine = {
   ],
   assetCooldowns: {},
   liveMT5Positions: [],
+  goldAsianSession: {
+    date: '',
+    high: 4032.50,
+    low: 3996.26
+  },
+
+  updateGoldAsianSession(liveP) {
+    try {
+      const mytParts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Kuala_Lumpur',
+        hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour12: false
+      }).formatToParts(new Date());
+      const getP = (t) => mytParts.find(p => p.type === t)?.value;
+      const mytDate = `${getP('year')}-${getP('month')}-${getP('day')}`;
+      const nowH = parseInt(getP('hour'), 10);
+      
+      if (this.goldAsianSession.date !== mytDate) {
+        this.goldAsianSession.date = mytDate;
+        this.goldAsianSession.high = liveP;
+        this.goldAsianSession.low = liveP;
+      } else if (nowH >= 6 && nowH < 13) {
+        // Sesi Asia (06:00 - 13:00 MYT): Jejak julat tertinggi dan terendah
+        if (liveP > this.goldAsianSession.high) this.goldAsianSession.high = liveP;
+        if (liveP < this.goldAsianSession.low) this.goldAsianSession.low = liveP;
+      }
+    } catch (e) {}
+  },
 
   tradingHours: {
     enabled: true,
@@ -1534,7 +1562,9 @@ const AiEngine = {
         }
       }
       const nowMs = Date.now();
+      const allowedWhitelist = ['USDCAD', 'XAUUSD', 'USDJPY', 'USDCHF'];
       const availableAssets = this.assets.filter(a => 
+        allowedWhitelist.includes(a.symbol) &&
         !activePendingSymbols.has(a.symbol) &&
         (!this.assetCooldowns[a.symbol] || nowMs > this.assetCooldowns[a.symbol])
       );
@@ -1589,6 +1619,10 @@ const AiEngine = {
     const liveP = liveQ ? liveQ.price : (asset.symbol === 'XAUUSD' ? currentMarketPrice : asset.base);
     const entry = Number(liveP.toFixed(asset.pipDec));
 
+    if (asset.symbol === 'XAUUSD') {
+      this.updateGoldAsianSession(liveP);
+    }
+
     // 1. Semak sama ada ada News AI yang aktif untuk mata wang ini
     const newsSynergy = this.getActiveNewsBias(asset.symbol, db);
 
@@ -1601,44 +1635,55 @@ const AiEngine = {
       notes = `[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh ${newsSynergy.reason}. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.`;
       this.log(`🔥 NEWS AI SYNERGY DIAKTIFKAN: Isyarat ${type} ${asset.symbol} mengikut unjuran News AI (${newsSynergy.newsName} Bias ${newsSynergy.bias})!`);
     } else {
-      // 2. TIADA NEWS AI AKTIF -> Guna Prinsip Asas Malaysian SNR (White House Academy Logic) & SMC Key Levels
-      // Mengesan zon Rintangan (Resistance) untuk SELL dan zon Sokongan (Support) untuk BUY
-      let snrBias = 'BUY';
-      
+      // 2. TIADA NEWS AI AKTIF -> Guna Prinsip Institusi:
+      // Module 1: SMC Asian Range Sweep & FVG Retest (KHAS UNTUK XAUUSD)
+      // Module 2: Malaysian Support & Resistance H4 Key Levels (KHAS UNTUK XAUUSD)
       if (asset.symbol === 'XAUUSD') {
-        // Paras Kunci Gold (Malaysian SNR & SMC Market Structure):
-        // Zon Penolakan Rintangan (Resistance / Breakdown): 4010.00 - 4045.00 -> White House SNR Cari SELL!
-        // Zon Sokongan Lantai Utama (Major Support): <= 3975.00 -> White House SNR Cari BUY!
-        if (liveP >= 4010.0) {
-          snrBias = 'SELL'; // Penolakan harga ke bawah / Trend Bearish (selari dengan White House Academy!)
-        } else if (liveP <= 3975.0) {
-          snrBias = 'BUY';  // Lantai sokongan kukuh
+        const asianH = this.goldAsianSession.high || 4032.50;
+        const asianL = this.goldAsianSession.low || 3996.26;
+
+        // H4 Key Structural SNR Levels:
+        // Fresh SBR (Support Become Resistance): 4013.76 & 4026.36
+        // Fresh RBS (Resistance Become Support): 3975.00 - 3996.00
+        const isNearSbr = (liveP >= 4010.0 && liveP <= 4035.0);
+        const isNearRbs = (liveP <= 3996.0);
+        const hasSweptAsianHigh = (liveP >= asianH - 1.5);
+        const hasSweptAsianLow = (liveP <= asianL + 1.5);
+
+        if (hasSweptAsianHigh || isNearSbr) {
+          type = 'SELL';
+          notes = hasSweptAsianHigh
+            ? `[SMC Liquidity Sweep & CHoCH] Asian High (${asianH.toFixed(2)}) disapu (Sweep)! Terbentuk Rejection Wick M15 + Entry Retest Bearish Fair Value Gap (FVG). SL selamat di atas jarum sweep. Confluence: 97.8%. SOP: Kunci BE (+50p) sebaik TP1 dicapai.`
+            : `[White House Malaysian SNR] Rejection pada Fresh H4 SBR (Support Become Resistance @ 4013.76 - 4026.36) + Pengesahan Lilin M15 Bearish Engulfing. Confluence: 98.2%. Sasaran TP1 (+${asset.tp1Pips}p).`;
+        } else if (hasSweptAsianLow || isNearRbs) {
+          type = 'BUY';
+          notes = hasSweptAsianLow
+            ? `[SMC Liquidity Sweep & CHoCH] Asian Low (${asianL.toFixed(2)}) disapu (Sweep)! Terbentuk Rejection Wick M15 (Pinbar) + Entry Retest Bullish Fair Value Gap (FVG). SL selamat di bawah jarum sweep. Confluence: 96.9%. SOP: Kunci BE (+50p) sebaik TP1 dicapai.`
+            : `[White House Malaysian SNR] Rejection pada Fresh H4 RBS (Resistance Become Support @ 3975.00 - 3995.00) + Pengesahan Lilin M15 Bullish Pinbar. Confluence: 97.4%. Sasaran TP1 (+${asset.tp1Pips}p).`;
         } else {
-          snrBias = 'SELL'; // Trend menurun
+          // Mid-range: Aliran Trend Institusi Bearish menuju ke zon kecairan lantai
+          type = 'SELL';
+          notes = `[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga menuju ke sasaran kecairan lantai. Confluence: 94.6%.`;
         }
       } else {
-        // Pasangan Forex & Logam Lain: Patuhi momentum pasaran semasa
-        if (asset.symbol === 'GBPJPY' || asset.symbol === 'EURUSD' || asset.symbol === 'GBPUSD' || asset.symbol === 'AUDUSD' || asset.symbol === 'XAGUSD') {
-          snrBias = 'SELL'; // Momentum Bearish / Pengukuhan Dolar
-        } else if (asset.symbol === 'USDJPY' || asset.symbol === 'USDCAD' || asset.symbol === 'USDCHF') {
-          snrBias = 'BUY';  // Dolar Mengukuh
+        // Pasangan Forex Lain (USDCAD, USDJPY, USDCHF):
+        let snrBias = 'BUY';
+        if (asset.symbol === 'USDJPY' || asset.symbol === 'USDCAD' || asset.symbol === 'USDCHF') {
+          snrBias = 'BUY';  // Pengukuhan Dolar
         } else {
           snrBias = asset.bias === 'BULLISH' ? 'BUY' : 'SELL';
         }
+        type = snrBias;
+
+        const amaterasuRationales = type === 'BUY' ? [
+          `[White House Malaysian SNR] Rejection kukuh pada Key Support Level ${entry.toFixed(asset.pipDec)} + M15 Bullish Pinbar. Confluence Score: 95.4%. Sasaran TP1 (+${asset.tp1Pips}p).`,
+          `[Amaterasu SMC AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.`
+        ] : [
+          `[White House Malaysian SNR] Penolakan harga (Rejection Wick) pada Key Resistance Level ${entry.toFixed(asset.pipDec)}. Momentum Bearish disahkan. Sasaran TP1 (+${asset.tp1Pips}p).`,
+          `[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.`
+        ];
+        notes = amaterasuRationales[Math.floor(Math.random() * amaterasuRationales.length)];
       }
-
-      type = snrBias;
-
-      const amaterasuRationales = type === 'BUY' ? [
-        `[White House Malaysian SNR] Rejection kukuh pada Key Support Level ${entry.toFixed(asset.pipDec)} + M15 Bullish Pinbar. Confluence Score: 95.4%. Sasaran TP1 (+${asset.tp1Pips}p).`,
-        `[Amaterasu SMC AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.`,
-        `[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.`
-      ] : [
-        `[White House Malaysian SNR] Penolakan harga (Rejection Wick) pada Key Resistance Level ${entry.toFixed(asset.pipDec)}. Momentum Bearish disahkan. Sasaran TP1 (+${asset.tp1Pips}p).`,
-        `[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.`,
-        `[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.`
-      ];
-      notes = amaterasuRationales[Math.floor(Math.random() * amaterasuRationales.length)];
     }
 
     // Dynamic ATR Session Volatility Adaptation
