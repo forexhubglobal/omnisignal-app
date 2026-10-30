@@ -54,14 +54,16 @@ DEFAULT_CONFIG = {
     "execution_mode": "SPLIT_TP", # "SPLIT_TP" (TP1, TP2, TP3), "SINGLE_TP1", "SINGLE_TP2", "SINGLE_TP3"
     "auto_breakeven": True,
     "gold_min_be_pips": 50.0,
-    "gbpjpy_min_be_pips": 28.0,
-    "max_concurrent_pairs": 10,
+    "max_concurrent_pairs": 4,
     "max_slippage_pips": 5,
     "magic_number": 888999,
     "mt5_terminal_path": "",
+    "allowed_pairs": ["USDCAD", "XAUUSD", "USDJPY", "USDCHF"],
     "custom_lot_map": {
-        "XAGUSD": 0.05,
-        "SILVER": 0.05
+        "USDCAD": 0.50,
+        "XAUUSD": 0.20,
+        "USDJPY": 0.20,
+        "USDCHF": 0.20
     },
     "custom_symbol_map": {
         "WTI": "USOIL",
@@ -113,13 +115,13 @@ class AmaterasuBridge:
         print("  +===================================================================+")
         print(f"{Colors.RESET}")
         print(f" {Colors.CYAN}* Server Target   :{Colors.RESET} {self.server_url}")
-        print(f" {Colors.CYAN}* Base Lot Size   :{Colors.RESET} {self.lot_size}")
+        print(f" {Colors.CYAN}* Whitelist Pairs :{Colors.RESET} USDCAD, XAUUSD, USDJPY, USDCHF (4 Pair Sahaja)")
+        print(f" {Colors.CYAN}* USDCAD Lot Size :{Colors.RESET} 0.50 lot (Juara Konsisten)")
+        print(f" {Colors.CYAN}* Gold Lot Size   :{Colors.RESET} 0.20 lot (+50p Anti-Pullback BE)")
+        print(f" {Colors.CYAN}* JPY/CHF Lot Size:{Colors.RESET} 0.20 lot (Penstabil Portfolio)")
         print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2/TP3)")
         print(f" {Colors.CYAN}* Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
-        print(f" {Colors.CYAN}* Gold BE Trigger :{Colors.RESET} +{self.config.get('gold_min_be_pips', 50.0)} pips (Anti-Pullback Buffer)")
-        print(f" {Colors.CYAN}* GBPJPY BE Trig  :{Colors.RESET} +{self.config.get('gbpjpy_min_be_pips', 28.0)} pips (M15 ATR Guard)")
-        print(f" {Colors.CYAN}* Silver Lot Size :{Colors.RESET} 0.05 lot (Auto Risk Balancing)")
-        print(f" {Colors.CYAN}* Max Open Pairs  :{Colors.RESET} {self.config.get('max_concurrent_pairs', 10)}")
+        print(f" {Colors.CYAN}* Max Open Pairs  :{Colors.RESET} {self.config.get('max_concurrent_pairs', 4)}")
         print(f" {Colors.CYAN}* Magic Number    :{Colors.RESET} {self.magic_number}")
         print("  -------------------------------------------------------------------")
 
@@ -241,6 +243,13 @@ class AmaterasuBridge:
         symbol_raw = signal.get("symbol", "XAUUSD")
         symbol = self.resolve_symbol(symbol_raw)
         
+        # 0. WHITELIST GUARD: Hanya 4 Pair Pilihan Bos (USDCAD, XAUUSD, USDJPY, USDCHF)
+        allowed_pairs = self.config.get("allowed_pairs", ["USDCAD", "XAUUSD", "USDJPY", "USDCHF"])
+        clean_raw_sym = symbol_raw.split('.')[0].upper()
+        if allowed_pairs and clean_raw_sym not in [p.upper() for p in allowed_pairs]:
+            print(f"{Colors.YELLOW}🛡️ [PAIR DITAPIS] Simbol #{clean_raw_sym} ditolak. Hanya {', '.join(allowed_pairs)} dibenarkan mengikut arahan bos.{Colors.RESET}")
+            return None
+        
         # Pastikan simbol aktif dalam MarketWatch
         sym_selected = mt5.symbol_select(symbol, True)
         sym_info = mt5.symbol_info(symbol)
@@ -327,9 +336,14 @@ class AmaterasuBridge:
         if diff > (self.max_slippage_pips * 10 * point):
             print(f"{Colors.YELLOW}[PASARAN BERGERAK] Harga semasa ({price:.{digits}f}) vs Signal ({signal_entry:.{digits}f}). TP/SL diselaraskan secara dinamik: TP{tp_target}={tp:.{digits}f}, SL={sl:.{digits}f}.{Colors.RESET}")
 
-        # Saiz lot: Semak jika simbol mempunyai custom lot (cth: Silver 0.05 lot demi mengimbangi saiz kontrak 50x)
+        # Saiz lot: Semak jika simbol mempunyai custom lot (cth: USDCAD 0.50 lot, XAU/JPY/CHF 0.20 lot)
         exec_lot = self.lot_size
-        custom_lots = self.config.get("custom_lot_map", {"XAGUSD": 0.05, "SILVER": 0.05})
+        custom_lots = self.config.get("custom_lot_map", {
+            "USDCAD": 0.50,
+            "XAUUSD": 0.20,
+            "USDJPY": 0.20,
+            "USDCHF": 0.20
+        })
         for c_sym, c_lot in custom_lots.items():
             if c_sym.upper() in symbol.upper():
                 exec_lot = float(c_lot)
@@ -410,6 +424,12 @@ class AmaterasuBridge:
 
         status = sig.get("status", "ACTIVE")
         if status != "ACTIVE":
+            return
+
+        # WHITELIST GUARD: Hanya 4 Pair Pilihan Bos (USDCAD, XAUUSD, USDJPY, USDCHF)
+        allowed_pairs = self.config.get("allowed_pairs", ["USDCAD", "XAUUSD", "USDJPY", "USDCHF"])
+        clean_sym = str(sig.get("symbol", "")).split('.')[0].upper()
+        if allowed_pairs and clean_sym not in [p.upper() for p in allowed_pairs]:
             return
 
         self.executed_signal_ids.add(sig_id)
