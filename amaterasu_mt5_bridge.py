@@ -107,6 +107,7 @@ class AmaterasuBridge:
         self.broker_symbols = {} # cache available broker symbols
         self.synced_deal_tickets = set()
         self.last_sl_timestamps = {} # {symbol: timestamp} for Post-SL Liquidity Sweep Cooldown
+        self.pullback_retry_log = {} # {sig_id: timestamp} for debouncing pullback standby logs
         
     def banner(self):
         print(f"{Colors.RED}{Colors.BOLD}")
@@ -362,6 +363,28 @@ class AmaterasuBridge:
         digits = sym_info.digits
         point = sym_info.point
 
+        # 0.3 STRICT PULLBACK RETEST GUARD (ANTI-CHASING / DILARANG MASUK DI PUNCAK ATAU DASAR):
+        # Mencegah sama sekali 'selling at the bottom' atau 'buying at the top'.
+        # Wajib ada ruang pullback sebelum sebarang order dihantar ke pasaran sebenar!
+        try:
+            m15_rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M15, 0, 5)
+            if m15_rates is not None and len(m15_rates) >= 3:
+                recent_low = float(min(r['low'] for r in m15_rates))
+                recent_high = float(max(r['high'] for r in m15_rates))
+
+                if not is_buy: # SELL ORDER
+                    buffer_floor = 4.0 if clean_raw_sym == "XAUUSD" else (0.0008 if "JPY" not in clean_raw_sym else 0.08)
+                    if price <= (recent_low + buffer_floor):
+                        print(f"{Colors.YELLOW}🛡️ [STRICT PULLBACK GUARD] Menolak order SELL #{clean_raw_sym} @ {price:.{digits}f}! Harga berada di zon lantai dasar ({recent_low:.{digits}f} + {buffer_floor}). DILARANG SELL di lantai dasar! Wajib tunggu Pullback melantun ke atas dahulu sebelum SELL!{Colors.RESET}")
+                        return None
+                else: # BUY ORDER
+                    buffer_roof = 4.0 if clean_raw_sym == "XAUUSD" else (0.0008 if "JPY" not in clean_raw_sym else 0.08)
+                    if price >= (recent_high - buffer_roof):
+                        print(f"{Colors.YELLOW}🛡️ [STRICT PULLBACK GUARD] Menolak order BUY #{clean_raw_sym} @ {price:.{digits}f}! Harga berada di zon bumbung puncak ({recent_high:.{digits}f} - {buffer_roof}). DILARANG BUY di puncak! Wajib tunggu Pullback melantun ke bawah dahulu sebelum BUY!{Colors.RESET}")
+                        return None
+        except Exception as e:
+            pass
+
         # Entry & distance calculation
         signal_entry = float(signal.get("entry", price))
         raw_tp = float(signal.get("tp3" if tp_target == 3 else ("tp2" if tp_target == 2 else "tp1"), 0.0))
@@ -541,17 +564,6 @@ class AmaterasuBridge:
                 print(f"{Colors.YELLOW}🛡️ [LONDON TRAP ZONE] Signal #{clean_sym} ditolak pada jam {now_myt.strftime('%H:%M')} MYT. Zon 14:00 - 16:00 disekat bagi mengelak manipulasi Judas Swing.{Colors.RESET}")
                 return
 
-        self.executed_signal_ids.add(sig_id)
-
-        print(f"\n{Colors.BOLD}{Colors.GREEN}═════════════════════════════════════════════════════════════════════{Colors.RESET}")
-        print(f" {Colors.GREEN}🚀 SIGNAL BARU DIKESAN DARI AMATERASU X!{Colors.RESET}")
-        print(f" • Simbol          : #{sig.get('symbol')} ({sig.get('type')})")
-        print(f" • Entry Ref       : {sig.get('entry')}")
-        print(f" • TP1 / TP2 / TP3 : {sig.get('tp1')} / {sig.get('tp2')} / {sig.get('tp3')}")
-        print(f" • Stop Loss       : {sig.get('sl')}")
-        print(f" • Confluence      : {sig.get('notes', 'Amaterasu Institutional Flow')[:75]}...")
-        print(f"{Colors.BOLD}{Colors.GREEN}═════════════════════════════════════════════════════════════════════{Colors.RESET}")
-
         order_records = []
         if self.execution_mode == "SPLIT_TP":
             # Buka 3 layer mengikut Amaterasu Institutional SOP:
@@ -585,6 +597,13 @@ class AmaterasuBridge:
 
         if order_records:
             self.active_positions[sig_id] = order_records
+            self.executed_signal_ids.add(sig_id)
+            print(f"{Colors.GREEN}✅ [ENTRY BERJAYA] Semua {len(order_records)} layer #{clean_sym} berjaya dibuka pada harga optimum!{Colors.RESET}")
+        else:
+            now_t = time.time()
+            if (now_t - self.pullback_retry_log.get(sig_id, 0)) > 20:
+                self.pullback_retry_log[sig_id] = now_t
+                print(f"{Colors.YELLOW}⏳ [PULLBACK RETEST STANDBY] Signal #{clean_sym} ditangguhkan seketika oleh Strict Pullback Guard. Amaterasu bersedia masuk sebaik harga membuat lantunan pullback selamat!{Colors.RESET}")
 
     def apply_breakeven_for_symbol(self, raw_symbol, sig_data=None):
         """Kunci Stop Loss ke Break-Even bagi semua posisi terbuka broker bagi simbol ini"""

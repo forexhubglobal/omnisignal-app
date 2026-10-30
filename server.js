@@ -1667,6 +1667,23 @@ const AiEngine = {
       // 1. ADA NEWS AI AKTIF -> Patuhi arah News AI secara mutlak tanpa sebarang override songsang!
       type = newsSynergy.type;
       notes = `[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh ${newsSynergy.reason}. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.`;
+      
+      // STRICT PULLBACK ENTRY GUARD (ANTI-CHASING / NO SELLING AT FLOOR OR BUYING AT ROOF):
+      // Walaupun ada News AI, DILARANG sama sekali SELL jika harga sedang berada di lantai dasar,
+      // dan DILARANG BUY jika harga sedang berada di bumbung puncak!
+      // Wajib tunggu harga buat Pullback Retest dahulu!
+      if (asset.symbol === 'XAUUSD') {
+        const floorRef = this.goldAsianSession.low || 3960.0;
+        const roofRef = this.goldAsianSession.high || 4032.5;
+        if (type === 'SELL' && liveP <= (floorRef + 4.0)) {
+          this.log(`🛡️ [STRICT PULLBACK GUARD] Menyekat isyarat SELL XAUUSD pada ${liveP.toFixed(2)}. Harga berada betul-betul di lantai dasar (${floorRef.toFixed(2)} + 4.0). Wajib tunggu Pullback melantun ke atas dahulu sebelum SELL!`);
+          return;
+        }
+        if (type === 'BUY' && liveP >= (roofRef - 4.0)) {
+          this.log(`🛡️ [STRICT PULLBACK GUARD] Menyekat isyarat BUY XAUUSD pada ${liveP.toFixed(2)}. Harga berada betul-betul di bumbung puncak (${roofRef.toFixed(2)} - 4.0). Wajib tunggu Pullback melantun ke bawah dahulu sebelum BUY!`);
+          return;
+        }
+      }
       this.log(`🔥 NEWS AI SYNERGY DIAKTIFKAN: Isyarat ${type} ${asset.symbol} mengikut unjuran News AI (${newsSynergy.newsName} Bias ${newsSynergy.bias})!`);
     } else {
       // 2. TIADA NEWS AI AKTIF -> Guna Prinsip Institusi:
