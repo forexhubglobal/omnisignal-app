@@ -123,6 +123,7 @@ class AmaterasuBridge:
         print(f" {Colors.CYAN}* JPY/CHF Lot Size:{Colors.RESET} 0.20 lot (Penstabil Portfolio)")
         print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2/TP3)")
         print(f" {Colors.CYAN}* Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
+        print(f" {Colors.CYAN}* Floating ATR    :{Colors.RESET} AKTIF (M15 Live Volatility True Range)")
         print(f" {Colors.CYAN}* Gold Trap Zone  :{Colors.RESET} 14:00 - 16:00 MYT (London Trap DIBLOK)")
         print(f" {Colors.CYAN}* Max Open Pairs  :{Colors.RESET} {self.config.get('max_concurrent_pairs', 4)}")
         print(f" {Colors.CYAN}* Magic Number    :{Colors.RESET} {self.magic_number}")
@@ -242,6 +243,24 @@ class AmaterasuBridge:
                 return fill
         return mt5.ORDER_FILLING_FOK
 
+    def get_m15_atr(self, symbol, period=14):
+        """Kira 14-period Average True Range (ATR) M15 terus daripada lilin MetaTrader 5"""
+        try:
+            rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M15, 0, period + 2)
+            if rates is not None and len(rates) >= period + 1:
+                tr_list = []
+                for i in range(1, len(rates)):
+                    h = rates[i]['high']
+                    l = rates[i]['low']
+                    prev_c = rates[i-1]['close']
+                    tr = max(h - l, abs(h - prev_c), abs(l - prev_c))
+                    tr_list.append(tr)
+                if tr_list:
+                    return sum(tr_list[-period:]) / period
+        except Exception:
+            pass
+        return None
+
     def execute_order(self, signal, tp_target=1):
         symbol_raw = signal.get("symbol", "XAUUSD")
         symbol = self.resolve_symbol(symbol_raw)
@@ -348,15 +367,46 @@ class AmaterasuBridge:
         raw_tp = float(signal.get("tp3" if tp_target == 3 else ("tp2" if tp_target == 2 else "tp1"), 0.0))
         raw_sl = float(signal.get("sl", 0.0))
 
-        # Kira jarak TP & SL dari harga signal asal (pip distance)
-        tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (18.0 if tp_target == 3 else (12.0 if tp_target == 2 else 6.0))
-        sl_dist = abs(raw_sl - signal_entry) if raw_sl > 0 else (13.0 if clean_raw_sym == "XAUUSD" else 5.0)
+        # DYNAMIC FLOATING ATR ENGINE:
+        # Menyelaras TP dan SL mengikut volatiliti sebenar purata 14 lilin M15 pasaran secara automatik
+        use_dyn_atr = self.config.get("dynamic_floating_atr", True)
+        live_atr = self.get_m15_atr(symbol, 14) if use_dyn_atr else None
 
-        # Jaminan Penimbal Selamat XAUUSD:
-        # Minimum Stop Loss bagi Gold mestilah sekurang-kurangnya 12.0 mata ($12 / 120 pips)
-        # untuk memastikan terlindung di luar jarum M15 Liquidity Sweep!
-        if clean_raw_sym == "XAUUSD" and sl_dist < 12.0:
-            sl_dist = 13.0
+        if live_atr and live_atr > 0:
+            if clean_raw_sym == "XAUUSD":
+                # Gold Dynamic ATR:
+                # Minimum SL = 12.0 mata, atau 1.5x ATR jika pasaran bergelora!
+                sl_dist = max(1.5 * live_atr, 12.0)
+                if tp_target == 3:
+                    tp_dist = max(2.5 * live_atr, 20.0)
+                elif tp_target == 2:
+                    tp_dist = max(1.6 * live_atr, 12.0)
+                else: # TP1
+                    tp_dist = max(0.8 * live_atr, 6.0)
+                print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr:.2f} mata | SL: {sl_dist:.2f} | TP{tp_target}: {tp_dist:.2f} mata (Autonomi Pasaran){Colors.RESET}")
+            else:
+                # Forex (USDCAD, USDJPY, USDCHF):
+                min_forex_sl = 0.0020 if "JPY" not in clean_raw_sym else 0.20
+                min_forex_tp1 = 0.0018 if "JPY" not in clean_raw_sym else 0.18
+                min_forex_tp2 = 0.0035 if "JPY" not in clean_raw_sym else 0.35
+                min_forex_tp3 = 0.0060 if "JPY" not in clean_raw_sym else 0.60
+                
+                sl_dist = max(3.5 * live_atr, min_forex_sl)
+                if tp_target == 3:
+                    tp_dist = max(7.0 * live_atr, min_forex_tp3)
+                elif tp_target == 2:
+                    tp_dist = max(4.5 * live_atr, min_forex_tp2)
+                else:
+                    tp_dist = max(2.5 * live_atr, min_forex_tp1)
+                
+                pip_mult = 100 if "JPY" in clean_raw_sym else 10000
+                print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr * pip_mult:.1f} pips | SL: {sl_dist * pip_mult:.1f}p | TP{tp_target}: {tp_dist * pip_mult:.1f}p (Autonomi Pasaran){Colors.RESET}")
+        else:
+            # Fallback jika ATR tidak aktif / gagal dibaca
+            tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (18.0 if tp_target == 3 else (12.0 if tp_target == 2 else 6.0))
+            sl_dist = abs(raw_sl - signal_entry) if raw_sl > 0 else (13.0 if clean_raw_sym == "XAUUSD" else 5.0)
+            if clean_raw_sym == "XAUUSD" and sl_dist < 12.0:
+                sl_dist = 13.0
 
         # Gunakan jarak relatif dari harga kemasukan sebenar (Market Price)
         # Ini mengelakkan ralat 'Invalid Stops' jika harga sudah bergerak

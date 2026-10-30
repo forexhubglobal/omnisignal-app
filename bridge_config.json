@@ -25,5 +25,6 @@
     "BTCUSD": "BTCUSD"
   },
   "ny_gold_multiplier_active": true,
-  "ny_gold_lot_size": 0.35
+  "ny_gold_lot_size": 0.35,
+  "dynamic_floating_atr": true
 }
