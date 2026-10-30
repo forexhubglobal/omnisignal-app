@@ -106,6 +106,7 @@ class AmaterasuBridge:
         self.active_positions = {}
         self.broker_symbols = {} # cache available broker symbols
         self.synced_deal_tickets = set()
+        self.last_sl_timestamps = {} # {symbol: timestamp} for Post-SL Liquidity Sweep Cooldown
         
     def banner(self):
         print(f"{Colors.RED}{Colors.BOLD}")
@@ -248,6 +249,17 @@ class AmaterasuBridge:
         clean_raw_sym = symbol_raw.split('.')[0].upper()
         if allowed_pairs and clean_raw_sym not in [p.upper() for p in allowed_pairs]:
             print(f"{Colors.YELLOW}🛡️ [PAIR DITAPIS] Simbol #{clean_raw_sym} ditolak. Hanya {', '.join(allowed_pairs)} dibenarkan mengikut arahan bos.{Colors.RESET}")
+            return None
+
+        # 0.1 POST-SL LIQUIDITY SWEEP GUARD:
+        # Jika baru terkena SL pada simbol ini (terutamanya Emas):
+        # Wajib bertenang 45 minit untuk Gold / 30 minit untuk forex bagi memastikan Liquidity Sweep reda sepenuhnya!
+        last_sl = self.last_sl_timestamps.get(clean_raw_sym, 0)
+        cooldown_sec = 45 * 60 if clean_raw_sym == "XAUUSD" else 30 * 60
+        elapsed = time.time() - last_sl
+        if elapsed < cooldown_sec:
+            rem_min = int((cooldown_sec - elapsed) / 60)
+            print(f"{Colors.YELLOW}🛡️ [POST-SL LIQUIDITY SWEEP GUARD] Menolak re-entry #{clean_raw_sym}. Baru terkena SL {int(elapsed/60)} minit lepas. Baki bertenang: {rem_min} minit bagi memastikan sweep reda sepenuhnya.{Colors.RESET}")
             return None
         
         # Pastikan simbol aktif dalam MarketWatch
@@ -832,6 +844,9 @@ class AmaterasuBridge:
                             event = 'CLOSED'
                             if '[sl' in comment.lower() or d.profit < 0:
                                 event = 'SL'
+                                if d.profit < -5.0: # Hanya rekod jika rugi sebenar (bukan BE sifar)
+                                    self.last_sl_timestamps[raw_sym] = time.time()
+                                    print(f"{Colors.RED}🛑 [SL DIKESAN] #{raw_sym} terkena SL (-${abs(d.profit):.2f}). Mengaktifkan Post-SL Liquidity Sweep Guard!{Colors.RESET}")
                             elif '[tp' in comment.lower() or d.profit > 0:
                                 event = 'TP1' if 'tp1' in comment.lower() else 'TP2'
                             

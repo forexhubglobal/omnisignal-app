@@ -1530,7 +1530,7 @@ const AiEngine = {
       );
       if (Array.isArray(this.liveMT5Positions)) {
         for (const p of this.liveMT5Positions) {
-          if (p.symbol) activePendingSymbols.add(p.symbol);
+          if (p.symbol) activePendingSymbols.add(p.symbol.replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase());
         }
       }
       const nowMs = Date.now();
@@ -1570,7 +1570,7 @@ const AiEngine = {
     if (existingActive) {
       return;
     }
-    if (Array.isArray(this.liveMT5Positions) && this.liveMT5Positions.some(p => p.symbol === asset.symbol)) {
+    if (Array.isArray(this.liveMT5Positions) && this.liveMT5Positions.some(p => (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() === asset.symbol.toUpperCase())) {
       return;
     }
     if (this.assetCooldowns && this.assetCooldowns[asset.symbol] && Date.now() < this.assetCooldowns[asset.symbol]) {
@@ -1920,7 +1920,13 @@ const AiEngine = {
       db.activeSignals = db.activeSignals.filter(s => s.symbol !== sig.symbol && s.id !== sig.id);
     }
     if (!this.assetCooldowns) this.assetCooldowns = {};
-    this.assetCooldowns[sig.symbol] = Date.now() + (25 * 60 * 1000); // 25 min institutional cooldown
+    if (outcome === 'SL') {
+      const cooldownMin = sig.symbol === 'XAUUSD' ? 45 : 30;
+      this.assetCooldowns[sig.symbol] = Date.now() + (cooldownMin * 60 * 1000);
+      this.log(`🛑 [POST-SL LIQUIDITY SWEEP GUARD] ${sig.symbol} terkena SL! Re-entry disekat selama ${cooldownMin} minit bagi memastikan Liquidity Sweep reda sepenuhnya.`);
+    } else {
+      this.assetCooldowns[sig.symbol] = Date.now() + (20 * 60 * 1000);
+    }
     db.activeSignal = (db.activeSignals && db.activeSignals[0]) || {
       status: 'WAITING',
       symbol: 'XAUUSD',
