@@ -1,40 +1,47 @@
 {
   "stats": {
-    "totalSignals": 49,
+    "totalSignals": 294,
     "winRate": 93,
-    "tp1Hit": 305,
-    "tp2Hit": 47,
+    "tp1Hit": 273,
+    "tp2Hit": 0,
     "tp3Hit": 0,
-    "slHit": 20,
-    "totalProfitToday": 11660,
+    "slHit": 21,
+    "totalProfitToday": -30,
     "last7Days": [
       {
+        "day": "Mon",
+        "date": "Oct 26",
+        "pips": 0
+      },
+      {
+        "day": "Tue",
+        "date": "Oct 27",
+        "pips": 0
+      },
+      {
         "day": "Wed",
+        "date": "Oct 28",
         "pips": 0
       },
       {
         "day": "Thu",
-        "pips": 0
+        "date": "Oct 29",
+        "pips": 3230
       },
       {
         "day": "Fri",
-        "pips": 0
+        "date": "Oct 30",
+        "pips": 6100
       },
       {
         "day": "Sat",
-        "pips": 0
-      },
-      {
-        "day": "Sun",
-        "pips": 0
-      },
-      {
-        "day": "Mon",
+        "date": "Oct 31",
         "pips": 0
       },
       {
         "day": "Today",
-        "pips": 0
+        "date": "Nov 1",
+        "pips": -30
       }
     ]
   },
@@ -60,11 +67,23 @@
     "currentPrice": 4004.23,
     "floatingPips": -1.5,
     "beLocked": false,
-    "ticks": 55,
+    "ticks": 59,
     "notes": "[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at 4004.08. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.",
     "peakPips": 5.5
   },
   "signals": [
+    {
+      "id": "sig-1793322896434",
+      "time": "07:39",
+      "date": "Nov 1",
+      "symbol": "EURJPY",
+      "type": "BUY",
+      "entry": 176.306,
+      "status": "SL",
+      "pips": -30,
+      "tags": [],
+      "peak": 5
+    },
     {
       "id": "sig-1793327262163",
       "time": "10:32",
@@ -4599,19 +4618,16 @@
     }
   ],
   "lastResolvedSignal": {
-    "id": "sig-1793325905507",
-    "time": "10:16",
-    "date": "Oct 30",
-    "symbol": "USDCAD",
+    "id": "sig-1793322896434",
+    "time": "07:39",
+    "date": "Nov 1",
+    "symbol": "EURJPY",
     "type": "BUY",
-    "entry": 1.3966,
-    "status": "TP_TRAIL",
-    "pips": 20,
-    "tags": [
-      "TP1",
-      "TRAIL"
-    ],
-    "peak": 3
+    "entry": 176.306,
+    "status": "SL",
+    "pips": -30,
+    "tags": [],
+    "peak": 5
   },
   "aiNewsStats": {
     "totalNewsSignals": 5,
@@ -4711,7 +4727,7 @@
       "currentPrice": 4004.23,
       "floatingPips": -1.5,
       "beLocked": false,
-      "ticks": 55,
+      "ticks": 59,
       "notes": "[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at 4004.08. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.",
       "peakPips": 5.5
     },
@@ -4734,16 +4750,16 @@
       "lockedProfitPips": 0,
       "willWin": true,
       "firedAt": "10:35",
-      "currentPrice": 1.397,
-      "floatingPips": 3,
+      "currentPrice": 1.3977,
+      "floatingPips": 10,
       "beLocked": false,
-      "ticks": 115,
+      "ticks": 119,
       "notes": "[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.",
-      "peakPips": 3
+      "peakPips": 10
     },
     {
       "id": "sig-1793327563015",
-      "status": "TP1_HIT",
+      "status": "TP2_HIT",
       "symbol": "USDCHF",
       "type": "BUY",
       "timeframe": "M15",
@@ -4751,27 +4767,29 @@
       "tp1": 0.8228,
       "tp2": 0.8245,
       "tp3": 0.8266,
-      "sl": 0.8211,
+      "sl": 0.8238,
       "tp1Pips": 20,
       "tp2Pips": 34,
       "tp3Pips": 55,
       "slPips": 17,
-      "trailingStage": 0,
-      "lockedProfitPips": 0,
+      "trailingStage": 3,
+      "lockedProfitPips": 27,
       "willWin": true,
       "firedAt": "10:32",
-      "currentPrice": 0.8211,
-      "floatingPips": 0,
+      "currentPrice": 0.8245,
+      "floatingPips": 34,
       "beLocked": true,
-      "ticks": 176,
+      "ticks": 180,
       "notes": "[Amaterasu SMC AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at 0.8211. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.",
-      "peakPips": 3,
+      "peakPips": 34,
       "tp1Triggered": true,
-      "tp1HitAt": "10:37"
+      "tp1HitAt": "10:37",
+      "tp2Triggered": true,
+      "tp2HitAt": "07:39"
     },
     {
       "id": "sig-1793324551264",
-      "status": "ACTIVE",
+      "status": "TP1_HIT",
       "symbol": "EURUSD",
       "type": "SELL",
       "timeframe": "M15",
@@ -4779,21 +4797,23 @@
       "tp1": 1.1181,
       "tp2": 1.1164,
       "tp3": 1.1143,
-      "sl": 1.1215,
-      "tp1Pips": 17,
+      "sl": 1.1171,
+      "tp1Pips": 20,
       "tp2Pips": 34,
       "tp3Pips": 55,
       "slPips": 17,
-      "trailingStage": 0,
-      "lockedProfitPips": 0,
+      "trailingStage": 3,
+      "lockedProfitPips": 27,
       "willWin": false,
       "firedAt": "09:42",
-      "currentPrice": 1.1198,
-      "floatingPips": 0,
-      "beLocked": false,
-      "ticks": 1356,
+      "currentPrice": 1.1167,
+      "floatingPips": 31,
+      "beLocked": true,
+      "ticks": 1360,
       "notes": "[White House Malaysian SNR] Penolakan harga (Rejection Wick) pada Key Resistance Level 1.1198. Momentum Bearish disahkan. Sasaran TP1 (+20p).",
-      "peakPips": 5
+      "peakPips": 31,
+      "tp1Triggered": true,
+      "tp1HitAt": "07:39"
     },
     {
       "id": "sig-1793323949461",
@@ -4814,16 +4834,16 @@
       "lockedProfitPips": 0,
       "willWin": false,
       "firedAt": "09:32",
-      "currentPrice": 1.3394,
-      "floatingPips": 5,
+      "currentPrice": 1.3393,
+      "floatingPips": 6,
       "beLocked": false,
-      "ticks": 1596,
+      "ticks": 1600,
       "notes": "[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at 1.3399. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.",
       "peakPips": 11
     },
     {
       "id": "sig-1793327412554",
-      "status": "TP1_HIT",
+      "status": "TP2_HIT",
       "symbol": "USDJPY",
       "type": "BUY",
       "timeframe": "M15",
@@ -4831,23 +4851,25 @@
       "tp1": 157.704,
       "tp2": 157.924,
       "tp3": 158.174,
-      "sl": 157.494,
+      "sl": 157.704,
       "tp1Pips": 25,
       "tp2Pips": 43,
       "tp3Pips": 68,
       "slPips": 21,
       "trailingStage": 0,
-      "lockedProfitPips": 0,
+      "lockedProfitPips": 25,
       "willWin": true,
       "firedAt": "10:30",
-      "currentPrice": 157.485,
-      "floatingPips": -0.9,
+      "currentPrice": 157.542,
+      "floatingPips": 4.8,
       "beLocked": true,
-      "ticks": 236,
+      "ticks": 240,
       "notes": "[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.",
-      "peakPips": 3.3,
+      "peakPips": 4.8,
       "tp1Triggered": true,
-      "tp1HitAt": "10:35"
+      "tp1HitAt": "10:35",
+      "tp2Triggered": true,
+      "tp2HitAt": "07:39"
     },
     {
       "id": "sig-1793297621771",
@@ -4868,10 +4890,10 @@
       "lockedProfitPips": 0,
       "willWin": false,
       "firedAt": "02:13",
-      "currentPrice": 210.932,
-      "floatingPips": 9,
+      "currentPrice": 210.974,
+      "floatingPips": 4.8,
       "beLocked": false,
-      "ticks": 12096,
+      "ticks": 12100,
       "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.",
       "peakPips": 34.3
     },
@@ -4894,38 +4916,12 @@
       "lockedProfitPips": 0,
       "willWin": false,
       "firedAt": "01:13",
-      "currentPrice": 52.911,
-      "floatingPips": -30.1,
+      "currentPrice": 52.872,
+      "floatingPips": -26.2,
       "beLocked": false,
-      "ticks": 13536,
+      "ticks": 13540,
       "notes": "[Amaterasu Institutional Flow] Pengagihan kecairan penjual institusi (Distribution Block). Penolakan harga pada garis rintangan utama mengesahkan penurunan.",
       "peakPips": 0
-    },
-    {
-      "id": "sig-1793322896434",
-      "status": "ACTIVE",
-      "symbol": "EURJPY",
-      "type": "BUY",
-      "timeframe": "M15",
-      "entry": 176.306,
-      "tp1": 176.566,
-      "tp2": 176.816,
-      "tp3": 177.116,
-      "sl": 176.046,
-      "tp1Pips": 26,
-      "tp2Pips": 51,
-      "tp3Pips": 81,
-      "slPips": 26,
-      "trailingStage": 0,
-      "lockedProfitPips": 0,
-      "willWin": false,
-      "firedAt": "09:14",
-      "currentPrice": 176.351,
-      "floatingPips": 4.5,
-      "beLocked": false,
-      "ticks": 2016,
-      "notes": "[Amaterasu Institutional Flow] Penyerapan kecairan pembeli institusi (Liquidity Injection). Formasi rejection candle mengesahkan zon pantulan kukuh.",
-      "peakPips": 15.2
     },
     {
       "id": "sig-1793277912284",
@@ -4946,10 +4942,10 @@
       "lockedProfitPips": 0,
       "willWin": false,
       "firedAt": "20:45",
-      "currentPrice": 0.7034,
-      "floatingPips": -1,
+      "currentPrice": 0.7032,
+      "floatingPips": 1,
       "beLocked": false,
-      "ticks": 19937,
+      "ticks": 19941,
       "notes": "[⚡ AMATERASU NEWS AI SYNERGY] Didorong oleh Unjuran News AI: US Initial Jobless Claims & Core PCE (USD Bias BUY / Strong USD) -> AUDUSD SELL. Confluence Score: 96.8%. SOP Wajib: Alih SL ke Break-Even (BE) sebaik sasaran TP1 disentuh.",
       "peakPips": 17
     }

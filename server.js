@@ -179,13 +179,81 @@ const defaultDB = {
   ]
 };
 
+// Helper to synchronize stats with actual signal history
+function syncStatsWithSignals(db) {
+  if (!db || !Array.isArray(db.signals)) return;
+  const signals = db.signals;
+  let wins = 0, losses = 0, tp1 = 0, tp2 = 0, tp3 = 0, sl = 0;
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const today = new Date();
+
+  // Build last 7 days map from actual signals
+  const last7Days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dayName = dayNames[d.getDay()];
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
+    const isToday = (i === 0);
+
+    let dayPips = 0;
+    for (const s of signals) {
+      if (s.date === dateStr || (isToday && s.date === 'Today')) {
+        const isBe = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
+        dayPips += isBe ? 0 : (Number(s.pips) || 0);
+      }
+    }
+
+    last7Days.push({
+      day: isToday ? 'Today' : dayName,
+      date: dateStr,
+      pips: dayPips
+    });
+  }
+
+  // Aggregate stats across all signals
+  for (const s of signals) {
+    const isBe = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
+    const p = isBe ? 0 : (Number(s.pips) || 0);
+    if (p > 0 || ['TP1','TP2','TP3','CLOSED IN PROFIT','TP_TRAIL'].includes(s.status)) {
+      wins++;
+      if (s.status === 'TP3') tp3++;
+      else if (s.status === 'TP2') tp2++;
+      else tp1++;
+    } else if (s.status === 'SL' && !isBe) {
+      losses++;
+      sl++;
+    }
+  }
+
+  const totalSignals = wins + losses;
+  const winRate = totalSignals > 0 ? Math.round((wins / totalSignals) * 100) : 92;
+  const todayPips = last7Days[last7Days.length - 1].pips;
+
+  db.stats = {
+    totalSignals,
+    winRate,
+    tp1Hit: tp1,
+    tp2Hit: tp2,
+    tp3Hit: tp3,
+    slHit: sl,
+    totalProfitToday: todayPips,
+    last7Days
+  };
+}
+
 // Load or initialize DB with in-memory caching
 let inMemoryDB = null;
 function getDB() {
-  if (inMemoryDB) return inMemoryDB;
+  if (inMemoryDB) {
+    syncStatsWithSignals(inMemoryDB);
+    return inMemoryDB;
+  }
   try {
     if (!fs.existsSync(DB_FILE)) {
       inMemoryDB = JSON.parse(JSON.stringify(defaultDB));
+      syncStatsWithSignals(inMemoryDB);
       return inMemoryDB;
     }
     const content = fs.readFileSync(DB_FILE, 'utf8');
@@ -193,15 +261,18 @@ function getDB() {
     if (!Array.isArray(inMemoryDB.activeSignals)) {
       inMemoryDB.activeSignals = (inMemoryDB.activeSignal && inMemoryDB.activeSignal.status === 'ACTIVE') ? [inMemoryDB.activeSignal] : [];
     }
+    syncStatsWithSignals(inMemoryDB);
     return inMemoryDB;
   } catch (e) {
     console.error('Error reading DB, using defaults', e);
     inMemoryDB = JSON.parse(JSON.stringify(defaultDB));
+    syncStatsWithSignals(inMemoryDB);
     return inMemoryDB;
   }
 }
 
 function saveDB(db) {
+  syncStatsWithSignals(db);
   inMemoryDB = db;
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');

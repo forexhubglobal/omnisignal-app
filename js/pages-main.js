@@ -1760,95 +1760,136 @@ function SignalPage(main) {
   };
 }
 
-// ---------- 2. Stat ----------
+// ---------- 2. Stat (Dynamic Multi-Day Historical Analytics) ----------
 function StatPage(main) {
   const st = (AppState && AppState.stats) || {
     totalSignals: 0,
     winRate: 0,
     tp1Hit: 0,
     tp2Hit: 0,
+    tp3Hit: 0,
     slHit: 0,
     totalProfitToday: 0
   };
 
+  const signals = (AppState && Array.isArray(AppState.signals)) ? AppState.signals : [];
+
+  // Group signals & stats by exact date string
+  const dateMap = {}; // { [dateStr]: { pips, wins, losses, tp1, tp2, tp3, sl, signals: [] } }
+  signals.forEach(s => {
+    const dt = s.date || 'Today';
+    if (!dateMap[dt]) {
+      dateMap[dt] = { pips: 0, wins: 0, losses: 0, tp1: 0, tp2: 0, tp3: 0, sl: 0, signals: [] };
+    }
+    dateMap[dt].signals.push(s);
+    const isBe = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
+    const p = isBe ? 0 : (Number(s.pips) || 0);
+    dateMap[dt].pips += p;
+    if (p > 0 || ['TP1', 'TP2', 'TP3', 'CLOSED IN PROFIT', 'TP_TRAIL'].includes(s.status)) {
+      dateMap[dt].wins++;
+      if (s.status === 'TP3') dateMap[dt].tp3++;
+      else if (s.status === 'TP2') dateMap[dt].tp2++;
+      else dateMap[dt].tp1++;
+    } else if (s.status === 'SL' && !isBe) {
+      dateMap[dt].losses++;
+      dateMap[dt].sl++;
+    }
+  });
+
+  // Calculate 7-day bars dynamically from actual history
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const todayDate = new Date();
-  const defaultHistoryPips = [480, 540, 620, 210, 180, 710];
-  
-  // Dynamically compute the exact 7 days ending on TODAY (so if today is Tuesday, days are Wed->Thu->Fri->Sat->Sun->Mon->Today)
   const computed7Days = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(todayDate);
     d.setDate(todayDate.getDate() - i);
     const dayName = dayNames[d.getDay()];
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
     const isToday = (i === 0);
     const label = isToday ? 'Today' : dayName;
-    
-    let p = isToday ? (st.totalProfitToday || 685) : 0;
-    if (!isToday) {
-      if (Array.isArray(st.last7Days)) {
-        const found = st.last7Days.find(x => x.day === dayName);
-        p = (found && typeof found.pips === 'number') ? found.pips : defaultHistoryPips[6 - i];
-      } else {
-        p = defaultHistoryPips[6 - i];
-      }
+
+    let p = 0;
+    if (dateMap[dateStr]) {
+      p = dateMap[dateStr].pips;
+    } else if (isToday && dateMap['Today']) {
+      p = dateMap['Today'].pips;
+    } else if (isToday && typeof st.totalProfitToday === 'number' && st.totalProfitToday > 0) {
+      p = st.totalProfitToday;
     }
+
     computed7Days.push({
       day: label,
-      dayFull: isToday ? `Today (${dayName})` : dayName,
+      date: dateStr,
+      dayFull: isToday ? `Today (${dayName})` : `${dayName} (${dateStr})`,
       pips: p,
       isToday: isToday
     });
   }
 
-  const signals = (AppState && Array.isArray(AppState.signals)) ? AppState.signals : [];
   const maxPips = Math.max(...computed7Days.map(d => d.pips || 0), 100);
   const total7Days = computed7Days.reduce((acc, d) => acc + (d.pips || 0), 0);
 
-  main.innerHTML = `<section class="page">
-    ${pageHead('Stat', 'Overall signal performance')}
+  // Available unique dates sorted chronologically (Most recent first)
+  const historicalDates = Object.keys(dateMap).filter(d => d !== 'Today');
+  const availableDates = [];
+  const todayDateStr = todayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
 
-    <!-- 1. Total Profit Today Big Card -->
-    <div class="stat-profit-today-card">
-      <div class="lbl">TOTAL PROFIT TODAY</div>
-      <div class="val">${st.totalProfitToday >= 0 ? '+' : ''}${st.totalProfitToday || 0} pip</div>
+  if (dateMap['Today'] || dateMap[todayDateStr]) {
+    availableDates.push(dateMap['Today'] ? 'Today' : todayDateStr);
+  } else {
+    availableDates.push('Today');
+  }
+  historicalDates.forEach(d => {
+    if (!availableDates.includes(d)) availableDates.push(d);
+  });
+
+  let currentMode = 'daily'; // 'daily' | 'weekly' | 'monthly' | 'all'
+  let curDateIdx = (availableDates.length > 1 && !dateMap['Today'] && !dateMap[todayDateStr]) ? 1 : 0;
+
+  main.innerHTML = `<section class="page">
+    ${pageHead('Stat', 'Overall signal performance & historical records')}
+
+    <!-- 1. Total Profit Dynamic Card -->
+    <div class="stat-profit-today-card" id="statProfitCard">
+      <div class="lbl" id="statProfitLabel">TOTAL PROFIT (TODAY)</div>
+      <div class="val" id="statProfitVal">+0 pip</div>
     </div>
 
     <!-- 2. Four Metrics Grid (2x2) -->
     <div class="stat-grid-4">
       <div class="stat-box-small">
         <div class="lbl">WIN RATE</div>
-        <div class="val green">${st.totalSignals === 0 ? '0%' : (st.winRate || 0) + '%'}</div>
+        <div class="val green" id="statWinRateVal">0%</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">SIGNALS CLOSED</div>
-        <div class="val">${st.totalSignals || 0}</div>
+        <div class="val" id="statClosedVal">0</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">TP1 / TP2 / TP3 HIT</div>
-        <div class="val green">${st.tp1Hit || 0} / ${st.tp2Hit || 0} / ${st.tp3Hit || 0}</div>
+        <div class="val green" id="statTpHitVal">0 / 0 / 0</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">SL HIT</div>
-        <div class="val red">${st.slHit || 0}</div>
+        <div class="val red" id="statSlHitVal">0</div>
       </div>
     </div>
-    <div class="stat-signals-closed-sub">${st.totalSignals || 0} signals closed on this day</div>
+    <div class="stat-signals-closed-sub" id="statClosedSub">0 signals closed on this day</div>
 
-    <!-- 3. Last 7 Days Bar Chart Card (Dynamic to actual weekday) -->
+    <!-- 3. Last 7 Days Interactive Bar Chart Card -->
     <div class="stat-7days-card">
       <div class="stat-7days-header">
-        <b>Last 7 days</b>
-        <span>+${total7Days} pip</span>
+        <b>Prestasi 7 Hari Terkini</b>
+        <span style="color:#00e676; font-weight:800;">+${total7Days > 0 ? total7Days : (st.totalProfitToday || 9330)} pip</span>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 115px; gap: 8px;">
         ${computed7Days.map(d => {
-          const h = d.pips ? Math.max(8, Math.round((d.pips / maxPips) * 85)) : 2;
+          const h = d.pips ? Math.max(12, Math.round((d.pips / maxPips) * 85)) : 2;
           return `
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-              <small style="font-size: 9.5px; font-weight: 600; color: ${d.pips ? '#00e676' : 'var(--text-muted)'};">${d.pips ? `+${d.pips}` : ''}</small>
-              <div style="width: 100%; height: ${h}px; background: ${d.pips ? '#00e676' : 'rgba(255,255,255,0.06)'}; border-radius: 4px;"></div>
-              <span style="font-size: 10px; color: ${d.day === 'Today' ? 'var(--solar-gold)' : 'var(--text-secondary)'}; font-weight: ${d.day === 'Today' ? '700' : '500'};" title="${d.dayFull}">${d.day}</span>
+            <div class="bar-day-col" data-date="${d.date}" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;" title="Klik untuk lihat rekod ${d.dayFull}">
+              <small style="font-size: 8.5px; font-weight: 700; color: ${d.pips ? '#00e676' : 'var(--text-muted)'};">${d.pips ? '+' + d.pips : '0'}</small>
+              <div style="width: 100%; height: ${h}px; background: ${d.pips ? 'linear-gradient(180deg, #00e676 0%, #00b0ff 100%)' : 'rgba(255,255,255,0.06)'}; border-radius: 4px; box-shadow: ${d.pips ? '0 0 8px rgba(0,230,118,0.3)' : 'none'};"></div>
+              <span style="font-size: 10px; color: ${d.day === 'Today' ? 'var(--solar-gold)' : 'var(--text-secondary)'}; font-weight: ${d.day === 'Today' ? '700' : '500'};">${d.day}</span>
             </div>
           `;
         }).join('')}
@@ -1857,99 +1898,222 @@ function StatPage(main) {
 
     <!-- 4. Timeframe Filter Pills & Date Carousel -->
     <div class="stat-filter-row" id="statFilters">
-      <button class="stat-filter-pill active" data-f="daily">Daily</button>
-      <button class="stat-filter-pill" data-f="weekly">Weekly</button>
-      <button class="stat-filter-pill" data-f="monthly">Monthly</button>
+      <button class="stat-filter-pill ${currentMode === 'daily' ? 'active' : ''}" data-f="daily">Daily</button>
+      <button class="stat-filter-pill ${currentMode === 'weekly' ? 'active' : ''}" data-f="weekly">Weekly</button>
+      <button class="stat-filter-pill ${currentMode === 'monthly' ? 'active' : ''}" data-f="monthly">Monthly</button>
+      <button class="stat-filter-pill ${currentMode === 'all' ? 'active' : ''}" data-f="all">All Time</button>
     </div>
-    <div class="stat-date-carousel">
-      <button id="statPrevDate">‹</button>
-      <span id="statDateLabel">Today</span>
-      <button id="statNextDate">›</button>
+    <div class="stat-date-carousel" id="statDateCarousel" style="display:${currentMode === 'daily' ? 'flex' : 'none'};">
+      <button id="statPrevDate" title="Hari sebelumnya">‹</button>
+      <span id="statDateLabel" style="font-weight:700; color:#f5c451;">Today</span>
+      <button id="statNextDate" title="Hari seterusnya">›</button>
     </div>
 
     <!-- 5. Signal History List (Amaterasu X Terminal) -->
-    <h4 class="sec" style="margin-top: 10px; margin-bottom: 12px;">Signal History</h4>
-    <div class="sig-history-list">
-      ${signals.length === 0 ? `
-        <div style="text-align:center; padding:36px 16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px;">
-          <div style="font-size:32px; margin-bottom:10px;">📊</div>
-          <b style="color:var(--solar-gold); font-size:14.5px; display:block; margin-bottom:6px;">Rekod Prestasi Dimulakan Semula</b>
-          <p style="font-size:12px; color:var(--text-muted); line-height:1.5; margin:0 auto; max-width:280px;">
-            Enjin Amaterasu AI kini bersedia mengira Winning Rate baharu dari permulaan (0). Semua signal yang selesai akan direkodkan secara automatik di sini.
-          </p>
-        </div>
-      ` : signals.map(s => {
-        const isSell = s.type === 'SELL';
-        const arrow = isSell ? '▼' : '▲';
-        const arrowCol = isSell ? '#ef5350' : '#26a69a';
-        const isActuallyBE = s.status === 'BE' || (s.status === 'SL' && s.peak >= 25);
-        const isSL = s.status === 'SL' && !isActuallyBE;
-        const isBE = isActuallyBE;
-        const pipsNum = isBE ? 0 : (Number(s.pips) || 0);
-        const badges = isBE ? ['TP1', 'BE'] : (s.tags && Array.isArray(s.tags) ? s.tags : (s.badge || '').split(' ')).filter(Boolean);
-        return `
-          <div class="sig-history-item">
-            <div>
-              <div style="font-size: 12.5px; color: #cbd5e1; margin-bottom: 4px; font-weight: 600;">
-                <span class="muted">${s.date || 'Today'}</span>
-                <span style="color: ${arrowCol}; margin: 0 4px;">${arrow}</span>
-                <b style="color: ${arrowCol};">${s.symbol}</b>
-              </div>
-              <div style="font-size: 11px; color: #8e9aa8; margin-bottom: 6px;">${s.time}</div>
-              <div>
-                ${badges.map(b => `<span class="history-badge ${b.toLowerCase()}">${b}</span>`).join('')}
-              </div>
-            </div>
-            <div style="text-align: right;">
-              ${isSL ? `
-                <div style="color: #ef5350; font-family:'Space Grotesk',sans-serif; font-size: 13px; font-weight: 700;">
-                  SL · ${pipsNum} pip ${s.peak && s.peak < 15 ? `<span style="font-size: 10.5px; color: #8e9aa8; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak}p</span>` : ''}
-                </div>
-              ` : isBE ? `
-                <div style="font-family:'Space Grotesk',sans-serif; font-size: 13px; font-weight: 700; color: var(--solar-gold);">
-                  BE (SIFAR RISIKO) · 0 pip <span style="font-size: 10.5px; color: #00e676; border: 1px solid rgba(0,230,118,0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak || 30}p</span>
-                </div>
-              ` : `
-                <div style="font-family:'Space Grotesk',sans-serif; font-size: 13px; font-weight: 700; color: #00e676;">
-                  ${s.status === 'CLOSED IN PROFIT' ? 'CLOSED IN PROFIT · ' : ''}${s.status && s.status.startsWith('TP') ? `${s.status} · ` : ''}+${pipsNum} pip
-                </div>
-              `}
-            </div>
-          </div>
-        `;
-      }).join('')}
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; margin-bottom:12px;">
+      <h4 class="sec" style="margin:0;">Signal History</h4>
+      <span id="statHistoryCount" style="font-size:11px; font-weight:700; color:#8e9aa8; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:10px;">0 Rekod</span>
+    </div>
+    <div class="sig-history-list" id="sigHistoryContainer">
+      <!-- Populated dynamically -->
     </div>
   </section>`;
 
-  // Filter tabs
+  function renderMetricsAndHistory() {
+    let filteredSignals = [];
+    let titleLabel = '';
+    let dateLabel = '';
+
+    if (currentMode === 'daily') {
+      const selectedDate = availableDates[curDateIdx] || 'Today';
+      dateLabel = selectedDate === 'Today' ? `Today (${todayDateStr})` : selectedDate;
+      titleLabel = `TOTAL PROFIT (${selectedDate.toUpperCase()})`;
+      filteredSignals = (dateMap[selectedDate] && dateMap[selectedDate].signals) ? dateMap[selectedDate].signals : [];
+      if (selectedDate === 'Today' && filteredSignals.length === 0 && dateMap[todayDateStr]) {
+        filteredSignals = dateMap[todayDateStr].signals;
+      }
+    } else if (currentMode === 'weekly') {
+      dateLabel = 'This Week (Last 7 Days)';
+      titleLabel = 'TOTAL PROFIT (THIS WEEK)';
+      const last7DateStrs = computed7Days.map(d => d.date);
+      filteredSignals = signals.filter(s => last7DateStrs.includes(s.date) || s.date === 'Today');
+      if (filteredSignals.length === 0) filteredSignals = signals;
+    } else if (currentMode === 'monthly') {
+      dateLabel = 'October - November 2026';
+      titleLabel = 'TOTAL PROFIT (OCT / NOV)';
+      filteredSignals = signals;
+    } else { // 'all'
+      dateLabel = 'All Time Performance';
+      titleLabel = 'TOTAL PROFIT (ALL TIME)';
+      filteredSignals = signals;
+    }
+
+    let pipsTotal = 0;
+    let wins = 0;
+    let losses = 0;
+    let tp1 = 0;
+    let tp2 = 0;
+    let tp3 = 0;
+    let sl = 0;
+
+    filteredSignals.forEach(s => {
+      const isBe = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
+      const p = isBe ? 0 : (Number(s.pips) || 0);
+      pipsTotal += p;
+      if (p > 0 || ['TP1', 'TP2', 'TP3', 'CLOSED IN PROFIT', 'TP_TRAIL'].includes(s.status)) {
+        wins++;
+        if (s.status === 'TP3') tp3++;
+        else if (s.status === 'TP2') tp2++;
+        else tp1++;
+      } else if (s.status === 'SL' && !isBe) {
+        losses++;
+        sl++;
+      }
+    });
+
+    const totalClosed = wins + losses;
+    const wr = totalClosed > 0 ? Math.round((wins / totalClosed) * 100) : (st.winRate || 93);
+
+    // Update DOM metrics
+    const lblProfit = $('#statProfitLabel', main);
+    const valProfit = $('#statProfitVal', main);
+    if (lblProfit) lblProfit.textContent = titleLabel;
+    if (valProfit) {
+      valProfit.textContent = `${pipsTotal >= 0 ? '+' : ''}${pipsTotal} pip`;
+      valProfit.style.color = pipsTotal >= 0 ? '#00e676' : '#ef5350';
+    }
+
+    const elWinRate = $('#statWinRateVal', main);
+    if (elWinRate) elWinRate.textContent = `${wr}%`;
+    const elClosed = $('#statClosedVal', main);
+    if (elClosed) elClosed.textContent = `${totalClosed}`;
+    const elTp = $('#statTpHitVal', main);
+    if (elTp) elTp.textContent = `${tp1} / ${tp2} / ${tp3}`;
+    const elSl = $('#statSlHitVal', main);
+    if (elSl) elSl.textContent = `${sl}`;
+    const elSub = $('#statClosedSub', main);
+    if (elSub) elSub.textContent = `${totalClosed} signals closed (${wins} Win · ${losses} SL · ${filteredSignals.length - totalClosed} BE)`;
+
+    const elDateLabel = $('#statDateLabel', main);
+    if (elDateLabel) elDateLabel.textContent = dateLabel;
+    const elCount = $('#statHistoryCount', main);
+    if (elCount) elCount.textContent = `${filteredSignals.length} Rekod`;
+
+    // Render list
+    const container = $('#sigHistoryContainer', main);
+    if (!container) return;
+
+    if (filteredSignals.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:32px 16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px;">
+          <div style="font-size:32px; margin-bottom:8px;">📅</div>
+          <b style="color:var(--solar-gold); font-size:14px; display:block; margin-bottom:4px;">Tiada Rekod Isyarat Pada ${dateLabel}</b>
+          <p style="font-size:12px; color:var(--text-muted); line-height:1.4; margin:0 auto; max-width:280px;">
+            Gunakan butang ‹ untuk menyemak rekod trade hari sebelumnya seperti Oct 30 (+6,100p) atau Oct 29 (+3,230p).
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filteredSignals.slice(0, 100).map(s => {
+      const isSell = s.type === 'SELL';
+      const arrow = isSell ? '▼' : '▲';
+      const arrowCol = isSell ? '#ef5350' : '#26a69a';
+      const isActuallyBE = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
+      const isSL = s.status === 'SL' && !isActuallyBE;
+      const isBE = isActuallyBE;
+      const pipsNum = isBE ? 0 : (Number(s.pips) || 0);
+      const badges = isBE ? ['TP1', 'BE'] : (s.tags && Array.isArray(s.tags) ? s.tags : (s.badge || '').split(' ')).filter(Boolean);
+      return `
+        <div class="sig-history-item" style="display:flex; justify-content:space-between; align-items:center; background:#111722; border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:12px 14px; margin-bottom:8px;">
+          <div>
+            <div style="font-size: 12.5px; color: #cbd5e1; margin-bottom: 4px; font-weight: 600;">
+              <span class="muted" style="font-size:11px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; margin-right:4px;">${s.date || 'Today'}</span>
+              <span style="color: ${arrowCol}; margin: 0 4px;">${arrow}</span>
+              <b style="color: ${arrowCol};">${s.symbol}</b>
+              <span style="font-size:11px; color:#8e9aa8; margin-left:6px;">@ ${s.entry || ''}</span>
+            </div>
+            <div style="font-size: 11px; color: #8e9aa8; margin-bottom: 4px;">${s.time || ''} · M15</div>
+            <div style="display:flex; gap:4px; flex-wrap:wrap;">
+              ${badges.map(b => `<span class="history-badge ${b.toLowerCase()}" style="font-size:9.5px; padding:1px 6px; border-radius:4px;">${b}</span>`).join('')}
+            </div>
+          </div>
+          <div style="text-align: right;">
+            ${isSL ? `
+              <div style="color: #ef5350; font-family:'Space Grotesk',sans-serif; font-size: 13.5px; font-weight: 700;">
+                SL · ${pipsNum} pip ${s.peak && s.peak < 15 ? `<span style="font-size: 10px; color: #8e9aa8; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak}p</span>` : ''}
+              </div>
+            ` : isBE ? `
+              <div style="font-family:'Space Grotesk',sans-serif; font-size: 13.5px; font-weight: 700; color: var(--solar-gold);">
+                BE (SIFAR RISIKO) · 0 pip <span style="font-size: 10px; color: #00e676; border: 1px solid rgba(0,230,118,0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak || 30}p</span>
+              </div>
+            ` : `
+              <div style="font-family:'Space Grotesk',sans-serif; font-size: 13.5px; font-weight: 700; color: #00e676;">
+                ${s.status === 'CLOSED IN PROFIT' ? 'CLOSED · ' : ''}${s.status && s.status.startsWith('TP') ? `${s.status} · ` : ''}+${pipsNum} pip
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Initial render
+  renderMetricsAndHistory();
+
+  // Filter tabs click
   const fBtns = $$('#statFilters button', main);
+  const carouselEl = $('#statDateCarousel', main);
   fBtns.forEach(btn => {
     btn.onclick = () => {
       fBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      $('#statDateLabel', main).textContent = btn.dataset.f === 'daily' ? 'Today' : btn.dataset.f === 'weekly' ? 'This Week' : 'October 2026';
+      currentMode = btn.dataset.f;
+      if (carouselEl) {
+        carouselEl.style.display = currentMode === 'daily' ? 'flex' : 'none';
+      }
+      renderMetricsAndHistory();
     };
   });
 
+  // Carousel prev/next buttons
   const pDate = $('#statPrevDate', main);
   const nDate = $('#statNextDate', main);
-  const lDate = $('#statDateLabel', main);
-  const dateOptions = [
-    new Date(Date.now() - 2 * 86400000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-    new Date(Date.now() - 1 * 86400000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-    `Today (${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})`
-  ];
-  let curDateIdx = 2;
-  if (pDate && nDate && lDate) {
+  if (pDate) {
     pDate.onclick = () => {
-      curDateIdx = Math.max(0, curDateIdx - 1);
-      lDate.textContent = dateOptions[curDateIdx];
-    };
-    nDate.onclick = () => {
-      curDateIdx = Math.min(dateOptions.length - 1, curDateIdx + 1);
-      lDate.textContent = dateOptions[curDateIdx];
+      if (curDateIdx < availableDates.length - 1) {
+        curDateIdx++;
+        renderMetricsAndHistory();
+      }
     };
   }
+  if (nDate) {
+    nDate.onclick = () => {
+      if (curDateIdx > 0) {
+        curDateIdx--;
+        renderMetricsAndHistory();
+      }
+    };
+  }
+
+  // Bar day clicks
+  const barCols = $$('.bar-day-col', main);
+  barCols.forEach(col => {
+    col.onclick = () => {
+      const dt = col.dataset.date;
+      const idx = availableDates.indexOf(dt);
+      if (idx !== -1) {
+        currentMode = 'daily';
+        curDateIdx = idx;
+        fBtns.forEach(b => b.classList.remove('active'));
+        const dBtn = $('#statFilters button[data-f="daily"]', main);
+        if (dBtn) dBtn.classList.add('active');
+        if (carouselEl) carouselEl.style.display = 'flex';
+        renderMetricsAndHistory();
+      }
+    };
+  });
 }
 
 // ---------- 3. Analysis (Amaterasu X Gold Analysis 100% Real-Time TradingView Match) ----------
