@@ -180,6 +180,30 @@ const defaultDB = {
 };
 
 // Helper to synchronize stats with actual signal history
+
+// Helper to format trader pass and compute live 14-day expiry
+function formatTraderData(trader) {
+  if (!trader) return null;
+  const now = new Date();
+  const exp = new Date(trader.expiresAt || (now.getTime() + 14 * 86400000));
+  const diffMs = exp.getTime() - now.getTime();
+  const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  let computedStatus = trader.status || 'active';
+  if (computedStatus !== 'locked') {
+    if (daysRemaining <= 0) computedStatus = 'expired';
+    else if (daysRemaining <= 3) computedStatus = 'expiring';
+    else computedStatus = 'active';
+  }
+
+  return {
+    ...trader,
+    daysRemaining: Math.max(0, daysRemaining),
+    isExpired: daysRemaining <= 0,
+    status: computedStatus
+  };
+}
+
 function syncStatsWithSignals(db) {
   if (!db || !Array.isArray(db.signals)) return;
   const signals = db.signals;
@@ -566,7 +590,9 @@ const server = http.createServer(async (req, res) => {
       analysis: db.analysis,
       screener: db.screener,
       classes: db.classes,
-      contests: db.contests
+      contests: db.contests,
+      ibs: db.ibs || [],
+      traders: (db.traders || []).map(formatTraderData)
     })}\n\n`);
 
     req.on('close', () => {
@@ -1281,6 +1307,302 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: e.message }));
     }
+  }
+
+  // ===== 14. IB & TRADER NETWORK (14-DAY PERFORMANCE PASS ECOSYSTEM) =====
+
+  // 14.1 GET /api/ib/all (Fetch all IBs and summary metrics)
+  if (pathname === '/api/ib/all' && req.method === 'GET') {
+    const db = getDB();
+    const ibs = db.ibs || [];
+    const traders = (db.traders || []).map(formatTraderData);
+    const summary = {
+      totalIbs: ibs.length,
+      totalTraders: traders.length,
+      activeTraders: traders.filter(t => t.status === 'active').length,
+      expiringTraders: traders.filter(t => t.status === 'expiring').length,
+      expiredTraders: traders.filter(t => t.status === 'expired' || t.status === 'locked').length,
+    };
+    const enrichedIbs = ibs.map(ib => {
+      const ibTraders = traders.filter(t => t.ibCode === ib.code || t.ibId === ib.id);
+      return {
+        ...ib,
+        traderCount: ibTraders.length,
+        activeCount: ibTraders.filter(t => t.status === 'active').length,
+        expiringCount: ibTraders.filter(t => t.status === 'expiring').length,
+        expiredCount: ibTraders.filter(t => t.status === 'expired' || t.status === 'locked').length,
+      };
+    });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ success: true, ibs: enrichedIbs, summary }));
+  }
+
+  // 14.2 POST /api/ib/create (Master Admin creates new IB)
+  if (pathname === '/api/ib/create' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      if (!payload.name || !payload.code) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Name and unique IB Code are required' }));
+      }
+      const db = getDB();
+      if (!Array.isArray(db.ibs)) db.ibs = [];
+      const cleanCode = payload.code.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+      if (db.ibs.some(ib => ib.code === cleanCode)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'IB Code already exists' }));
+      }
+      const newIb = {
+        id: 'ib-' + Date.now(),
+        code: cleanCode,
+        name: payload.name.trim(),
+        leader: payload.leader || payload.name,
+        phone: payload.phone || '',
+        telegram: payload.telegram || '',
+        broker: payload.broker || 'Versus Trade',
+        affiliateLink: payload.affiliateLink || '',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        notes: payload.notes || ''
+      };
+      db.ibs.push(newIb);
+      saveDB(db);
+      broadcastEvent('ib_list_updated', db.ibs);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, ib: newIb }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // 14.3 DELETE /api/ib/delete
+  if (pathname === '/api/ib/delete' && req.method === 'DELETE') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      db.ibs = (db.ibs || []).filter(ib => ib.id !== payload.ibId && ib.code !== payload.code);
+      saveDB(db);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // 14.4 GET /api/traders (List all traders, filterable by ?ib=...)
+  if (pathname === '/api/traders' && req.method === 'GET') {
+    const db = getDB();
+    const query = new URLSearchParams(urlParts[1] || '');
+    const ibFilter = query.get('ib');
+    let list = (db.traders || []).map(formatTraderData);
+    if (ibFilter && ibFilter !== 'all') {
+      list = list.filter(t => t.ibCode === ibFilter || t.ibId === ibFilter);
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ success: true, traders: list }));
+  }
+
+  // 14.5 POST /api/traders/onboard (Register a new client trader with 14-day pass)
+  if (pathname === '/api/traders/onboard' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      if (!payload.name || !payload.mt5Account) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Name and MT5 Account are required' }));
+      }
+      const db = getDB();
+      if (!Array.isArray(db.traders)) db.traders = [];
+      const cleanMt5 = String(payload.mt5Account).trim();
+      const now = new Date();
+      const expires = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+
+      let existing = db.traders.find(t => String(t.mt5Account) === cleanMt5);
+      if (existing) {
+        existing.name = payload.name.trim();
+        existing.phone = payload.phone || existing.phone;
+        existing.ibCode = payload.ibCode || existing.ibCode;
+        existing.expiresAt = expires.toISOString();
+        existing.depositAmount = Number(payload.depositAmount) || existing.depositAmount || 0;
+        existing.notes = payload.notes || existing.notes;
+        existing.status = 'active';
+        saveDB(db);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, message: 'Trader updated & pass refreshed +14 days', trader: formatTraderData(existing) }));
+      }
+
+      const newTrader = {
+        id: 'trd-' + Date.now(),
+        name: payload.name.trim(),
+        username: (payload.username || payload.name).toLowerCase().replace(/[^a-z0-9_-]/g, '_'),
+        phone: payload.phone || '',
+        mt5Account: cleanMt5,
+        ibId: payload.ibId || '',
+        ibCode: payload.ibCode || 'alpha_fx',
+        registeredAt: now.toISOString(),
+        expiresAt: expires.toISOString(),
+        status: 'active',
+        depositAmount: Number(payload.depositAmount) || 0,
+        lastLotChecked: Number(payload.lastLotChecked) || 0,
+        extensionCount: 0,
+        notes: payload.notes || '14-Day Performance Pass diaktifkan'
+      };
+      db.traders.unshift(newTrader);
+      saveDB(db);
+      broadcastEvent('trader_registered', formatTraderData(newTrader));
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, trader: formatTraderData(newTrader) }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // 14.6 POST /api/traders/extend (Extend +14 Days upon capital/lot verification)
+  if (pathname === '/api/traders/extend' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      const trd = (db.traders || []).find(t => t.id === payload.traderId || String(t.mt5Account) === String(payload.mt5Account));
+      if (!trd) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Trader not found' }));
+      }
+      const daysToAdd = Number(payload.days) || 14;
+      const now = new Date();
+      const currentExp = new Date(trd.expiresAt);
+      const baseDate = currentExp > now ? currentExp : now;
+      const newExp = new Date(baseDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+      trd.expiresAt = newExp.toISOString();
+      trd.status = 'active';
+      trd.extensionCount = (trd.extensionCount || 0) + 1;
+      trd.lastExtensionAt = now.toISOString();
+      if (payload.lastLotChecked !== undefined) trd.lastLotChecked = Number(payload.lastLotChecked);
+      if (payload.depositAmount !== undefined) trd.depositAmount = Number(payload.depositAmount);
+      if (payload.notes) trd.notes = payload.notes;
+      saveDB(db);
+      const formatted = formatTraderData(trd);
+      broadcastEvent('trader_extended', formatted);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, trader: formatted, message: 'Berjaya perbaharui +14 hari untuk ' + trd.name + '!' }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // 14.7 POST /api/traders/toggle-status (Lock / Unlock access)
+  if (pathname === '/api/traders/toggle-status' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      const trd = (db.traders || []).find(t => t.id === payload.traderId);
+      if (!trd) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Trader not found' }));
+      }
+      trd.status = payload.status || (trd.status === 'locked' ? 'active' : 'locked');
+      saveDB(db);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, trader: formatTraderData(trd) }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // 14.8 POST /api/traders/update-lot
+  if (pathname === '/api/traders/update-lot' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      const trd = (db.traders || []).find(t => t.id === payload.traderId);
+      if (!trd) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Trader not found' }));
+      }
+      if (payload.lastLotChecked !== undefined) trd.lastLotChecked = Number(payload.lastLotChecked);
+      if (payload.depositAmount !== undefined) trd.depositAmount = Number(payload.depositAmount);
+      if (payload.notes) trd.notes = payload.notes;
+      saveDB(db);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, trader: formatTraderData(trd) }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // 14.9 DELETE /api/traders/delete
+  if (pathname === '/api/traders/delete' && req.method === 'DELETE') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      db.traders = (db.traders || []).filter(t => t.id !== payload.traderId);
+      saveDB(db);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // 14.10 GET /api/trader/verify-pass (Used by client app to check 14-day validity)
+  if (pathname === '/api/trader/verify-pass' && req.method === 'GET') {
+    const db = getDB();
+    const query = new URLSearchParams(urlParts[1] || '');
+    const id = query.get('id') || '';
+    const mt5 = query.get('mt5') || '';
+    const callSign = query.get('user') || '';
+
+    const isMasterOperator = ['tengku khairi', 'kj35', 'kj35 (master trader)', 'admin', 'sensei hiro'].includes(callSign.toLowerCase().trim());
+    if (isMasterOperator) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        success: true,
+        isMaster: true,
+        valid: true,
+        daysRemaining: 999,
+        passTitle: 'Master VIP Infinite Pass',
+        message: 'Akses Penuh Master Admin'
+      }));
+    }
+
+    const trd = (db.traders || []).find(t => 
+      (id && t.id === id) || 
+      (mt5 && String(t.mt5Account) === String(mt5)) || 
+      (callSign && ((t.username && t.username.toLowerCase() === callSign.toLowerCase()) || (t.name && t.name.toLowerCase() === callSign.toLowerCase())))
+    );
+
+    if (trd) {
+      const formatted = formatTraderData(trd);
+      const ib = (db.ibs || []).find(i => i.code === trd.ibCode || i.id === trd.ibId) || { name: 'Amaterasu Partner', phone: '+60123456789' };
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        success: true,
+        found: true,
+        trader: formatted,
+        valid: !formatted.isExpired && formatted.status !== 'locked',
+        daysRemaining: formatted.daysRemaining,
+        ib: { name: ib.name, code: ib.code, phone: ib.phone, telegram: ib.telegram },
+        message: formatted.isExpired 
+          ? 'Tempoh pas 14-hari anda telah tamat. Sila hubungi IB untuk pembaharuan percuma.' 
+          : 'Pas Aktif: Baki ' + formatted.daysRemaining + ' Hari'
+      }));
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({
+      success: true,
+      found: false,
+      valid: true,
+      isTrial: true,
+      daysRemaining: 14,
+      passTitle: '14-Day Performance Trial',
+      message: 'Mod Percubaan 14-Hari'
+    }));
   }
 
   // ===== Static Files =====

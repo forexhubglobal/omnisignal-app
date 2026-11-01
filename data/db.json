@@ -6,13 +6,8 @@
     "tp2Hit": 0,
     "tp3Hit": 0,
     "slHit": 21,
-    "totalProfitToday": -30,
+    "totalProfitToday": 0,
     "last7Days": [
-      {
-        "day": "Mon",
-        "date": "Oct 26",
-        "pips": 0
-      },
       {
         "day": "Tue",
         "date": "Oct 27",
@@ -39,9 +34,14 @@
         "pips": 0
       },
       {
-        "day": "Today",
+        "day": "Sun",
         "date": "Nov 1",
         "pips": -30
+      },
+      {
+        "day": "Today",
+        "date": "Nov 2",
+        "pips": 0
       }
     ]
   },
@@ -4950,5 +4950,116 @@
       "peakPips": 17
     }
   ],
-  "newsSynergyMode": "AUTO"
+  "newsSynergyMode": "AUTO",
+  "ibs": [
+    {
+      "id": "ib-alpha",
+      "code": "alpha_fx",
+      "name": "Team Alpha FX",
+      "leader": "Captain Zul",
+      "phone": "+60123456789",
+      "telegram": "@captain_zul_alpha",
+      "broker": "Versus Trade",
+      "affiliateLink": "https://versustrade.com/register?ib=ALPHA",
+      "status": "active",
+      "createdAt": "2026-10-15T00:00:00.000Z",
+      "notes": "Group VIP Utama - Min  cent, fokus XAUUSD & USDJPY"
+    },
+    {
+      "id": "ib-vanguard",
+      "code": "vanguard_capital",
+      "name": "Vanguard Traders Hub",
+      "leader": "Master Haris",
+      "phone": "+60198765432",
+      "telegram": "@haris_vanguard",
+      "broker": "Versus Trade",
+      "affiliateLink": "https://versustrade.com/register?ib=VANGUARD",
+      "status": "active",
+      "createdAt": "2026-10-20T00:00:00.000Z",
+      "notes": "Komuniti Trader Lembah Klang"
+    }
+  ],
+  "traders": [
+    {
+      "id": "trd-1",
+      "name": "Ahmad Fikri",
+      "username": "ahmad_fikri",
+      "phone": "+60112345678",
+      "mt5Account": "5100159981",
+      "ibId": "ib-alpha",
+      "ibCode": "alpha_fx",
+      "registeredAt": "2026-10-28T17:08:31.858Z",
+      "expiresAt": "2026-11-11T17:08:31.858Z",
+      "status": "active",
+      "depositAmount": 100,
+      "lastLotChecked": 1.45,
+      "extensionCount": 0,
+      "notes": "Modal  cent disahkan, trade aktif minggu ini"
+    },
+    {
+      "id": "trd-2",
+      "name": "Mohd Zaki",
+      "username": "zaki_trader",
+      "phone": "+60173322114",
+      "mt5Account": "5100157723",
+      "ibId": "ib-alpha",
+      "ibCode": "alpha_fx",
+      "registeredAt": "2026-10-20T17:08:31.858Z",
+      "expiresAt": "2026-11-03T17:08:31.858Z",
+      "status": "active",
+      "depositAmount": 50,
+      "lastLotChecked": 0.85,
+      "extensionCount": 0,
+      "notes": "Baki 2 hari! IB perlu semak lot sebelum renew"
+    },
+    {
+      "id": "trd-3",
+      "name": "Faris Danial",
+      "username": "faris_fx",
+      "phone": "+60189900112",
+      "mt5Account": "5100154410",
+      "ibId": "ib-vanguard",
+      "ibCode": "vanguard_capital",
+      "registeredAt": "2026-10-16T17:08:31.858Z",
+      "expiresAt": "2026-11-15T17:26:45.507Z",
+      "status": "active",
+      "depositAmount": 100,
+      "lastLotChecked": 1.2,
+      "extensionCount": 1,
+      "notes": "Modal  cent disahkan",
+      "lastExtensionAt": "2026-11-01T17:26:45.507Z"
+    },
+    {
+      "id": "trd-4",
+      "name": "Siti Nur Aisyah",
+      "username": "aisyah_gold",
+      "phone": "+60134455667",
+      "mt5Account": "5100158832",
+      "ibId": "ib-alpha",
+      "ibCode": "alpha_fx",
+      "registeredAt": "2026-10-31T17:08:31.858Z",
+      "expiresAt": "2026-11-14T17:08:31.858Z",
+      "status": "active",
+      "depositAmount": 200,
+      "lastLotChecked": 0.6,
+      "extensionCount": 0,
+      "notes": "Baru onboard semalam, deposit "
+    },
+    {
+      "id": "trd-5",
+      "name": "Kamarul Ariffin",
+      "username": "kamarul_pro",
+      "phone": "+60167788990",
+      "mt5Account": "5100153391",
+      "ibId": "ib-vanguard",
+      "ibCode": "vanguard_capital",
+      "registeredAt": "2026-10-19T17:08:31.858Z",
+      "expiresAt": "2026-11-02T17:08:31.858Z",
+      "status": "active",
+      "depositAmount": 150,
+      "lastLotChecked": 2.3,
+      "extensionCount": 1,
+      "notes": "Trader power! Dah buat 2.3 lot, layak auto-extend"
+    }
+  ]
 }
