@@ -558,7 +558,7 @@ const server = http.createServer(async (req, res) => {
       activeSignal: db.activeSignal,
       activeSignals: db.activeSignals || (db.activeSignal && db.activeSignal.status === 'ACTIVE' ? [db.activeSignal] : []),
       lastResolvedSignal: db.lastResolvedSignal,
-      signals: (db.signals || []).slice(0, 15),
+      signals: db.signals || [],
       marketQuotes: liveMarketQuotes,
       stats: db.stats,
       aiNewsStats: db.aiNewsStats || { totalNewsSignals: 0, winRate: 0, tpHit: 0, slHit: 0, totalPips: 0 },

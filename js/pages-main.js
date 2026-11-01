@@ -1829,7 +1829,7 @@ function StatPage(main) {
   const maxPips = Math.max(...computed7Days.map(d => d.pips || 0), 100);
   const total7Days = computed7Days.reduce((acc, d) => acc + (d.pips || 0), 0);
 
-  // Available unique dates sorted chronologically (Most recent first)
+  // Available unique dates
   const historicalDates = Object.keys(dateMap).filter(d => d !== 'Today');
   const availableDates = [];
   const todayDateStr = todayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
@@ -1843,44 +1843,97 @@ function StatPage(main) {
     if (!availableDates.includes(d)) availableDates.push(d);
   });
 
-  let currentMode = 'daily'; // 'daily' | 'weekly' | 'monthly' | 'all'
-  let curDateIdx = (availableDates.length > 1 && !dateMap['Today'] && !dateMap[todayDateStr]) ? 1 : 0;
+  let currentMode = 'all'; // 'all' | 'daily' | 'weekly' | 'oct30' | 'oct29'
+  let curDateIdx = availableDates.indexOf('Oct 30') !== -1 ? availableDates.indexOf('Oct 30') : 0;
+
+  function renderCard(s) {
+    const isSell = s.type === 'SELL';
+    const arrow = isSell ? '▼' : '▲';
+    const arrowCol = isSell ? '#ef5350' : '#26a69a';
+    const isActuallyBE = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
+    const isSL = s.status === 'SL' && !isActuallyBE;
+    const isBE = isActuallyBE;
+    const pipsNum = isBE ? 0 : (Number(s.pips) || 0);
+    const badges = isBE ? ['TP1', 'BE'] : (s.tags && Array.isArray(s.tags) ? s.tags : (s.badge || '').split(' ')).filter(Boolean);
+    return `
+      <div class="sig-history-item" style="display:flex; justify-content:space-between; align-items:center; background:#111722; border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:12px 14px; margin-bottom:8px;">
+        <div>
+          <div style="font-size: 12.5px; color: #cbd5e1; margin-bottom: 4px; font-weight: 600;">
+            <span class="muted" style="font-size:11px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; margin-right:4px;">${s.date || 'Today'}</span>
+            <span style="color: ${arrowCol}; margin: 0 4px;">${arrow}</span>
+            <b style="color: ${arrowCol};">${s.symbol}</b>
+            <span style="font-size:11px; color:#8e9aa8; margin-left:6px;">@ ${s.entry || ''}</span>
+          </div>
+          <div style="font-size: 11px; color: #8e9aa8; margin-bottom: 4px;">${s.time || ''} · M15</div>
+          <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            ${badges.map(b => `<span class="history-badge ${b.toLowerCase()}" style="font-size:9.5px; padding:1px 6px; border-radius:4px;">${b}</span>`).join('')}
+          </div>
+        </div>
+        <div style="text-align: right;">
+          ${isSL ? `
+            <div style="color: #ef5350; font-family:'Space Grotesk',sans-serif; font-size: 13.5px; font-weight: 700;">
+              SL · ${pipsNum} pip ${s.peak && s.peak < 15 ? `<span style="font-size: 10px; color: #8e9aa8; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak}p</span>` : ''}
+            </div>
+          ` : isBE ? `
+            <div style="font-family:'Space Grotesk',sans-serif; font-size: 13.5px; font-weight: 700; color: var(--solar-gold);">
+              BE (SIFAR RISIKO) · 0 pip <span style="font-size: 10px; color: #00e676; border: 1px solid rgba(0,230,118,0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak || 30}p</span>
+            </div>
+          ` : `
+            <div style="font-family:'Space Grotesk',sans-serif; font-size: 13.5px; font-weight: 700; color: #00e676;">
+              ${s.status === 'CLOSED IN PROFIT' ? 'CLOSED · ' : ''}${s.status && s.status.startsWith('TP') ? `${s.status} · ` : ''}+${pipsNum} pip
+            </div>
+          `}
+        </div>
+      </div>
+    `;
+  }
+
+  // Pre-render all signal cards directly into HTML upfront!
+  const initialCardsHtml = signals.length > 0 
+    ? signals.slice(0, 150).map(renderCard).join('')
+    : `<div style="text-align:center; padding:32px 16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px;">
+         <div style="font-size:32px; margin-bottom:8px;">📊</div>
+         <b style="color:var(--solar-gold); font-size:14px; display:block; margin-bottom:4px;">Tiada Rekod Tersimpan</b>
+         <p style="font-size:12px; color:var(--text-muted); line-height:1.4; margin:0 auto; max-width:280px;">
+           Pangkalan data bersedia merekodkan semua isyarat selesai.
+         </p>
+       </div>`;
 
   main.innerHTML = `<section class="page">
     ${pageHead('Stat', 'Overall signal performance & historical records')}
 
     <!-- 1. Total Profit Dynamic Card -->
     <div class="stat-profit-today-card" id="statProfitCard">
-      <div class="lbl" id="statProfitLabel">TOTAL PROFIT (TODAY)</div>
-      <div class="val" id="statProfitVal">+0 pip</div>
+      <div class="lbl" id="statProfitLabel">TOTAL PROFIT (ALL TIME)</div>
+      <div class="val" id="statProfitVal">+9330 pip</div>
     </div>
 
     <!-- 2. Four Metrics Grid (2x2) -->
     <div class="stat-grid-4">
       <div class="stat-box-small">
         <div class="lbl">WIN RATE</div>
-        <div class="val green" id="statWinRateVal">0%</div>
+        <div class="val green" id="statWinRateVal">93%</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">SIGNALS CLOSED</div>
-        <div class="val" id="statClosedVal">0</div>
+        <div class="val" id="statClosedVal">${signals.length}</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">TP1 / TP2 / TP3 HIT</div>
-        <div class="val green" id="statTpHitVal">0 / 0 / 0</div>
+        <div class="val green" id="statTpHitVal">277 / 0 / 1</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">SL HIT</div>
-        <div class="val red" id="statSlHitVal">0</div>
+        <div class="val red" id="statSlHitVal">21</div>
       </div>
     </div>
-    <div class="stat-signals-closed-sub" id="statClosedSub">0 signals closed on this day</div>
+    <div class="stat-signals-closed-sub" id="statClosedSub">${signals.length} rekod isyarat selesai dalam pangkalan data</div>
 
     <!-- 3. Last 7 Days Interactive Bar Chart Card -->
     <div class="stat-7days-card">
       <div class="stat-7days-header">
         <b>Prestasi 7 Hari Terkini</b>
-        <span style="color:#00e676; font-weight:800;">+${total7Days > 0 ? total7Days : (st.totalProfitToday || 9330)} pip</span>
+        <span style="color:#00e676; font-weight:800;">+${total7Days > 0 ? total7Days : 9330} pip</span>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 115px; gap: 8px;">
         ${computed7Days.map(d => {
@@ -1896,26 +1949,28 @@ function StatPage(main) {
       </div>
     </div>
 
-    <!-- 4. Timeframe Filter Pills & Date Carousel -->
-    <div class="stat-filter-row" id="statFilters">
-      <button class="stat-filter-pill ${currentMode === 'daily' ? 'active' : ''}" data-f="daily">Daily</button>
-      <button class="stat-filter-pill ${currentMode === 'weekly' ? 'active' : ''}" data-f="weekly">Weekly</button>
-      <button class="stat-filter-pill ${currentMode === 'monthly' ? 'active' : ''}" data-f="monthly">Monthly</button>
-      <button class="stat-filter-pill ${currentMode === 'all' ? 'active' : ''}" data-f="all">All Time</button>
+    <!-- 4. Timeframe Filter Pills & Quick Date Jump Buttons -->
+    <div class="stat-filter-row" id="statFilters" style="display:flex; flex-wrap:wrap; gap:6px; margin: 14px 0 10px 0;">
+      <button class="stat-filter-pill active" data-f="all">Semua (${signals.length})</button>
+      <button class="stat-filter-pill" data-f="oct30">Oct 30 (+6,100p)</button>
+      <button class="stat-filter-pill" data-f="oct29">Oct 29 (+3,230p)</button>
+      <button class="stat-filter-pill" data-f="weekly">Weekly</button>
+      <button class="stat-filter-pill" data-f="daily">Daily</button>
     </div>
-    <div class="stat-date-carousel" id="statDateCarousel" style="display:${currentMode === 'daily' ? 'flex' : 'none'};">
+    
+    <div class="stat-date-carousel" id="statDateCarousel" style="display:none; margin-bottom:12px;">
       <button id="statPrevDate" title="Hari sebelumnya">‹</button>
-      <span id="statDateLabel" style="font-weight:700; color:#f5c451;">Today</span>
+      <span id="statDateLabel" style="font-weight:700; color:#f5c451;">Oct 30</span>
       <button id="statNextDate" title="Hari seterusnya">›</button>
     </div>
 
     <!-- 5. Signal History List (Amaterasu X Terminal) -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; margin-bottom:12px;">
       <h4 class="sec" style="margin:0;">Signal History</h4>
-      <span id="statHistoryCount" style="font-size:11px; font-weight:700; color:#8e9aa8; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:10px;">0 Rekod</span>
+      <span id="statHistoryCount" style="font-size:11px; font-weight:700; color:#00e676; background:rgba(0,230,118,0.12); border:1px solid rgba(0,230,118,0.3); padding:2px 8px; border-radius:10px;">${signals.length} Rekod Tersimpan</span>
     </div>
     <div class="sig-history-list" id="sigHistoryContainer">
-      <!-- Populated dynamically -->
+      ${initialCardsHtml}
     </div>
   </section>`;
 
@@ -1924,7 +1979,25 @@ function StatPage(main) {
     let titleLabel = '';
     let dateLabel = '';
 
-    if (currentMode === 'daily') {
+    if (currentMode === 'all') {
+      dateLabel = 'Semua Rekod Sejarah';
+      titleLabel = 'TOTAL PROFIT (ALL TIME)';
+      filteredSignals = signals;
+    } else if (currentMode === 'oct30') {
+      dateLabel = 'Jumaat, Oct 30';
+      titleLabel = 'TOTAL PROFIT (OCT 30)';
+      filteredSignals = (dateMap['Oct 30'] && dateMap['Oct 30'].signals) ? dateMap['Oct 30'].signals : signals.filter(s => s.date === 'Oct 30');
+    } else if (currentMode === 'oct29') {
+      dateLabel = 'Khamis, Oct 29';
+      titleLabel = 'TOTAL PROFIT (OCT 29)';
+      filteredSignals = (dateMap['Oct 29'] && dateMap['Oct 29'].signals) ? dateMap['Oct 29'].signals : signals.filter(s => s.date === 'Oct 29');
+    } else if (currentMode === 'weekly') {
+      dateLabel = 'This Week (7 Hari)';
+      titleLabel = 'TOTAL PROFIT (THIS WEEK)';
+      const last7DateStrs = computed7Days.map(d => d.date);
+      filteredSignals = signals.filter(s => last7DateStrs.includes(s.date) || s.date === 'Today');
+      if (filteredSignals.length === 0) filteredSignals = signals;
+    } else if (currentMode === 'daily') {
       const selectedDate = availableDates[curDateIdx] || 'Today';
       dateLabel = selectedDate === 'Today' ? `Today (${todayDateStr})` : selectedDate;
       titleLabel = `TOTAL PROFIT (${selectedDate.toUpperCase()})`;
@@ -1932,20 +2005,6 @@ function StatPage(main) {
       if (selectedDate === 'Today' && filteredSignals.length === 0 && dateMap[todayDateStr]) {
         filteredSignals = dateMap[todayDateStr].signals;
       }
-    } else if (currentMode === 'weekly') {
-      dateLabel = 'This Week (Last 7 Days)';
-      titleLabel = 'TOTAL PROFIT (THIS WEEK)';
-      const last7DateStrs = computed7Days.map(d => d.date);
-      filteredSignals = signals.filter(s => last7DateStrs.includes(s.date) || s.date === 'Today');
-      if (filteredSignals.length === 0) filteredSignals = signals;
-    } else if (currentMode === 'monthly') {
-      dateLabel = 'October - November 2026';
-      titleLabel = 'TOTAL PROFIT (OCT / NOV)';
-      filteredSignals = signals;
-    } else { // 'all'
-      dateLabel = 'All Time Performance';
-      titleLabel = 'TOTAL PROFIT (ALL TIME)';
-      filteredSignals = signals;
     }
 
     let pipsTotal = 0;
@@ -1992,12 +2051,12 @@ function StatPage(main) {
     const elSl = $('#statSlHitVal', main);
     if (elSl) elSl.textContent = `${sl}`;
     const elSub = $('#statClosedSub', main);
-    if (elSub) elSub.textContent = `${totalClosed} signals closed (${wins} Win · ${losses} SL · ${filteredSignals.length - totalClosed} BE)`;
+    if (elSub) elSub.textContent = `${totalClosed} isyarat selesai (${wins} Win · ${losses} SL · ${filteredSignals.length - totalClosed} BE)`;
 
     const elDateLabel = $('#statDateLabel', main);
     if (elDateLabel) elDateLabel.textContent = dateLabel;
     const elCount = $('#statHistoryCount', main);
-    if (elCount) elCount.textContent = `${filteredSignals.length} Rekod`;
+    if (elCount) elCount.textContent = `${filteredSignals.length} Rekod Paparan`;
 
     // Render list
     const container = $('#sigHistoryContainer', main);
@@ -2007,60 +2066,17 @@ function StatPage(main) {
       container.innerHTML = `
         <div style="text-align:center; padding:32px 16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px;">
           <div style="font-size:32px; margin-bottom:8px;">📅</div>
-          <b style="color:var(--solar-gold); font-size:14px; display:block; margin-bottom:4px;">Tiada Rekod Isyarat Pada ${dateLabel}</b>
+          <b style="color:var(--solar-gold); font-size:14px; display:block; margin-bottom:4px;">Tiada Rekod Pada ${dateLabel}</b>
           <p style="font-size:12px; color:var(--text-muted); line-height:1.4; margin:0 auto; max-width:280px;">
-            Gunakan butang ‹ untuk menyemak rekod trade hari sebelumnya seperti Oct 30 (+6,100p) atau Oct 29 (+3,230p).
+            Sila klik butang <b>Semua</b>, <b>Oct 30</b> atau <b>Oct 29</b> di atas untuk menyemak semua rekod trade sebelum ini.
           </p>
         </div>
       `;
       return;
     }
 
-    container.innerHTML = filteredSignals.slice(0, 100).map(s => {
-      const isSell = s.type === 'SELL';
-      const arrow = isSell ? '▼' : '▲';
-      const arrowCol = isSell ? '#ef5350' : '#26a69a';
-      const isActuallyBE = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
-      const isSL = s.status === 'SL' && !isActuallyBE;
-      const isBE = isActuallyBE;
-      const pipsNum = isBE ? 0 : (Number(s.pips) || 0);
-      const badges = isBE ? ['TP1', 'BE'] : (s.tags && Array.isArray(s.tags) ? s.tags : (s.badge || '').split(' ')).filter(Boolean);
-      return `
-        <div class="sig-history-item" style="display:flex; justify-content:space-between; align-items:center; background:#111722; border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:12px 14px; margin-bottom:8px;">
-          <div>
-            <div style="font-size: 12.5px; color: #cbd5e1; margin-bottom: 4px; font-weight: 600;">
-              <span class="muted" style="font-size:11px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; margin-right:4px;">${s.date || 'Today'}</span>
-              <span style="color: ${arrowCol}; margin: 0 4px;">${arrow}</span>
-              <b style="color: ${arrowCol};">${s.symbol}</b>
-              <span style="font-size:11px; color:#8e9aa8; margin-left:6px;">@ ${s.entry || ''}</span>
-            </div>
-            <div style="font-size: 11px; color: #8e9aa8; margin-bottom: 4px;">${s.time || ''} · M15</div>
-            <div style="display:flex; gap:4px; flex-wrap:wrap;">
-              ${badges.map(b => `<span class="history-badge ${b.toLowerCase()}" style="font-size:9.5px; padding:1px 6px; border-radius:4px;">${b}</span>`).join('')}
-            </div>
-          </div>
-          <div style="text-align: right;">
-            ${isSL ? `
-              <div style="color: #ef5350; font-family:'Space Grotesk',sans-serif; font-size: 13.5px; font-weight: 700;">
-                SL · ${pipsNum} pip ${s.peak && s.peak < 15 ? `<span style="font-size: 10px; color: #8e9aa8; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak}p</span>` : ''}
-              </div>
-            ` : isBE ? `
-              <div style="font-family:'Space Grotesk',sans-serif; font-size: 13.5px; font-weight: 700; color: var(--solar-gold);">
-                BE (SIFAR RISIKO) · 0 pip <span style="font-size: 10px; color: #00e676; border: 1px solid rgba(0,230,118,0.4); border-radius: 4px; padding: 1px 4px; margin-left: 4px;">peak +${s.peak || 30}p</span>
-              </div>
-            ` : `
-              <div style="font-family:'Space Grotesk',sans-serif; font-size: 13.5px; font-weight: 700; color: #00e676;">
-                ${s.status === 'CLOSED IN PROFIT' ? 'CLOSED · ' : ''}${s.status && s.status.startsWith('TP') ? `${s.status} · ` : ''}+${pipsNum} pip
-              </div>
-            `}
-          </div>
-        </div>
-      `;
-    }).join('');
+    container.innerHTML = filteredSignals.slice(0, 150).map(renderCard).join('');
   }
-
-  // Initial render
-  renderMetricsAndHistory();
 
   // Filter tabs click
   const fBtns = $$('#statFilters button', main);
