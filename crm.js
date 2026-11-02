@@ -1085,6 +1085,7 @@ function renderIbNetwork() {
             <button type="button" class="btn btn-primary" onclick="window.extendTraderPass('${t.id}', '${esc(t.name)}')" title="Lanjutkan +14 Hari" style="padding:4px 8px; font-size:11px; background:linear-gradient(135deg, #00D68F, #00A36C); border:none; color:#080D14; font-weight:700;">
               ⚡ +14 Hari
             </button>
+            <button type="button" class="btn btn-outline" onclick="window.resetTraderDevice('${t.id}', '${esc(t.name)}')" title="Set Semula Kunci Peranti" style="padding:4px 6px; font-size:11px; color:#E5C158;">📱 Reset</button>
             <button type="button" class="btn btn-outline" onclick="window.openEditLotModal('${t.id}', '${esc(t.name)}', ${t.lastLotChecked || 0}, ${t.depositAmount || 0}, '${esc(t.notes || '')}')" title="Kemas kini Lot & Modal" style="padding:4px 8px; font-size:11px;">
               📝 Lot
             </button>
@@ -1181,6 +1182,28 @@ window.deleteTrader = async function(traderId, name) {
     }
   } catch (err) {
     toast('Ralat sambungan: ' + err.message);
+  }
+};
+
+
+window.resetTraderDevice = async function(traderId, name) {
+  if (!confirm('Set semula kunci peranti untuk ' + name + '?\n\nTindakan ini membolehkan trader mendaftarkan telefon/laptop baru.')) return;
+  toast('Menetapkan semula peranti...');
+  try {
+    const res = await fetch('/api/traders/reset-device', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ traderId })
+    });
+    const d = await res.json();
+    if (d.success) {
+      toast('✅ ' + d.message);
+      loadData();
+    } else {
+      toast(d.error || 'Gagal set semula peranti');
+    }
+  } catch(err) {
+    toast('Ralat: ' + err.message);
   }
 };
 

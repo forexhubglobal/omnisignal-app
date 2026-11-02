@@ -28,6 +28,16 @@ function route() {
 
 
   // ===== 14-DAY PERFORMANCE PASS & IB ECOSYSTEM =====
+  // 🛡️ Client Device Fingerprint Helper (1-Device Lock)
+  function getOrCreateDeviceId() {
+    let devId = localStorage.getItem('ama_device_id');
+    if (!devId) {
+      devId = 'dev-' + Math.random().toString(36).substring(2, 10) + '-' + Date.now().toString(36);
+      localStorage.setItem('ama_device_id', devId);
+    }
+    return devId;
+  }
+
   // Captures ?ib=... referral code
   try {
     const urlParams = new URLSearchParams(window.location.search);
@@ -42,7 +52,10 @@ function route() {
     const currentUser = store.get('ama_operator') || BRAND.user;
     const badge = $('#passPillBadge');
     try {
-      const res = await fetch(`/api/trader/verify-pass?user=${encodeURIComponent(currentUser)}`);
+      const devId = getOrCreateDeviceId();
+      const devModel = navigator.userAgentData?.platform || navigator.platform || "Web Browser";
+      const storedMt5 = localStorage.getItem("ama_mt5") || "";
+      const res = await fetch(`/api/trader/verify-pass?user=${encodeURIComponent(currentUser)}&mt5=${encodeURIComponent(storedMt5)}&deviceId=${encodeURIComponent(devId)}&deviceModel=${encodeURIComponent(devModel)}`);
       const data = await res.json();
       
       if (badge) {
@@ -60,6 +73,10 @@ function route() {
       }
 
       // If pass expired and NOT master operator: trigger graceful lock modal
+      if (data.deviceBlocked) {
+        showDeviceBlockedModal(data);
+        return;
+      }
       if (!data.isMaster && !data.valid && data.found) {
         showExpiredLockModal(data);
       }
@@ -111,6 +128,59 @@ function route() {
         </div>
       `}
     `);
+  }
+
+  
+  function showDeviceBlockedModal(data) {
+    const existing = document.getElementById('deviceBlockedOverlay');
+    if (existing) existing.remove();
+
+    const ibName = (data.ib && data.ib.name) ? data.ib.name : 'IB Rakan Niaga Anda';
+    const ibPhone = (data.ib && data.ib.phone) ? data.ib.phone : '+60123456789';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'deviceBlockedOverlay';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(8,13,20,0.96)';
+    overlay.style.backdropFilter = 'blur(16px)';
+    overlay.style.zIndex = '9999999';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.padding = '20px';
+
+    overlay.innerHTML = `
+      <div style="background:#0F1722; border:2px solid #EF2D3D; border-radius:20px; max-width:440px; width:100%; padding:28px 24px; text-align:center; box-shadow:0 0 60px rgba(239,45,61,0.5);">
+        <div style="width:68px; height:68px; margin:0 auto 16px; background:rgba(239,45,61,0.15); border:1.5px solid #EF2D3D; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:32px;">
+          ⛔
+        </div>
+        <h2 style="font-family:'Space Grotesk',sans-serif; color:#FFF; font-size:20px; font-weight:900; margin-bottom:8px;">
+          PERANTI TIDAK DIIKTIRAF
+        </h2>
+        <div style="background:rgba(239,45,61,0.1); border:1px solid rgba(239,45,61,0.3); border-radius:10px; padding:10px; margin-bottom:16px;">
+          <b style="color:#EF2D3D; font-size:12.5px;">1 AKAUN MT5 = 1 PERANTI SAHAJA</b>
+        </div>
+        <p style="font-size:12px; color:#A0A6B4; line-height:1.5; margin-bottom:18px;">
+          Akaun MT5 <b style="color:#00D68F;">#${esc(data.mt5Account || '')}</b> telah didaftarkan pada peranti lain. Perkongsian akses kepada orang lain adalah <b style="color:#FFF;">dilarang sama sekali</b>.
+        </p>
+
+        <div style="background:#07090E; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; font-size:11.5px; color:#CBD5E1; text-align:left; margin-bottom:20px;">
+          💡 <b>Anda baru menukar telefon atau peranti baru?</b><br>
+          Sila hubungi IB anda untuk set semula kunci peranti (*Reset Device Binding*).
+        </div>
+
+        <a href="https://wa.me/${ibPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Salam IB ' + ibName + ', akaun MT5 #' + (data.mt5Account || '') + ' saya disekat kerana tukar peranti baru. Mohon reset device binding saya di CRM.')}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:14px; background:linear-gradient(135deg, #EF2D3D, #FF6D00); color:#FFF; font-weight:800; border-radius:10px; font-size:13px; text-decoration:none; margin-bottom:12px; box-shadow:0 4px 15px rgba(239,45,61,0.4);">
+          📲 WhatsApp IB (${esc(ibName)}) untuk Reset
+        </a>
+
+        <button type="button" onclick="localStorage.removeItem('ama_operator'); localStorage.removeItem('ama_mt5'); location.reload();" style="background:transparent; border:1px solid rgba(255,255,255,0.15); color:#A0A6B4; font-size:11px; padding:8px 16px; border-radius:8px; cursor:pointer;">
+          🚪 Log Masuk Guna Akaun Lain
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
   }
 
   function showExpiredLockModal(data) {
@@ -216,45 +286,81 @@ function init() {
         </div>
 
         <div class="login-body">
-          <div style="font-size:11px; color:#8E9AA8; font-style:italic; margin-bottom:14px; line-height:1.45; border-left:2.5px solid #EF2D3D; padding-left:10px; background:rgba(239,45,61,0.05); padding-top:4px; padding-bottom:4px; border-radius:0 6px 6px 0;">
-            "Even in the darkest night, the light of Amaterasu will never fade." — Itachi Uchiha
+          <div style="display:flex; background:rgba(255,255,255,0.04); border-radius:10px; padding:3px; margin-bottom:14px; border:1px solid rgba(255,255,255,0.08);">
+            <button type="button" id="tabModeTrader" style="flex:1; padding:8px; font-size:11.5px; font-weight:700; border-radius:8px; background:#EF2D3D; color:#FFF; border:none; cursor:pointer;">
+              👤 Trader MT5
+            </button>
+            <button type="button" id="tabModeMaster" style="flex:1; padding:8px; font-size:11.5px; font-weight:700; border-radius:8px; background:transparent; color:#A0A6B4; border:none; cursor:pointer;">
+              👑 Master Admin
+            </button>
           </div>
 
-          <div class="login-field">
-            <label>Pilih Profil Operator</label>
-            <div class="login-operator-pills">
-              <button type="button" class="operator-chip active" data-call="Tengku Khairi">👑 Tengku Khairi</button>
-              <button type="button" class="operator-chip" data-call="kj35 (Master Trader)">⚡ kj35</button>
-              <button type="button" class="operator-chip" data-call="Alpha Trader">👁️ Alpha Trader</button>
+          <!-- Section A: Client Trader MT5 Login -->
+          <div id="sectionTraderLogin">
+            <div style="font-size:11px; color:#00D68F; margin-bottom:12px; background:rgba(0,214,143,0.06); border:1px solid rgba(0,214,143,0.25); border-radius:8px; padding:8px 10px; line-height:1.4;">
+              🛡️ <b>SISTEM 1-DEVICE LOCK:</b><br>
+              Akaun MT5 anda dikunci pada peranti ini secara automatik. Perkongsian akaun adalah dilarang.
             </div>
+
+            <form id="traderMt5LoginForm">
+              <div class="login-field" style="margin-bottom:10px;">
+                <label>No Akaun MT5 Anda</label>
+                <div class="login-input-wrap">
+                  <input type="text" id="loginTraderMt5" required placeholder="cth: 5100159981" style="font-family:monospace; font-weight:700; color:#00D68F;" />
+                </div>
+              </div>
+
+              <div class="login-field" style="margin-bottom:14px;">
+                <label>Nama / Call-Sign Trader</label>
+                <div class="login-input-wrap">
+                  <input type="text" id="loginTraderName" required placeholder="cth: Ahmad Fikri" />
+                </div>
+              </div>
+
+              <button type="submit" class="btn-login-fire" style="width:100%;">
+                <span>⚡</span> Sahkan Peranti & Masuk Terminal
+              </button>
+            </form>
           </div>
 
-          <form id="amaterasuLoginForm">
+          <!-- Section B: Master Operator Login -->
+          <div id="sectionMasterLogin" style="display:none;">
             <div class="login-field">
-              <label>Operator Call-Sign</label>
-              <div class="login-input-wrap">
-                <input type="text" id="loginCallSign" value="${esc(currentOp)}" required placeholder="cth: Tengku Khairi" autocomplete="username" />
+              <label>Pilih Profil Master</label>
+              <div class="login-operator-pills">
+                <button type="button" class="operator-chip active" data-call="Tengku Khairi">👑 Tengku Khairi</button>
+                <button type="button" class="operator-chip" data-call="kj35 (Master Trader)">⚡ kj35</button>
+                <button type="button" class="operator-chip" data-call="Admin">👁️ Admin</button>
               </div>
             </div>
 
-            <div class="login-field">
-              <label>Access Code / Secret Key</label>
-              <div class="login-input-wrap">
-                <input type="password" id="loginPasscode" value="AMATERASU-2026" required placeholder="Kunci Keselamatan MT5" autocomplete="current-password" />
+            <form id="amaterasuLoginForm">
+              <div class="login-field">
+                <label>Operator Call-Sign</label>
+                <div class="login-input-wrap">
+                  <input type="text" id="loginCallSign" value="${esc(currentOp)}" required placeholder="cth: Tengku Khairi" autocomplete="username" />
+                </div>
               </div>
-            </div>
 
-            <button type="submit" class="btn-login-fire" id="btnSubmitLogin" style="margin-top:16px;">
-              <span>⚡</span> Masuk Terminal Amaterasu X
-            </button>
+              <div class="login-field">
+                <label>Kunci Keselamatan MT5</label>
+                <div class="login-input-wrap">
+                  <input type="password" id="loginPasscode" value="AMATERASU-2026" required placeholder="Kunci Keselamatan" autocomplete="current-password" />
+                </div>
+              </div>
 
-            <button type="button" class="btn btn-outline" id="btnGuestLogin" style="width:100%; margin-top:10px; padding:11px; font-size:12px; font-weight:700; border-color:rgba(255,255,255,0.12); color:#A0A6B4;">
-              <span>👁️</span> Masuk Sebagai Tetamu (Demo Guest)
-            </button>
-          </form>
+              <button type="submit" class="btn-login-fire" id="btnSubmitLogin" style="margin-top:14px;">
+                <span>⚡</span> Masuk Terminal Master
+              </button>
+            </form>
+          </div>
 
-          <div style="text-align:center; margin-top:16px; font-size:10.5px; color:#64748B;">
-            Sambungan Disulitkan SSL · Kluster MT5 Disahkan
+          <button type="button" class="btn btn-outline" id="btnGuestLogin" style="width:100%; margin-top:10px; padding:9px; font-size:11px; font-weight:700; border-color:rgba(255,255,255,0.12); color:#A0A6B4;">
+            <span>👁️</span> Masuk Sebagai Tetamu (Demo 14-Hari)
+          </button>
+
+          <div style="text-align:center; margin-top:14px; font-size:10.5px; color:#64748B;">
+            Sambungan Disulitkan SSL · Polisi 1 Akaun = 1 Peranti
           </div>
         </div>
       </div>
@@ -295,6 +401,68 @@ function init() {
       }, 250);
     };
 
+    // Switch between Trader MT5 and Master Admin tab
+    const tabTrader = $('#tabModeTrader', overlay);
+    const tabMaster = $('#tabModeMaster', overlay);
+    const secTrader = $('#sectionTraderLogin', overlay);
+    const secMaster = $('#sectionMasterLogin', overlay);
+
+    if (tabTrader && tabMaster) {
+      tabTrader.onclick = () => {
+        tabTrader.style.background = '#EF2D3D';
+        tabTrader.style.color = '#FFF';
+        tabMaster.style.background = 'transparent';
+        tabMaster.style.color = '#A0A6B4';
+        secTrader.style.display = 'block';
+        secMaster.style.display = 'none';
+      };
+      tabMaster.onclick = () => {
+        tabMaster.style.background = '#EF2D3D';
+        tabMaster.style.color = '#FFF';
+        tabTrader.style.background = 'transparent';
+        tabTrader.style.color = '#A0A6B4';
+        secMaster.style.display = 'block';
+        secTrader.style.display = 'none';
+      };
+    }
+
+    // Trader MT5 Form Submit
+    const traderForm = $('#traderMt5LoginForm', overlay);
+    if (traderForm) {
+      traderForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const mt5Acc = ($('#loginTraderMt5', overlay).value || '').trim();
+        const traderName = ($('#loginTraderName', overlay).value || '').trim();
+        const devId = getOrCreateDeviceId();
+        const devModel = navigator.userAgentData?.platform || navigator.platform || "Web Browser";
+
+        toast('Mengesahkan peranti dan akaun MT5...');
+        try {
+          const res = await fetch(`/api/trader/verify-pass?mt5=${encodeURIComponent(mt5Acc)}&user=${encodeURIComponent(traderName)}&deviceId=${encodeURIComponent(devId)}&deviceModel=${encodeURIComponent(devModel)}`);
+          const data = await res.json();
+
+          if (data.deviceBlocked) {
+            overlay.remove();
+            showDeviceBlockedModal(data);
+            return;
+          }
+
+          if (data.found && !data.valid) {
+            overlay.remove();
+            showExpiredLockModal(data);
+            return;
+          }
+
+          // Login success!
+          localStorage.setItem('ama_mt5', mt5Acc);
+          doLogin(traderName);
+        } catch(err) {
+          toast('Ralat sambungan: ' + err.message);
+        }
+      };
+    }
+
+    // Master Form Submit
     const form = $('#amaterasuLoginForm', overlay);
     if (form) {
       form.onsubmit = (e) => {

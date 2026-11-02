@@ -1549,13 +1549,37 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // 14.10 GET /api/trader/verify-pass (Used by client app to check 14-day validity)
+  // 14.11 POST /api/traders/reset-device (Reset device binding for trader)
+  if (pathname === '/api/traders/reset-device' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      const trd = (db.traders || []).find(t => t.id === payload.traderId || String(t.mt5Account) === String(payload.mt5Account));
+      if (!trd) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'Trader not found' }));
+      }
+      trd.boundDeviceId = null;
+      trd.boundDeviceModel = null;
+      trd.boundAt = null;
+      saveDB(db);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, message: 'Kunci peranti untuk ' + trd.name + ' berjaya diset semula!' }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // 14.10 GET /api/trader/verify-pass (Used by client app to check 14-day validity & 1-device lock)
   if (pathname === '/api/trader/verify-pass' && req.method === 'GET') {
     const db = getDB();
     const query = new URLSearchParams(urlParts[1] || '');
     const id = query.get('id') || '';
     const mt5 = query.get('mt5') || '';
     const callSign = query.get('user') || '';
+    const deviceId = query.get('deviceId') || '';
+    const deviceModel = query.get('deviceModel') || 'Mobile/Desktop';
 
     const isMasterOperator = ['tengku khairi', 'kj35', 'kj35 (master trader)', 'admin', 'sensei hiro'].includes(callSign.toLowerCase().trim());
     if (isMasterOperator) {
@@ -1577,8 +1601,33 @@ const server = http.createServer(async (req, res) => {
     );
 
     if (trd) {
-      const formatted = formatTraderData(trd);
       const ib = (db.ibs || []).find(i => i.code === trd.ibCode || i.id === trd.ibId) || { name: 'Amaterasu Partner', phone: '+60123456789' };
+
+      // 🛡️ 1-DEVICE BINDING ENFORCEMENT
+      if (deviceId) {
+        if (!trd.boundDeviceId) {
+          // First device binding
+          trd.boundDeviceId = deviceId;
+          trd.boundDeviceModel = deviceModel;
+          trd.boundAt = new Date().toISOString();
+          saveDB(db);
+        } else if (trd.boundDeviceId !== deviceId) {
+          // Device mismatch: Access blocked!
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({
+            success: false,
+            found: true,
+            deviceBlocked: true,
+            traderName: trd.name,
+            mt5Account: trd.mt5Account,
+            boundModel: trd.boundDeviceModel || 'Peranti Pertama Anda',
+            ib: { name: ib.name, phone: ib.phone, telegram: ib.telegram },
+            message: 'Akses Disekat: Akaun MT5 ini telah dikunci pada peranti lain (1 Akaun = 1 Peranti Sahaja). Sila hubungi IB anda untuk set semula peranti jika anda menukar telefon.'
+          }));
+        }
+      }
+
+      const formatted = formatTraderData(trd);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({
         success: true,
@@ -1604,7 +1653,6 @@ const server = http.createServer(async (req, res) => {
       message: 'Mod Percubaan 14-Hari'
     }));
   }
-
   // ===== Static Files =====
   let file = pathname;
   if (file === '/' || file === '') file = '/index.html';
