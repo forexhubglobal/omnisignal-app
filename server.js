@@ -2,9 +2,11 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 const PORT = process.env.PORT || 3000;
 const DB_FILE = path.join(__dirname, 'data', 'db.json');
+const TMP_DB_FILE = path.join(os.tmpdir(), 'amaterasu_db_cache.json');
 
 // Ensure data directory
 if (!fs.existsSync(path.join(__dirname, 'data'))) {
@@ -267,13 +269,26 @@ function syncStatsWithSignals(db) {
   };
 }
 
-// Load or initialize DB with in-memory caching
+// Load or initialize DB with in-memory caching & writable /tmp fallback
 let inMemoryDB = null;
 function getDB() {
   if (inMemoryDB) {
     syncStatsWithSignals(inMemoryDB);
     return inMemoryDB;
   }
+  // 1. Try reading from TMP_DB_FILE (persists across warm serverless invocations)
+  try {
+    if (fs.existsSync(TMP_DB_FILE)) {
+      const tmpContent = fs.readFileSync(TMP_DB_FILE, 'utf8');
+      inMemoryDB = JSON.parse(tmpContent);
+      if (Array.isArray(inMemoryDB.activeSignals)) {
+        syncStatsWithSignals(inMemoryDB);
+        return inMemoryDB;
+      }
+    }
+  } catch (e) {}
+
+  // 2. Fallback to bundled DB_FILE
   try {
     if (!fs.existsSync(DB_FILE)) {
       inMemoryDB = JSON.parse(JSON.stringify(defaultDB));
@@ -298,10 +313,16 @@ function getDB() {
 function saveDB(db) {
   syncStatsWithSignals(db);
   inMemoryDB = db;
+  // Always write to writable temporary directory
+  try {
+    fs.writeFileSync(TMP_DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+  } catch (e) {}
+
+  // Also write to DB_FILE if filesystem is writable
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
   } catch (e) {
-    // Tolerated on read-only serverless lambdas (inMemoryDB retains updates)
+    // Tolerated on read-only serverless lambdas
   }
 }
 
@@ -627,9 +648,112 @@ const server = http.createServer(async (req, res) => {
       }
       if (payload && Array.isArray(payload.openPositions)) {
         AiEngine.liveMT5Positions = payload.openPositions;
+
+        // =========================================================================
+        // CONTINUOUS MT5 POSITION AUTO-RECONCILIATION ENGINE
+        // MT5 is the single absolute truth. The Web App MUST reflect MT5 reality!
+        // =========================================================================
+        const db = getDB();
+        let dbChanged = false;
+        const allowedWhitelist = ['XAUUSD', 'USDCHF', 'EURUSD'];
+
+        // Map MT5 positions by clean symbol (e.g. 'XAUUSD', 'USDCHF', 'EURUSD')
+        const mt5BySymbol = {};
+        for (const p of payload.openPositions) {
+          const sym = (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase();
+          if (allowedWhitelist.includes(sym) && !mt5BySymbol[sym]) {
+            mt5BySymbol[sym] = p;
+          }
+        }
+
+        if (!Array.isArray(db.activeSignals)) db.activeSignals = [];
+
+        // 1. Reconcile existing active signals against MT5 open positions
+        for (let i = 0; i < db.activeSignals.length; i++) {
+          const sig = db.activeSignals[i];
+          const sym = (sig.symbol || '').toUpperCase();
+          const mt5Pos = mt5BySymbol[sym];
+
+          if (mt5Pos) {
+            // Direction or major entry divergence: forcefully align to MT5 reality!
+            const priceDiff = Math.abs(sig.entry - mt5Pos.openPrice);
+            const maxTol = sym === 'XAUUSD' ? 2.0 : 0.0020;
+            if (sig.type !== mt5Pos.type || priceDiff > maxTol) {
+              console.log(`🚨 [AUTO-RECONCILE] Discrepancy detected for #${sym}! DB was ${sig.type} @ ${sig.entry}. Aligning to MT5 reality: ${mt5Pos.type} @ ${mt5Pos.openPrice}`);
+              sig.type = mt5Pos.type;
+              sig.entry = mt5Pos.openPrice;
+              sig.status = 'ACTIVE';
+              sig.notes = `[MT5 Real-Time Verified] Selaras 100% dengan posisi terbuka MT5 (Tiket #${mt5Pos.ticket})`;
+              if (mt5Pos.sl) sig.sl = mt5Pos.sl;
+              if (mt5Pos.tp) sig.tp1 = mt5Pos.tp;
+              dbChanged = true;
+            }
+            if (!sig.mt5Verified || sig.mt5Ticket !== mt5Pos.ticket) {
+              sig.mt5Verified = true;
+              sig.mt5Ticket = mt5Pos.ticket;
+              sig.mt5OpenPrice = mt5Pos.openPrice;
+              dbChanged = true;
+            }
+          }
+        }
+
+        // 2. If MT5 has an open whitelist position not yet in db.activeSignals, auto-insert it!
+        for (const [sym, mt5Pos] of Object.entries(mt5BySymbol)) {
+          const existing = db.activeSignals.find(s => s.symbol === sym);
+          if (!existing) {
+            console.log(`⚡ [AUTO-RECONCILE] Inserting missing MT5 position to Web App: #${sym} ${mt5Pos.type} @ ${mt5Pos.openPrice}`);
+            const pipMult = sym === 'XAUUSD' ? 1.0 : (sym.includes('JPY') ? 0.01 : 0.0001);
+            const slDistance = sym === 'XAUUSD' ? 12 : 25 * pipMult;
+            const tp1Distance = sym === 'XAUUSD' ? 6.5 : 20 * pipMult;
+            const tp2Distance = sym === 'XAUUSD' ? 13 : 35 * pipMult;
+            const tp3Distance = sym === 'XAUUSD' ? 20 : 55 * pipMult;
+
+            const newSig = {
+              id: 'mt5-' + mt5Pos.ticket,
+              status: 'ACTIVE',
+              symbol: sym,
+              asset: sym,
+              type: mt5Pos.type,
+              timeframe: 'M15',
+              entry: mt5Pos.openPrice,
+              sl: mt5Pos.sl || (mt5Pos.type === 'BUY' ? Number((mt5Pos.openPrice - slDistance).toFixed(sym === 'XAUUSD' ? 2 : 4)) : Number((mt5Pos.openPrice + slDistance).toFixed(sym === 'XAUUSD' ? 2 : 4))),
+              tp1: mt5Pos.tp || (mt5Pos.type === 'BUY' ? Number((mt5Pos.openPrice + tp1Distance).toFixed(sym === 'XAUUSD' ? 2 : 4)) : Number((mt5Pos.openPrice - tp1Distance).toFixed(sym === 'XAUUSD' ? 2 : 4))),
+              tp2: mt5Pos.type === 'BUY' ? Number((mt5Pos.openPrice + tp2Distance).toFixed(sym === 'XAUUSD' ? 2 : 4)) : Number((mt5Pos.openPrice - tp2Distance).toFixed(sym === 'XAUUSD' ? 2 : 4)),
+              tp3: mt5Pos.type === 'BUY' ? Number((mt5Pos.openPrice + tp3Distance).toFixed(sym === 'XAUUSD' ? 2 : 4)) : Number((mt5Pos.openPrice - tp3Distance).toFixed(sym === 'XAUUSD' ? 2 : 4)),
+              firedAt: getMYTTime(),
+              currentPrice: mt5Pos.openPrice,
+              floatingPips: 0,
+              beLocked: false,
+              mt5Verified: true,
+              mt5Ticket: mt5Pos.ticket,
+              notes: `[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #${mt5Pos.ticket})`
+            };
+            db.activeSignals.unshift(newSig);
+            dbChanged = true;
+          }
+        }
+
+        // 3. Ensure db.activeSignal matches primary MT5 position (priority: XAUUSD > USDCHF > EURUSD)
+        const primarySym = allowedWhitelist.find(s => mt5BySymbol[s]) || (db.activeSignals[0] ? db.activeSignals[0].symbol : 'XAUUSD');
+        const primarySig = db.activeSignals.find(s => s.symbol === primarySym) || db.activeSignals[0];
+        if (primarySig && (!db.activeSignal || db.activeSignal.symbol !== primarySig.symbol || db.activeSignal.type !== primarySig.type || db.activeSignal.entry !== primarySig.entry)) {
+          db.activeSignal = primarySig;
+          dbChanged = true;
+        }
+
+        if (dbChanged) {
+          saveDB(db);
+          broadcastEvent('on_pips_update', db.activeSignals);
+          broadcastEvent('signal_update', {
+            type: 'MT5_AUTO_RECONCILED',
+            activeSignal: db.activeSignal,
+            activeSignals: db.activeSignals,
+            message: 'Isyarat diselaraskan serta-merta mengikut posisi rasmi terminal MT5.'
+          });
+        }
       }
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, synced: Object.keys(payload?.quotes || {}).length }));
+      return res.end(JSON.stringify({ success: true, synced: Object.keys(payload?.quotes || {}).length, reconciled: !!payload?.openPositions }));
     } catch (err) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: err.message }));
@@ -818,13 +942,32 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/signal/fire' && req.method === 'POST') {
     try {
       const payload = await parseJsonBody(req);
+      const targetSymbol = (payload.symbol || 'XAUUSD').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase();
+      const targetType = (payload.type || 'BUY').toUpperCase();
+
+      // STRICT ANTI-CONFLICT GUARD:
+      // Block any signal that contradicts an open position in MT5!
+      if (Array.isArray(AiEngine.liveMT5Positions)) {
+        const opposingPos = AiEngine.liveMT5Positions.find(p => 
+          (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() === targetSymbol &&
+          p.type !== targetType
+        );
+        if (opposingPos) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({
+            error: `[SEKATAN KESELAMATAN] Terminal MT5 sedang memegang posisi ${opposingPos.type} bagi #${targetSymbol} (Tiket #${opposingPos.ticket}). Signal bertentangan (${targetType}) disekat demi melindungi trader!`
+          }));
+        }
+      }
+
       const db = getDB();
       if (!Array.isArray(db.activeSignals)) db.activeSignals = [];
       const newSig = {
         id: 'sig-' + Date.now(),
         status: 'ACTIVE',
-        symbol: payload.symbol || 'XAUUSD',
-        type: payload.type || 'BUY',
+        symbol: targetSymbol,
+        asset: targetSymbol,
+        type: targetType,
         timeframe: payload.timeframe || 'M15',
         entry: Number(payload.entry) || 3986.50,
         tp1: Number(payload.tp1) || 3994.50,

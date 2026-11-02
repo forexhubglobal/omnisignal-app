@@ -478,9 +478,17 @@ function SignalPage(main) {
   const ticketHtml = isCurrentAssetActive ? `
     <div class="solar-ticket ${isTp1 ? 'tp1-secured' : ''}">
       <div class="solar-ticket-head">
-        <span class="signal-type-badge ${isTp1 ? 'tp1' : currentSig.type.toLowerCase()}" style="${isTp1 ? 'background:rgba(0,230,118,0.18); color:#00e676; border:1px solid #00e676;' : ''}">
-          ${isTp1 ? `🎯 TARGET 1 HIT (+${currentSig.tp1Pips || 25} PIPS) · BE LOCKED` : `● RUNNING (${currentSig.type} ${currentSig.symbol})`}
-        </span>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span class="signal-type-badge ${isTp1 ? 'tp1' : currentSig.type.toLowerCase()}" style="${isTp1 ? 'background:rgba(0,230,118,0.18); color:#00e676; border:1px solid #00e676;' : ''}">
+            ${isTp1 ? `🎯 TARGET 1 HIT (+${currentSig.tp1Pips || 25} PIPS) · BE LOCKED` : `● RUNNING (${currentSig.type} ${currentSig.symbol})`}
+          </span>
+          ${currentSig.mt5Verified ? `
+            <span style="background:rgba(0,230,118,0.12); color:#00e676; border:1px solid rgba(0,230,118,0.4); border-radius:4px; font-size:10px; font-weight:700; padding:2px 7px; display:inline-flex; align-items:center; gap:4px;">
+              <span style="width:6px; height:6px; border-radius:50%; background:#00e676; animation:pulseDot 1.2s infinite; display:inline-block;"></span>
+              MT5 LIVE VERIFIED #${currentSig.mt5Ticket || ''}
+            </span>
+          ` : ''}
+        </div>
         <span class="muted" style="font-size: 11.5px;">Triggered: ${currentSig.firedAt || 'Live'}</span>
       </div>
 
