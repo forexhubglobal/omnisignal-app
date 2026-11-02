@@ -1733,17 +1733,10 @@ const AiEngine = {
     broadcastEvent('ai_engine_log', { log: entry, all: this.logHistory.slice(0, 20) });
   },
 
-  assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4020.00, pipVal: 0.1, pipDec: 2, tp1Pips: 60, tp2Pips: 120, tp3Pips: 220, slPips: 130, bias: 'BEARISH' },
-    { symbol: 'XAGUSD', name: 'Silver', base: 52.87, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, tp3Pips: 100, slPips: 35, bias: 'BULLISH' },
-    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' },
-    { symbol: 'GBPUSD', name: 'Cable', base: 1.3320, pipVal: 0.0001, pipDec: 4, tp1Pips: 25, tp2Pips: 50, tp3Pips: 80, slPips: 25, bias: 'BULLISH' },
-    { symbol: 'USDJPY', name: 'Dollar/Yen', base: 157.74, pipVal: 0.01, pipDec: 3, tp1Pips: 25, tp2Pips: 50, tp3Pips: 80, slPips: 25, bias: 'BEARISH' },
-    { symbol: 'GBPJPY', name: 'Pound/Yen', base: 210.15, pipVal: 0.01, pipDec: 3, tp1Pips: 35, tp2Pips: 70, tp3Pips: 110, slPips: 35, bias: 'BULLISH' },
-    { symbol: 'EURJPY', name: 'Euro/Yen', base: 175.95, pipVal: 0.01, pipDec: 3, tp1Pips: 30, tp2Pips: 60, tp3Pips: 95, slPips: 30, bias: 'BULLISH' },
-    { symbol: 'AUDUSD', name: 'Aussie', base: 0.7023, pipVal: 0.0001, pipDec: 4, tp1Pips: 15, tp2Pips: 30, tp3Pips: 50, slPips: 20, bias: 'BEARISH' },
-    { symbol: 'USDCAD', name: 'Loonie', base: 1.4016, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BULLISH' },
-    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' }
+    assets: [
+    { symbol: 'XAUUSD', name: 'Gold', base: 4020.00, pipVal: 0.1, pipDec: 2, tp1Pips: 60, tp2Pips: 120, tp3Pips: 220, slPips: 70, bias: 'BULLISH' },
+    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' },
+    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' }
   ],
 
   // High-Impact Economic News Schedule tracked by Amaterasu AI
@@ -1989,7 +1982,7 @@ const AiEngine = {
         }
       }
       const nowMs = Date.now();
-      const allowedWhitelist = ['USDCAD', 'XAUUSD', 'USDJPY', 'USDCHF'];
+      const allowedWhitelist = ['XAUUSD', 'USDCHF', 'EURUSD'];
       const availableAssets = this.assets.filter(a => 
         allowedWhitelist.includes(a.symbol) &&
         !activePendingSymbols.has(a.symbol) &&

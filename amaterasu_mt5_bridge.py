@@ -58,7 +58,7 @@ DEFAULT_CONFIG = {
     "max_slippage_pips": 5,
     "magic_number": 888999,
     "mt5_terminal_path": "",
-    "allowed_pairs": ["USDCAD", "XAUUSD", "USDJPY", "USDCHF"],
+    "allowed_pairs": ["XAUUSD", "USDCHF", "EURUSD"],
     "custom_lot_map": {
         "USDCAD": 0.50,
         "XAUUSD": 0.20,
@@ -117,7 +117,7 @@ class AmaterasuBridge:
         print("  +===================================================================+")
         print(f"{Colors.RESET}")
         print(f" {Colors.CYAN}* Server Target   :{Colors.RESET} {self.server_url}")
-        print(f" {Colors.CYAN}* Whitelist Pairs :{Colors.RESET} USDCAD, XAUUSD, USDJPY, USDCHF (4 Pair Sahaja)")
+        print(f" {Colors.CYAN}* Whitelist Pairs :{Colors.RESET} XAUUSD, USDCHF, EURUSD (TOP 3 ELITE SAHAJA)")
         print(f" {Colors.CYAN}* USDCAD Lot Size :{Colors.RESET} 0.50 lot (Juara Konsisten)")
         print(f" {Colors.CYAN}* Gold Lot Size   :{Colors.RESET} 0.20 lot (+50p Anti-Pullback BE)")
         print(f" {Colors.CYAN}* Gold NY Boost   :{Colors.RESET} 0.35 lot (19:30 - 23:30 MYT Golden Window - 98.3% Winrate)")
@@ -267,7 +267,7 @@ class AmaterasuBridge:
         symbol = self.resolve_symbol(symbol_raw)
         
         # 0. WHITELIST GUARD: Hanya 4 Pair Pilihan Bos (USDCAD, XAUUSD, USDJPY, USDCHF)
-        allowed_pairs = self.config.get("allowed_pairs", ["USDCAD", "XAUUSD", "USDJPY", "USDCHF"])
+        allowed_pairs = self.config.get("allowed_pairs", ["XAUUSD", "USDCHF", "EURUSD"])
         clean_raw_sym = symbol_raw.split('.')[0].upper()
         if allowed_pairs and clean_raw_sym not in [p.upper() for p in allowed_pairs]:
             print(f"{Colors.YELLOW}🛡️ [PAIR DITAPIS] Simbol #{clean_raw_sym} ditolak. Hanya {', '.join(allowed_pairs)} dibenarkan mengikut arahan bos.{Colors.RESET}")
