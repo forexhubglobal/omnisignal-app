@@ -8,7 +8,7 @@
     "tp2Hit": 0,
     "tp3Hit": 0,
     "slHit": 23,
-    "totalProfitToday": 303,
+    "totalProfitToday": 0,
     "last7Days": [
       {
         "day": "Sat",
@@ -18,35 +18,35 @@
       {
         "day": "Sun",
         "date": "Nov 1",
-        "pips": 0
+        "pips": -30
       },
       {
         "day": "Mon",
         "date": "Nov 2",
-        "pips": 1090
+        "pips": 0
       },
       {
         "day": "Tue",
         "date": "Nov 3",
-        "pips": 1600
+        "pips": -137
       },
       {
         "day": "Wed",
         "date": "Nov 4",
-        "pips": 1940
+        "pips": 0
       },
       {
         "day": "Thu",
         "date": "Nov 5",
-        "pips": 1205
+        "pips": 0
       },
       {
         "day": "Today",
         "date": "Nov 6",
-        "pips": 303
+        "pips": 0
       }
     ],
-    "lastUpdated": "2026-11-05T21:31:46.000Z"
+    "lastUpdated": "2026-11-05T21:41:45.000Z"
   },
   "activeSignal": {
     "status": "WAITING",
@@ -64,7 +64,7 @@
     {
       "id": "sig-1793324551264",
       "time": "09:42",
-      "date": "Nov 6",
+      "date": "Nov 3",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1198,
@@ -78,7 +78,7 @@
     {
       "id": "sig-1793327563015",
       "time": "10:32",
-      "date": "Nov 6",
+      "date": "Nov 3",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8211,
@@ -92,7 +92,7 @@
     {
       "id": "mt5-485648774",
       "time": "13:41",
-      "date": "Nov 6",
+      "date": "Nov 3",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 3904.84,
@@ -106,7 +106,7 @@
     {
       "id": "sig-1793322896434",
       "time": "07:39",
-      "date": "Nov 6",
+      "date": "Nov 1",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.306,
@@ -118,7 +118,7 @@
     {
       "id": "sig-1793327262163",
       "time": "10:32",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8213,
@@ -132,7 +132,7 @@
     {
       "id": "sig-1793327111745",
       "time": "10:30",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.503,
@@ -146,7 +146,7 @@
     {
       "id": "sig-1793326961285",
       "time": "10:27",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8216,
@@ -160,7 +160,7 @@
     {
       "id": "sig-1793326810770",
       "time": "10:25",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.488,
@@ -174,7 +174,7 @@
     {
       "id": "sig-1793326660323",
       "time": "10:22",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8212,
@@ -188,7 +188,7 @@
     {
       "id": "sig-1793326509850",
       "time": "10:20",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.457,
@@ -202,7 +202,7 @@
     {
       "id": "sig-1793326359399",
       "time": "10:17",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8215,
@@ -216,7 +216,7 @@
     {
       "id": "sig-1793325905507",
       "time": "10:16",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3966,
@@ -231,7 +231,7 @@
     {
       "id": "sig-1793326055932",
       "time": "10:15",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.48,
@@ -245,7 +245,7 @@
     {
       "id": "sig-1793325755000",
       "time": "10:13",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4008.1,
@@ -260,7 +260,7 @@
     {
       "id": "sig-1793325454023",
       "time": "10:07",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.427,
@@ -274,7 +274,7 @@
     {
       "id": "sig-1793325604477",
       "time": "10:05",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3968,
@@ -288,7 +288,7 @@
     {
       "id": "sig-1793325303578",
       "time": "10:00",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3966,
@@ -302,7 +302,7 @@
     {
       "id": "sig-1793325153119",
       "time": "09:57",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.402,
@@ -316,7 +316,7 @@
     {
       "id": "sig-1793325002635",
       "time": "09:55",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3965,
@@ -330,7 +330,7 @@
     {
       "id": "sig-1793324852226",
       "time": "09:52",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.47,
@@ -344,7 +344,7 @@
     {
       "id": "sig-1793324701712",
       "time": "09:50",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3969,
@@ -358,7 +358,7 @@
     {
       "id": "sig-1793324400866",
       "time": "09:47",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.427,
@@ -372,7 +372,7 @@
     {
       "id": "sig-1793324250401",
       "time": "09:45",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3968,
@@ -386,7 +386,7 @@
     {
       "id": "sig-1793323799025",
       "time": "09:40",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8202,
@@ -401,7 +401,7 @@
     {
       "id": "sig-1793324099896",
       "time": "09:40",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.441,
@@ -415,7 +415,7 @@
     {
       "id": "sig-1793323648507",
       "time": "09:34",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.354,
@@ -429,7 +429,7 @@
     {
       "id": "sig-1793323498135",
       "time": "09:29",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8201,
@@ -443,7 +443,7 @@
     {
       "id": "sig-1793323347745",
       "time": "09:28",
-      "date": "Nov 6",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4004.69,
@@ -455,7 +455,7 @@
     {
       "id": "sig-1793323197328",
       "time": "09:27",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.282,
@@ -469,7 +469,7 @@
     {
       "id": "sig-1793323046879",
       "time": "09:22",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4001.76,
@@ -483,7 +483,7 @@
     {
       "id": "sig-1793322746021",
       "time": "09:17",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 3999.56,
@@ -497,7 +497,7 @@
     {
       "id": "sig-1793322595610",
       "time": "09:14",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.203,
@@ -511,7 +511,7 @@
     {
       "id": "sig-1793305595091",
       "time": "09:11",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3984,
@@ -523,7 +523,7 @@
     {
       "id": "sig-1793322294642",
       "time": "09:09",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.173,
@@ -537,7 +537,7 @@
     {
       "id": "sig-1793289545537",
       "time": "09:06",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "GBPUSD",
       "type": "SELL",
       "entry": 1.3373,
@@ -549,7 +549,7 @@
     {
       "id": "sig-1793321993730",
       "time": "09:04",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.254,
@@ -563,7 +563,7 @@
     {
       "id": "sig-1793318383289",
       "time": "09:03",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1181,
@@ -575,7 +575,7 @@
     {
       "id": "sig-1793321692874",
       "time": "08:59",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.327,
@@ -589,7 +589,7 @@
     {
       "id": "sig-1793321392009",
       "time": "08:54",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.298,
@@ -603,7 +603,7 @@
     {
       "id": "sig-1793310710598",
       "time": "08:54",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8237,
@@ -615,7 +615,7 @@
     {
       "id": "sig-1793321091153",
       "time": "08:49",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.262,
@@ -629,7 +629,7 @@
     {
       "id": "sig-1793320790230",
       "time": "08:44",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.352,
@@ -643,7 +643,7 @@
     {
       "id": "sig-1793320038028",
       "time": "08:43",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4008.03,
@@ -655,7 +655,7 @@
     {
       "id": "sig-1793313418404",
       "time": "08:43",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.718,
@@ -667,7 +667,7 @@
     {
       "id": "sig-1793320489329",
       "time": "08:39",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.43,
@@ -681,7 +681,7 @@
     {
       "id": "sig-1793320188470",
       "time": "08:34",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.477,
@@ -695,7 +695,7 @@
     {
       "id": "sig-1793319887589",
       "time": "08:29",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.454,
@@ -709,7 +709,7 @@
     {
       "id": "sig-1793319737190",
       "time": "08:27",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4011.17,
@@ -723,7 +723,7 @@
     {
       "id": "sig-1793319586780",
       "time": "08:24",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.446,
@@ -737,7 +737,7 @@
     {
       "id": "sig-1793319436379",
       "time": "08:22",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4012.64,
@@ -751,7 +751,7 @@
     {
       "id": "sig-1793319285957",
       "time": "08:19",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.376,
@@ -765,7 +765,7 @@
     {
       "id": "sig-1793319135492",
       "time": "08:17",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4006.07,
@@ -779,7 +779,7 @@
     {
       "id": "sig-1793318985030",
       "time": "08:14",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.45,
@@ -793,7 +793,7 @@
     {
       "id": "sig-1793318834555",
       "time": "08:12",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4004.01,
@@ -807,7 +807,7 @@
     {
       "id": "sig-1793318684126",
       "time": "08:09",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.55,
@@ -821,7 +821,7 @@
     {
       "id": "sig-1793318533725",
       "time": "08:07",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4006.67,
@@ -835,7 +835,7 @@
     {
       "id": "sig-1793285584872",
       "time": "08:04",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURJPY",
       "type": "BUY",
       "entry": 176.218,
@@ -849,7 +849,7 @@
     {
       "id": "sig-1793318232825",
       "time": "08:02",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4008.18,
@@ -863,7 +863,7 @@
     {
       "id": "sig-1793318082363",
       "time": "07:59",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1183,
@@ -877,7 +877,7 @@
     {
       "id": "sig-1793317931951",
       "time": "07:57",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4008.52,
@@ -891,7 +891,7 @@
     {
       "id": "sig-1793317781476",
       "time": "07:54",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1182,
@@ -905,7 +905,7 @@
     {
       "id": "sig-1793317630993",
       "time": "07:52",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4009.07,
@@ -919,7 +919,7 @@
     {
       "id": "sig-1793317330114",
       "time": "07:49",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1184,
@@ -933,7 +933,7 @@
     {
       "id": "sig-1793316577847",
       "time": "07:47",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4015.47,
@@ -947,7 +947,7 @@
     {
       "id": "sig-1793317029188",
       "time": "07:42",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1185,
@@ -961,7 +961,7 @@
     {
       "id": "sig-1793316728312",
       "time": "07:37",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1186,
@@ -975,7 +975,7 @@
     {
       "id": "sig-1793316427436",
       "time": "07:32",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1186,
@@ -989,7 +989,7 @@
     {
       "id": "sig-1793316277006",
       "time": "07:29",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4014.18,
@@ -1003,7 +1003,7 @@
     {
       "id": "sig-1793316126528",
       "time": "07:27",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1188,
@@ -1017,7 +1017,7 @@
     {
       "id": "sig-1793315976098",
       "time": "07:24",
-      "date": "Nov 5",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4012.39,
@@ -1031,7 +1031,7 @@
     {
       "id": "sig-1793315825625",
       "time": "07:22",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1189,
@@ -1045,7 +1045,7 @@
     {
       "id": "sig-1793315675204",
       "time": "07:19",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4013.77,
@@ -1059,7 +1059,7 @@
     {
       "id": "sig-1793315524837",
       "time": "07:17",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1188,
@@ -1073,7 +1073,7 @@
     {
       "id": "sig-1793315374391",
       "time": "07:14",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4014.44,
@@ -1087,7 +1087,7 @@
     {
       "id": "sig-1793315073423",
       "time": "07:09",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4017.03,
@@ -1101,7 +1101,7 @@
     {
       "id": "sig-1793314772496",
       "time": "07:04",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4024.39,
@@ -1115,7 +1115,7 @@
     {
       "id": "sig-1793314471590",
       "time": "06:59",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4024.51,
@@ -1129,7 +1129,7 @@
     {
       "id": "sig-1793314170751",
       "time": "06:54",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4024.4,
@@ -1143,7 +1143,7 @@
     {
       "id": "sig-1793313869815",
       "time": "06:49",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.93,
@@ -1157,7 +1157,7 @@
     {
       "id": "sig-1793285735368",
       "time": "06:46",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1165,
@@ -1169,7 +1169,7 @@
     {
       "id": "sig-1793313568904",
       "time": "06:44",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4022.42,
@@ -1183,7 +1183,7 @@
     {
       "id": "sig-1793313267942",
       "time": "06:39",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4020.67,
@@ -1197,7 +1197,7 @@
     {
       "id": "sig-1793313117531",
       "time": "06:36",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.706,
@@ -1211,7 +1211,7 @@
     {
       "id": "sig-1793312967141",
       "time": "06:34",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4018.13,
@@ -1225,7 +1225,7 @@
     {
       "id": "sig-1793312816710",
       "time": "06:31",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.683,
@@ -1239,7 +1239,7 @@
     {
       "id": "sig-1793312666255",
       "time": "06:29",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4018.34,
@@ -1253,7 +1253,7 @@
     {
       "id": "sig-1793312515762",
       "time": "06:26",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.639,
@@ -1267,7 +1267,7 @@
     {
       "id": "sig-1793312365282",
       "time": "06:24",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.23,
@@ -1281,7 +1281,7 @@
     {
       "id": "sig-1793312214825",
       "time": "06:21",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.608,
@@ -1295,7 +1295,7 @@
     {
       "id": "sig-1793312064382",
       "time": "06:19",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.53,
@@ -1309,7 +1309,7 @@
     {
       "id": "sig-1793311913927",
       "time": "06:16",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.628,
@@ -1323,7 +1323,7 @@
     {
       "id": "sig-1793311763527",
       "time": "06:14",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4022.77,
@@ -1337,7 +1337,7 @@
     {
       "id": "sig-1793311462677",
       "time": "06:09",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4023.53,
@@ -1351,7 +1351,7 @@
     {
       "id": "sig-1793311161832",
       "time": "06:04",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.26,
@@ -1365,7 +1365,7 @@
     {
       "id": "sig-1793310861025",
       "time": "05:59",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.26,
@@ -1379,7 +1379,7 @@
     {
       "id": "sig-1793310560107",
       "time": "05:54",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.28,
@@ -1393,7 +1393,7 @@
     {
       "id": "sig-1793310409679",
       "time": "05:51",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8236,
@@ -1407,7 +1407,7 @@
     {
       "id": "sig-1793310259184",
       "time": "05:49",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.27,
@@ -1421,7 +1421,7 @@
     {
       "id": "sig-1793309807784",
       "time": "05:46",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.667,
@@ -1436,7 +1436,7 @@
     {
       "id": "sig-1793310108695",
       "time": "05:46",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8238,
@@ -1450,7 +1450,7 @@
     {
       "id": "sig-1793309958233",
       "time": "05:44",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.27,
@@ -1464,7 +1464,7 @@
     {
       "id": "sig-1793309506957",
       "time": "05:41",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8237,
@@ -1478,7 +1478,7 @@
     {
       "id": "sig-1793309657378",
       "time": "05:39",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.29,
@@ -1492,7 +1492,7 @@
     {
       "id": "sig-1793309356500",
       "time": "05:36",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.676,
@@ -1506,7 +1506,7 @@
     {
       "id": "sig-1793309206024",
       "time": "05:34",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.27,
@@ -1520,7 +1520,7 @@
     {
       "id": "sig-1793308905079",
       "time": "05:31",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8237,
@@ -1534,7 +1534,7 @@
     {
       "id": "sig-1793309055602",
       "time": "05:29",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.674,
@@ -1548,7 +1548,7 @@
     {
       "id": "sig-1793308754605",
       "time": "05:26",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.25,
@@ -1562,7 +1562,7 @@
     {
       "id": "sig-1793308604174",
       "time": "05:21",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8239,
@@ -1576,7 +1576,7 @@
     {
       "id": "sig-1793308453724",
       "time": "05:19",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.27,
@@ -1590,7 +1590,7 @@
     {
       "id": "sig-1793308303254",
       "time": "05:16",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8237,
@@ -1604,7 +1604,7 @@
     {
       "id": "sig-1793308152717",
       "time": "05:14",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.22,
@@ -1618,7 +1618,7 @@
     {
       "id": "sig-1793308002239",
       "time": "05:11",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8236,
@@ -1632,7 +1632,7 @@
     {
       "id": "sig-1793307851796",
       "time": "05:09",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.22,
@@ -1646,7 +1646,7 @@
     {
       "id": "sig-1793307701334",
       "time": "05:06",
-      "date": "Nov 4",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8242,
@@ -1660,7 +1660,7 @@
     {
       "id": "sig-1793307550826",
       "time": "05:04",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.24,
@@ -1674,7 +1674,7 @@
     {
       "id": "sig-1793307400346",
       "time": "05:01",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8242,
@@ -1688,7 +1688,7 @@
     {
       "id": "sig-1793307249860",
       "time": "04:59",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4019.32,
@@ -1702,7 +1702,7 @@
     {
       "id": "sig-1793307099406",
       "time": "04:56",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8242,
@@ -1716,7 +1716,7 @@
     {
       "id": "sig-1793306949013",
       "time": "04:54",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4022.16,
@@ -1730,7 +1730,7 @@
     {
       "id": "sig-1793306798591",
       "time": "04:51",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8241,
@@ -1744,7 +1744,7 @@
     {
       "id": "sig-1793306648160",
       "time": "04:49",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4023.81,
@@ -1758,7 +1758,7 @@
     {
       "id": "sig-1793306196899",
       "time": "04:46",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.685,
@@ -1773,7 +1773,7 @@
     {
       "id": "sig-1793306497767",
       "time": "04:46",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8246,
@@ -1787,7 +1787,7 @@
     {
       "id": "sig-1793306347308",
       "time": "04:44",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4027.69,
@@ -1801,7 +1801,7 @@
     {
       "id": "sig-1793306046503",
       "time": "04:41",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8244,
@@ -1815,7 +1815,7 @@
     {
       "id": "sig-1793305745539",
       "time": "04:39",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4025.05,
@@ -1829,7 +1829,7 @@
     {
       "id": "sig-1793305896042",
       "time": "04:36",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.691,
@@ -1843,7 +1843,7 @@
     {
       "id": "sig-1793305444632",
       "time": "04:34",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8245,
@@ -1857,7 +1857,7 @@
     {
       "id": "sig-1793305143805",
       "time": "04:29",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4026.07,
@@ -1871,7 +1871,7 @@
     {
       "id": "sig-1793305294227",
       "time": "04:26",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3985,
@@ -1885,7 +1885,7 @@
     {
       "id": "sig-1793291501312",
       "time": "04:24",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "SELL",
       "entry": 0.8264,
@@ -1899,7 +1899,7 @@
     {
       "id": "sig-1793304993402",
       "time": "04:21",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3984,
@@ -1913,7 +1913,7 @@
     {
       "id": "sig-1793304843035",
       "time": "04:19",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4028.06,
@@ -1927,7 +1927,7 @@
     {
       "id": "sig-1793304692656",
       "time": "04:16",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3986,
@@ -1941,7 +1941,7 @@
     {
       "id": "sig-1793304542216",
       "time": "04:14",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4027.56,
@@ -1955,7 +1955,7 @@
     {
       "id": "sig-1793304391790",
       "time": "04:11",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3987,
@@ -1969,7 +1969,7 @@
     {
       "id": "sig-1793304241325",
       "time": "04:09",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4024.6,
@@ -1983,7 +1983,7 @@
     {
       "id": "sig-1793304090915",
       "time": "04:06",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3992,
@@ -1997,7 +1997,7 @@
     {
       "id": "sig-1793274752787",
       "time": "04:05",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDJPY",
       "type": "BUY",
       "entry": 157.968,
@@ -2009,7 +2009,7 @@
     {
       "id": "sig-1793303940485",
       "time": "04:04",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4022.13,
@@ -2023,7 +2023,7 @@
     {
       "id": "sig-1793303790044",
       "time": "04:01",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.399,
@@ -2037,7 +2037,7 @@
     {
       "id": "sig-1793303489166",
       "time": "03:59",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.03,
@@ -2051,7 +2051,7 @@
     {
       "id": "sig-1793296267754",
       "time": "03:56",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.397,
@@ -2065,7 +2065,7 @@
     {
       "id": "sig-1793298975718",
       "time": "03:25",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4006.65,
@@ -2077,7 +2077,7 @@
     {
       "id": "sig-1793298674776",
       "time": "02:36",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4007.34,
@@ -2091,7 +2091,7 @@
     {
       "id": "sig-1793298373942",
       "time": "02:31",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4007.2,
@@ -2105,7 +2105,7 @@
     {
       "id": "sig-1793298073123",
       "time": "02:26",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4008.27,
@@ -2119,7 +2119,7 @@
     {
       "id": "sig-1793297772215",
       "time": "02:21",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4009.59,
@@ -2133,7 +2133,7 @@
     {
       "id": "sig-1793297471344",
       "time": "02:16",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4010.05,
@@ -2147,7 +2147,7 @@
     {
       "id": "sig-1793297320920",
       "time": "02:13",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.027,
@@ -2161,7 +2161,7 @@
     {
       "id": "sig-1793297019956",
       "time": "02:11",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4007.32,
@@ -2175,7 +2175,7 @@
     {
       "id": "sig-1793296719126",
       "time": "02:03",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4008.29,
@@ -2189,7 +2189,7 @@
     {
       "id": "sig-1793296418223",
       "time": "01:58",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4009.35,
@@ -2203,7 +2203,7 @@
     {
       "id": "sig-1793296117323",
       "time": "01:53",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4010.71,
@@ -2217,7 +2217,7 @@
     {
       "id": "sig-1793295966881",
       "time": "01:51",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3967,
@@ -2231,7 +2231,7 @@
     {
       "id": "sig-1793295816449",
       "time": "01:48",
-      "date": "Nov 3",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4014.45,
@@ -2245,7 +2245,7 @@
     {
       "id": "sig-1793295666060",
       "time": "01:46",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.397,
@@ -2259,7 +2259,7 @@
     {
       "id": "sig-1793295214738",
       "time": "01:43",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.099,
@@ -2274,7 +2274,7 @@
     {
       "id": "sig-1793295515580",
       "time": "01:43",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4016.06,
@@ -2288,7 +2288,7 @@
     {
       "id": "sig-1793295365134",
       "time": "01:41",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3969,
@@ -2302,7 +2302,7 @@
     {
       "id": "sig-1793295064361",
       "time": "01:36",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3971,
@@ -2316,7 +2316,7 @@
     {
       "id": "sig-1793294913902",
       "time": "01:33",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.098,
@@ -2330,7 +2330,7 @@
     {
       "id": "sig-1793294763422",
       "time": "01:31",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3973,
@@ -2344,7 +2344,7 @@
     {
       "id": "sig-1793294612934",
       "time": "01:28",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.111,
@@ -2358,7 +2358,7 @@
     {
       "id": "sig-1793294462464",
       "time": "01:26",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3974,
@@ -2372,7 +2372,7 @@
     {
       "id": "sig-1793294161469",
       "time": "01:23",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.115,
@@ -2386,7 +2386,7 @@
     {
       "id": "sig-1793293860641",
       "time": "01:16",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.14,
@@ -2400,7 +2400,7 @@
     {
       "id": "sig-1793293710175",
       "time": "01:13",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAGUSD",
       "type": "SELL",
       "entry": 52.587,
@@ -2414,7 +2414,7 @@
     {
       "id": "sig-1793293108432",
       "time": "01:11",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4017.26,
@@ -2426,7 +2426,7 @@
     {
       "id": "sig-1793293559727",
       "time": "01:11",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.13,
@@ -2440,7 +2440,7 @@
     {
       "id": "sig-1793293409335",
       "time": "01:08",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAGUSD",
       "type": "SELL",
       "entry": 52.551,
@@ -2454,7 +2454,7 @@
     {
       "id": "sig-1793293258871",
       "time": "01:05",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.083,
@@ -2468,7 +2468,7 @@
     {
       "id": "sig-1793292957972",
       "time": "01:03",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAGUSD",
       "type": "SELL",
       "entry": 52.526,
@@ -2482,7 +2482,7 @@
     {
       "id": "sig-1793292657108",
       "time": "01:00",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.046,
@@ -2496,7 +2496,7 @@
     {
       "id": "sig-1793292807554",
       "time": "00:58",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4013.96,
@@ -2510,7 +2510,7 @@
     {
       "id": "sig-1793292253574",
       "time": "00:54",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "SELL",
       "entry": 1.3978,
@@ -2525,7 +2525,7 @@
     {
       "id": "sig-1793292506630",
       "time": "00:53",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4018.32,
@@ -2539,7 +2539,7 @@
     {
       "id": "sig-1793290297762",
       "time": "00:45",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.101,
@@ -2551,7 +2551,7 @@
     {
       "id": "sig-1793290749025",
       "time": "00:45",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "BUY",
       "entry": 4015.49,
@@ -2563,7 +2563,7 @@
     {
       "id": "sig-1793274151009",
       "time": "00:45",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAGUSD",
       "type": "SELL",
       "entry": 52.906,
@@ -2575,7 +2575,7 @@
     {
       "id": "sig-1793291952689",
       "time": "00:44",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "SELL",
       "entry": 1.3981,
@@ -2589,7 +2589,7 @@
     {
       "id": "sig-1793291651733",
       "time": "00:39",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "SELL",
       "entry": 1.3982,
@@ -2603,7 +2603,7 @@
     {
       "id": "sig-1793291350821",
       "time": "00:34",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "SELL",
       "entry": 1.3984,
@@ -2617,7 +2617,7 @@
     {
       "id": "sig-1793290448195",
       "time": "00:19",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "BUY",
       "entry": 4012.95,
@@ -2631,7 +2631,7 @@
     {
       "id": "sig-1793290147298",
       "time": "00:14",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "BUY",
       "entry": 4018.83,
@@ -2645,7 +2645,7 @@
     {
       "id": "sig-1793289996892",
       "time": "00:11",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.128,
@@ -2659,7 +2659,7 @@
     {
       "id": "sig-1793289846479",
       "time": "00:09",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "BUY",
       "entry": 4020.7,
@@ -2673,7 +2673,7 @@
     {
       "id": "sig-1793289395072",
       "time": "00:06",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCHF",
       "type": "SELL",
       "entry": 0.8268,
@@ -2688,7 +2688,7 @@
     {
       "id": "sig-1793289696003",
       "time": "00:06",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "SELL",
       "entry": 211.096,
@@ -2702,7 +2702,7 @@
     {
       "id": "sig-1793289244608",
       "time": "00:04",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "USDCAD",
       "type": "SELL",
       "entry": 1.3978,
@@ -2717,7 +2717,7 @@
     {
       "id": "sig-1793285885812",
       "time": "00:04",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4027.56,
@@ -2731,7 +2731,7 @@
     {
       "id": "sig-1793283177684",
       "time": "00:01",
-      "date": "Nov 2",
+      "date": "Oct 30",
       "symbol": "GBPJPY",
       "type": "BUY",
       "entry": 210.515,
@@ -2745,7 +2745,7 @@
     {
       "id": "sig-1793283027185",
       "time": "23:05",
-      "date": "Nov 2",
+      "date": "Oct 29",
       "symbol": "GBPUSD",
       "type": "SELL",
       "entry": 1.3335,
@@ -2757,7 +2757,7 @@
     {
       "id": "sig-1793270389975",
       "time": "23:03",
-      "date": "Nov 2",
+      "date": "Oct 29",
       "symbol": "USDCHF",
       "type": "BUY",
       "entry": 0.8287,
@@ -2769,7 +2769,7 @@
     {
       "id": "sig-1793285434433",
       "time": "22:58",
-      "date": "Nov 2",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4030.13,
@@ -2783,7 +2783,7 @@
     {
       "id": "sig-1793285283968",
       "time": "22:53",
-      "date": "Nov 2",
+      "date": "Oct 29",
       "symbol": "EURJPY",
       "type": "SELL",
       "entry": 176.007,
@@ -2797,7 +2797,7 @@
     {
       "id": "sig-1793281823760",
       "time": "22:52",
-      "date": "Nov 2",
+      "date": "Oct 29",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.4008,
@@ -2809,7 +2809,7 @@
     {
       "id": "sig-1793285133450",
       "time": "22:50",
-      "date": "Nov 2",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4035.12,
@@ -2823,7 +2823,7 @@
     {
       "id": "sig-1793284832603",
       "time": "22:45",
-      "date": "Nov 2",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4031.32,
@@ -2837,7 +2837,7 @@
     {
       "id": "sig-1793284531695",
       "time": "22:40",
-      "date": "Nov 2",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4028.3,
@@ -2851,7 +2851,7 @@
     {
       "id": "sig-1793284230807",
       "time": "22:35",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4030.67,
@@ -2865,7 +2865,7 @@
     {
       "id": "sig-1793283929883",
       "time": "22:30",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4023.83,
@@ -2879,7 +2879,7 @@
     {
       "id": "sig-1793283628956",
       "time": "22:25",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4026.08,
@@ -2893,7 +2893,7 @@
     {
       "id": "sig-1793280018493",
       "time": "22:22",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURJPY",
       "type": "SELL",
       "entry": 175.694,
@@ -2905,7 +2905,7 @@
     {
       "id": "sig-1793280469815",
       "time": "22:21",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1125,
@@ -2917,7 +2917,7 @@
     {
       "id": "sig-1793283328059",
       "time": "22:20",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4021.31,
@@ -2931,7 +2931,7 @@
     {
       "id": "sig-1793282876753",
       "time": "22:15",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4023.17,
@@ -2945,7 +2945,7 @@
     {
       "id": "sig-1793282726300",
       "time": "22:12",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPJPY",
       "type": "BUY",
       "entry": 210.29,
@@ -2959,7 +2959,7 @@
     {
       "id": "sig-1793282575909",
       "time": "22:07",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4025.92,
@@ -2973,7 +2973,7 @@
     {
       "id": "sig-1793282275152",
       "time": "22:02",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4022.52,
@@ -2987,7 +2987,7 @@
     {
       "id": "sig-1793281974212",
       "time": "21:57",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4023.64,
@@ -3001,7 +3001,7 @@
     {
       "id": "sig-1793281673325",
       "time": "21:52",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4024.8,
@@ -3015,7 +3015,7 @@
     {
       "id": "sig-1793281522908",
       "time": "21:50",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.4014,
@@ -3029,7 +3029,7 @@
     {
       "id": "sig-1793281372443",
       "time": "21:47",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4029.91,
@@ -3043,7 +3043,7 @@
     {
       "id": "sig-1793280921198",
       "time": "21:45",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPUSD",
       "type": "SELL",
       "entry": 1.3327,
@@ -3058,7 +3058,7 @@
     {
       "id": "sig-1793281222026",
       "time": "21:45",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.4009,
@@ -3072,7 +3072,7 @@
     {
       "id": "sig-1793281071597",
       "time": "21:42",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4029.28,
@@ -3086,7 +3086,7 @@
     {
       "id": "sig-1793276106959",
       "time": "21:40",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3986,
@@ -3100,7 +3100,7 @@
     {
       "id": "sig-1793277310554",
       "time": "21:39",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPJPY",
       "type": "BUY",
       "entry": 210.585,
@@ -3112,7 +3112,7 @@
     {
       "id": "sig-1793280770761",
       "time": "21:37",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4025.87,
@@ -3126,7 +3126,7 @@
     {
       "id": "sig-1793280620282",
       "time": "21:35",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPUSD",
       "type": "SELL",
       "entry": 1.3317,
@@ -3140,7 +3140,7 @@
     {
       "id": "sig-1793280319368",
       "time": "21:32",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4025.02,
@@ -3154,7 +3154,7 @@
     {
       "id": "sig-1793280168916",
       "time": "21:27",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1119,
@@ -3168,7 +3168,7 @@
     {
       "id": "sig-1793279717632",
       "time": "21:25",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4024.96,
@@ -3182,7 +3182,7 @@
     {
       "id": "sig-1793279868109",
       "time": "21:22",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1121,
@@ -3196,7 +3196,7 @@
     {
       "id": "sig-1793269487297",
       "time": "21:20",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURJPY",
       "type": "SELL",
       "entry": 175.993,
@@ -3210,7 +3210,7 @@
     {
       "id": "sig-1793279567257",
       "time": "21:17",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.113,
@@ -3224,7 +3224,7 @@
     {
       "id": "sig-1793279416842",
       "time": "21:15",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4023.45,
@@ -3238,7 +3238,7 @@
     {
       "id": "sig-1793279266405",
       "time": "21:12",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.113,
@@ -3252,7 +3252,7 @@
     {
       "id": "sig-1793279115964",
       "time": "21:10",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4025.3,
@@ -3266,7 +3266,7 @@
     {
       "id": "sig-1793278965502",
       "time": "21:07",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1125,
@@ -3280,7 +3280,7 @@
     {
       "id": "sig-1793278815052",
       "time": "21:05",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4020.05,
@@ -3294,7 +3294,7 @@
     {
       "id": "sig-1793278664588",
       "time": "21:02",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1132,
@@ -3308,7 +3308,7 @@
     {
       "id": "sig-1793278213201",
       "time": "21:00",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPUSD",
       "type": "SELL",
       "entry": 1.3325,
@@ -3323,7 +3323,7 @@
     {
       "id": "sig-1793278514153",
       "time": "21:00",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4018.59,
@@ -3337,7 +3337,7 @@
     {
       "id": "sig-1793278363698",
       "time": "20:57",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.114,
@@ -3351,7 +3351,7 @@
     {
       "id": "sig-1793278062742",
       "time": "20:52",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1142,
@@ -3365,7 +3365,7 @@
     {
       "id": "sig-1793277611443",
       "time": "20:50",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPUSD",
       "type": "SELL",
       "entry": 1.3335,
@@ -3379,7 +3379,7 @@
     {
       "id": "sig-1793277761840",
       "time": "20:47",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "EURUSD",
       "type": "SELL",
       "entry": 1.1147,
@@ -3393,7 +3393,7 @@
     {
       "id": "sig-1793277461025",
       "time": "20:45",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "AUDUSD",
       "type": "SELL",
       "entry": 0.7034,
@@ -3407,7 +3407,7 @@
     {
       "id": "sig-1793277160121",
       "time": "20:37",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "AUDUSD",
       "type": "SELL",
       "entry": 0.7035,
@@ -3421,7 +3421,7 @@
     {
       "id": "sig-1793277009627",
       "time": "20:35",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPJPY",
       "type": "BUY",
       "entry": 210.605,
@@ -3435,7 +3435,7 @@
     {
       "id": "sig-1793276859193",
       "time": "20:32",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "AUDUSD",
       "type": "SELL",
       "entry": 0.703,
@@ -3449,7 +3449,7 @@
     {
       "id": "sig-1793276407745",
       "time": "20:30",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "XAUUSD",
       "type": "SELL",
       "entry": 4029.5,
@@ -3464,7 +3464,7 @@
     {
       "id": "sig-1793276708731",
       "time": "20:30",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPJPY",
       "type": "BUY",
       "entry": 210.611,
@@ -3478,7 +3478,7 @@
     {
       "id": "sig-1793276558269",
       "time": "20:27",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "AUDUSD",
       "type": "SELL",
       "entry": 0.7031,
@@ -3492,7 +3492,7 @@
     {
       "id": "sig-1793276257351",
       "time": "20:25",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPJPY",
       "type": "BUY",
       "entry": 210.56,
@@ -3506,7 +3506,7 @@
     {
       "id": "sig-1793275956492",
       "time": "20:17",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPJPY",
       "type": "BUY",
       "entry": 210.502,
@@ -3520,7 +3520,7 @@
     {
       "id": "sig-1793275505120",
       "time": "20:15",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "GBPUSD",
       "type": "SELL",
       "entry": 1.3318,
@@ -3535,7 +3535,7 @@
     {
       "id": "sig-1793275806037",
       "time": "20:15",
-      "date": "Oct 30",
+      "date": "Oct 29",
       "symbol": "USDCAD",
       "type": "BUY",
       "entry": 1.3983,

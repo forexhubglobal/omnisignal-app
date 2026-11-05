@@ -299,7 +299,22 @@ function getDB() {
     syncStatsWithSignals(inMemoryDB);
     return inMemoryDB;
   }
-  // 1. Try reading from TMP_DB_FILE (persists across warm serverless invocations)
+  // 1. Primary: Load bundled DB_FILE (carries latest git deployed data)
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const content = fs.readFileSync(DB_FILE, 'utf8');
+      inMemoryDB = JSON.parse(content);
+      if (!Array.isArray(inMemoryDB.activeSignals)) {
+        inMemoryDB.activeSignals = (inMemoryDB.activeSignal && inMemoryDB.activeSignal.status === 'ACTIVE') ? [inMemoryDB.activeSignal] : [];
+      }
+      syncStatsWithSignals(inMemoryDB);
+      return inMemoryDB;
+    }
+  } catch (e) {
+    console.error('Error reading DB_FILE:', e);
+  }
+
+  // 2. Fallback to TMP_DB_FILE
   try {
     if (fs.existsSync(TMP_DB_FILE)) {
       const tmpContent = fs.readFileSync(TMP_DB_FILE, 'utf8');
@@ -311,41 +326,25 @@ function getDB() {
     }
   } catch (e) {}
 
-  // 2. Fallback to bundled DB_FILE
-  try {
-    if (!fs.existsSync(DB_FILE)) {
-      inMemoryDB = JSON.parse(JSON.stringify(defaultDB));
-      syncStatsWithSignals(inMemoryDB);
-      return inMemoryDB;
-    }
-    const content = fs.readFileSync(DB_FILE, 'utf8');
-    inMemoryDB = JSON.parse(content);
-    if (!Array.isArray(inMemoryDB.activeSignals)) {
-      inMemoryDB.activeSignals = (inMemoryDB.activeSignal && inMemoryDB.activeSignal.status === 'ACTIVE') ? [inMemoryDB.activeSignal] : [];
-    }
-    syncStatsWithSignals(inMemoryDB);
-    return inMemoryDB;
-  } catch (e) {
-    console.error('Error reading DB, using defaults', e);
-    inMemoryDB = JSON.parse(JSON.stringify(defaultDB));
-    syncStatsWithSignals(inMemoryDB);
-    return inMemoryDB;
-  }
+  inMemoryDB = JSON.parse(JSON.stringify(defaultDB));
+  syncStatsWithSignals(inMemoryDB);
+  return inMemoryDB;
 }
 
+let saveTimeout = null;
 function saveDB(db) {
   syncStatsWithSignals(db);
   inMemoryDB = db;
-  // Always write to writable temporary directory
-  try {
-    fs.writeFileSync(TMP_DB_FILE, JSON.stringify(db, null, 2), 'utf8');
-  } catch (e) {}
-
-  // Also write to DB_FILE if filesystem is writable
-  try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
-  } catch (e) {
-    // Tolerated on read-only serverless lambdas
+  // Debounce writes to disk to prevent I/O blocking and CPU throttling on cloud hosting
+  if (!saveTimeout) {
+    saveTimeout = setTimeout(() => {
+      saveTimeout = null;
+      try {
+        const payload = JSON.stringify(inMemoryDB, null, 2);
+        fs.writeFile(TMP_DB_FILE, payload, 'utf8', () => {});
+        fs.writeFile(DB_FILE, payload, 'utf8', () => {});
+      } catch (e) {}
+    }, 1500);
   }
 }
 
@@ -612,6 +611,12 @@ const server = http.createServer(async (req, res) => {
     return res.end();
   }
 
+  // Fast health check for Render & uptime monitors
+  if (pathname === '/api/ping' || pathname === '/healthz') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    return res.end('pong');
+  }
+
   // SSE Stream: /api/events
   if (pathname === '/api/events') {
     res.writeHead(200, {
@@ -813,14 +818,17 @@ const server = http.createServer(async (req, res) => {
           const initDep = db.copytrade.initialDeposit || 10000.0;
           const eq = Number(acc.equity) || db.copytrade.currentEquity;
           const bal = Number(acc.balance) || db.copytrade.currentBalance;
+          const isDiff = Math.abs((db.copytrade.currentEquity || 0) - eq) > 0.01 || Math.abs((db.copytrade.currentBalance || 0) - bal) > 0.01;
           db.copytrade.currentEquity = eq;
           db.copytrade.currentBalance = bal;
           db.copytrade.growthPct = +(((eq - initDep) / initDep) * 100).toFixed(2);
           db.copytrade.netProfitUsc = +(eq - initDep).toFixed(2);
           db.copytrade.netProfitUsd = +(db.copytrade.netProfitUsc / 100).toFixed(2);
           db.copytrade.lastSync = getMYTTimeWithSeconds();
-          dbChanged = true;
-          broadcastEvent('copytrade_update', db.copytrade);
+          if (isDiff) {
+            dbChanged = true;
+            broadcastEvent('copytrade_update', db.copytrade);
+          }
         }
 
         if (dbChanged) {
