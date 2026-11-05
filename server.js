@@ -741,6 +741,28 @@ const server = http.createServer(async (req, res) => {
           dbChanged = true;
         }
 
+        // 4. PURGE CLOSED POSITIONS (ZERO GHOST SIGNALS IN ON PIPS):
+        // Jika sesuatu signal dalam db.activeSignals tiada lagi dalam posisi terbuka MT5,
+        // dan ia bukan signal baharu (< 20 saat), bermakna ia telahpun DITUTUP oleh MT5!
+        // Padamkan serta-merta dari activeSignals dan simpan ke rekod sejarah!
+        for (let i = db.activeSignals.length - 1; i >= 0; i--) {
+          const sig = db.activeSignals[i];
+          const sym = (sig.symbol || '').toUpperCase();
+          if (allowedWhitelist.includes(sym) && !mt5BySymbol[sym]) {
+            if ((sig.ticks || 0) > 5 || sig.mt5Verified) {
+              console.log(`🧹 [AUTO-PURGE CLOSED TRADE] #${sym} sudah tiada dalam MT5 (telah ditutup/SL). Memadamkan dari On Pips!`);
+              const asset = AiEngine.assets.find(a => a.symbol === sym) || AiEngine.assets[0];
+              const curP = liveMarketQuotes[sym] ? liveMarketQuotes[sym].price : sig.entry;
+              const isBuy = sig.type === 'BUY';
+              const isSlHit = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
+              const outcome = isSlHit ? (sig.beLocked ? 'BE' : 'SL') : (sig.status === 'TP1_HIT' ? 'TP1' : 'CLOSED');
+              const finalPips = outcome === 'SL' ? -asset.slPips : (outcome === 'BE' ? 0 : (sig.floatingPips || 0));
+              AiEngine.resolveTrade(db, sig, outcome, finalPips, asset);
+              dbChanged = true;
+            }
+          }
+        }
+
         if (dbChanged) {
           saveDB(db);
           broadcastEvent('on_pips_update', db.activeSignals);
@@ -2418,12 +2440,6 @@ const AiEngine = {
       }
 
       const curP = liveQ.price;
-      const deviationPct = Math.abs(curP - sig.entry) / sig.entry;
-      if (deviationPct > 0.025) {
-        remaining.push(sig);
-        continue;
-      }
-
       const isBuy = sig.type === 'BUY';
       const diff = isBuy ? (curP - sig.entry) : (sig.entry - curP);
       const floatingPips = Number((diff / asset.pipVal).toFixed(1));
@@ -2431,6 +2447,20 @@ const AiEngine = {
       sig.currentPrice = curP;
       sig.floatingPips = floatingPips;
       sig.peakPips = Math.max(sig.peakPips || 0, floatingPips);
+
+      // =========================================================================
+      // MANDATORY RULE 1: STRICT STOP LOSS EXECUTION (ZERO FLOATING PAST SL!)
+      // Sebaik sahaja harga mencecah paras Stop Loss (SL), trade WAJIB dipadamkan
+      // daripada On Pips serta-merta tanpa sebarang penangguhan atau pengecualian!
+      // =========================================================================
+      const slCondition = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
+      if (slCondition) {
+        const lossPips = sig.beLocked ? 0 : -Math.abs(sig.slPips || asset.slPips);
+        const outcome = sig.beLocked ? 'BE' : 'SL';
+        this.log(`🛑 [SL TRIGGERED] ${sig.symbol} hit Stop Loss @ ${curP} (SL: ${sig.sl})! Memadamkan daripada On Pips serta-merta.`);
+        this.resolveTrade(db, sig, outcome, lossPips, asset);
+        continue;
+      }
 
       // Stage 1: Hit TP1 (Trigger + Lock Breakeven)
       // SOP: Trade must develop for at least 40 ticks (~1.5 mins) and reach TP1 price or maturity
@@ -2551,14 +2581,8 @@ const AiEngine = {
           }
         }
       } else {
-        // Trade belum capai BE -> normal initial SL (perlu sekurang-kurangnya 80 ticks / ~3.5 minit)
         const slCondition = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
-        if (slCondition && (sig.ticks || 0) >= 80) {
-          if (sig.willWin) {
-            // Setup SMC berkualiti tinggi: Jangan potong pramatang, beri ruang bernafas
-            remaining.push(sig);
-            continue;
-          }
+        if (slCondition) {
           this.resolveTrade(db, sig, 'SL', -asset.slPips, asset);
           continue;
         }
