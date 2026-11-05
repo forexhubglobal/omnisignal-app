@@ -4,6 +4,14 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// Protect server process from termination on broken client sockets or transient errors
+process.on('uncaughtException', (err) => {
+  console.error('[CRASH GUARD] uncaughtException caught:', err && err.message ? err.message : err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[CRASH GUARD] unhandledRejection caught:', reason);
+});
+
 const PORT = process.env.PORT || 3000;
 const DB_FILE = path.join(__dirname, 'data', 'db.json');
 const TMP_DB_FILE = path.join(os.tmpdir(), 'amaterasu_db_cache.json');
@@ -353,7 +361,15 @@ const sseClients = new Set();
 function broadcastEvent(type, data) {
   const payload = `event: ${type}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const client of sseClients) {
-    client.write(payload);
+    try {
+      if (client.writable && !client.destroyed) {
+        client.write(payload);
+      } else {
+        sseClients.delete(client);
+      }
+    } catch (e) {
+      sseClients.delete(client);
+    }
   }
 }
 
