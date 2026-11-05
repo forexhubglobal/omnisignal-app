@@ -9,26 +9,6 @@
     "totalProfitToday": 0,
     "last7Days": [
       {
-        "day": "Tue",
-        "date": "Oct 27",
-        "pips": 0
-      },
-      {
-        "day": "Wed",
-        "date": "Oct 28",
-        "pips": 0
-      },
-      {
-        "day": "Thu",
-        "date": "Oct 29",
-        "pips": 3230
-      },
-      {
-        "day": "Fri",
-        "date": "Oct 30",
-        "pips": 6100
-      },
-      {
         "day": "Sat",
         "date": "Oct 31",
         "pips": 0
@@ -39,11 +19,33 @@
         "pips": -30
       },
       {
-        "day": "Today",
+        "day": "Mon",
         "date": "Nov 2",
         "pips": 0
+      },
+      {
+        "day": "Tue",
+        "date": "Nov 3",
+        "pips": -137
+      },
+      {
+        "day": "Wed",
+        "date": "Nov 4",
+        "pips": 0
+      },
+      {
+        "day": "Thu",
+        "date": "Nov 5",
+        "pips": 0
+      },
+      {
+        "day": "Today",
+        "date": "Nov 6",
+        "pips": 0
       }
-    ]
+    ],
+    "totalSignalsClosed": 297,
+    "totalProfitAllTime": 9163
   },
   "activeSignal": {
     "status": "WAITING",
@@ -4851,7 +4853,7 @@
   "copytrade": {
     "masterAccount": "5100154135",
     "broker": "Versus Trade Ltd. (Live1)",
-    "initialDeposit": 10000.0,
+    "initialDeposit": 10000,
     "currentBalance": 16466.53,
     "currentEquity": 16478.53,
     "growthPct": 64.79,

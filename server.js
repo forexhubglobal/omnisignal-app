@@ -227,22 +227,24 @@ function syncStatsWithSignals(db) {
   if (!db || !Array.isArray(db.signals)) return;
   const signals = db.signals;
   let wins = 0, losses = 0, tp1 = 0, tp2 = 0, tp3 = 0, sl = 0;
+  let totalProfitAllTime = 0;
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const today = new Date();
+  // Normalise strictly to Malaysia Timezone (Asia/Kuala_Lumpur)
+  const mytNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kuala_Lumpur' }));
 
   // Build last 7 days map from actual signals
   const last7Days = [];
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
+    const d = new Date(mytNow);
+    d.setDate(mytNow.getDate() - i);
     const dayName = dayNames[d.getDay()];
-    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const isToday = (i === 0);
 
     let dayPips = 0;
     for (const s of signals) {
-      if (s.date === dateStr || (isToday && s.date === 'Today')) {
+      if (s.date === dateStr || (isToday && (s.date === 'Today' || s.date === dateStr))) {
         const isBe = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
         dayPips += isBe ? 0 : (Number(s.pips) || 0);
       }
@@ -259,6 +261,7 @@ function syncStatsWithSignals(db) {
   for (const s of signals) {
     const isBe = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
     const p = isBe ? 0 : (Number(s.pips) || 0);
+    totalProfitAllTime += p;
     if (p > 0 || ['TP1','TP2','TP3','CLOSED IN PROFIT','TP_TRAIL'].includes(s.status)) {
       wins++;
       if (s.status === 'TP3') tp3++;
@@ -276,13 +279,16 @@ function syncStatsWithSignals(db) {
 
   db.stats = {
     totalSignals,
+    totalSignalsClosed: signals.length,
+    totalProfitAllTime,
     winRate,
     tp1Hit: tp1,
     tp2Hit: tp2,
     tp3Hit: tp3,
     slHit: sl,
     totalProfitToday: todayPips,
-    last7Days
+    last7Days,
+    lastUpdated: mytNow.toISOString()
   };
 }
 

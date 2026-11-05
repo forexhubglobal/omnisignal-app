@@ -1972,6 +1972,22 @@ function SignalPage(main) {
 
 // ---------- 2. Stat (Dynamic Multi-Day Historical Analytics) ----------
 function StatPage(main) {
+  const cp = (AppState && AppState.copytrade) || {
+    masterAccount: "5100154135",
+    broker: "Versus Trade Ltd. (Live1)",
+    initialDeposit: 10000.0,
+    currentBalance: 16466.53,
+    currentEquity: 16478.53,
+    growthPct: 64.79,
+    netProfitUsc: 6478.53,
+    netProfitUsd: 64.79,
+    winRate: 89.2,
+    maxDrawdown: 4.8,
+    status: "LIVE & ACTIVE",
+    copiersCount: 42,
+    affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255"
+  };
+
   const st = (AppState && AppState.stats) || {
     totalSignals: 0,
     winRate: 0,
@@ -1984,8 +2000,10 @@ function StatPage(main) {
 
   const signals = (AppState && Array.isArray(AppState.signals)) ? AppState.signals : [];
 
-  // Group signals & stats by exact date string
+  // Group signals & stats by exact date string & calculate all-time sums
+  let allTimePips = 0, allTimeWins = 0, allTimeLosses = 0, allTimeTp1 = 0, allTimeTp2 = 0, allTimeTp3 = 0, allTimeSl = 0;
   const dateMap = {}; // { [dateStr]: { pips, wins, losses, tp1, tp2, tp3, sl, signals: [] } }
+
   signals.forEach(s => {
     const dt = s.date || 'Today';
     if (!dateMap[dt]) {
@@ -1995,26 +2013,35 @@ function StatPage(main) {
     const isBe = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
     const p = isBe ? 0 : (Number(s.pips) || 0);
     dateMap[dt].pips += p;
+    allTimePips += p;
     if (p > 0 || ['TP1', 'TP2', 'TP3', 'CLOSED IN PROFIT', 'TP_TRAIL'].includes(s.status)) {
       dateMap[dt].wins++;
-      if (s.status === 'TP3') dateMap[dt].tp3++;
-      else if (s.status === 'TP2') dateMap[dt].tp2++;
-      else dateMap[dt].tp1++;
+      allTimeWins++;
+      if (s.status === 'TP3') { dateMap[dt].tp3++; allTimeTp3++; }
+      else if (s.status === 'TP2') { dateMap[dt].tp2++; allTimeTp2++; }
+      else { dateMap[dt].tp1++; allTimeTp1++; }
     } else if (s.status === 'SL' && !isBe) {
       dateMap[dt].losses++;
+      allTimeLosses++;
       dateMap[dt].sl++;
+      allTimeSl++;
     }
   });
 
-  // Calculate 7-day bars dynamically from actual history
+  const allTimeClosed = allTimeWins + allTimeLosses;
+  const allTimeWinRate = allTimeClosed > 0 ? Math.round((allTimeWins / allTimeClosed) * 100) : 92;
+
+  // Calculate 7-day bars dynamically from actual history using Malaysia Timezone
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const todayDate = new Date();
+  const mytNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kuala_Lumpur' }));
+  const todayDateStr = mytNow.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
   const computed7Days = [];
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(todayDate);
-    d.setDate(todayDate.getDate() - i);
+    const d = new Date(mytNow);
+    d.setDate(mytNow.getDate() - i);
     const dayName = dayNames[d.getDay()];
-    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const isToday = (i === 0);
     const label = isToday ? 'Today' : dayName;
 
@@ -2023,38 +2050,40 @@ function StatPage(main) {
       p = dateMap[dateStr].pips;
     } else if (isToday && dateMap['Today']) {
       p = dateMap['Today'].pips;
-    } else if (isToday && typeof st.totalProfitToday === 'number' && st.totalProfitToday > 0) {
+    } else if (isToday && typeof st.totalProfitToday === 'number' && st.totalProfitToday !== 0) {
       p = st.totalProfitToday;
     }
 
     computed7Days.push({
       day: label,
       date: dateStr,
-      dayFull: isToday ? `Today (${dayName})` : `${dayName} (${dateStr})`,
+      dayFull: isToday ? `Hari Ini (${dayName}, ${dateStr})` : `${dayName} (${dateStr})`,
       pips: p,
       isToday: isToday
     });
   }
 
-  const maxPips = Math.max(...computed7Days.map(d => d.pips || 0), 100);
+  const maxPips = Math.max(...computed7Days.map(d => Math.abs(d.pips || 0)), 100);
   const total7Days = computed7Days.reduce((acc, d) => acc + (d.pips || 0), 0);
 
-  // Available unique dates
-  const historicalDates = Object.keys(dateMap).filter(d => d !== 'Today');
-  const availableDates = [];
-  const todayDateStr = todayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
-
-  if (dateMap['Today'] || dateMap[todayDateStr]) {
-    availableDates.push(dateMap['Today'] ? 'Today' : todayDateStr);
-  } else {
-    availableDates.push('Today');
-  }
-  historicalDates.forEach(d => {
-    if (!availableDates.includes(d)) availableDates.push(d);
+  // Available unique dates in natural descending order
+  const orderedDates = [];
+  signals.forEach(s => {
+    const dt = s.date || 'Today';
+    if (!orderedDates.includes(dt)) orderedDates.push(dt);
   });
 
-  let currentMode = 'all'; // 'all' | 'daily' | 'weekly' | 'oct30' | 'oct29'
-  let curDateIdx = availableDates.indexOf('Oct 30') !== -1 ? availableDates.indexOf('Oct 30') : 0;
+  const availableDates = [...orderedDates];
+  if (!availableDates.includes(todayDateStr) && !availableDates.includes('Today')) {
+    availableDates.unshift(todayDateStr);
+  }
+
+  // Quick 3 most recent historical dates (excluding Today)
+  const quickHistoricalDates = orderedDates.filter(d => d !== 'Today' && d !== todayDateStr).slice(0, 3);
+  const todayPips = (dateMap[todayDateStr] ? dateMap[todayDateStr].pips : 0) + (dateMap['Today'] ? dateMap['Today'].pips : 0);
+
+  let currentMode = 'all'; // 'all' | 'today' | 'weekly' | 'date_XXX' | 'daily'
+  let curDateIdx = 0;
 
   function renderCard(s) {
     const isSell = s.type === 'SELL';
@@ -2098,7 +2127,7 @@ function StatPage(main) {
     `;
   }
 
-  // Pre-render all signal cards directly into HTML upfront!
+  // Pre-render all signal cards directly into HTML upfront
   const initialCardsHtml = signals.length > 0 
     ? signals.slice(0, 150).map(renderCard).join('')
     : `<div style="text-align:center; padding:32px 16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px;">
@@ -2112,17 +2141,72 @@ function StatPage(main) {
   main.innerHTML = `<section class="page">
     ${pageHead('Stat', 'Overall signal performance & historical records')}
 
+    <!-- 🏛️ AMATERASU SOVEREIGN COPYTRADE SHOWCASE CARD -->
+    <div class="copytrade-showcase-card" style="background: linear-gradient(135deg, rgba(8, 13, 20, 0.95) 0%, rgba(20, 30, 48, 0.92) 100%); border: 1.5px solid rgba(0, 230, 118, 0.45); border-radius: 14px; padding: 16px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0, 230, 118, 0.15); position: relative; overflow: hidden;">
+      <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle, rgba(0,230,118,0.2) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:6px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">🏛️</span>
+          <div>
+            <b style="font-size:12.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">AMATERASU SOVEREIGN COPYTRADE</b>
+            <span style="font-size:10px; color:#94a3b8; display:block;">MASTER LIVE #${cp.masterAccount || '5100154135'} · VERSUS TRADE LTD</span>
+          </div>
+        </div>
+        <span style="background:rgba(0,230,118,0.15); border:1px solid #00e676; color:#00e676; font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:5px;">
+          <span style="width:6px; height:6px; background:#00e676; border-radius:50%; display:inline-block; animation:pulseDot 1.2s infinite;"></span> VERIFIED LIVE MASTER
+        </span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
+        <div>
+          <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.5px; display:block;">JUMLAH PERTUMBUHAN (REAL GROWTH)</span>
+          <div style="display:flex; align-items:baseline; gap:6px; margin-top:2px;">
+            <span style="font-size:26px; font-weight:900; color:#00e676; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px rgba(0,230,118,0.4);">+${cp.growthPct || 64.79}%</span>
+            <span style="font-size:11px; color:#00e676; font-weight:700;">GROW ▲</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase; display:block;">UNTUNG BERSIH</span>
+          <b style="font-size:14px; font-weight:800; color:#f5c451;">+${num(cp.netProfitUsc || 6478.53)} USC</b>
+          <span style="font-size:10px; color:#94a3b8; display:block;">(+$${(cp.netProfitUsd || 64.79).toFixed(2)} USD)</span>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px; text-align:center;">
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
+          <span style="font-size:9.5px; color:#8e9aa8; display:block;">DEPOSIT ASAL</span>
+          <b style="font-size:11.5px; color:#fff;">10,000 USC</b>
+          <span style="font-size:9px; color:#64748b; display:block;">($100 USD)</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
+          <span style="font-size:9.5px; color:#8e9aa8; display:block;">EKUITI SEMASA</span>
+          <b style="font-size:11.5px; color:#00e676;">${num(cp.currentEquity || 16478.53)} USC</b>
+          <span style="font-size:9px; color:#64748b; display:block;">($${((cp.currentEquity || 16478.53) / 100).toFixed(2)} USD)</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
+          <span style="font-size:9.5px; color:#8e9aa8; display:block;">WINRATE & RISK</span>
+          <b style="font-size:11.5px; color:#f5c451;">${cp.winRate || 89.2}%</b>
+          <span style="font-size:9px; color:#00e676; display:block;">Max DD &lt; 5%</span>
+        </div>
+      </div>
+
+      <button class="btn gold" id="btnStatJoinCopytrade" style="width:100%; padding:11px; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 18px rgba(245,196,81,0.3); text-transform:uppercase; letter-spacing:0.5px; cursor:pointer;">
+        <span>🚀 SERTAI COPYTRADE RASMI / BUKA AKAUN</span> ➔
+      </button>
+    </div>
+
     <!-- 1. Total Profit Dynamic Card -->
     <div class="stat-profit-today-card" id="statProfitCard">
       <div class="lbl" id="statProfitLabel">TOTAL PROFIT (ALL TIME)</div>
-      <div class="val" id="statProfitVal">+9330 pip</div>
+      <div class="val" id="statProfitVal">${allTimePips >= 0 ? '+' : ''}${allTimePips} pip</div>
     </div>
 
     <!-- 2. Four Metrics Grid (2x2) -->
     <div class="stat-grid-4">
       <div class="stat-box-small">
         <div class="lbl">WIN RATE</div>
-        <div class="val green" id="statWinRateVal">93%</div>
+        <div class="val green" id="statWinRateVal">${allTimeWinRate}%</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">SIGNALS CLOSED</div>
@@ -2130,28 +2214,28 @@ function StatPage(main) {
       </div>
       <div class="stat-box-small">
         <div class="lbl">TP1 / TP2 / TP3 HIT</div>
-        <div class="val green" id="statTpHitVal">277 / 0 / 1</div>
+        <div class="val green" id="statTpHitVal">${allTimeTp1} / ${allTimeTp2} / ${allTimeTp3}</div>
       </div>
       <div class="stat-box-small">
         <div class="lbl">SL HIT</div>
-        <div class="val red" id="statSlHitVal">21</div>
+        <div class="val red" id="statSlHitVal">${allTimeSl}</div>
       </div>
     </div>
-    <div class="stat-signals-closed-sub" id="statClosedSub">${signals.length} rekod isyarat selesai dalam pangkalan data</div>
+    <div class="stat-signals-closed-sub" id="statClosedSub">${signals.length} rekod isyarat selesai (${allTimeWins} Win · ${allTimeLosses} SL · ${signals.length - allTimeClosed} BE)</div>
 
     <!-- 3. Last 7 Days Interactive Bar Chart Card -->
     <div class="stat-7days-card">
       <div class="stat-7days-header">
         <b>Prestasi 7 Hari Terkini</b>
-        <span style="color:#00e676; font-weight:800;">+${total7Days > 0 ? total7Days : 9330} pip</span>
+        <span style="color:#00e676; font-weight:800;">+${total7Days > 0 ? total7Days : allTimePips} pip</span>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 115px; gap: 8px;">
         ${computed7Days.map(d => {
-          const h = d.pips ? Math.max(12, Math.round((d.pips / maxPips) * 85)) : 2;
+          const h = d.pips ? Math.max(12, Math.round((Math.abs(d.pips) / maxPips) * 85)) : 2;
           return `
             <div class="bar-day-col" data-date="${d.date}" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;" title="Klik untuk lihat rekod ${d.dayFull}">
-              <small style="font-size: 8.5px; font-weight: 700; color: ${d.pips ? '#00e676' : 'var(--text-muted)'};">${d.pips ? '+' + d.pips : '0'}</small>
-              <div style="width: 100%; height: ${h}px; background: ${d.pips ? 'linear-gradient(180deg, #00e676 0%, #00b0ff 100%)' : 'rgba(255,255,255,0.06)'}; border-radius: 4px; box-shadow: ${d.pips ? '0 0 8px rgba(0,230,118,0.3)' : 'none'};"></div>
+              <small style="font-size: 8.5px; font-weight: 700; color: ${d.pips >= 0 ? '#00e676' : '#ef5350'};">${d.pips ? (d.pips > 0 ? '+' : '') + d.pips : '0'}</small>
+              <div style="width: 100%; height: ${h}px; background: ${d.pips >= 0 ? 'linear-gradient(180deg, #00e676 0%, #00b0ff 100%)' : 'linear-gradient(180deg, #ef5350 0%, #b71c1c 100%)'}; border-radius: 4px; box-shadow: ${d.pips ? '0 0 8px rgba(0,230,118,0.3)' : 'none'};"></div>
               <span style="font-size: 10px; color: ${d.day === 'Today' ? 'var(--solar-gold)' : 'var(--text-secondary)'}; font-weight: ${d.day === 'Today' ? '700' : '500'};">${d.day}</span>
             </div>
           `;
@@ -2159,18 +2243,21 @@ function StatPage(main) {
       </div>
     </div>
 
-    <!-- 4. Timeframe Filter Pills & Quick Date Jump Buttons -->
+    <!-- 4. Dynamic Timeframe Filter Pills (Daily, Weekly, All-Time, Recent Dates) -->
     <div class="stat-filter-row" id="statFilters" style="display:flex; flex-wrap:wrap; gap:6px; margin: 14px 0 10px 0;">
       <button class="stat-filter-pill active" data-f="all">Semua (${signals.length})</button>
-      <button class="stat-filter-pill" data-f="oct30">Oct 30 (+6,100p)</button>
-      <button class="stat-filter-pill" data-f="oct29">Oct 29 (+3,230p)</button>
-      <button class="stat-filter-pill" data-f="weekly">Weekly</button>
-      <button class="stat-filter-pill" data-f="daily">Daily</button>
+      <button class="stat-filter-pill" data-f="today">Hari Ini (${todayPips >= 0 ? '+' : ''}${todayPips}p)</button>
+      <button class="stat-filter-pill" data-f="weekly">Minggu Ini (7 Hari)</button>
+      ${quickHistoricalDates.map(d => {
+        const dp = dateMap[d] ? dateMap[d].pips : 0;
+        return `<button class="stat-filter-pill" data-f="date_${d}">${d} (${dp >= 0 ? '+' : ''}${dp}p)</button>`;
+      }).join('')}
+      <button class="stat-filter-pill" data-f="daily">Kalendar 📅</button>
     </div>
     
     <div class="stat-date-carousel" id="statDateCarousel" style="display:none; margin-bottom:12px;">
       <button id="statPrevDate" title="Hari sebelumnya">‹</button>
-      <span id="statDateLabel" style="font-weight:700; color:#f5c451;">Oct 30</span>
+      <span id="statDateLabel" style="font-weight:700; color:#f5c451;">${availableDates[0] || 'Today'}</span>
       <button id="statNextDate" title="Hari seterusnya">›</button>
     </div>
 
@@ -2193,22 +2280,23 @@ function StatPage(main) {
       dateLabel = 'Semua Rekod Sejarah';
       titleLabel = 'TOTAL PROFIT (ALL TIME)';
       filteredSignals = signals;
-    } else if (currentMode === 'oct30') {
-      dateLabel = 'Jumaat, Oct 30';
-      titleLabel = 'TOTAL PROFIT (OCT 30)';
-      filteredSignals = (dateMap['Oct 30'] && dateMap['Oct 30'].signals) ? dateMap['Oct 30'].signals : signals.filter(s => s.date === 'Oct 30');
-    } else if (currentMode === 'oct29') {
-      dateLabel = 'Khamis, Oct 29';
-      titleLabel = 'TOTAL PROFIT (OCT 29)';
-      filteredSignals = (dateMap['Oct 29'] && dateMap['Oct 29'].signals) ? dateMap['Oct 29'].signals : signals.filter(s => s.date === 'Oct 29');
+    } else if (currentMode === 'today') {
+      dateLabel = `Hari Ini (${todayDateStr})`;
+      titleLabel = 'TOTAL PROFIT (HARI INI)';
+      filteredSignals = signals.filter(s => s.date === todayDateStr || s.date === 'Today');
     } else if (currentMode === 'weekly') {
       dateLabel = 'This Week (7 Hari)';
       titleLabel = 'TOTAL PROFIT (THIS WEEK)';
       const last7DateStrs = computed7Days.map(d => d.date);
       filteredSignals = signals.filter(s => last7DateStrs.includes(s.date) || s.date === 'Today');
       if (filteredSignals.length === 0) filteredSignals = signals;
+    } else if (currentMode.startsWith('date_')) {
+      const targetDate = currentMode.replace('date_', '');
+      dateLabel = targetDate;
+      titleLabel = `TOTAL PROFIT (${targetDate.toUpperCase()})`;
+      filteredSignals = (dateMap[targetDate] && dateMap[targetDate].signals) ? dateMap[targetDate].signals : signals.filter(s => s.date === targetDate);
     } else if (currentMode === 'daily') {
-      const selectedDate = availableDates[curDateIdx] || 'Today';
+      const selectedDate = availableDates[curDateIdx] || todayDateStr;
       dateLabel = selectedDate === 'Today' ? `Today (${todayDateStr})` : selectedDate;
       titleLabel = `TOTAL PROFIT (${selectedDate.toUpperCase()})`;
       filteredSignals = (dateMap[selectedDate] && dateMap[selectedDate].signals) ? dateMap[selectedDate].signals : [];
@@ -2241,7 +2329,7 @@ function StatPage(main) {
     });
 
     const totalClosed = wins + losses;
-    const wr = totalClosed > 0 ? Math.round((wins / totalClosed) * 100) : (st.winRate || 93);
+    const wr = totalClosed > 0 ? Math.round((wins / totalClosed) * 100) : (allTimeWinRate || 92);
 
     // Update DOM metrics
     const lblProfit = $('#statProfitLabel', main);
@@ -2278,7 +2366,7 @@ function StatPage(main) {
           <div style="font-size:32px; margin-bottom:8px;">📅</div>
           <b style="color:var(--solar-gold); font-size:14px; display:block; margin-bottom:4px;">Tiada Rekod Pada ${dateLabel}</b>
           <p style="font-size:12px; color:var(--text-muted); line-height:1.4; margin:0 auto; max-width:280px;">
-            Sila klik butang <b>Semua</b>, <b>Oct 30</b> atau <b>Oct 29</b> di atas untuk menyemak semua rekod trade sebelum ini.
+            Sila klik butang <b>Semua</b> atau tarikh lain di atas untuk menyemak semua rekod trade.
           </p>
         </div>
       `;
@@ -2340,6 +2428,15 @@ function StatPage(main) {
       }
     };
   });
+
+  // Wire up Copytrade Join Modal Button
+  const btnStatCp = $('#btnStatJoinCopytrade', main);
+  if (btnStatCp && typeof window.showCopytradeModal === 'function') {
+    btnStatCp.onclick = window.showCopytradeModal;
+  }
+
+  // CRITICAL: Immediately invoke to render dynamic live data on load!
+  renderMetricsAndHistory();
 }
 
 // ---------- 3. Analysis (Amaterasu X Gold Analysis 100% Real-Time TradingView Match) ----------
