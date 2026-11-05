@@ -2798,12 +2798,10 @@ setInterval(() => {
 // Initial real market quote fetch on boot
 refreshAllLiveQuotes().catch(() => {});
 
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  server.listen(PORT, () => {
-    console.log(`Amaterasu AI Sovereign Platform Ready!`);
-    console.log(`User App: http://localhost:${PORT}`);
-    console.log(`Admin CRM: http://localhost:${PORT}/crm`);
-  });
-}
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Amaterasu AI Sovereign Platform Ready on 0.0.0.0:${PORT}!`);
+  console.log(`User App: http://0.0.0.0:${PORT}`);
+  console.log(`Admin CRM: http://0.0.0.0:${PORT}/crm`);
+});
 
 module.exports = server;
