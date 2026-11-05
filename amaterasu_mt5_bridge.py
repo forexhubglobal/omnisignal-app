@@ -989,11 +989,24 @@ class AmaterasuBridge:
                             "sl": p.sl,
                             "tp": p.tp,
                             "profit": p.profit
-                        })
+                acc = mt5.account_info()
+                acc_info = None
+                if acc:
+                    acc_info = {
+                        "balance": float(acc.balance),
+                        "equity": float(acc.equity),
+                        "profit": float(acc.profit),
+                        "margin": float(acc.margin),
+                        "login": int(acc.login)
+                    }
                 urls = [self.server_url]
                 for u in urls:
                     try:
-                        requests.post(f"{u.rstrip('/')}/api/market/sync-mt5", json={"quotes": quotes, "openPositions": pos_list}, timeout=2)
+                        requests.post(f"{u.rstrip('/')}/api/market/sync-mt5", json={
+                            "quotes": quotes, 
+                            "openPositions": pos_list,
+                            "accountInfo": acc_info
+                        }, timeout=2)
                     except Exception:
                         pass
             except Exception:

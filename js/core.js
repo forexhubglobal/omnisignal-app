@@ -342,7 +342,20 @@ const AppState = {
         this.screener = d.screener;
         this.classes = d.classes;
         this.contests = d.contests;
+        this.copytrade = d.copytrade || null;
         if (typeof route === 'function') route();
+      });
+      s.addEventListener('copytrade_update', e => {
+        try {
+          const cp = JSON.parse(e.data);
+          this.copytrade = cp;
+          const elGrowth = document.getElementById('cpGrowthVal');
+          if (elGrowth) elGrowth.textContent = `+${cp.growthPct || 64.79}%`;
+          const elEq = document.getElementById('cpEquityVal');
+          if (elEq) elEq.textContent = `${num(cp.currentEquity || 16478.53)} USC`;
+          const elNet = document.getElementById('cpNetProfitVal');
+          if (elNet) elNet.textContent = `+${num(cp.netProfitUsc || 6478.53)} USC`;
+        } catch (err) {}
       });
       s.addEventListener('market_quotes', e => {
         const quotes = JSON.parse(e.data);

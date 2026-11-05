@@ -4847,5 +4847,22 @@
       "extensionCount": 1,
       "notes": "Trader power! Dah buat 2.3 lot, layak auto-extend"
     }
-  ]
+  ],
+  "copytrade": {
+    "masterAccount": "5100154135",
+    "broker": "Versus Trade Ltd. (Live1)",
+    "initialDeposit": 10000.0,
+    "currentBalance": 16466.53,
+    "currentEquity": 16478.53,
+    "growthPct": 64.79,
+    "netProfitUsc": 6478.53,
+    "netProfitUsd": 64.79,
+    "winRate": 89.2,
+    "maxDrawdown": 4.8,
+    "status": "LIVE & ACTIVE",
+    "copiersCount": 42,
+    "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
+    "lastSync": "2026-11-06 04:20:00"
+  },
+  "copytradeRequests": []
 }

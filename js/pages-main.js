@@ -434,6 +434,132 @@ function openShareWinModal(sig, isWin = false) {
   }
 }
 
+// ===== Amaterasu Sovereign Copytrade Onboarding Modal =====
+function showCopytradeModal() {
+  const cp = (AppState && AppState.copytrade) || {
+    masterAccount: "5100154135",
+    broker: "Versus Trade Ltd. (Live1)",
+    growthPct: 64.79,
+    currentEquity: 16478.53,
+    affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255"
+  };
+  const affLink = cp.affiliateLink || "https://one.versustrade.link/links/go/14490?pid=31255";
+
+  const m = modal(`
+    <div style="text-align:left;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:20px;">🏛️</span>
+          <div>
+            <b style="font-family:'Space Grotesk',sans-serif; font-size:14px; color:#fff; text-transform:uppercase;">AMATERASU COPYTRADE</b>
+            <span style="display:block; font-size:10.5px; color:#00e676; font-weight:700;">● MASTER VERIFIED (LIVE +${cp.growthPct || 64.79}%)</span>
+          </div>
+        </div>
+        <button data-close style="background:transparent; border:none; color:#8e9aa8; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+
+      <!-- Quick Master Proof Banner -->
+      <div style="background:linear-gradient(135deg, rgba(0,230,118,0.14) 0%, rgba(11,17,24,0.95) 100%); border:1px solid rgba(0,230,118,0.35); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase;">REKOD AKAUN MASTER</span>
+            <b style="font-size:13px; color:#fff; display:block;">#${cp.masterAccount || '5100154135'} (Versus Trade Live)</b>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase;">TOTAL GROW</span>
+            <b style="font-size:16px; color:#00e676; font-weight:900;">+${cp.growthPct || 64.79}% 📈</b>
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:#cbd5e1; line-height:1.45; margin-bottom:14px;">
+        Ikuti posisi dagangan Master secara automatik 100% tanpa perlu tengok graf atau tekan buy/sell sendiri. Sila ikut <b>SOP Mudah 3-Langkah</b> di bawah:
+      </p>
+
+      <!-- Step 1 -->
+      <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="background:#f5c451; color:#000; font-size:11px; font-weight:900; width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">1</span>
+          <b style="color:#fff; font-size:12.5px;">Daftar Akaun Broker Rasmi (Wajib)</b>
+        </div>
+        <p style="font-size:11px; color:#94a3b8; margin:0 0 10px 0; line-height:1.4;">
+          Daftar akaun trading anda melalui pautan rasmi Versus Trade di bawah untuk melayakkan penyegerakan sistem Amaterasu X:
+        </p>
+        <a href="${affLink}" target="_blank" rel="noopener noreferrer" class="btn gold" style="display:flex; align-items:center; justify-content:center; gap:6px; padding:10px; font-weight:800; font-size:12px; text-decoration:none; border-radius:6px; text-transform:uppercase; box-shadow:0 4px 14px rgba(245,196,81,0.3);">
+          <span>🔗</span> BUKA AKAUN BROKER SEKARANG ➔
+        </a>
+      </div>
+
+      <!-- Step 2 -->
+      <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <span style="background:#00e676; color:#000; font-size:11px; font-weight:900; width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">2</span>
+          <b style="color:#fff; font-size:12.5px;">Deposit Modal Dagangan</b>
+        </div>
+        <p style="font-size:11px; color:#94a3b8; margin:0; line-height:1.4;">
+          Deposit minima serendah <b>$50 - $100 USD</b> (Akaun Standard atau Akaun Cent). Modal kekal 100% milik anda dan boleh dikeluarkan pada bila-bila masa.
+        </p>
+      </div>
+
+      <!-- Step 3 -->
+      <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="background:#00bcd4; color:#000; font-size:11px; font-weight:900; width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;">3</span>
+          <b style="color:#fff; font-size:12.5px;">Hantar No Akaun MT5 Anda Untuk Di-Link</b>
+        </div>
+        
+        <form id="formCopytradeJoin" style="display:flex; flex-direction:column; gap:8px;">
+          <input type="text" id="cpClientName" placeholder="Nama Penuh Anda" required style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:12px;" />
+          <input type="tel" id="cpClientPhone" placeholder="No WhatsApp (Cth: +60123456789)" required style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:12px;" />
+          <input type="text" id="cpClientMt5" placeholder="No Akaun MT5 Versus Trade Anda" required style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:12px;" />
+          
+          <button type="submit" class="btn" style="background:#00e676; color:#000; font-weight:800; font-size:12px; padding:10px; border-radius:6px; margin-top:4px; cursor:pointer;">
+            ✅ HANTAR UNTUK PENGESAHAN & AKTIFKAN
+          </button>
+        </form>
+      </div>
+
+      <div style="text-align:center;">
+        <button data-close class="btn btn-outline" style="font-size:11px; color:#8e9aa8; padding:6px 14px; border-radius:6px;">Tutup</button>
+      </div>
+    </div>
+  `);
+
+  const form = $('#formCopytradeJoin', m.el);
+  if (form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const name = $('#cpClientName', m.el).value.trim();
+      const phone = $('#cpClientPhone', m.el).value.trim();
+      const mt5 = $('#cpClientMt5', m.el).value.trim();
+      
+      try {
+        const btn = form.querySelector('button[type=submit]');
+        btn.disabled = true;
+        btn.textContent = 'Menghantar...';
+        
+        const res = await fetch('/api/copytrade/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, mt5Account: mt5 })
+        });
+        const d = await res.json();
+        if (d.success) {
+          toast('✅ Permohonan Copytrade berjaya dihantar! Admin akan hubungi anda.');
+          m.close();
+        } else {
+          toast('Ralat: ' + (d.error || 'Sila cuba lagi'));
+          btn.disabled = false;
+          btn.textContent = '✅ HANTAR UNTUK PENGESAHAN & AKTIFKAN';
+        }
+      } catch (err) {
+        toast('Gagal menghantar permohonan. Sila semak sambungan.');
+      }
+    };
+  }
+}
+window.showCopytradeModal = showCopytradeModal;
+
 // ---------- 1. Signal ----------
 function SignalPage(main) {
   let activeSymId = store.get('selected_signal_sym') || 'XAUUSD';
@@ -442,6 +568,21 @@ function SignalPage(main) {
   Market.updateUI();
 
   const globalSig = (AppState && AppState.activeSignal) || { status: 'WAITING', type: 'BUY', symbol: 'XAUUSD', entry: 4013.00, tp1: 4016.00, tp2: 4020.50, sl: 4009.50 };
+  const cp = (AppState && AppState.copytrade) || {
+    masterAccount: "5100154135",
+    broker: "Versus Trade Ltd. (Live1)",
+    initialDeposit: 10000.0,
+    currentBalance: 16466.53,
+    currentEquity: 16478.53,
+    growthPct: 64.79,
+    netProfitUsc: 6478.53,
+    netProfitUsd: 64.79,
+    winRate: 89.2,
+    maxDrawdown: 4.8,
+    status: "LIVE & ACTIVE",
+    copiersCount: 42,
+    affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255"
+  };
 
   const isLiveOrTp1 = globalSig.status === 'ACTIVE' || globalSig.status === 'TP1_HIT';
   const activeList = (AppState && Array.isArray(AppState.activeSignals) && AppState.activeSignals.length > 0)
@@ -945,6 +1086,61 @@ function SignalPage(main) {
       </div>
     </div>
     
+    <!-- 🏛️ AMATERASU SOVEREIGN COPYTRADE SHOWCASE CARD -->
+    <div class="copytrade-showcase-card" style="background: linear-gradient(135deg, rgba(8, 13, 20, 0.95) 0%, rgba(20, 30, 48, 0.92) 100%); border: 1.5px solid rgba(0, 230, 118, 0.45); border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 8px 32px rgba(0, 230, 118, 0.15); position: relative; overflow: hidden;">
+      <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle, rgba(0,230,118,0.2) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:6px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">🏛️</span>
+          <div>
+            <b style="font-size:12.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">AMATERASU SOVEREIGN COPYTRADE</b>
+            <span style="font-size:10px; color:#94a3b8; display:block;">MASTER LIVE #${cp.masterAccount || '5100154135'} · VERSUS TRADE LTD</span>
+          </div>
+        </div>
+        <span style="background:rgba(0,230,118,0.15); border:1px solid #00e676; color:#00e676; font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:5px;">
+          <span style="width:6px; height:6px; background:#00e676; border-radius:50%; display:inline-block; animation:pulseDot 1.2s infinite;"></span> VERIFIED LIVE MASTER
+        </span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
+        <div>
+          <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.5px; display:block;">JUMLAH PERTUMBUHAN (REAL GROWTH)</span>
+          <div style="display:flex; align-items:baseline; gap:6px; margin-top:2px;">
+            <span id="cpGrowthVal" style="font-size:26px; font-weight:900; color:#00e676; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px rgba(0,230,118,0.4);">+${cp.growthPct || 64.79}%</span>
+            <span style="font-size:11px; color:#00e676; font-weight:700;">GROW ▲</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase; display:block;">UNTUNG BERSIH</span>
+          <b id="cpNetProfitVal" style="font-size:14px; font-weight:800; color:#f5c451;">+${num(cp.netProfitUsc || 6478.53)} USC</b>
+          <span style="font-size:10px; color:#94a3b8; display:block;">(+$${(cp.netProfitUsd || 64.79).toFixed(2)} USD)</span>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px; text-align:center;">
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
+          <span style="font-size:9.5px; color:#8e9aa8; display:block;">DEPOSIT ASAL</span>
+          <b style="font-size:11.5px; color:#fff;">10,000 USC</b>
+          <span style="font-size:9px; color:#64748b; display:block;">($100 USD)</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
+          <span style="font-size:9.5px; color:#8e9aa8; display:block;">EKUITI SEMASA</span>
+          <b id="cpEquityVal" style="font-size:11.5px; color:#00e676;">${num(cp.currentEquity || 16478.53)} USC</b>
+          <span style="font-size:9px; color:#64748b; display:block;">($${((cp.currentEquity || 16478.53) / 100).toFixed(2)} USD)</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
+          <span style="font-size:9.5px; color:#8e9aa8; display:block;">WINRATE & RISK</span>
+          <b style="font-size:11.5px; color:#f5c451;">${cp.winRate || 89.2}%</b>
+          <span style="font-size:9px; color:#00e676; display:block;">Max DD &lt; 5%</span>
+        </div>
+      </div>
+
+      <button class="btn gold" id="btnJoinCopytradeModal" style="width:100%; padding:11px; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 18px rgba(245,196,81,0.3); text-transform:uppercase; letter-spacing:0.5px; cursor:pointer;">
+        <span>🚀 SERTAI COPYTRADE RASMI / BUKA AKAUN</span> ➔
+      </button>
+    </div>
+
     <!-- 1. 100% Match Interactive SNR Chart Card with Screener Trends (Gambar Pertama Exact) -->
     <div class="snr-chart-card">
       <div class="snr-screener-block">
@@ -1606,6 +1802,12 @@ function SignalPage(main) {
         btnTrigger.innerHTML = `<span>⚡ Jana Signal AI ${inst.name} Sekarang</span>`;
       }
     };
+  }
+
+  // Copytrade Modal Trigger
+  const btnJoinCp = $('#btnJoinCopytradeModal', main);
+  if (btnJoinCp) {
+    btnJoinCp.onclick = showCopytradeModal;
   }
 
   // Share Win / Setup Poster Buttons

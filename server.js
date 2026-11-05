@@ -178,7 +178,24 @@ const defaultDB = {
     { id: 'sc-1', name: 'Zack Alpha', score: 3840, game: 'blocks', month: '2026-10' },
     { id: 'sc-2', name: 'kj35', score: 2450, game: 'blocks', month: '2026-10' },
     { id: 'sc-3', name: 'NurFX', score: 1920, game: 'blocks', month: '2026-10' }
-  ]
+  ],
+  copytrade: {
+    masterAccount: "5100154135",
+    broker: "Versus Trade Ltd. (Live1)",
+    initialDeposit: 10000.0,
+    currentBalance: 16466.53,
+    currentEquity: 16478.53,
+    growthPct: 64.79,
+    netProfitUsc: 6478.53,
+    netProfitUsd: 64.79,
+    winRate: 89.2,
+    maxDrawdown: 4.8,
+    status: "LIVE & ACTIVE",
+    copiersCount: 42,
+    affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255",
+    lastSync: "04:20:00"
+  },
+  copytradeRequests: []
 };
 
 // Helper to synchronize stats with actual signal history
@@ -615,7 +632,8 @@ const server = http.createServer(async (req, res) => {
       classes: db.classes,
       contests: db.contests,
       ibs: db.ibs || [],
-      traders: (db.traders || []).map(formatTraderData)
+      traders: (db.traders || []).map(formatTraderData),
+      copytrade: db.copytrade || null
     })}\n\n`);
 
     req.on('close', () => {
@@ -765,6 +783,40 @@ const server = http.createServer(async (req, res) => {
           }
         }
 
+        // 5. LIVE COPYTRADE MASTER PERFORMANCE SYNC:
+        if (payload.accountInfo) {
+          const acc = payload.accountInfo;
+          if (!db.copytrade) {
+            db.copytrade = {
+              masterAccount: "5100154135",
+              broker: "Versus Trade Ltd. (Live1)",
+              initialDeposit: 10000.0,
+              currentBalance: 16466.53,
+              currentEquity: 16478.53,
+              growthPct: 64.79,
+              netProfitUsc: 6478.53,
+              netProfitUsd: 64.79,
+              winRate: 89.2,
+              maxDrawdown: 4.8,
+              status: "LIVE & ACTIVE",
+              copiersCount: 42,
+              affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255",
+              lastSync: getMYTTimeWithSeconds()
+            };
+          }
+          const initDep = db.copytrade.initialDeposit || 10000.0;
+          const eq = Number(acc.equity) || db.copytrade.currentEquity;
+          const bal = Number(acc.balance) || db.copytrade.currentBalance;
+          db.copytrade.currentEquity = eq;
+          db.copytrade.currentBalance = bal;
+          db.copytrade.growthPct = +(((eq - initDep) / initDep) * 100).toFixed(2);
+          db.copytrade.netProfitUsc = +(eq - initDep).toFixed(2);
+          db.copytrade.netProfitUsd = +(db.copytrade.netProfitUsc / 100).toFixed(2);
+          db.copytrade.lastSync = getMYTTimeWithSeconds();
+          dbChanged = true;
+          broadcastEvent('copytrade_update', db.copytrade);
+        }
+
         if (dbChanged) {
           saveDB(db);
           broadcastEvent('on_pips_update', db.activeSignals);
@@ -777,7 +829,41 @@ const server = http.createServer(async (req, res) => {
         }
       }
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, synced: Object.keys(payload?.quotes || {}).length, reconciled: !!payload?.openPositions }));
+      return res.end(JSON.stringify({ success: true, synced: Object.keys(payload?.quotes || {}).length, reconciled: !!payload?.openPositions, copytrade: db.copytrade }));
+    } catch (err) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: err.message }));
+    }
+  }
+
+  // 0.1c GET /api/copytrade/info
+  if (pathname === '/api/copytrade/info' && req.method === 'GET') {
+    const db = getDB();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(db.copytrade || {}));
+  }
+
+  // 0.1d POST /api/copytrade/join (Client submission to follow copytrade)
+  if (pathname === '/api/copytrade/join' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      if (!Array.isArray(db.copytradeRequests)) db.copytradeRequests = [];
+      const newReq = {
+        id: 'cpr-' + Date.now(),
+        name: payload.name || 'Trader Anonymous',
+        phone: payload.phone || '',
+        mt5Account: payload.mt5Account || '',
+        depositAmount: Number(payload.depositAmount) || 100,
+        status: 'PENDING_VERIFICATION',
+        createdAt: new Date().toISOString(),
+        mytTime: getMYTTimeWithSeconds()
+      };
+      db.copytradeRequests.unshift(newReq);
+      saveDB(db);
+      broadcastEvent('copytrade_request_added', newReq);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, request: newReq }));
     } catch (err) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: err.message }));

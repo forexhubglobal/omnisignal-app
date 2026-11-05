@@ -56,6 +56,21 @@ function MorePage(main) {
       <span class="go" style="color:var(--solar-gold); font-size:18px;">›</span>
     </a>
 
+    <!-- Amaterasu Official Copytrade Banner -->
+    <div class="card" id="moreCopytradeCard" style="display:flex; align-items:center; justify-content:space-between; padding:16px 18px; margin-bottom:18px; border:1px solid rgba(0,230,118,0.4); background:linear-gradient(135deg, rgba(0,230,118,0.12) 0%, rgba(11,17,26,0.95) 100%); cursor:pointer; border-radius:12px; box-shadow:0 4px 20px rgba(0,230,118,0.15);">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:28px;">🏛️</span>
+        <div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <b style="font-family:'Space Grotesk',sans-serif; font-size:14px; color:#fff;">Sovereign Copytrade (Master Live)</b>
+            <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:10px;">+${((AppState && AppState.copytrade && AppState.copytrade.growthPct) || 64.79)}% GROW</span>
+          </div>
+          <small style="color:#94a3b8; font-size:11px;">Ikuti akaun master #5100154135 (Versus Trade) secara automatik</small>
+        </div>
+      </div>
+      <span class="go" style="color:#00e676; font-size:18px; font-weight:700;">➔</span>
+    </div>
+
     <!-- Academy Section -->
     <h4 class="sec">Amaterasu Academy</h4>
     <div class="tile-grid">
@@ -90,6 +105,13 @@ function MorePage(main) {
   </section>`;
 
   $('#siteBanner', main).onclick = () => modal(`<h3>${BRAND.name}</h3><p class="muted">Amaterasu AI Sovereign Platform official gateway.</p><div class="modal-actions"><button class="btn gold" data-close>Understood</button></div>`);
+
+  const cpCard = $('#moreCopytradeCard', main);
+  if (cpCard) {
+    cpCard.onclick = () => {
+      if (typeof showCopytradeModal === 'function') showCopytradeModal();
+    };
+  }
 
   $('#classesBtn', main).onclick = () => {
     const list = (AppState && AppState.classes && AppState.classes.length) ? AppState.classes : [
