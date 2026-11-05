@@ -986,6 +986,8 @@ class AmaterasuBridge:
                             "symbol": p.symbol.split('.')[0].upper(),
                             "type": "BUY" if p.type == 0 else "SELL",
                             "openPrice": p.price_open,
+                            "sl": p.sl,
+                            "tp": p.tp,
                             "profit": p.profit
                         })
                 urls = [self.server_url]

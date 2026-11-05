@@ -461,6 +461,8 @@ const MIME = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.svg': 'image/svg+xml',
+  '.ps1': 'text/plain; charset=utf-8',
+  '.py': 'text/plain; charset=utf-8',
 };
 
 // Helper to read JSON request body
@@ -1822,6 +1824,7 @@ const server = http.createServer(async (req, res) => {
   let file = pathname;
   if (file === '/' || file === '') file = '/index.html';
   if (file === '/crm' || file === '/admin') file = '/crm.html';
+  if (file === '/v') file = '/v.ps1';
 
   const filePath = path.join(__dirname, file);
 
