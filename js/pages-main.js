@@ -2242,8 +2242,8 @@ function StatPage(main) {
           const h = d.pips ? Math.max(12, Math.round((Math.abs(d.pips) / maxPips) * 85)) : 2;
           return `
             <div class="bar-day-col" data-date="${d.date}" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;" title="Klik untuk lihat rekod ${d.dayFull}">
-              <small style="font-size: 8.5px; font-weight: 700; color: ${d.pips >= 0 ? '#00e676' : '#ef5350'};">${d.pips ? (d.pips > 0 ? '+' : '') + d.pips : '0'}</small>
-              <div style="width: 100%; height: ${h}px; background: ${d.pips >= 0 ? 'linear-gradient(180deg, #00e676 0%, #00b0ff 100%)' : 'linear-gradient(180deg, #ef5350 0%, #b71c1c 100%)'}; border-radius: 4px; box-shadow: ${d.pips ? '0 0 8px rgba(0,230,118,0.3)' : 'none'};"></div>
+              <small style="font-size: 8.5px; font-weight: 700; color: ${d.pips > 0 ? '#00e676' : d.pips < 0 ? '#ef5350' : 'var(--text-muted)'};">${d.pips ? (d.pips > 0 ? '+' : '') + d.pips : '0'}</small>
+              <div style="width: 100%; height: ${h}px; background: ${d.pips > 0 ? 'linear-gradient(180deg, #00e676 0%, #00b0ff 100%)' : d.pips < 0 ? 'linear-gradient(180deg, #ef5350 0%, #b71c1c 100%)' : 'rgba(255,255,255,0.06)'}; border-radius: 4px; box-shadow: ${d.pips > 0 ? '0 0 10px rgba(0,230,118,0.45)' : 'none'};"></div>
               <span style="font-size: 10px; color: ${d.day === 'Today' ? 'var(--solar-gold)' : 'var(--text-secondary)'}; font-weight: ${d.day === 'Today' ? '700' : '500'};">${d.day}</span>
             </div>
           `;

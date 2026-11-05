@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amaterasu-x-v5';
+const CACHE_NAME = 'amaterasu-x-v6';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
