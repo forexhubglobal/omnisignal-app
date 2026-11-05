@@ -485,7 +485,7 @@ function showCopytradeModal() {
         <p style="font-size:11px; color:#94a3b8; margin:0 0 10px 0; line-height:1.4;">
           Daftar akaun trading anda melalui pautan rasmi Versus Trade di bawah untuk melayakkan penyegerakan sistem Amaterasu X:
         </p>
-        <a href="${affLink}" target="_blank" rel="noopener noreferrer" class="btn gold" style="display:flex; align-items:center; justify-content:center; gap:6px; padding:10px; font-weight:800; font-size:12px; text-decoration:none; border-radius:6px; text-transform:uppercase; box-shadow:0 4px 14px rgba(245,196,81,0.3);">
+        <a href="${affLink}" target="_blank" rel="noopener noreferrer" id="btnOpenBrokerLink" class="btn gold" style="display:flex; align-items:center; justify-content:center; gap:6px; padding:10px; font-weight:800; font-size:12px; text-decoration:none; border-radius:6px; text-transform:uppercase; box-shadow:0 4px 14px rgba(245,196,81,0.3); cursor:pointer;">
           <span>🔗</span> BUKA AKAUN BROKER SEKARANG ➔
         </a>
       </div>
@@ -524,6 +524,14 @@ function showCopytradeModal() {
       </div>
     </div>
   `);
+
+  const btnBroker = $('#btnOpenBrokerLink', m.el);
+  if (btnBroker) {
+    btnBroker.onclick = (e) => {
+      e.preventDefault();
+      window.open(affLink, '_blank');
+    };
+  }
 
   const form = $('#formCopytradeJoin', m.el);
   if (form) {
