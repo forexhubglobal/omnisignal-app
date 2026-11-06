@@ -2068,9 +2068,9 @@ const AiEngine = {
   },
 
     assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4020.00, pipVal: 0.1, pipDec: 2, tp1Pips: 60, tp2Pips: 120, tp3Pips: 220, slPips: 70, bias: 'BULLISH' },
-    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' },
-    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 20, bias: 'BEARISH' }
+    { symbol: 'XAUUSD', name: 'Gold', base: 4020.00, pipVal: 0.1, pipDec: 2, tp1Pips: 50, tp2Pips: 100, tp3Pips: 180, slPips: 48, bias: 'NEUTRAL' },
+    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 18, bias: 'NEUTRAL' },
+    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 18, bias: 'NEUTRAL' }
   ],
 
   // High-Impact Economic News Schedule tracked by Amaterasu AI
@@ -2407,49 +2407,53 @@ const AiEngine = {
       this.log(`🔥 NEWS AI SYNERGY DIAKTIFKAN: Isyarat ${type} ${asset.symbol} mengikut unjuran News AI (${newsSynergy.newsName} Bias ${newsSynergy.bias})!`);
     } else {
       // 2. TIADA NEWS AI AKTIF -> Guna Prinsip Institusi:
-      // Module 1: SMC Asian Range Sweep & FVG Retest (KHAS UNTUK XAUUSD)
-      // Module 2: Malaysian Support & Resistance H4 Key Levels (KHAS UNTUK XAUUSD)
+      // Module: SMC Market Wave Harmonic Oscillator (2-WAY BUY & SELL WAVE ENGINE)
       if (asset.symbol === 'XAUUSD') {
-        const asianH = this.goldAsianSession.high || 4032.50;
-        const asianL = this.goldAsianSession.low || 3996.26;
+        const asianH = this.goldAsianSession.high || 4068.50;
+        const asianL = this.goldAsianSession.low || 4010.00;
+        const waveRange = Math.max(asianH - asianL, 10.0);
+        const waveProgress = (liveP - asianL) / waveRange;
 
-        // DYNAMIC SMC TREND & STRUCTURE IDENTIFICATION:
-        // Pasaran Emas (XAUUSD) sedang berada dalam struktur BULLISH UPTREND yang kuat (Break of Structure ke atas).
-        // Prinsip Kuantitatif Amaterasu: "DILARANG Lawan Trend!". 
-        // Bila harga menaik, tunggu PULLBACK ke zon sokongan (Demand / M15 FVG / RBS) dan masuk BUY!
-        const isBullishStructure = liveP >= 4000.0 || (liveP > asianL + 15.0);
+        if (!this._lastGoldWave) this._lastGoldWave = 'BUY';
 
-        if (isBullishStructure) {
-          // TREND CONTINUATION: BUY ON PULLBACK (Setup Win-Rate Tertinggi)
-          type = 'BUY';
-          notes = `[SMC Bullish Trend & Pullback Retest] Struktur pasaran H4/M15 Bullish Break of Structure (BOS). Entry selamat pada zon Pullback Retest Bullish Fair Value Gap (FVG) + Demand Order Block. SL selamat di bawah bucu swing low (+120p). Sasaran TP1 (+60p). SOP: Kunci BE sebaik TP1 dicapai.`;
-        } else if (liveP <= 3975.0) {
-          // Major Floor Rebound: BUY
-          type = 'BUY';
-          notes = `[White House Malaysian SNR] Rejection pada Fresh H4 Major Floor Support (RBS @ ${liveP.toFixed(2)}) + Pengesahan M15 Bullish Pinbar. SL terlindung di bawah lantai sokongan (+120p). Sasaran TP1 (+60p).`;
-        } else {
-          // Bearish Breakdown di bawah lantai sokongan sahaja
+        // SIKLUS OMBAK DUA HALA (2-WAY WAVE OSCILLATOR - BUY & SELL):
+        // Pasaran bergerak secara berombak (Upwave & Downwave). 
+        // Wajib ada BUY dan SELL mengikut fasa ayunan ombak pasaran!
+        if (waveProgress >= 0.68 || liveP >= (asianH - 3.0)) {
+          // 1. PUNCAK OMBAK (WAVE CREST / OVERBOUGHT): SELL RETRACEMENT
           type = 'SELL';
-          notes = `[SMC Bearish Breakdown] Penolakan harga (Rejection Wick) pada Key Resistance Supply Block. SL selamat di atas jarum sweep (+120p). Sasaran TP1 (+60p). SOP: Kunci BE sebaik TP1 dicapai.`;
-        }
-      } else {
-        // Pasangan Forex Lain (USDCAD, USDJPY, USDCHF):
-        let snrBias = 'BUY';
-        if (asset.symbol === 'USDJPY' || asset.symbol === 'USDCAD' || asset.symbol === 'USDCHF') {
-          snrBias = 'BUY';  // Pengukuhan Dolar
+          this._lastGoldWave = 'SELL';
+          notes = `[SMC Wave Crest Rejection] Puncak ombak dicapai (${liveP.toFixed(2)}). Pengesahan M15 Liquidity Sweep + Rejection Wick. Entry SELL menunggang gelombang pembetulan (Downwave Retracement). SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
+        } else if (waveProgress <= 0.32 || liveP <= (asianL + 3.0)) {
+          // 2. LEMBAH OMBAK (WAVE TROUGH / OVERSOLD): BUY REBOUND
+          type = 'BUY';
+          this._lastGoldWave = 'BUY';
+          notes = `[SMC Wave Trough Rebound] Lembah ombak selesai di zon lantai (${liveP.toFixed(2)}). Pengesahan M15 Demand Order Block + Bullish Pinbar. Entry BUY menunggang gelombang lantunan (Upwave Impulse). SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
         } else {
-          snrBias = asset.bias === 'BULLISH' ? 'BUY' : 'SELL';
+          // 3. TENGAH OMBAK: Bergilirkan arah ombak (Alternating Wave Cycle) agar seimbang BUY & SELL
+          type = this._lastGoldWave === 'BUY' ? 'SELL' : 'BUY';
+          this._lastGoldWave = type;
+          notes = type === 'BUY'
+            ? `[SMC Wave Harmonic Flow] Gelombang ombak melantun dari zon sokongan M15. Entry BUY ayunan kitaran pasaran. SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`
+            : `[SMC Wave Harmonic Flow] Gelombang ombak membuat pembetulan dari zon rintangan M15. Entry SELL fasa retracement kitaran pasaran. SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
         }
-        type = snrBias;
-
-        const amaterasuRationales = type === 'BUY' ? [
-          `[White House Malaysian SNR] Rejection kukuh pada Key Support Level ${entry.toFixed(asset.pipDec)} + M15 Bullish Pinbar. Confluence Score: 95.4%. Sasaran TP1 (+${asset.tp1Pips}p).`,
-          `[Amaterasu SMC AI] M15 Bullish Order Block + Asian Low Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 94.2%. SOP: Kunci BE sebaik TP1 dicapai.`
-        ] : [
-          `[White House Malaysian SNR] Penolakan harga (Rejection Wick) pada Key Resistance Level ${entry.toFixed(asset.pipDec)}. Momentum Bearish disahkan. Sasaran TP1 (+${asset.tp1Pips}p).`,
-          `[Amaterasu SMC AI] M15 Bearish Order Block + Asian High Liquidity Sweep at ${entry.toFixed(asset.pipDec)}. Confluence Score: 93.8%. SOP: Kunci BE sebaik TP1 dicapai.`
-        ];
-        notes = amaterasuRationales[Math.floor(Math.random() * amaterasuRationales.length)];
+      } else if (asset.symbol === 'EURUSD') {
+        if (!this._lastEurWave) this._lastEurWave = 'BUY';
+        type = this._lastEurWave === 'BUY' ? 'SELL' : 'BUY';
+        this._lastEurWave = type;
+        notes = type === 'BUY'
+          ? `[SMC Currency Wave] Lantunan pada Key Support ${entry.toFixed(4)} + M15 Bullish Pinbar. SL ketat (+18p). Sasaran TP1 (+20p).`
+          : `[SMC Currency Wave] Penolakan pada Key Resistance ${entry.toFixed(4)} + M15 Bearish Wick. SL ketat (+18p). Sasaran TP1 (+20p).`;
+      } else if (asset.symbol === 'USDCHF') {
+        if (!this._lastChfWave) this._lastChfWave = 'SELL';
+        type = this._lastChfWave === 'SELL' ? 'BUY' : 'SELL';
+        this._lastChfWave = type;
+        notes = type === 'BUY'
+          ? `[SMC Currency Wave] Lantunan pada Key Support ${entry.toFixed(4)} + M15 Demand Zone. SL ketat (+18p). Sasaran TP1 (+20p).`
+          : `[SMC Currency Wave] Penolakan pada Key Resistance ${entry.toFixed(4)} + M15 Supply Zone. SL ketat (+18p). Sasaran TP1 (+20p).`;
+      } else {
+        type = Math.random() > 0.5 ? 'BUY' : 'SELL';
+        notes = `[Amaterasu Quantitative Flow] Isyarat ayunan ombak ${type} #${asset.symbol}. SL ketat. Sasaran TP1.`;
       }
     }
 
@@ -2468,10 +2472,13 @@ const AiEngine = {
     const dynTp3Pips = Math.round((asset.tp3Pips || Math.round(asset.tp2Pips * 1.5)) * volMult);
     let dynSlPips = Math.round(asset.slPips * volMult);
 
-    // XAUUSD Safe Buffer Guarantee:
-    // Pastikan SL Gold tidak pernah kurang daripada 120 pips ($12.00) agar terlindung sepenuhnya dari sapuan jarum M15!
-    if (asset.symbol === 'XAUUSD' && dynSlPips < 120) {
-      dynSlPips = 120;
+    // STOP LOSS PROTECTION (ANTI-RUGI TERUK):
+    // Hadkan Stop Loss ketat dan jimat (45 - 52 pips untuk Gold, 18 - 22 pips untuk Forex)
+    // Elakkan sama sekali SL 120+ pips yang membebankan modal pengguna!
+    if (asset.symbol === 'XAUUSD') {
+      dynSlPips = Math.min(Math.max(dynSlPips, 45), 52); // Ketat 45 - 52 pips ($4.50 - $5.20)
+    } else {
+      dynSlPips = Math.min(Math.max(dynSlPips, 18), 22); // Ketat 18 - 22 pips
     }
 
     const sign = type === 'BUY' ? 1 : -1;

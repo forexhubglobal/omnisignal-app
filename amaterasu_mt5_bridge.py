@@ -397,24 +397,24 @@ class AmaterasuBridge:
 
         if live_atr and live_atr > 0:
             if clean_raw_sym == "XAUUSD":
-                # Gold Dynamic ATR:
-                # Minimum SL = 12.0 mata, atau 1.5x ATR jika pasaran bergelora!
-                sl_dist = max(1.5 * live_atr, 12.0)
+                # Gold Tight & Protected Risk Model (Anti-Rugi Teruk):
+                # Hadkan SL Gold ketat antara 4.8 hingga 5.2 mata (48 - 52 pips sahaja)
+                sl_dist = min(max(1.0 * live_atr, 4.8), 5.2)
                 if tp_target == 3:
-                    tp_dist = max(2.5 * live_atr, 20.0)
+                    tp_dist = max(2.5 * live_atr, 18.0)
                 elif tp_target == 2:
-                    tp_dist = max(1.6 * live_atr, 12.0)
+                    tp_dist = max(1.6 * live_atr, 10.0)
                 else: # TP1
-                    tp_dist = max(0.8 * live_atr, 6.0)
+                    tp_dist = max(0.8 * live_atr, 5.0)
                 print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr:.2f} mata | SL: {sl_dist:.2f} | TP{tp_target}: {tp_dist:.2f} mata (Autonomi Pasaran){Colors.RESET}")
             else:
-                # Forex (USDCAD, USDJPY, USDCHF):
-                min_forex_sl = 0.0020 if "JPY" not in clean_raw_sym else 0.20
-                min_forex_tp1 = 0.0018 if "JPY" not in clean_raw_sym else 0.18
-                min_forex_tp2 = 0.0035 if "JPY" not in clean_raw_sym else 0.35
-                min_forex_tp3 = 0.0060 if "JPY" not in clean_raw_sym else 0.60
+                # Forex (USDCAD, USDJPY, USDCHF, EURUSD):
+                min_forex_sl = 0.0018 if "JPY" not in clean_raw_sym else 0.18
+                min_forex_tp1 = 0.0020 if "JPY" not in clean_raw_sym else 0.20
+                min_forex_tp2 = 0.0040 if "JPY" not in clean_raw_sym else 0.40
+                min_forex_tp3 = 0.0065 if "JPY" not in clean_raw_sym else 0.65
                 
-                sl_dist = max(3.5 * live_atr, min_forex_sl)
+                sl_dist = min(max(2.0 * live_atr, min_forex_sl), 0.0022 if "JPY" not in clean_raw_sym else 0.22)
                 if tp_target == 3:
                     tp_dist = max(7.0 * live_atr, min_forex_tp3)
                 elif tp_target == 2:
@@ -426,10 +426,8 @@ class AmaterasuBridge:
                 print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr * pip_mult:.1f} pips | SL: {sl_dist * pip_mult:.1f}p | TP{tp_target}: {tp_dist * pip_mult:.1f}p (Autonomi Pasaran){Colors.RESET}")
         else:
             # Fallback jika ATR tidak aktif / gagal dibaca
-            tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (18.0 if tp_target == 3 else (12.0 if tp_target == 2 else 6.0))
-            sl_dist = abs(raw_sl - signal_entry) if raw_sl > 0 else (13.0 if clean_raw_sym == "XAUUSD" else 5.0)
-            if clean_raw_sym == "XAUUSD" and sl_dist < 12.0:
-                sl_dist = 13.0
+            tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (18.0 if tp_target == 3 else (10.0 if tp_target == 2 else 5.0))
+            sl_dist = min(abs(raw_sl - signal_entry), 5.2) if raw_sl > 0 else (4.8 if clean_raw_sym == "XAUUSD" else 0.0018)
 
         # Gunakan jarak relatif dari harga kemasukan sebenar (Market Price)
         # Ini mengelakkan ralat 'Invalid Stops' jika harga sudah bergerak
