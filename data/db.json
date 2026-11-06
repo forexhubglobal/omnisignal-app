@@ -4855,17 +4855,17 @@
     "masterAccount": "5100154135",
     "broker": "Versus Trade Ltd. (Live1)",
     "initialDeposit": 10000,
-    "currentBalance": 16466.53,
-    "currentEquity": 16478.53,
-    "growthPct": 64.79,
-    "netProfitUsc": 6478.53,
-    "netProfitUsd": 64.79,
-    "winRate": 89.2,
+    "currentBalance": 18328.53,
+    "currentEquity": 18302.79,
+    "growthPct": 83.03,
+    "netProfitUsc": 8302.79,
+    "netProfitUsd": 83.03,
+    "winRate": 90.4,
     "maxDrawdown": 4.8,
     "status": "LIVE & ACTIVE",
     "copiersCount": 42,
     "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-    "lastSync": "2026-11-06 04:20:00"
+    "lastSync": "2026-11-06 13:35:00"
   },
   "copytradeRequests": []
 }

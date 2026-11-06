@@ -63,7 +63,7 @@ function MorePage(main) {
         <div>
           <div style="display:flex; align-items:center; gap:6px;">
             <b style="font-family:'Space Grotesk',sans-serif; font-size:14px; color:#fff;">Sovereign Copytrade (Master Live)</b>
-            <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:10px;">+${((AppState && AppState.copytrade && AppState.copytrade.growthPct) || 64.79)}% GROW</span>
+            <span class="cp-growth-val" style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:10px;">+${((AppState && AppState.copytrade && AppState.copytrade.growthPct) || 83.03)}% GROW</span>
           </div>
           <small style="color:#94a3b8; font-size:11px;">Ikuti akaun master #5100154135 (Versus Trade) secara automatik</small>
         </div>

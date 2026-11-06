@@ -681,6 +681,9 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/market/sync-mt5' && req.method === 'POST') {
     try {
       const payload = await parseJsonBody(req);
+      const db = getDB();
+      let dbChanged = false;
+
       if (payload && payload.quotes) {
         for (const [sym, q] of Object.entries(payload.quotes)) {
           if (liveMarketQuotes[sym] && typeof q.price === 'number') {
@@ -700,8 +703,6 @@ const server = http.createServer(async (req, res) => {
         // CONTINUOUS MT5 POSITION AUTO-RECONCILIATION ENGINE
         // MT5 is the single absolute truth. The Web App MUST reflect MT5 reality!
         // =========================================================================
-        const db = getDB();
-        let dbChanged = false;
         const allowedWhitelist = ['XAUUSD', 'USDCHF', 'EURUSD'];
 
         // Map MT5 positions by clean symbol (e.g. 'XAUUSD', 'USDCHF', 'EURUSD')
@@ -809,55 +810,56 @@ const server = http.createServer(async (req, res) => {
             }
           }
         }
+      }
 
-        // 5. LIVE COPYTRADE MASTER PERFORMANCE SYNC:
-        if (payload.accountInfo) {
-          const acc = payload.accountInfo;
-          if (!db.copytrade) {
-            db.copytrade = {
-              masterAccount: "5100154135",
-              broker: "Versus Trade Ltd. (Live1)",
-              initialDeposit: 10000.0,
-              currentBalance: 16466.53,
-              currentEquity: 16478.53,
-              growthPct: 64.79,
-              netProfitUsc: 6478.53,
-              netProfitUsd: 64.79,
-              winRate: 89.2,
-              maxDrawdown: 4.8,
-              status: "LIVE & ACTIVE",
-              copiersCount: 42,
-              affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255",
-              lastSync: getMYTTimeWithSeconds()
-            };
-          }
-          const initDep = db.copytrade.initialDeposit || 10000.0;
-          const eq = Number(acc.equity) || db.copytrade.currentEquity;
-          const bal = Number(acc.balance) || db.copytrade.currentBalance;
-          const isDiff = Math.abs((db.copytrade.currentEquity || 0) - eq) > 0.01 || Math.abs((db.copytrade.currentBalance || 0) - bal) > 0.01;
-          db.copytrade.currentEquity = eq;
-          db.copytrade.currentBalance = bal;
-          db.copytrade.growthPct = +(((eq - initDep) / initDep) * 100).toFixed(2);
-          db.copytrade.netProfitUsc = +(eq - initDep).toFixed(2);
-          db.copytrade.netProfitUsd = +(db.copytrade.netProfitUsc / 100).toFixed(2);
-          db.copytrade.lastSync = getMYTTimeWithSeconds();
-          if (isDiff) {
-            dbChanged = true;
-            broadcastEvent('copytrade_update', db.copytrade);
-          }
+      // 5. LIVE COPYTRADE MASTER PERFORMANCE SYNC:
+      if (payload && payload.accountInfo) {
+        const acc = payload.accountInfo;
+        if (!db.copytrade) {
+          db.copytrade = {
+            masterAccount: "5100154135",
+            broker: "Versus Trade Ltd. (Live1)",
+            initialDeposit: 10000.0,
+            currentBalance: 16466.53,
+            currentEquity: 16478.53,
+            growthPct: 64.79,
+            netProfitUsc: 6478.53,
+            netProfitUsd: 64.79,
+            winRate: 89.2,
+            maxDrawdown: 4.8,
+            status: "LIVE & ACTIVE",
+            copiersCount: 42,
+            affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255",
+            lastSync: getMYTTimeWithSeconds()
+          };
         }
-
-        if (dbChanged) {
-          saveDB(db);
-          broadcastEvent('on_pips_update', db.activeSignals);
-          broadcastEvent('signal_update', {
-            type: 'MT5_AUTO_RECONCILED',
-            activeSignal: db.activeSignal,
-            activeSignals: db.activeSignals,
-            message: 'Isyarat diselaraskan serta-merta mengikut posisi rasmi terminal MT5.'
-          });
+        const initDep = Number(db.copytrade.initialDeposit) || 10000.0;
+        const eq = Number(acc.equity) || db.copytrade.currentEquity;
+        const bal = Number(acc.balance) || db.copytrade.currentBalance;
+        const isDiff = Math.abs((db.copytrade.currentEquity || 0) - eq) > 0.01 || Math.abs((db.copytrade.currentBalance || 0) - bal) > 0.01;
+        db.copytrade.currentEquity = eq;
+        db.copytrade.currentBalance = bal;
+        db.copytrade.growthPct = +(((eq - initDep) / initDep) * 100).toFixed(2);
+        db.copytrade.netProfitUsc = +(eq - initDep).toFixed(2);
+        db.copytrade.netProfitUsd = +(db.copytrade.netProfitUsc / 100).toFixed(2);
+        db.copytrade.lastSync = getMYTTimeWithSeconds();
+        if (isDiff) {
+          dbChanged = true;
+          broadcastEvent('copytrade_update', db.copytrade);
         }
       }
+
+      if (dbChanged) {
+        saveDB(db);
+        broadcastEvent('on_pips_update', db.activeSignals);
+        broadcastEvent('signal_update', {
+          type: 'MT5_AUTO_RECONCILED',
+          activeSignal: db.activeSignal,
+          activeSignals: db.activeSignals,
+          message: 'Isyarat diselaraskan serta-merta mengikut posisi rasmi terminal MT5.'
+        });
+      }
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: true, synced: Object.keys(payload?.quotes || {}).length, reconciled: !!payload?.openPositions, copytrade: db.copytrade }));
     } catch (err) {

@@ -311,6 +311,7 @@ const AppState = {
       this.screener = this.db.screener;
       this.classes = this.db.classes;
       this.contests = this.db.contests;
+      this.copytrade = this.db.copytrade || null;
 
       // Fetch initial live quotes
       try {
@@ -349,12 +350,15 @@ const AppState = {
         try {
           const cp = JSON.parse(e.data);
           this.copytrade = cp;
-          const elGrowth = document.getElementById('cpGrowthVal');
-          if (elGrowth) elGrowth.textContent = `+${cp.growthPct || 64.79}%`;
-          const elEq = document.getElementById('cpEquityVal');
-          if (elEq) elEq.textContent = `${num(cp.currentEquity || 16478.53)} USC`;
-          const elNet = document.getElementById('cpNetProfitVal');
-          if (elNet) elNet.textContent = `+${num(cp.netProfitUsc || 6478.53)} USC`;
+          document.querySelectorAll('.cp-growth-val, #cpGrowthVal').forEach(el => {
+            el.textContent = `+${cp.growthPct || 83.03}%`;
+          });
+          document.querySelectorAll('.cp-equity-val, #cpEquityVal').forEach(el => {
+            el.textContent = `${num(cp.currentEquity || 18302.79)} USC`;
+          });
+          document.querySelectorAll('.cp-net-val, #cpNetProfitVal').forEach(el => {
+            el.textContent = `+${num(cp.netProfitUsc || 8302.79)} USC`;
+          });
         } catch (err) {}
       });
       s.addEventListener('market_quotes', e => {

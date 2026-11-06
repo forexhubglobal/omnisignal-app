@@ -1115,14 +1115,14 @@ function SignalPage(main) {
         <div>
           <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.5px; display:block;">JUMLAH PERTUMBUHAN (REAL GROWTH)</span>
           <div style="display:flex; align-items:baseline; gap:6px; margin-top:2px;">
-            <span id="cpGrowthVal" style="font-size:26px; font-weight:900; color:#00e676; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px rgba(0,230,118,0.4);">+${cp.growthPct || 64.79}%</span>
+            <span class="cp-growth-val" id="cpGrowthVal" style="font-size:26px; font-weight:900; color:#00e676; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px rgba(0,230,118,0.4);">+${cp.growthPct || 83.03}%</span>
             <span style="font-size:11px; color:#00e676; font-weight:700;">GROW ▲</span>
           </div>
         </div>
         <div style="text-align:right;">
           <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase; display:block;">UNTUNG BERSIH</span>
-          <b id="cpNetProfitVal" style="font-size:14px; font-weight:800; color:#f5c451;">+${num(cp.netProfitUsc || 6478.53)} USC</b>
-          <span style="font-size:10px; color:#94a3b8; display:block;">(+$${(cp.netProfitUsd || 64.79).toFixed(2)} USD)</span>
+          <b class="cp-net-val" id="cpNetProfitVal" style="font-size:14px; font-weight:800; color:#f5c451;">+${num(cp.netProfitUsc || 8302.79)} USC</b>
+          <span style="font-size:10px; color:#94a3b8; display:block;">(+$${(cp.netProfitUsd || 83.03).toFixed(2)} USD)</span>
         </div>
       </div>
 
@@ -1134,12 +1134,12 @@ function SignalPage(main) {
         </div>
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
           <span style="font-size:9.5px; color:#8e9aa8; display:block;">EKUITI SEMASA</span>
-          <b id="cpEquityVal" style="font-size:11.5px; color:#00e676;">${num(cp.currentEquity || 16478.53)} USC</b>
-          <span style="font-size:9px; color:#64748b; display:block;">($${((cp.currentEquity || 16478.53) / 100).toFixed(2)} USD)</span>
+          <b class="cp-equity-val" id="cpEquityVal" style="font-size:11.5px; color:#00e676;">${num(cp.currentEquity || 18302.79)} USC</b>
+          <span style="font-size:9px; color:#64748b; display:block;">($${((cp.currentEquity || 18302.79) / 100).toFixed(2)} USD)</span>
         </div>
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
           <span style="font-size:9.5px; color:#8e9aa8; display:block;">WINRATE & RISK</span>
-          <b style="font-size:11.5px; color:#f5c451;">${cp.winRate || 89.2}%</b>
+          <b style="font-size:11.5px; color:#f5c451;">${cp.winRate || 90.4}%</b>
           <span style="font-size:9px; color:#00e676; display:block;">Max DD &lt; 5%</span>
         </div>
       </div>
@@ -2170,14 +2170,14 @@ function StatPage(main) {
         <div>
           <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.5px; display:block;">JUMLAH PERTUMBUHAN (REAL GROWTH)</span>
           <div style="display:flex; align-items:baseline; gap:6px; margin-top:2px;">
-            <span style="font-size:26px; font-weight:900; color:#00e676; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px rgba(0,230,118,0.4);">+${cp.growthPct || 64.79}%</span>
+            <span class="cp-growth-val" style="font-size:26px; font-weight:900; color:#00e676; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px rgba(0,230,118,0.4);">+${cp.growthPct || 83.03}%</span>
             <span style="font-size:11px; color:#00e676; font-weight:700;">GROW ▲</span>
           </div>
         </div>
         <div style="text-align:right;">
           <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase; display:block;">UNTUNG BERSIH</span>
-          <b style="font-size:14px; font-weight:800; color:#f5c451;">+${num(cp.netProfitUsc || 6478.53)} USC</b>
-          <span style="font-size:10px; color:#94a3b8; display:block;">(+$${(cp.netProfitUsd || 64.79).toFixed(2)} USD)</span>
+          <b class="cp-net-val" style="font-size:14px; font-weight:800; color:#f5c451;">+${num(cp.netProfitUsc || 8302.79)} USC</b>
+          <span style="font-size:10px; color:#94a3b8; display:block;">(+$${(cp.netProfitUsd || 83.03).toFixed(2)} USD)</span>
         </div>
       </div>
 
@@ -2189,12 +2189,12 @@ function StatPage(main) {
         </div>
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
           <span style="font-size:9.5px; color:#8e9aa8; display:block;">EKUITI SEMASA</span>
-          <b style="font-size:11.5px; color:#00e676;">${num(cp.currentEquity || 16478.53)} USC</b>
-          <span style="font-size:9px; color:#64748b; display:block;">($${((cp.currentEquity || 16478.53) / 100).toFixed(2)} USD)</span>
+          <b class="cp-equity-val" style="font-size:11.5px; color:#00e676;">${num(cp.currentEquity || 18302.79)} USC</b>
+          <span style="font-size:9px; color:#64748b; display:block;">($${((cp.currentEquity || 18302.79) / 100).toFixed(2)} USD)</span>
         </div>
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
           <span style="font-size:9.5px; color:#8e9aa8; display:block;">WINRATE & RISK</span>
-          <b style="font-size:11.5px; color:#f5c451;">${cp.winRate || 89.2}%</b>
+          <b style="font-size:11.5px; color:#f5c451;">${cp.winRate || 90.4}%</b>
           <span style="font-size:9px; color:#00e676; display:block;">Max DD &lt; 5%</span>
         </div>
       </div>

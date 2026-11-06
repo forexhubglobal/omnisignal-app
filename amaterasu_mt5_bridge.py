@@ -989,6 +989,7 @@ class AmaterasuBridge:
                             "sl": p.sl,
                             "tp": p.tp,
                             "profit": p.profit
+                        })
                 acc = mt5.account_info()
                 acc_info = None
                 if acc:
