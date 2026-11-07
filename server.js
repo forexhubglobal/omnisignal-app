@@ -205,6 +205,33 @@ const defaultDB = {
     affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255",
     lastSync: "04:20:00"
   },
+  copytrade2: {
+    id: "master-2",
+    name: "The Mighty Duck II",
+    avatar: "img/themightyduck.png",
+    masterAccount: "5100207348",
+    broker: "Versus Trade Ltd. (Live1)",
+    initialDeposit: 10000.0,
+    totalWithdrawn: 0.0,
+    totalWithdrawnUsd: 0.0,
+    allTimeProfitUsc: 0.0,
+    allTimeProfitUsd: 0.0,
+    allTimeGrowthPct: 0.0,
+    growthPct: 0.0,
+    netProfitUsc: 0.0,
+    netProfitUsd: 0.0,
+    currentBalance: 10000.0,
+    currentEquity: 10000.0,
+    activeEquity: 10000.0,
+    activeEquityUsd: 100.0,
+    winRate: 100.0,
+    maxDrawdown: 0.0,
+    status: "LIVE & ACTIVE",
+    copiersCount: 18,
+    affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255",
+    lastSync: "07:45:00"
+  },
+  copytrades: [],
   copytradeRequests: []
 };
 
@@ -709,11 +736,64 @@ const server = http.createServer(async (req, res) => {
             trd.currentBalance = acc.balance;
             trd.currentEquity = acc.equity;
             trd.lastSync = getMYTTimeWithSeconds();
-            saveDB(db);
           }
+
+          // SYNC MASTER COPYTRADE 2 (#5100207348):
+          if (String(acc.login) === '5100207348') {
+            if (!db.copytrade2) {
+              db.copytrade2 = {
+                id: "master-2",
+                name: "The Mighty Duck II",
+                avatar: "img/themightyduck.png",
+                masterAccount: "5100207348",
+                broker: "Versus Trade Ltd. (Live1)",
+                initialDeposit: 10000.0,
+                totalWithdrawn: 0.0,
+                totalWithdrawnUsd: 0.0,
+                allTimeProfitUsc: 0.0,
+                allTimeProfitUsd: 0.0,
+                allTimeGrowthPct: 0.0,
+                growthPct: 0.0,
+                netProfitUsc: 0.0,
+                netProfitUsd: 0.0,
+                currentBalance: 10000.0,
+                currentEquity: 10000.0,
+                activeEquity: 10000.0,
+                activeEquityUsd: 100.0,
+                winRate: 100.0,
+                maxDrawdown: 0.0,
+                status: "LIVE & ACTIVE",
+                copiersCount: 18,
+                affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255"
+              };
+            }
+            const initDep2 = Number(db.copytrade2.initialDeposit) || 10000.0;
+            const eq2 = Number(acc.equity) || db.copytrade2.currentEquity;
+            const bal2 = Number(acc.balance) || db.copytrade2.currentBalance;
+            const totalWd2 = Number(db.copytrade2.totalWithdrawn) || 0.0;
+            db.copytrade2.currentEquity = eq2;
+            db.copytrade2.currentBalance = bal2;
+            db.copytrade2.activeEquity = eq2;
+            db.copytrade2.activeEquityUsd = +(eq2 / 100).toFixed(2);
+            const netProfit2 = +(eq2 + totalWd2 - initDep2).toFixed(2);
+            db.copytrade2.netProfitUsc = netProfit2;
+            db.copytrade2.netProfitUsd = +(netProfit2 / 100).toFixed(2);
+            db.copytrade2.growthPct = +((netProfit2 / initDep2) * 100).toFixed(2);
+            db.copytrade2.allTimeProfitUsc = Math.max(netProfit2, 0);
+            db.copytrade2.allTimeGrowthPct = Math.max(db.copytrade2.growthPct, 0);
+            db.copytrade2.lastSync = getMYTTimeWithSeconds();
+
+            if (!Array.isArray(db.copytrades)) {
+              db.copytrades = [db.copytrade, db.copytrade2];
+            } else {
+              db.copytrades[1] = db.copytrade2;
+            }
+            broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrades: db.copytrades });
+          }
+          saveDB(db);
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: true, followerSynced: true, login: payload?.accountInfo?.login }));
+        return res.end(JSON.stringify({ success: true, followerSynced: true, login: payload?.accountInfo?.login, copytrade2: db.copytrade2 }));
       }
 
       if (payload && Array.isArray(payload.openPositions)) {
@@ -944,8 +1024,13 @@ const server = http.createServer(async (req, res) => {
   // 0.1c GET /api/copytrade/info
   if (pathname === '/api/copytrade/info' && req.method === 'GET') {
     const db = getDB();
+    const list = db.copytrades || [db.copytrade, db.copytrade2].filter(Boolean);
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(db.copytrade || {}));
+    return res.end(JSON.stringify({
+      copytrade: db.copytrade || {},
+      copytrade2: db.copytrade2 || {},
+      copytrades: list
+    }));
   }
 
   // 0.1d POST /api/copytrade/join (Client submission to follow copytrade)

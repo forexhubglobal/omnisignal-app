@@ -312,6 +312,8 @@ const AppState = {
       this.classes = this.db.classes;
       this.contests = this.db.contests;
       this.copytrade = this.db.copytrade || null;
+      this.copytrade2 = this.db.copytrade2 || null;
+      this.copytrades = this.db.copytrades || [this.copytrade, this.copytrade2].filter(Boolean);
 
       // Fetch initial live quotes
       try {
@@ -344,6 +346,8 @@ const AppState = {
         this.classes = d.classes;
         this.contests = d.contests;
         this.copytrade = d.copytrade || null;
+        this.copytrade2 = d.copytrade2 || null;
+        this.copytrades = d.copytrades || [this.copytrade, this.copytrade2].filter(Boolean);
         if (typeof route === 'function') route();
       });
       s.addEventListener('copytrade_update', e => {
