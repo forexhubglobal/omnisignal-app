@@ -207,8 +207,8 @@ const defaultDB = {
   },
   copytrade2: {
     id: "master-2",
-    name: "The Mighty Duck II",
-    avatar: "img/themightyduck.png",
+    name: "Amaterasu X",
+    avatar: "img/amaterasux.png",
     masterAccount: "5100207348",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
@@ -743,8 +743,8 @@ const server = http.createServer(async (req, res) => {
             if (!db.copytrade2) {
               db.copytrade2 = {
                 id: "master-2",
-                name: "The Mighty Duck II",
-                avatar: "img/themightyduck.png",
+                name: "Amaterasu X",
+                avatar: "img/amaterasux.png",
                 masterAccount: "5100207348",
                 broker: "Versus Trade Ltd. (Live1)",
                 initialDeposit: 10000.0,

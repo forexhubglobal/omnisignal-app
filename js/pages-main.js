@@ -455,8 +455,8 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
   };
   const cp2 = (AppState && AppState.copytrade2) || {
     id: "master-2",
-    name: "The Mighty Duck II",
-    avatar: "img/themightyduck.png",
+    name: "Amaterasu X",
+    avatar: "img/amaterasux.png",
     masterAccount: "5100207348",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
@@ -478,23 +478,23 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
       <!-- Vault Selector Tabs -->
       <div style="display:flex; gap:6px; margin-bottom:14px; background:rgba(0,0,0,0.5); padding:4px; border-radius:10px; border:1px solid rgba(255,255,255,0.08);">
         <button type="button" class="btn-vault-tab ${!isV2 ? 'active' : ''}" onclick="window.switchCopytradeVault(1)" style="flex:1; padding:8px 6px; border-radius:7px; border:none; background:${!isV2 ? 'rgba(0,230,118,0.22)' : 'transparent'}; border:${!isV2 ? '1px solid #00e676' : '1px solid transparent'}; color:${!isV2 ? '#00e676' : '#94a3b8'}; font-weight:800; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; transition:all 0.2s;">
-          <span>🦆</span> Master 1 (#5100154135)
+          <span>🦆</span> The Mighty Duck (#5100154135)
         </button>
         <button type="button" class="btn-vault-tab ${isV2 ? 'active' : ''}" onclick="window.switchCopytradeVault(2)" style="flex:1; padding:8px 6px; border-radius:7px; border:none; background:${isV2 ? 'rgba(0,230,118,0.22)' : 'transparent'}; border:${isV2 ? '1px solid #00e676' : '1px solid transparent'}; color:${isV2 ? '#00e676' : '#94a3b8'}; font-weight:800; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; transition:all 0.2s;">
-          <span>🦆</span> Master 2 (#5100207348)
+          <span>🔥</span> Amaterasu X (#5100207348)
         </button>
       </div>
 
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
         <div style="display:flex; align-items:center; gap:10px;">
-          <img src="img/themightyduck.png" alt="The Mighty Duck" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #00e676; box-shadow:0 0 12px rgba(0,230,118,0.45);" />
+          <img src="${cp.avatar || (isV2 ? 'img/amaterasux.png' : 'img/themightyduck.png')}" alt="${cp.name || 'Master'}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid ${isV2 ? '#ff3d00' : '#00e676'}; box-shadow:0 0 14px ${isV2 ? 'rgba(255,61,0,0.5)' : 'rgba(0,230,118,0.45)'};" />
           <div>
-            <b style="font-size:13.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">${cp.name || (isV2 ? 'THE MIGHTY DUCK II' : 'THE MIGHTY DUCK')}</b>
+            <b style="font-size:13.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">${cp.name || (isV2 ? 'AMATERASU X' : 'THE MIGHTY DUCK')}</b>
             <span style="font-size:10px; color:#94a3b8; display:block;">MASTER LIVE #${cp.masterAccount || (isV2 ? '5100207348' : '5100154135')} · VERSUS TRADE LTD</span>
           </div>
         </div>
-        <span style="background:rgba(0,230,118,0.15); border:1px solid #00e676; color:#00e676; font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:5px;">
-          <span style="width:6px; height:6px; background:#00e676; border-radius:50%; display:inline-block; animation:pulseDot 1.2s infinite;"></span> ${isV2 ? 'MASTER 2 (LIVE & ACTIVE)' : 'MASTER 1 (VERIFIED)'}
+        <span style="background:${isV2 ? 'rgba(255,61,0,0.15)' : 'rgba(0,230,118,0.15)'}; border:1px solid ${isV2 ? '#ff3d00' : '#00e676'}; color:${isV2 ? '#ff6e40' : '#00e676'}; font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:5px;">
+          <span style="width:6px; height:6px; background:${isV2 ? '#ff3d00' : '#00e676'}; border-radius:50%; display:inline-block; animation:pulseDot 1.2s infinite;"></span> ${isV2 ? 'MASTER 2 (AMATERASU X)' : 'MASTER 1 (THE MIGHTY DUCK)'}
         </span>
       </div>
 
@@ -678,7 +678,7 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
             <label style="font-size:10.5px; color:#8e9aa8; display:block; margin-bottom:4px; font-weight:700;">PILIH MASTER COPYTRADE PILIHAN ANDA:</label>
             <select id="cpTargetMaster" style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid rgba(0,230,118,0.4); border-radius:6px; color:#fff; font-size:12px; font-weight:700;">
               <option value="5100154135" ${Number(initialVault) === 1 ? 'selected' : ''}>🦆 The Mighty Duck - Master 1 (#5100154135 · +122.55% All-Time)</option>
-              <option value="5100207348" ${Number(initialVault) === 2 ? 'selected' : ''}>🦆 The Mighty Duck II - Master 2 (#5100207348 · Fresh 10,000 USC Pool)</option>
+              <option value="5100207348" ${Number(initialVault) === 2 ? 'selected' : ''}>🔥 Amaterasu X - Master 2 (#5100207348 · Fresh 10,000 USC Pool)</option>
             </select>
           </div>
           <input type="text" id="cpClientName" placeholder="Nama Penuh Anda" required style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:12px;" />
