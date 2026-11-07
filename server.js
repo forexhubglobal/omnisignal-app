@@ -696,6 +696,24 @@ const server = http.createServer(async (req, res) => {
         }
         broadcastEvent('market_quotes', liveMarketQuotes);
       }
+      const isMasterAccount = !payload.accountInfo || String(payload.accountInfo.login) === '5100154135' || !payload.accountInfo.login;
+
+      // Follower Accounts (e.g. Account 2 #5100207348) must NEVER overwrite Master positions or purge activeSignals!
+      if (!isMasterAccount) {
+        if (payload && payload.accountInfo) {
+          const acc = payload.accountInfo;
+          const trd = (db.traders || []).find(t => String(t.mt5Account) === String(acc.login));
+          if (trd) {
+            trd.currentBalance = acc.balance;
+            trd.currentEquity = acc.equity;
+            trd.lastSync = getMYTTimeWithSeconds();
+            saveDB(db);
+          }
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, followerSynced: true, login: payload?.accountInfo?.login }));
+      }
+
       if (payload && Array.isArray(payload.openPositions)) {
         AiEngine.liveMT5Positions = payload.openPositions;
 

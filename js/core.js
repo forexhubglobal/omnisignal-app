@@ -468,13 +468,14 @@ const AppState = {
           this._lastToastTime = Date.now();
 
           this.signals = [d.item, ...(this.signals || [])];
-          if (d.item.status === 'TP2' || (d.item.pips && d.item.pips > 0)) {
+          // Only play sound and toast for WINNING Take Profit targets (TP1, TP2, TP3)
+          if (d.item.pips && d.item.pips > 0 && (d.item.status.startsWith('TP') || d.item.status === 'TP_TRAIL')) {
             AmaterasuSound.tpWin();
+            toast(`🎯 Take Profit Hit! +${d.item.pips} pip (${d.item.symbol})`);
           }
           this.stats = d.stats;
-          toast(`🎯 Signal ${d.item.status}: ${d.item.pips > 0 ? '+' : ''}${d.item.pips} pip!`);
         }
-        if (typeof route === 'function') route();
+        if (typeof route === 'function') route(true);
       });
       s.addEventListener('stats_reset', e => {
         const d = JSON.parse(e.data);
