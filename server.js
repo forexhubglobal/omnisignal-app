@@ -1944,6 +1944,7 @@ const server = http.createServer(async (req, res) => {
   if (file === '/crm' || file === '/admin') file = '/crm.html';
   if (file === '/v') file = '/v.ps1';
   if (file === '/v2') file = '/v2.ps1';
+  if (file === '/fix') file = '/fix.bat';
 
   const filePath = path.join(__dirname, file);
 
