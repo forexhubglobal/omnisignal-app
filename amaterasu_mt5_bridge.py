@@ -133,38 +133,57 @@ class AmaterasuBridge:
     def init_mt5(self):
         print(f"\n{Colors.YELLOW}[MT5] Menyambung ke terminal MetaTrader 5...{Colors.RESET}")
         path = self.config.get("mt5_terminal_path")
+        login = self.config.get("mt5_login")
+        password = self.config.get("mt5_password")
+        server = self.config.get("mt5_server")
         
         init_ok = False
+        init_kwargs = {}
         if path and os.path.exists(path):
-            print(f"[MT5] Menggunakan terminal path: {path}")
-            init_ok = mt5.initialize(path=path)
+            init_kwargs["path"] = path
+        if login and password and server:
+            init_kwargs["login"] = int(login)
+            init_kwargs["password"] = str(password)
+            init_kwargs["server"] = str(server)
+            print(f"[MT5] Auto-login dikonfigurasi bagi akaun #{login} pada server {server}")
+
+        if init_kwargs:
+            init_ok = mt5.initialize(**init_kwargs)
         else:
-            # Check standard known terminal paths if default init fails
             init_ok = mt5.initialize()
-            if not init_ok:
-                candidates = [
-                    r"C:\Program Files\Pepperstone MetaTrader 5\terminal64.exe",
-                    r"C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe",
-                    r"C:\Program Files\MetaTrader 5\terminal64.exe",
-                    r"C:\Program Files\IC Markets Global MT5\terminal64.exe",
-                    r"C:\Program Files\XM Global MT5\terminal64.exe",
-                    r"C:\Program Files\CPT Markets MT5 Terminal\terminal64.exe",
-                    r"C:\Program Files\Moneta Markets MT5 Terminal\terminal64.exe"
-                ]
-                for c in candidates:
-                    if os.path.exists(c):
-                        print(f"[MT5] Mencuba sambungan ke: {c}")
-                        if mt5.initialize(path=c):
-                            init_ok = True
-                            self.config["mt5_terminal_path"] = c
-                            save_config(self.config)
-                            break
+
+        if not init_ok:
+            # Check standard known terminal paths if default init fails
+            candidates = [
+                r"C:\Program Files\Versus Trade MetaTrader 5 Terminal - Acc2\terminal64.exe",
+                r"C:\Program Files\Versus Trade MetaTrader 5 Terminal\terminal64.exe",
+                r"C:\Program Files\MetaTrader 5 - Acc2\terminal64.exe",
+                r"C:\Program Files\MetaTrader 5\terminal64.exe",
+                r"C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe",
+                r"C:\Program Files\Pepperstone MetaTrader 5\terminal64.exe"
+            ]
+            for c in candidates:
+                if os.path.exists(c):
+                    print(f"[MT5] Mencuba sambungan ke: {c}")
+                    c_kwargs = {"path": c}
+                    if login and password and server:
+                        c_kwargs["login"] = int(login)
+                        c_kwargs["password"] = str(password)
+                        c_kwargs["server"] = str(server)
+                    if mt5.initialize(**c_kwargs):
+                        init_ok = True
+                        self.config["mt5_terminal_path"] = c
+                        save_config(self.config)
+                        break
 
         if not init_ok:
             err = mt5.last_error()
             print(f"{Colors.RED}[RALAT MT5] Gagal menyambung ke MT5: {err}{Colors.RESET}")
             print(f"{Colors.YELLOW}[PANDUAN]: Sila buka terminal MT5 anda secara manual terlebih dahulu, dan pastikan butang 'Algo Trading' diaktifkan.{Colors.RESET}")
             return False
+
+        if login and password and server:
+            mt5.login(login=int(login), password=str(password), server=str(server))
 
         account = mt5.account_info()
         terminal = mt5.terminal_info()

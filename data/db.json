@@ -4767,6 +4767,24 @@
   ],
   "traders": [
     {
+      "id": "trd-acc2-boss",
+      "name": "Amaterasu Live Account 2",
+      "username": "amaterasu_acc2",
+      "phone": "+60199999999",
+      "mt5Account": "5100207348",
+      "ibId": "ib-master",
+      "ibCode": "master_sovereign",
+      "registeredAt": "2026-11-07T08:30:00.000Z",
+      "expiresAt": "2027-11-07T08:30:00.000Z",
+      "status": "active",
+      "depositAmount": 100,
+      "lastLotChecked": 0.0,
+      "extensionCount": 12,
+      "notes": "Akaun Kedua Rasmi Boss (10,000 USC) - Multi-Terminal VPS Active",
+      "boundDeviceId": null,
+      "boundDeviceModel": null
+    },
+    {
       "id": "trd-1",
       "name": "Ahmad Fikri",
       "username": "ahmad_fikri",
