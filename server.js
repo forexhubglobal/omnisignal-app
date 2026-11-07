@@ -852,12 +852,6 @@ const server = http.createServer(async (req, res) => {
       if (dbChanged) {
         saveDB(db);
         broadcastEvent('on_pips_update', db.activeSignals);
-        broadcastEvent('signal_update', {
-          type: 'MT5_AUTO_RECONCILED',
-          activeSignal: db.activeSignal,
-          activeSignals: db.activeSignals,
-          message: 'Isyarat diselaraskan serta-merta mengikut posisi rasmi terminal MT5.'
-        });
       }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });

@@ -390,12 +390,18 @@ const AppState = {
       s.addEventListener('on_pips_update', e => {
         const list = JSON.parse(e.data);
         if (Array.isArray(list)) {
+          const sigKey = list.map(s => `${s.id}_${s.symbol}_${s.status}_${s.entry}_${s.sl}_${s.tp1}_${s.beLocked}`).join('|');
+          const hasChanged = (this._lastPipsSigKey !== sigKey);
+          this._lastPipsSigKey = sigKey;
+
           this.activeSignals = list;
           if (list.length > 0 && (!this.activeSignal || this.activeSignal.status === 'WAITING')) {
             this.activeSignal = list[0];
           }
-          const isSigTab = !location.hash || location.hash === '#signal' || location.hash === '#';
-          if (typeof route === 'function' && isSigTab) route();
+          if (hasChanged) {
+            const isSigTab = !location.hash || location.hash === '#signal' || location.hash === '#';
+            if (typeof route === 'function' && isSigTab) route(true);
+          }
         }
       });
       s.addEventListener('on_pips_tick', e => {
@@ -425,18 +431,24 @@ const AppState = {
           if (idx !== -1) this.activeSignals[idx] = d.activeSignal;
         }
 
+        // Silent internal reconciliation - DO NOT alert user
+        if (d.type === 'MT5_AUTO_RECONCILED' || d.type === 'BACKGROUND_SYNC' || !d.type) {
+          return;
+        }
+
         // Deduplication Guard: Never fire toast/sound repeatedly for the same update
         const updateKey = `${d.symbol || (d.activeSignal && d.activeSignal.symbol) || ''}_${d.type || ''}_${(d.activeSignal && d.activeSignal.id) || ''}`;
         if (!this._seenSignalUpdates) this._seenSignalUpdates = new Set();
         if (this._seenSignalUpdates.has(updateKey)) {
-          if (typeof route === 'function') route();
           return;
         }
         this._seenSignalUpdates.add(updateKey);
 
-        AmaterasuSound.tpWin();
-        toast(d.message || `🎯 Target 1 Disahkan! Alih SL ke Break-Even (BE)!`);
-        if (typeof route === 'function') route();
+        if (d.type === 'TP1_HIT' || d.type === 'BE_LOCKED' || d.type === 'SL_HIT') {
+          AmaterasuSound.tpWin();
+          toast(d.message || `🎯 Target 1 Disahkan! Alih SL ke Break-Even (BE)!`);
+        }
+        if (typeof route === 'function') route(true);
       });
       s.addEventListener('signal_resolved', e => {
         const d = JSON.parse(e.data);
@@ -472,19 +484,19 @@ const AppState = {
         this.aiNewsHistory = d.aiNewsHistory || [];
         this.activeSignal = d.activeSignal;
         this.lastResolvedSignal = null;
-        toast('🔄 Statistik dan rekod signal telah dimulakan semula');
+        // toast suppressed
         if (typeof route === 'function') route();
       });
       s.addEventListener('ainews_updated', e => {
         const d = JSON.parse(e.data);
         this.aiNewsStats = d.stats;
         this.aiNewsHistory = d.history || [];
-        toast('📰 Rekod prestasi AI News dikemas kini');
+        // toast suppressed
         if (location.hash === '#ainews') route();
       });
       s.addEventListener('analysis_updated', e => {
         this.analysis = JSON.parse(e.data);
-        toast('📝 Amaterasu Solar Intelligence Updated');
+        // toast suppressed
         if (location.hash === '#analysis') route();
       });
       s.addEventListener('screener_updated', e => {
@@ -506,7 +518,7 @@ const AppState = {
       s.addEventListener('contest_updated', e => {
         const ct = JSON.parse(e.data);
         if (this.contests) this.contests[0] = ct;
-        toast(`🏆 Championship: ${ct.status.toUpperCase()}`);
+        // toast suppressed
         if (location.hash === '#contest') route();
       });
       s.addEventListener('feedback_replied', e => {

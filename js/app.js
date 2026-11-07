@@ -11,19 +11,37 @@ const ROUTES = {
 };
 
 let cleanup = null;
-function route() {
-  if (cleanup) { cleanup(); cleanup = null; }
-  $$('.modal-bg').forEach(m => m.remove());
+let currentActiveRoute = null;
+
+function route(isDataRefresh = false) {
   let r = location.hash.slice(1);
   if (!ROUTES[r]) r = 'signal';
+  
+  const isNavigating = (currentActiveRoute !== r);
+  currentActiveRoute = r;
+
+  // Preserve scroll position if this is an automated background data refresh or same page
+  const savedScrollY = (!isNavigating || isDataRefresh) ? (window.scrollY || document.documentElement.scrollTop || 0) : 0;
+
+  if (cleanup) { cleanup(); cleanup = null; }
+  $$('.modal-bg').forEach(m => m.remove());
+  
   const main = $('#main');
   main.innerHTML = '';
-  window.scrollTo(0, 0);
-  document.documentElement.scrollLeft = 0;
-  document.body.scrollLeft = 0;
+  
   cleanup = ROUTES[r](main) || null;
   const tab = TABS.some(t => t[0] === r) ? r : 'more';
   $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.r === tab));
+
+  if (savedScrollY > 0) {
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+    });
+  } else if (isNavigating) {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollLeft = 0;
+    document.body.scrollLeft = 0;
+  }
 }
 
 
