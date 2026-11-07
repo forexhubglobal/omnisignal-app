@@ -4870,6 +4870,8 @@
     }
   ],
   "copytrade": {
+    "name": "The Mighty Duck",
+    "avatar": "img/themightyduck.png",
     "masterAccount": "5100154135",
     "broker": "Versus Trade Ltd. (Live1)",
     "initialDeposit": 10000,

@@ -188,6 +188,8 @@ const defaultDB = {
     { id: 'sc-3', name: 'NurFX', score: 1920, game: 'blocks', month: '2026-10' }
   ],
   copytrade: {
+    name: "The Mighty Duck",
+    avatar: "img/themightyduck.png",
     masterAccount: "5100154135",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
@@ -835,6 +837,8 @@ const server = http.createServer(async (req, res) => {
         const acc = payload.accountInfo;
         if (!db.copytrade) {
           db.copytrade = {
+            name: "The Mighty Duck",
+            avatar: "img/themightyduck.png",
             masterAccount: "5100154135",
             broker: "Versus Trade Ltd. (Live1)",
             initialDeposit: 10000.0,

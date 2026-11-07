@@ -56,13 +56,13 @@ function MorePage(main) {
       <span class="go" style="color:var(--solar-gold); font-size:18px;">›</span>
     </a>
 
-    <!-- Amaterasu Official Copytrade Banner -->
+    <!-- The Mighty Duck Official Copytrade Banner -->
     <div class="card" id="moreCopytradeCard" style="display:flex; align-items:center; justify-content:space-between; padding:16px 18px; margin-bottom:18px; border:1px solid rgba(0,230,118,0.4); background:linear-gradient(135deg, rgba(0,230,118,0.12) 0%, rgba(11,17,26,0.95) 100%); cursor:pointer; border-radius:12px; box-shadow:0 4px 20px rgba(0,230,118,0.15);">
       <div style="display:flex; align-items:center; gap:12px;">
-        <span style="font-size:28px;">🏛️</span>
+        <img src="img/themightyduck.png" alt="The Mighty Duck" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #00e676; box-shadow:0 0 12px rgba(0,230,118,0.45);" />
         <div>
           <div style="display:flex; align-items:center; gap:6px;">
-            <b style="font-family:'Space Grotesk',sans-serif; font-size:14px; color:#fff;">Sovereign Copytrade (Master Live)</b>
+            <b style="font-family:'Space Grotesk',sans-serif; font-size:14px; color:#fff;">The Mighty Duck (Master Live)</b>
             <span class="cp-growth-val" style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:10px;">+${((AppState && AppState.copytrade && AppState.copytrade.growthPct) || 122.55)}% GROW</span>
           </div>
           <small style="color:#94a3b8; font-size:11px;">Ikuti akaun master #5100154135 (Versus Trade) secara automatik</small>

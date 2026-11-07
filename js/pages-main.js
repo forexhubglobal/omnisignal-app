@@ -460,11 +460,11 @@ function showCopytradeModal() {
   const m = modal(`
     <div style="text-align:left;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:20px;">🏛️</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="img/themightyduck.png" alt="The Mighty Duck" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid #00e676; box-shadow:0 0 10px rgba(0,230,118,0.4);" />
           <div>
-            <b style="font-family:'Space Grotesk',sans-serif; font-size:14px; color:#fff; text-transform:uppercase;">AMATERASU COPYTRADE</b>
-            <span style="display:block; font-size:10.5px; color:#00e676; font-weight:700;">● MASTER VERIFIED (LIVE +${cp.growthPct || 64.79}%)</span>
+            <b style="font-family:'Space Grotesk',sans-serif; font-size:14px; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">THE MIGHTY DUCK</b>
+            <span style="display:block; font-size:10.5px; color:#00e676; font-weight:700;">● MASTER VERIFIED (LIVE +${cp.growthPct || 122.55}%)</span>
           </div>
         </div>
         <button data-close style="background:transparent; border:none; color:#8e9aa8; font-size:18px; cursor:pointer;">✕</button>
@@ -473,10 +473,13 @@ function showCopytradeModal() {
       <!-- Quick Master Proof Banner -->
       <div style="background:linear-gradient(135deg, rgba(0,230,118,0.14) 0%, rgba(11,17,24,0.95) 100%); border:1px solid rgba(0,230,118,0.35); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase;">REKOD AKAUN MASTER</span>
-            <b style="font-size:13px; color:#fff; display:block;">#${cp.masterAccount || '5100154135'} (Versus Trade Live)</b>
-            <span style="font-size:10px; color:#f5c451; font-weight:700;">💰 Telah Withdraw: 10,000 USC ($100 USD)</span>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <img src="img/themightyduck.png" alt="The Mighty Duck" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #f5c451;" />
+            <div>
+              <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase;">REKOD AKAUN MASTER</span>
+              <b style="font-size:13px; color:#fff; display:block;">THE MIGHTY DUCK (#${cp.masterAccount || '5100154135'})</b>
+              <span style="font-size:10px; color:#f5c451; font-weight:700;">💰 Telah Withdraw: 10,000 USC ($100 USD)</span>
+            </div>
           </div>
           <div style="text-align:right;">
             <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase;">TOTAL GROW</span>
@@ -1115,15 +1118,15 @@ function SignalPage(main) {
       </div>
     </div>
     
-    <!-- 🏛️ AMATERASU SOVEREIGN COPYTRADE SHOWCASE CARD -->
+    <!-- 🦆 THE MIGHTY DUCK COPYTRADE SHOWCASE CARD -->
     <div class="copytrade-showcase-card" style="background: linear-gradient(135deg, rgba(8, 13, 20, 0.95) 0%, rgba(20, 30, 48, 0.92) 100%); border: 1.5px solid rgba(0, 230, 118, 0.45); border-radius: 14px; padding: 16px; margin-bottom: 14px; box-shadow: 0 8px 32px rgba(0, 230, 118, 0.15); position: relative; overflow: hidden;">
       <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle, rgba(0,230,118,0.2) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
       
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:6px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:18px;">🏛️</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="img/themightyduck.png" alt="The Mighty Duck" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #00e676; box-shadow:0 0 12px rgba(0,230,118,0.45);" />
           <div>
-            <b style="font-size:12.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">AMATERASU SOVEREIGN COPYTRADE</b>
+            <b style="font-size:13.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">THE MIGHTY DUCK</b>
             <span style="font-size:10px; color:#94a3b8; display:block;">MASTER LIVE #${cp.masterAccount || '5100154135'} · VERSUS TRADE LTD</span>
           </div>
         </div>
@@ -2194,15 +2197,15 @@ function StatPage(main) {
   main.innerHTML = `<section class="page">
     ${pageHead('Stat', 'Overall signal performance & historical records')}
 
-    <!-- 🏛️ AMATERASU SOVEREIGN COPYTRADE SHOWCASE CARD -->
+    <!-- 🦆 THE MIGHTY DUCK COPYTRADE SHOWCASE CARD -->
     <div class="copytrade-showcase-card" style="background: linear-gradient(135deg, rgba(8, 13, 20, 0.95) 0%, rgba(20, 30, 48, 0.92) 100%); border: 1.5px solid rgba(0, 230, 118, 0.45); border-radius: 14px; padding: 16px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0, 230, 118, 0.15); position: relative; overflow: hidden;">
       <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle, rgba(0,230,118,0.2) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
       
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:6px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:18px;">🏛️</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="img/themightyduck.png" alt="The Mighty Duck" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #00e676; box-shadow:0 0 12px rgba(0,230,118,0.45);" />
           <div>
-            <b style="font-size:12.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">AMATERASU SOVEREIGN COPYTRADE</b>
+            <b style="font-size:13.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">THE MIGHTY DUCK</b>
             <span style="font-size:10px; color:#94a3b8; display:block;">MASTER LIVE #${cp.masterAccount || '5100154135'} · VERSUS TRADE LTD</span>
           </div>
         </div>
