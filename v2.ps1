@@ -126,4 +126,5 @@ Write-Host ""
 Start-Process $mt5Acc2Exe -ArgumentList "/portable"
 Start-Sleep -Seconds 3
 
+Set-Location -Path $acc2Dir
 & $pyCmd -u "$acc2Dir\amaterasu_mt5_bridge.py"
