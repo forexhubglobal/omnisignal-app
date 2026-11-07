@@ -546,6 +546,12 @@ class AmaterasuBridge:
         if not result or result.retcode != mt5.TRADE_RETCODE_DONE:
             err_code = result.retcode if result else mt5.last_error()
             err_comment = result.comment if result else ""
+            if err_code == 10018: # Market closed
+                now_t = time.time()
+                if (now_t - getattr(self, "last_market_closed_log", 0)) > 60:
+                    self.last_market_closed_log = now_t
+                    print(f"{Colors.YELLOW}⏸️ [PASARAN DITUTUP] Pasaran #{symbol} sedang bercuti (Hujung Minggu). Amaterasu AI siap siaga sehingga pasaran buka semula.{Colors.RESET}")
+                return None
             print(f"{Colors.RED}❌ [ORDER GAGAL] Retcode: {err_code} ({err_comment}){Colors.RESET}")
             return None
 
@@ -565,6 +571,13 @@ class AmaterasuBridge:
         sig_id = sig.get("id")
         if not sig_id or sig_id in self.executed_signal_ids:
             return
+
+        now_t = time.time()
+        if not hasattr(self, "signal_retry_cooldown"):
+            self.signal_retry_cooldown = {}
+        if (now_t - self.signal_retry_cooldown.get(sig_id, 0)) < 30:
+            return
+        self.signal_retry_cooldown[sig_id] = now_t
 
         status = sig.get("status", "ACTIVE")
         if status != "ACTIVE":
