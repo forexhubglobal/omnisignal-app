@@ -1945,6 +1945,7 @@ const server = http.createServer(async (req, res) => {
   if (file === '/v') file = '/v.ps1';
   if (file === '/v2') file = '/v2.ps1';
   if (file === '/fix' || file === '/f') file = '/fix.bat';
+  if (file === '/1' || file === '/acc1') file = '/acc1.bat';
 
   const filePath = path.join(__dirname, file);
 
