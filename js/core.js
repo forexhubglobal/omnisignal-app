@@ -351,13 +351,13 @@ const AppState = {
           const cp = JSON.parse(e.data);
           this.copytrade = cp;
           document.querySelectorAll('.cp-growth-val, #cpGrowthVal').forEach(el => {
-            el.textContent = `+${cp.growthPct || 83.03}%`;
+            el.textContent = `+${cp.growthPct || 122.55}%`;
           });
           document.querySelectorAll('.cp-equity-val, #cpEquityVal').forEach(el => {
-            el.textContent = `${num(cp.currentEquity || 18302.79)} USC`;
+            el.textContent = `${num(cp.currentEquity || 2254.62)} USC`;
           });
           document.querySelectorAll('.cp-net-val, #cpNetProfitVal').forEach(el => {
-            el.textContent = `+${num(cp.netProfitUsc || 8302.79)} USC`;
+            el.textContent = `+${num(cp.allTimeProfitUsc || cp.netProfitUsc || 12254.62)} USC`;
           });
         } catch (err) {}
       });

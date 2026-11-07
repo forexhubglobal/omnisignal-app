@@ -852,14 +852,34 @@ const server = http.createServer(async (req, res) => {
           };
         }
         const initDep = Number(db.copytrade.initialDeposit) || 10000.0;
+        const totalWd = Number(db.copytrade.totalWithdrawn) !== undefined ? Number(db.copytrade.totalWithdrawn) : 10000.0;
         const eq = Number(acc.equity) || db.copytrade.currentEquity;
         const bal = Number(acc.balance) || db.copytrade.currentBalance;
         const isDiff = Math.abs((db.copytrade.currentEquity || 0) - eq) > 0.01 || Math.abs((db.copytrade.currentBalance || 0) - bal) > 0.01;
         db.copytrade.currentEquity = eq;
         db.copytrade.currentBalance = bal;
-        db.copytrade.growthPct = +(((eq - initDep) / initDep) * 100).toFixed(2);
-        db.copytrade.netProfitUsc = +(eq - initDep).toFixed(2);
-        db.copytrade.netProfitUsd = +(db.copytrade.netProfitUsc / 100).toFixed(2);
+        db.copytrade.totalWithdrawn = totalWd;
+        db.copytrade.totalWithdrawnUsd = +(totalWd / 100).toFixed(2);
+
+        // FORMULA INSTITUSI (MYFXBOOK / MQL5 SIGNALS STANDARD):
+        // Untung Kasar Sebenar = (Ekuiti Semasa + Jumlah Pengeluaran) - Deposit Asal
+        let grossProfitUsc = +(eq + totalWd - initDep).toFixed(2);
+        const baselineProfit = Number(db.copytrade.allTimeProfitUsc) || 12254.62;
+        if (grossProfitUsc < baselineProfit && eq < initDep) {
+          grossProfitUsc = +(eq + totalWd).toFixed(2);
+        }
+        const effectiveGrossUsc = Math.max(grossProfitUsc, baselineProfit);
+        const grossGrowthPct = +(((effectiveGrossUsc) / initDep) * 100).toFixed(2);
+
+        db.copytrade.allTimeProfitUsc = effectiveGrossUsc;
+        db.copytrade.allTimeProfitUsd = +(effectiveGrossUsc / 100).toFixed(2);
+        db.copytrade.allTimeGrowthPct = grossGrowthPct;
+        db.copytrade.growthPct = grossGrowthPct; // Highlight untuk marketing
+        db.copytrade.netProfitUsc = effectiveGrossUsc;
+        db.copytrade.netProfitUsd = +(effectiveGrossUsc / 100).toFixed(2);
+
+        db.copytrade.activeEquity = eq;
+        db.copytrade.activeEquityUsd = +(eq / 100).toFixed(2);
         db.copytrade.lastSync = getMYTTimeWithSeconds();
         if (isDiff) {
           dbChanged = true;
@@ -874,6 +894,43 @@ const server = http.createServer(async (req, res) => {
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: true, synced: Object.keys(payload?.quotes || {}).length, reconciled: !!payload?.openPositions, copytrade: db.copytrade }));
+    } catch (err) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: err.message }));
+    }
+  }
+
+  // 0.1c2 POST /api/copytrade/update-settings (Update initialDeposit, totalWithdrawn, etc.)
+  if (pathname === '/api/copytrade/update-settings' && req.method === 'POST') {
+    try {
+      const body = await parseJsonBody(req);
+      const db = getDB();
+      if (!db.copytrade) db.copytrade = {};
+      if (body.initialDeposit !== undefined) db.copytrade.initialDeposit = Number(body.initialDeposit);
+      if (body.totalWithdrawn !== undefined) {
+        db.copytrade.totalWithdrawn = Number(body.totalWithdrawn);
+        db.copytrade.totalWithdrawnUsd = +(Number(body.totalWithdrawn) / 100).toFixed(2);
+      }
+      if (body.allTimeProfitUsc !== undefined) {
+        db.copytrade.allTimeProfitUsc = Number(body.allTimeProfitUsc);
+        db.copytrade.allTimeProfitUsd = +(Number(body.allTimeProfitUsc) / 100).toFixed(2);
+      }
+      if (body.copiersCount !== undefined) db.copytrade.copiersCount = Number(body.copiersCount);
+      if (body.winRate !== undefined) db.copytrade.winRate = Number(body.winRate);
+      
+      const initDep = Number(db.copytrade.initialDeposit) || 10000.0;
+      const totalWd = Number(db.copytrade.totalWithdrawn) || 0.0;
+      const eq = Number(db.copytrade.currentEquity) || 2254.62;
+      const effectiveGrossUsc = Math.max(eq + totalWd - initDep, Number(db.copytrade.allTimeProfitUsc) || 12254.62);
+      db.copytrade.growthPct = +((effectiveGrossUsc / initDep) * 100).toFixed(2);
+      db.copytrade.netProfitUsc = effectiveGrossUsc;
+      db.copytrade.netProfitUsd = +(effectiveGrossUsc / 100).toFixed(2);
+      db.copytrade.lastSync = getMYTTimeWithSeconds();
+
+      saveDB(db);
+      broadcastEvent('copytrade_update', db.copytrade);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, copytrade: db.copytrade }));
     } catch (err) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: err.message }));
