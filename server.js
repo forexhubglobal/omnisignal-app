@@ -931,6 +931,7 @@ const server = http.createServer(async (req, res) => {
           const sig = db.activeSignals[i];
           const sym = (sig.symbol || '').toUpperCase();
           if (sig.isTest) continue;
+          const mt5Pos = mt5BySymbol[sym];
           if (mt5Pos) {
             // Direction or major entry divergence: forcefully align to MT5 reality!
             const priceDiff = Math.abs(sig.entry - mt5Pos.openPrice);
