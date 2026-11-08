@@ -967,7 +967,7 @@ const server = http.createServer(async (req, res) => {
         db.copytrade.lastSync = getMYTTimeWithSeconds();
         if (isDiff) {
           dbChanged = true;
-          broadcastEvent('copytrade_update', db.copytrade);
+          broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrades: db.copytrades || [db.copytrade, db.copytrade2].filter(Boolean) });
         }
       }
 

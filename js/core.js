@@ -352,18 +352,16 @@ const AppState = {
       });
       s.addEventListener('copytrade_update', e => {
         try {
-          const cp = JSON.parse(e.data);
-          this.copytrade = cp;
-          document.querySelectorAll('.cp-growth-val, #cpGrowthVal').forEach(el => {
-            el.textContent = `+${cp.growthPct || 122.55}%`;
-          });
-          document.querySelectorAll('.cp-equity-val, #cpEquityVal').forEach(el => {
-            el.textContent = `${num(cp.currentEquity || 2254.62)} USC`;
-          });
-          document.querySelectorAll('.cp-net-val, #cpNetProfitVal').forEach(el => {
-            el.textContent = `+${num(cp.allTimeProfitUsc || cp.netProfitUsc || 12254.62)} USC`;
-          });
-        } catch (err) {}
+          const raw = JSON.parse(e.data);
+          if (raw.copytrade) this.copytrade = raw.copytrade;
+          if (raw.copytrade2) this.copytrade2 = raw.copytrade2;
+          if (raw.copytrades) this.copytrades = raw.copytrades;
+          if (raw.masterAccount === '5100154135') this.copytrade = raw;
+          if (raw.masterAccount === '5100207348') this.copytrade2 = raw;
+          if (typeof window.refreshCopytradeUI === 'function') {
+            window.refreshCopytradeUI();
+          }
+        } catch (err) {} 
       });
       s.addEventListener('market_quotes', e => {
         const quotes = JSON.parse(e.data);
