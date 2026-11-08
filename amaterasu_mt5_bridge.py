@@ -311,15 +311,15 @@ class AmaterasuBridge:
                 return None
         
         # Pastikan simbol aktif dalam MarketWatch
-        sym_selected = mt5.symbol_select(symbol, True)
+        mt5.symbol_select(symbol, True)
         sym_info = mt5.symbol_info(symbol)
-        if not sym_selected and not (sym_info and sym_info.visible):
-            print(f"{Colors.RED}[ORDER] Gagal aktifkan simbol {symbol} di MarketWatch MT5.{Colors.RESET}")
-            return None
-
         if not sym_info:
-            print(f"{Colors.RED}[ORDER] Maklumat simbol {symbol} tidak ditemui.{Colors.RESET}")
-            return None
+            time.sleep(0.15)
+            mt5.symbol_select(symbol, True)
+            sym_info = mt5.symbol_info(symbol)
+            if not sym_info:
+                print(f"{Colors.RED}[ORDER] Maklumat simbol {symbol} tidak ditemui di broker.{Colors.RESET}")
+                return None
 
         order_type_str = str(signal.get("type", "")).upper().strip()
         if order_type_str not in ["BUY", "SELL"]:
