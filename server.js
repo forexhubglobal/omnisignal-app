@@ -836,6 +836,7 @@ const server = http.createServer(async (req, res) => {
             db.copytrade2.allTimeProfitUsc = Math.max(netProfit2, 0);
             db.copytrade2.allTimeGrowthPct = Math.max(db.copytrade2.growthPct, 0);
             db.copytrade2.lastSync = getMYTTimeWithSeconds();
+            db.copytrade2.openPositions = payload.openPositions || [];
 
             if (!Array.isArray(db.copytrades)) {
               db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean);
@@ -890,6 +891,7 @@ const server = http.createServer(async (req, res) => {
             db.copytrade3.allTimeProfitUsd = Math.max(netProfit3, 0);
             db.copytrade3.allTimeGrowthPct = Math.max(db.copytrade3.growthPct, 0);
             db.copytrade3.lastSync = getMYTTimeWithSeconds();
+            db.copytrade3.openPositions = payload.openPositions || [];
 
             if (!Array.isArray(db.copytrades)) {
               db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean);
@@ -928,8 +930,7 @@ const server = http.createServer(async (req, res) => {
         for (let i = 0; i < db.activeSignals.length; i++) {
           const sig = db.activeSignals[i];
           const sym = (sig.symbol || '').toUpperCase();
-          const mt5Pos = mt5BySymbol[sym];
-
+          if (sig.isTest) continue;
           if (mt5Pos) {
             // Direction or major entry divergence: forcefully align to MT5 reality!
             const priceDiff = Math.abs(sig.entry - mt5Pos.openPrice);
@@ -1003,7 +1004,7 @@ const server = http.createServer(async (req, res) => {
         // Gunakan debounce perlindungan (sekurang-kurangnya 5 kitaran berturut-turut tiada) sebelum menutup!
         for (let i = db.activeSignals.length - 1; i >= 0; i--) {
           const sig = db.activeSignals[i];
-          const sym = (sig.symbol || '').toUpperCase();
+          if (sig.isTest) continue;
           if (allowedWhitelist.includes(sym)) {
             if (!mt5BySymbol[sym]) {
               sig._missingFromMt5Count = (sig._missingFromMt5Count || 0) + 1;
