@@ -438,18 +438,22 @@ function openShareWinModal(sig, isWin = false) {
 window.activeCopytradeVault = 1;
 window.copytradeCalcState = { depositUsd: 100, isExpanded: false };
 
-window.toggleCopytradeCalculator = function(vaultId) {
-  window.copytradeCalcState.isExpanded = !window.copytradeCalcState.isExpanded;
-  const calcBox = document.getElementById('copytradeCalcContainer_' + vaultId);
-  const toggleBtn = document.getElementById('btnToggleCalc_' + vaultId);
-  if (calcBox) {
-    calcBox.style.display = window.copytradeCalcState.isExpanded ? 'block' : 'none';
+window.toggleCopytradeCalculator = function(vaultId, e) {
+  if (e) {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof e.stopPropagation === 'function') e.stopPropagation();
   }
-  if (toggleBtn) {
-    toggleBtn.innerHTML = window.copytradeCalcState.isExpanded 
+  window.copytradeCalcState.isExpanded = !window.copytradeCalcState.isExpanded;
+  const isExp = window.copytradeCalcState.isExpanded;
+
+  document.querySelectorAll('.copytrade-calc-box').forEach(calcBox => {
+    calcBox.style.display = isExp ? 'block' : 'none';
+  });
+  document.querySelectorAll('.btn-toggle-calc').forEach(toggleBtn => {
+    toggleBtn.innerHTML = isExp 
       ? '<span>🔼</span> TUTUP KALKULATOR' 
       : '<span>🧮</span> KALKULATOR UNJURAN';
-  }
+  });
 };
 
 window.updateProjectionCalc = function(vaultId, val) {
@@ -470,17 +474,21 @@ window.updateProjectionCalc = function(vaultId, val) {
   const m6TotalUsd = usd * Math.pow(1 + m1Pct, 6);
   const m6ProfitUsd = m6TotalUsd - usd;
 
-  const depDisp = document.getElementById('calcDepDisplay_' + vaultId);
-  if (depDisp) depDisp.textContent = '$' + usd.toFixed(0) + ' USD (' + (usc).toLocaleString() + ' USC)';
-
-  const p1 = document.getElementById('calcMonth1Profit_' + vaultId);
-  if (p1) p1.innerHTML = '+$' + m1ProfitUsd.toFixed(1) + ' <small style="font-size:10px; color:#94a3b8;">(Baki: $' + m1TotalUsd.toFixed(1) + ')</small>';
-
-  const p3 = document.getElementById('calcMonth3Profit_' + vaultId);
-  if (p3) p3.innerHTML = '+$' + m3ProfitUsd.toFixed(1) + ' <small style="font-size:10px; color:#94a3b8;">(Baki: $' + m3TotalUsd.toFixed(1) + ')</small>';
-
-  const p6 = document.getElementById('calcMonth6Profit_' + vaultId);
-  if (p6) p6.innerHTML = '+$' + m6ProfitUsd.toFixed(1) + ' <small style="font-size:10px; color:#94a3b8;">(Baki: $' + m6TotalUsd.toFixed(1) + ')</small>';
+  document.querySelectorAll('.calc-dep-display').forEach(el => {
+    el.textContent = '$' + usd.toFixed(0) + ' USD (' + (usc).toLocaleString() + ' USC)';
+  });
+  document.querySelectorAll('.copytrade-calc-slider').forEach(el => {
+    if (Number(el.value) !== usd) el.value = usd;
+  });
+  document.querySelectorAll('.calc-month1-profit').forEach(el => {
+    el.innerHTML = '+$' + m1ProfitUsd.toFixed(1) + ' <small style="font-size:10px; color:#94a3b8;">(Baki: $' + m1TotalUsd.toFixed(1) + ')</small>';
+  });
+  document.querySelectorAll('.calc-month3-profit').forEach(el => {
+    el.innerHTML = '+$' + m3ProfitUsd.toFixed(1) + ' <small style="font-size:10px; color:#94a3b8;">(Baki: $' + m3TotalUsd.toFixed(1) + ')</small>';
+  });
+  document.querySelectorAll('.calc-month6-profit').forEach(el => {
+    el.innerHTML = '+$' + m6ProfitUsd.toFixed(1) + ' <small style="font-size:10px; color:#94a3b8;">(Baki: $' + m6TotalUsd.toFixed(1) + ')</small>';
+  });
 };
 
 function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
@@ -550,6 +558,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     winRate: 90.4
   };
 
+  const isCalcOpen = Boolean(window.copytradeCalcState && window.copytradeCalcState.isExpanded);
   const currentDep = window.copytradeCalcState.depositUsd || 100;
   const m1Profit = (currentDep * 0.35).toFixed(1);
   const m1Total = (currentDep * 1.35).toFixed(1);
@@ -591,14 +600,14 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         <div>
           <span style="font-size:9.5px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.5px; display:block;">${isV2 ? 'PRESTASI PERTUMBUHAN (BARU MULA)' : 'ALL-TIME REALIZED GROWTH (SEBELUM TOLAK WD)'}</span>
           <div style="display:flex; align-items:baseline; gap:6px; margin-top:2px;">
-            <span style="font-size:26px; font-weight:900; color:${isV2 ? '#f5c451' : '#00e676'}; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px ${isV2 ? 'rgba(245,196,81,0.4)' : 'rgba(0,230,118,0.4)'};">+${Number(cp.growthPct).toFixed(2)}%</span>
+            <span class="cp-growth-num" style="font-size:26px; font-weight:900; color:${isV2 ? '#f5c451' : '#00e676'}; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px ${isV2 ? 'rgba(245,196,81,0.4)' : 'rgba(0,230,118,0.4)'};">+${Number(cp.growthPct).toFixed(2)}%</span>
             <span style="font-size:11px; color:${isV2 ? '#f5c451' : '#00e676'}; font-weight:700;">${isV2 ? 'READY ▲' : 'GROW ▲'}</span>
           </div>
         </div>
         <div style="text-align:right;">
           <span style="font-size:9.5px; color:#8e9aa8; text-transform:uppercase; display:block;">UNTUNG KASAR TERKUMPUL</span>
-          <b style="font-size:14px; font-weight:800; color:#f5c451;">+${num(cp.allTimeProfitUsc)} USC</b>
-          <span style="font-size:10px; color:#94a3b8; display:block;">(+$+${Number(cp.allTimeProfitUsd).toFixed(2)} USD)</span>
+          <b class="cp-gross-usc" style="font-size:14px; font-weight:800; color:#f5c451;">+${num(cp.allTimeProfitUsc)} USC</b>
+          <span class="cp-gross-usd" style="font-size:10px; color:#94a3b8; display:block;">(+$+${Number(cp.allTimeProfitUsd).toFixed(2)} USD)</span>
         </div>
       </div>
 
@@ -703,8 +712,8 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         </div>
         <div style="background:rgba(0,230,118,0.06); border:1px solid rgba(0,230,118,0.25); border-radius:8px; padding:8px 4px;">
           <span style="font-size:9px; color:#00e676; font-weight:700; display:block;">${!isV2 ? 'BAKI AKTIF (POST-WD)' : 'BAKI AKTIF TERKINI'}</span>
-          <b style="font-size:11.5px; color:#00e676;">${num(cp.currentEquity)} USC</b>
-          <span style="font-size:9px; color:#8e9aa8; display:block;">($+${(cp.currentEquity / 100).toFixed(2)} USD ${!isV2 ? 'Untung Sahaja' : 'Modal Penuh'})</span>
+          <b class="cp-active-equity-usc" style="font-size:11.5px; color:#00e676;">${num(cp.currentEquity)} USC</b>
+          <span class="cp-active-equity-usd" style="font-size:9px; color:#8e9aa8; display:block;">($+${(cp.currentEquity / 100).toFixed(2)} USD ${!isV2 ? 'Untung Sahaja' : 'Modal Penuh'})</span>
         </div>
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
           <span style="font-size:9px; color:#8e9aa8; display:block;">WINRATE & RISK</span>
@@ -718,13 +727,13 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         <button type="button" class="btn" onclick="openCopytradeStoryModal(${vaultId})" style="flex:1; background:linear-gradient(135deg, rgba(245,196,81,0.18) 0%, rgba(255,255,255,0.04) 100%); border:1px solid rgba(245,196,81,0.5); color:#f5c451; font-weight:800; font-size:11px; padding:9px 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all 0.2s;">
           <span>📸</span> KONGSI KAD STORY
         </button>
-        <button type="button" class="btn" id="btnToggleCalc_${vaultId}" onclick="window.toggleCopytradeCalculator(${vaultId})" style="flex:1; background:linear-gradient(135deg, rgba(0,230,118,0.18) 0%, rgba(255,255,255,0.04) 100%); border:1px solid rgba(0,230,118,0.5); color:#00e676; font-weight:800; font-size:11px; padding:9px 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all 0.2s;">
-          <span>🧮</span> KALKULATOR UNJURAN
+        <button type="button" class="btn btn-toggle-calc" id="btnToggleCalc_${vaultId}" onclick="window.toggleCopytradeCalculator(${vaultId}, event)" style="flex:1; background:linear-gradient(135deg, rgba(0,230,118,0.18) 0%, rgba(255,255,255,0.04) 100%); border:1px solid rgba(0,230,118,0.5); color:#00e676; font-weight:800; font-size:11px; padding:9px 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all 0.2s;">
+          <span>${isCalcOpen ? '🔼' : '🧮'}</span> ${isCalcOpen ? 'TUTUP KALKULATOR' : 'KALKULATOR UNJURAN'}
         </button>
       </div>
 
       <!-- FEATURE 2: INTERACTIVE COPYTRADE PROFIT PROJECTION CALCULATOR (Collapsible) -->
-      <div id="copytradeCalcContainer_${vaultId}" style="display:none; background:rgba(0,0,0,0.5); border:1px solid rgba(0,230,118,0.3); border-radius:10px; padding:12px; margin-bottom:12px;">
+      <div class="copytrade-calc-box" id="copytradeCalcContainer_${vaultId}" style="display:${isCalcOpen ? 'block' : 'none'}; background:rgba(0,0,0,0.5); border:1px solid rgba(0,230,118,0.3); border-radius:10px; padding:12px; margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <b style="font-size:11px; color:#00e676; text-transform:uppercase;">🧮 KALKULATOR UNJURAN KEUNTUNGAN (90.4% WINRATE)</b>
           <span style="font-size:9px; color:#94a3b8;">Kompaun Automatik</span>
@@ -733,9 +742,9 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         <div style="margin-bottom:10px;">
           <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
             <span style="color:#cbd5e1;">Pilih Jumlah Modal:</span>
-            <b id="calcDepDisplay_${vaultId}" style="color:#f5c451;">$${currentDep} USD (${(currentDep * 100).toLocaleString()} USC)</b>
+            <b class="calc-dep-display" id="calcDepDisplay_${vaultId}" style="color:#f5c451;">$${currentDep} USD (${(currentDep * 100).toLocaleString()} USC)</b>
           </div>
-          <input type="range" min="50" max="2500" step="25" value="${currentDep}" oninput="window.updateProjectionCalc(${vaultId}, this.value)" style="width:100%; cursor:pointer; accent-color:#00e676;" />
+          <input type="range" class="copytrade-calc-slider" min="50" max="2500" step="25" value="${currentDep}" oninput="window.updateProjectionCalc(${vaultId}, this.value)" style="width:100%; cursor:pointer; accent-color:#00e676;" />
           <div style="display:flex; justify-content:space-between; font-size:9px; color:#64748b; margin-top:2px;">
             <span>$50 Min</span>
             <span>$500</span>
@@ -748,15 +757,15 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-bottom:10px; text-align:center;">
           <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:6px; padding:6px 2px;">
             <span style="font-size:8.5px; color:#8e9aa8; display:block;">1 BULAN (+35%)</span>
-            <b id="calcMonth1Profit_${vaultId}" style="font-size:10.5px; color:#00e676;">+$${m1Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m1Total})</small></b>
+            <b class="calc-month1-profit" id="calcMonth1Profit_${vaultId}" style="font-size:10.5px; color:#00e676;">+$${m1Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m1Total})</small></b>
           </div>
           <div style="background:rgba(0,230,118,0.08); border:1px solid rgba(0,230,118,0.3); border-radius:6px; padding:6px 2px;">
             <span style="font-size:8.5px; color:#00e676; font-weight:700; display:block;">3 BULAN (+146%)</span>
-            <b id="calcMonth3Profit_${vaultId}" style="font-size:10.5px; color:#00e676;">+$${m3Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m3Total})</small></b>
+            <b class="calc-month3-profit" id="calcMonth3Profit_${vaultId}" style="font-size:10.5px; color:#00e676;">+$${m3Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m3Total})</small></b>
           </div>
           <div style="background:rgba(245,196,81,0.08); border:1px solid rgba(245,196,81,0.3); border-radius:6px; padding:6px 2px;">
             <span style="font-size:8.5px; color:#f5c451; font-weight:700; display:block;">6 BULAN (+505%)</span>
-            <b id="calcMonth6Profit_${vaultId}" style="font-size:10.5px; color:#f5c451;">+$${m6Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m6Total})</small></b>
+            <b class="calc-month6-profit" id="calcMonth6Profit_${vaultId}" style="font-size:10.5px; color:#f5c451;">+$${m6Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m6Total})</small></b>
           </div>
         </div>
 
@@ -781,8 +790,43 @@ window.switchCopytradeVault = function(vaultId) {
 };
 
 window.refreshCopytradeUI = function() {
-  document.querySelectorAll('.copytrade-showcase-container').forEach(el => {
-    el.innerHTML = getCopytradeCardHTML(window.activeCopytradeVault || 1);
+  const vId = window.activeCopytradeVault || 1;
+  const isV2 = Number(vId) === 2;
+
+  const cp1 = (AppState && AppState.copytrade) || {};
+  const cp2 = (AppState && AppState.copytrade2) || {};
+  const cp = isV2 ? {
+    growthPct: (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 0.00,
+    allTimeProfitUsc: (cp2 && typeof cp2.allTimeProfitUsc === 'number') ? cp2.allTimeProfitUsc : 0.00,
+    allTimeProfitUsd: (cp2 && typeof cp2.allTimeProfitUsd === 'number') ? cp2.allTimeProfitUsd : 0.00,
+    currentEquity: (cp2 && typeof cp2.currentEquity === 'number') ? cp2.currentEquity : 10000.0
+  } : {
+    growthPct: (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 122.55,
+    allTimeProfitUsc: (cp1 && typeof cp1.allTimeProfitUsc === 'number') ? cp1.allTimeProfitUsc : 12254.62,
+    allTimeProfitUsd: (cp1 && typeof cp1.allTimeProfitUsd === 'number') ? cp1.allTimeProfitUsd : 122.55,
+    currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 2254.62
+  };
+
+  const containers = document.querySelectorAll('.copytrade-showcase-container');
+  containers.forEach(el => {
+    // If the card is already rendered, do smooth in-place update of live numbers
+    // DO NOT wipe el.innerHTML or collapse user's opened calculator!
+    const growthEl = el.querySelector('.cp-growth-num');
+    const profitUscEl = el.querySelector('.cp-gross-usc');
+    const profitUsdEl = el.querySelector('.cp-gross-usd');
+    const equityUscEl = el.querySelector('.cp-active-equity-usc');
+    const equityUsdEl = el.querySelector('.cp-active-equity-usd');
+
+    if (growthEl && profitUscEl && profitUsdEl) {
+      growthEl.textContent = '+' + Number(cp.growthPct).toFixed(2) + '%';
+      profitUscEl.textContent = '+' + num(cp.allTimeProfitUsc) + ' USC';
+      profitUsdEl.textContent = '(+$' + Number(cp.allTimeProfitUsd).toFixed(2) + ' USD)';
+      if (equityUscEl) equityUscEl.textContent = num(cp.currentEquity) + ' USC';
+      if (equityUsdEl) equityUsdEl.textContent = '(+$' + (cp.currentEquity / 100).toFixed(2) + ' USD ' + (!isV2 ? 'Untung Sahaja' : 'Modal Penuh') + ')';
+    } else {
+      // Not yet initialized
+      el.innerHTML = getCopytradeCardHTML(vId);
+    }
   });
 };
 
