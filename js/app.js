@@ -389,7 +389,7 @@ function init() {
                   <span style="font-size:10px; color:#EF2D3D; font-weight:800;">*WAJIB</span>
                 </label>
                 <div class="login-input-wrap">
-                  <input type="text" id="loginInviteCode" placeholder="cth: AMATERASU-VIP" style="font-family:monospace; font-weight:800; text-transform:uppercase; color:#F5C451; letter-spacing:1px;" />
+                  <input type="text" id="loginInviteCode" placeholder="Masukkan Kod Jemputan" style="font-family:monospace; font-weight:800; text-transform:uppercase; color:#F5C451; letter-spacing:1px;" />
                 </div>
                 <small style="font-size:10px; color:#8E9AA8; display:block; margin-top:3px;">
                   *Pengguna baru wajib ada kod jemputan rasmi daripada Admin.
