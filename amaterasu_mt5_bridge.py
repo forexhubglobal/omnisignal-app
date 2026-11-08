@@ -293,7 +293,7 @@ class AmaterasuBridge:
         symbol_raw = signal.get("symbol", "XAUUSD")
         symbol = self.resolve_symbol(symbol_raw)
         
-        # 0. WHITELIST GUARD: Hanya 4 Pair Pilihan Bos (USDCAD, XAUUSD, USDJPY, USDCHF)
+        # 0. WHITELIST GUARD: Hanya Pair Pilihan Bos (XAUUSD, USDCHF, EURUSD, USDCAD, USDJPY)
         allowed_pairs = self.config.get("allowed_pairs", ["XAUUSD", "USDCHF", "EURUSD"])
         clean_raw_sym = symbol_raw.split('.')[0].upper()
         if allowed_pairs and clean_raw_sym not in [p.upper() for p in allowed_pairs]:
@@ -471,19 +471,14 @@ class AmaterasuBridge:
 
         # Saiz lot: Semak jika simbol mempunyai custom lot (cth: USDCAD 0.50 lot, XAU/JPY/CHF 0.20 lot)
         exec_lot = self.lot_size
-        custom_lots = self.config.get("custom_lot_map", {
-            "USDCAD": 0.50,
-            "XAUUSD": 0.20,
-            "USDJPY": 0.20,
-            "USDCHF": 0.20
-        })
+        custom_lots = self.config.get("custom_lot_map", {})
         for c_sym, c_lot in custom_lots.items():
             if c_sym.upper() in symbol.upper():
                 exec_lot = float(c_lot)
                 break
 
         # Module 3: Time-Price Theory (Sesi Emas New York: 7:30 PM - 11:30 PM MYT)
-        # HANYA UNTUK XAUUSD: Gandakan saiz posisi dari 0.20 kepada 0.35 lot sempena 98.3% Winrate Window!
+        # HANYA UNTUK XAUUSD: Gandakan saiz posisi sempena 98.3% Winrate Window
         is_ny_gold_boost = False
         if clean_raw_sym == "XAUUSD":
             from datetime import timezone, timedelta
@@ -494,7 +489,8 @@ class AmaterasuBridge:
                 (now_myt.hour == 23 and now_myt.minute <= 30)
             )
             if is_ny_golden_window and self.config.get("ny_gold_multiplier_active", True):
-                exec_lot = float(self.config.get("ny_gold_lot_size", 0.35))
+                default_ny_lot = round(exec_lot * 1.5, 2)
+                exec_lot = float(self.config.get("ny_gold_lot_size", default_ny_lot))
                 is_ny_gold_boost = True
                 print(f"{Colors.GREEN}{Colors.BOLD}🔥 [TIME-PRICE THEORY: SESI EMAS NEW YORK] Menggandakan saiz posisi XAUUSD kepada {exec_lot} lot! (Waktu Emas 19:30 - 23:30 MYT | Rekod 98.3% Winrate){Colors.RESET}")
 
@@ -597,8 +593,8 @@ class AmaterasuBridge:
         if status != "ACTIVE":
             return
 
-        # WHITELIST GUARD: Hanya 4 Pair Pilihan Bos (USDCAD, XAUUSD, USDJPY, USDCHF)
-        allowed_pairs = self.config.get("allowed_pairs", ["USDCAD", "XAUUSD", "USDJPY", "USDCHF"])
+        # WHITELIST GUARD: Hanya Pair Pilihan Bos (XAUUSD, USDCHF, EURUSD, USDCAD, USDJPY)
+        allowed_pairs = self.config.get("allowed_pairs", ["XAUUSD", "USDCHF", "EURUSD", "USDCAD", "USDJPY"])
         clean_sym = str(sig.get("symbol", "")).split('.')[0].upper()
         if allowed_pairs and clean_sym not in [p.upper() for p in allowed_pairs]:
             return
@@ -908,9 +904,8 @@ class AmaterasuBridge:
             running_signals = payload.get("activeSignals", [])
             for s in running_signals:
                 if s.get("status") == "ACTIVE" and s.get("id") not in self.executed_signal_ids:
-                    # Ambil signal yang baru keluar (kurang dari 2 minit)
                     print(f"[SYNC] Mengesan running signal semasa permulaan: #{s.get('symbol')} {s.get('type')}")
-                    # Jangan duplicate execute jika signal lama
+                    # Jangan kejar harga lama mengikut SOP Standard
                     self.executed_signal_ids.add(s.get("id"))
 
         elif event_name == "signal_fired":
@@ -1004,6 +999,30 @@ class AmaterasuBridge:
                             self.process_new_signal(s)
                         elif s.get("status") == "TP1_HIT" or s.get("beLocked"):
                             self.apply_breakeven_for_symbol(s.get("symbol"), s)
+            except Exception:
+                pass
+
+    def auto_updater_loop(self):
+        """Menyemak kemas kini terkini dari pelayan setiap 45 saat dan memulakan semula bridge secara automatik"""
+        url = f"{self.server_url}/amaterasu_mt5_bridge.py"
+        while self.running:
+            try:
+                time.sleep(45)
+                r = requests.get(url, timeout=10)
+                if r.status_code == 200 and len(r.text) > 10000:
+                    local_path = os.path.abspath(__file__)
+                    with open(local_path, "r", encoding="utf-8") as f:
+                        current_code = f.read()
+                    if current_code.strip() != r.text.strip():
+                        print(f"\n{Colors.GREEN}{Colors.BOLD}🚀 [AUTO-UPDATE] Versi baharu bridge dikesan dari pelayan! Mengemas kini secara automatik...{Colors.RESET}")
+                        with open(local_path, "w", encoding="utf-8") as f:
+                            f.write(r.text)
+                        print(f"{Colors.GREEN}✅ [AUTO-UPDATE] Berjaya dikemaskini. Memulakan semula Amaterasu Bridge...{Colors.RESET}")
+                        time.sleep(1.5)
+                        mt5.shutdown()
+                        import subprocess
+                        subprocess.Popen([sys.executable, local_path])
+                        os._exit(0)
             except Exception:
                 pass
 
@@ -1140,6 +1159,10 @@ class AmaterasuBridge:
         # Start Autonomous Auto-BreakEven Guardian thread
         guardian_thread = threading.Thread(target=self.breakeven_guardian_loop, daemon=True)
         guardian_thread.start()
+
+        # Start Self-Healing Auto Updater thread (Checks Render for script updates every 45s)
+        updater_thread = threading.Thread(target=self.auto_updater_loop, daemon=True)
+        updater_thread.start()
 
         # Run SSE listener on main thread
         try:
