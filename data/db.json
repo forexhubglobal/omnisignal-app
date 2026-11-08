@@ -4981,8 +4981,8 @@
     },
     {
       "id": "master-3",
-      "name": "Amaterasu Sovereign",
-      "avatar": "img/amaterasux.png",
+      "name": "Amaterasu X 2.0",
+      "avatar": "img/amaterasux_2.jpg",
       "masterAccount": "5100209626",
       "broker": "Versus Trade Ltd. (Live1)",
       "accountType": "Standard USD",
@@ -5041,8 +5041,8 @@
   },
   "copytrade3": {
     "id": "master-3",
-    "name": "Amaterasu Sovereign",
-    "avatar": "img/amaterasux.png",
+    "name": "Amaterasu X 2.0",
+    "avatar": "img/amaterasux_2.jpg",
     "masterAccount": "5100209626",
     "broker": "Versus Trade Ltd. (Live1)",
     "accountType": "Standard USD",

@@ -850,8 +850,8 @@ const server = http.createServer(async (req, res) => {
             if (!db.copytrade3) {
               db.copytrade3 = {
                 id: "master-3",
-                name: "Amaterasu Sovereign",
-                avatar: "img/amaterasux.png",
+                name: "Amaterasu X 2.0",
+                avatar: "img/amaterasux_2.jpg",
                 masterAccount: "5100209626",
                 broker: "Versus Trade Ltd. (Live1)",
                 accountType: "Standard USD",
@@ -874,6 +874,8 @@ const server = http.createServer(async (req, res) => {
                 affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255"
               };
             }
+            db.copytrade3.name = "Amaterasu X 2.0";
+            db.copytrade3.avatar = "img/amaterasux_2.jpg";
             const initDep3 = Number(db.copytrade3.initialDeposit) || 1000.0;
             const eq3 = Number(acc.equity) || db.copytrade3.currentEquity;
             const bal3 = Number(acc.balance) || db.copytrade3.currentBalance;

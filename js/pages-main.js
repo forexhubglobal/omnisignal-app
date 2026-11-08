@@ -531,8 +531,8 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
 
   const cp3 = (AppState && AppState.copytrade3) || {
     id: "master-3",
-    name: "Amaterasu Sovereign",
-    avatar: "img/amaterasux.png",
+    name: "Amaterasu X 2.0",
+    avatar: "img/amaterasux_2.jpg",
     masterAccount: "5100209626",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 1000.0,
@@ -558,8 +558,8 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     themeBadge = 'MASTER 3 (STANDARD $1,000 USD)';
     cp = {
       id: 3,
-      name: "AMATERASU SOVEREIGN",
-      avatar: "img/amaterasux.png",
+      name: "AMATERASU X 2.0",
+      avatar: (cp3 && cp3.avatar) || "img/amaterasux_2.jpg",
       masterAccount: "5100209626",
       growthPct: (cp3 && typeof cp3.growthPct === 'number') ? cp3.growthPct : 0.00,
       netProfitDisplay: '+$' + Number(cp3.netProfitUsd || 0).toFixed(2) + ' USD',
@@ -635,7 +635,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
           <span>🔥</span> Master 2 (Cent)
         </button>
         <button type="button" class="btn-vault-tab ${isV3 ? 'active' : ''}" onclick="window.switchCopytradeVault(3)" style="flex:1; min-width:95px; padding:7px 4px; border-radius:7px; border:none; background:${isV3 ? 'rgba(245,196,81,0.25)' : 'transparent'}; border:${isV3 ? '1px solid #f5c451' : '1px solid transparent'}; color:${isV3 ? '#f5c451' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
-          <span>👑</span> Master 3 ($1K USD)
+          <span>👑</span> Amaterasu X 2.0 ($1K)
         </button>
       </div>
 
@@ -1086,9 +1086,9 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
 
   if (isV3) {
     cp = (AppState && AppState.copytrade3) || {};
-    targetName = 'AMATERASU SOVEREIGN';
+    targetName = 'AMATERASU X 2.0';
     targetAcc = '5100209626';
-    targetAvatar = 'img/amaterasux.png';
+    targetAvatar = (cp && cp.avatar) || 'img/amaterasux_2.jpg';
     targetTheme = '#f5c451';
     targetType = 'Akaun Standard ($1,000 USD)';
   } else if (isV2) {
