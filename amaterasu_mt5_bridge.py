@@ -300,17 +300,6 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}🛡️ [PAIR DITAPIS] Simbol #{clean_raw_sym} ditolak. Hanya {', '.join(allowed_pairs)} dibenarkan mengikut arahan bos.{Colors.RESET}")
             return None
 
-        # 0.1 POST-SL LIQUIDITY SWEEP GUARD:
-        # Jika baru terkena SL pada simbol ini (terutamanya Emas):
-        # Wajib bertenang 45 minit untuk Gold / 30 minit untuk forex bagi memastikan Liquidity Sweep reda sepenuhnya!
-        last_sl = self.last_sl_timestamps.get(clean_raw_sym, 0)
-        cooldown_sec = 45 * 60 if clean_raw_sym == "XAUUSD" else 30 * 60
-        elapsed = time.time() - last_sl
-        if elapsed < cooldown_sec:
-            rem_min = int((cooldown_sec - elapsed) / 60)
-            print(f"{Colors.YELLOW}🛡️ [POST-SL LIQUIDITY SWEEP GUARD] Menolak re-entry #{clean_raw_sym}. Baru terkena SL {int(elapsed/60)} minit lepas. Baki bertenang: {rem_min} minit bagi memastikan sweep reda sepenuhnya.{Colors.RESET}")
-            return None
-
         # 0.2 LONDON TRAP ZONE GUARD (14:00 - 16:00 MYT):
         # Data sejarah 2,732 trade membuktikan 14:00 - 16:00 MYT penuh manipulasi Judas Swing.
         # XAUUSD DILARANG MASUK sepanjang 2 jam ini demi melindungi modal!
@@ -390,31 +379,7 @@ class AmaterasuBridge:
         digits = sym_info.digits
         point = sym_info.point
 
-        # 0.3 STRICT PULLBACK RETEST GUARD (ANTI-CHASING / DILARANG MASUK DI PUNCAK ATAU DASAR):
-        # Mencegah sama sekali 'selling at the bottom' atau 'buying at the top'.
-        # Wajib ada ruang pullback sebelum sebarang order dihantar ke pasaran sebenar!
-        is_test_mode = bool(signal.get("isTest") or signal.get("test") or signal.get("manual"))
-        if not is_test_mode:
-            try:
-                m15_rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M15, 0, 5)
-                if m15_rates is not None and len(m15_rates) >= 3:
-                    recent_low = float(min(r['low'] for r in m15_rates))
-                    recent_high = float(max(r['high'] for r in m15_rates))
 
-                    if not is_buy: # SELL ORDER
-                        buffer_floor = 4.0 if clean_raw_sym == "XAUUSD" else (0.0008 if "JPY" not in clean_raw_sym else 0.08)
-                        if price <= (recent_low + buffer_floor):
-                            print(f"{Colors.YELLOW}🛡️ [STRICT PULLBACK GUARD] Menolak order SELL #{clean_raw_sym} @ {price:.{digits}f}! Harga berada di zon lantai dasar ({recent_low:.{digits}f} + {buffer_floor}). DILARANG SELL di lantai dasar! Wajib tunggu Pullback melantun ke atas dahulu sebelum SELL!{Colors.RESET}")
-                            return None
-                    else: # BUY ORDER
-                        buffer_roof = 4.0 if clean_raw_sym == "XAUUSD" else (0.0008 if "JPY" not in clean_raw_sym else 0.08)
-                        if price >= (recent_high - buffer_roof):
-                            print(f"{Colors.YELLOW}🛡️ [STRICT PULLBACK GUARD] Menolak order BUY #{clean_raw_sym} @ {price:.{digits}f}! Harga berada di zon bumbung puncak ({recent_high:.{digits}f} - {buffer_roof}). DILARANG BUY di puncak! Wajib tunggu Pullback melantun ke bawah dahulu sebelum BUY!{Colors.RESET}")
-                            return None
-            except Exception as e:
-                pass
-        else:
-            print(f"{Colors.GREEN}{Colors.BOLD}⚡ [ADMIN TEST MODE] Menjalankan ujian eksekusi pasaran untuk akaun ini...{Colors.RESET}")
 
         # Entry & distance calculation
         signal_entry = float(signal.get("entry", price))
@@ -655,10 +620,7 @@ class AmaterasuBridge:
             self.executed_signal_ids.add(sig_id)
             print(f"{Colors.GREEN}✅ [ENTRY BERJAYA] Semua {len(order_records)} layer #{clean_sym} berjaya dibuka pada harga optimum!{Colors.RESET}")
         else:
-            now_t = time.time()
-            if (now_t - self.pullback_retry_log.get(sig_id, 0)) > 20:
-                self.pullback_retry_log[sig_id] = now_t
-                print(f"{Colors.YELLOW}⏳ [PULLBACK RETEST STANDBY] Signal #{clean_sym} ditangguhkan seketika oleh Strict Pullback Guard. Amaterasu bersedia masuk sebaik harga membuat lantunan pullback selamat!{Colors.RESET}")
+            print(f"{Colors.YELLOW}⚠️ [ENTRY DITANGGUHKAN] Order #{clean_sym} tidak dibuka. Sila semak sambungan broker atau pasaran.{Colors.RESET}")
 
     def apply_breakeven_for_symbol(self, raw_symbol, sig_data=None):
         """Kunci Stop Loss ke Break-Even bagi semua posisi terbuka broker bagi simbol ini"""
@@ -1125,9 +1087,6 @@ class AmaterasuBridge:
                             event = 'CLOSED'
                             if '[sl' in comment.lower() or d.profit < 0:
                                 event = 'SL'
-                                if d.profit < -5.0: # Hanya rekod jika rugi sebenar (bukan BE sifar)
-                                    self.last_sl_timestamps[raw_sym] = time.time()
-                                    print(f"{Colors.RED}🛑 [SL DIKESAN] #{raw_sym} terkena SL (-${abs(d.profit):.2f}). Mengaktifkan Post-SL Liquidity Sweep Guard!{Colors.RESET}")
                             elif '[tp' in comment.lower() or d.profit > 0:
                                 event = 'TP1' if 'tp1' in comment.lower() else 'TP2'
                             
