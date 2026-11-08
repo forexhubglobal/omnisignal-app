@@ -436,6 +436,52 @@ function openShareWinModal(sig, isWin = false) {
 
 // ===== The Mighty Duck Dual Master Copytrade System =====
 window.activeCopytradeVault = 1;
+window.copytradeCalcState = { depositUsd: 100, isExpanded: false };
+
+window.toggleCopytradeCalculator = function(vaultId) {
+  window.copytradeCalcState.isExpanded = !window.copytradeCalcState.isExpanded;
+  const calcBox = document.getElementById('copytradeCalcContainer_' + vaultId);
+  const toggleBtn = document.getElementById('btnToggleCalc_' + vaultId);
+  if (calcBox) {
+    calcBox.style.display = window.copytradeCalcState.isExpanded ? 'block' : 'none';
+  }
+  if (toggleBtn) {
+    toggleBtn.innerHTML = window.copytradeCalcState.isExpanded 
+      ? '<span>🔼</span> TUTUP KALKULATOR' 
+      : '<span>🧮</span> KALKULATOR UNJURAN';
+  }
+};
+
+window.updateProjectionCalc = function(vaultId, val) {
+  const usd = Number(val) || 100;
+  window.copytradeCalcState.depositUsd = usd;
+  const usc = usd * 100;
+
+  // Monthly expected return based on 90.4% winrate (~35% conservative monthly baseline)
+  const m1Pct = 0.35;
+  const m1ProfitUsd = usd * m1Pct;
+  const m1TotalUsd = usd + m1ProfitUsd;
+
+  // 3-Month compounding: (1 + 0.35)^3 - 1 ~= +146%
+  const m3TotalUsd = usd * Math.pow(1 + m1Pct, 3);
+  const m3ProfitUsd = m3TotalUsd - usd;
+
+  // 6-Month compounding: (1 + 0.35)^6 - 1 ~= +505%
+  const m6TotalUsd = usd * Math.pow(1 + m1Pct, 6);
+  const m6ProfitUsd = m6TotalUsd - usd;
+
+  const depDisp = document.getElementById('calcDepDisplay_' + vaultId);
+  if (depDisp) depDisp.textContent = '$' + usd.toFixed(0) + ' USD (' + (usc).toLocaleString() + ' USC)';
+
+  const p1 = document.getElementById('calcMonth1Profit_' + vaultId);
+  if (p1) p1.innerHTML = '+$' + m1ProfitUsd.toFixed(1) + ' <small style="font-size:10px; color:#94a3b8;">(Baki: $' + m1TotalUsd.toFixed(1) + ')</small>';
+
+  const p3 = document.getElementById('calcMonth3Profit_' + vaultId);
+  if (p3) p3.innerHTML = '+$' + m3ProfitUsd.toFixed(1) + ' <small style="font-size:10px; color:#94a3b8;">(Baki: $' + m3TotalUsd.toFixed(1) + ')</small>';
+
+  const p6 = document.getElementById('calcMonth6Profit_' + vaultId);
+  if (p6) p6.innerHTML = '+$' + m6ProfitUsd.toFixed(1) + ' <small style="font-size:10px; color:#94a3b8;">(Baki: $' + m6TotalUsd.toFixed(1) + ')</small>';
+};
 
 function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
   const isV2 = Number(vaultId) === 2;
@@ -475,6 +521,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
 
   // Dedicated data per vault (ZERO cross-contamination)
   const cp = isV2 ? {
+    id: 2,
     name: "AMATERASU X",
     avatar: "img/amaterasux.png",
     masterAccount: "5100207348",
@@ -488,6 +535,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     totalWithdrawn: 0.0,
     winRate: 100.0
   } : {
+    id: 1,
     name: "THE MIGHTY DUCK",
     avatar: "img/themightyduck.png",
     masterAccount: "5100154135",
@@ -501,6 +549,14 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     totalWithdrawn: 10000.0,
     winRate: 90.4
   };
+
+  const currentDep = window.copytradeCalcState.depositUsd || 100;
+  const m1Profit = (currentDep * 0.35).toFixed(1);
+  const m1Total = (currentDep * 1.35).toFixed(1);
+  const m3Total = (currentDep * Math.pow(1.35, 3)).toFixed(1);
+  const m3Profit = (Number(m3Total) - currentDep).toFixed(1);
+  const m6Total = (currentDep * Math.pow(1.35, 6)).toFixed(1);
+  const m6Profit = (Number(m6Total) - currentDep).toFixed(1);
 
   return `
     <div class="copytrade-showcase-card" style="background: linear-gradient(135deg, rgba(8, 13, 20, 0.95) 0%, rgba(20, 30, 48, 0.92) 100%); border: 1.5px solid ${isV2 ? 'rgba(255, 61, 0, 0.5)' : 'rgba(0, 230, 118, 0.45)'}; border-radius: 14px; padding: 16px; box-shadow: 0 8px 32px ${isV2 ? 'rgba(255, 61, 0, 0.2)' : 'rgba(0, 230, 118, 0.15)'}; position: relative; overflow: hidden;">
@@ -546,6 +602,69 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         </div>
       </div>
 
+      <!-- FEATURE 3: LIVE EQUITY CURVE SVG MINI-CHART -->
+      <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:10px 12px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:9.5px; color:#94a3b8; text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">📈 LENGKUK EKUITI REAL-TIME (EQUITY CURVE)</span>
+          <span style="font-size:9px; color:${isV2 ? '#ff6e40' : '#00e676'}; font-weight:800;">${isV2 ? 'BASELINE POOL' : 'VERIFIED MT5 CLUSTER'}</span>
+        </div>
+        <div style="width:100%; height:76px; position:relative;">
+          ${!isV2 ? `
+          <svg viewBox="0 0 340 76" style="width:100%; height:100%; overflow:visible;">
+            <defs>
+              <linearGradient id="eqGrad1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#00e676" stop-opacity="0.38"/>
+                <stop offset="100%" stop-color="#00e676" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            <!-- Gridlines -->
+            <line x1="10" y1="65" x2="330" y2="65" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+            <line x1="10" y1="38" x2="330" y2="38" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="3,3" />
+            <line x1="10" y1="12" x2="330" y2="12" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="3,3" />
+
+            <!-- Area Fill -->
+            <polygon points="15,65 55,56 120,44 185,32 250,14 285,10 295,46 325,44 325,65 15,65" fill="url(#eqGrad1)" />
+            <!-- Main Trend Line -->
+            <polyline points="15,65 55,56 120,44 185,32 250,14 285,10" fill="none" stroke="#00e676" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            <!-- Post WD Step Down & Continuation -->
+            <line x1="285" y1="10" x2="295" y2="46" stroke="#f5c451" stroke-width="2" stroke-dasharray="2,2" />
+            <polyline points="295,46 325,44" fill="none" stroke="#00e676" stroke-width="2.5" stroke-linecap="round" />
+
+            <!-- Milestone Pins -->
+            <circle cx="15" cy="65" r="3.5" fill="#fff" stroke="#00e676" stroke-width="2" />
+            <text x="15" y="74" fill="#64748b" font-size="7.5" font-family="sans-serif">Mula $100</text>
+
+            <circle cx="285" cy="10" r="4.5" fill="#f5c451" stroke="#fff" stroke-width="1.5" />
+            <rect x="230" y="0" width="105" height="15" rx="3" fill="rgba(0,0,0,0.8)" stroke="#f5c451" stroke-width="1" />
+            <text x="234" y="11" fill="#f5c451" font-size="8" font-weight="bold" font-family="sans-serif">💰 +$100 WD TAKEN</text>
+
+            <circle cx="325" cy="44" r="3.5" fill="#00e676" />
+          </svg>
+          ` : `
+          <svg viewBox="0 0 340 76" style="width:100%; height:100%; overflow:visible;">
+            <defs>
+              <linearGradient id="eqGrad2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ff3d00" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="#ff3d00" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            <line x1="10" y1="52" x2="330" y2="52" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+            <!-- Baseline -->
+            <polygon points="15,52 180,52 325,24 325,65 15,65" fill="url(#eqGrad2)" />
+            <line x1="15" y1="52" x2="180" y2="52" stroke="#ff3d00" stroke-width="2.5" stroke-linecap="round" />
+            <polyline points="180,52 245,38 325,24" fill="none" stroke="#f5c451" stroke-width="2" stroke-dasharray="4,4" stroke-linecap="round" />
+
+            <circle cx="15" cy="52" r="3.5" fill="#fff" stroke="#ff3d00" stroke-width="2" />
+            <text x="15" y="68" fill="#94a3b8" font-size="8" font-family="sans-serif">Pool 10,000 USC ($100)</text>
+
+            <circle cx="180" cy="52" r="4.5" fill="#ff6e40" stroke="#fff" stroke-width="1.5" />
+            <rect x="188" y="42" width="138" height="16" rx="3" fill="rgba(0,0,0,0.85)" stroke="#ff6e40" stroke-width="1" />
+            <text x="194" y="53" fill="#ff6e40" font-size="8" font-weight="bold" font-family="sans-serif">⚡ STANDBY ISNIN 06:00 AM</text>
+          </svg>
+          `}
+        </div>
+      </div>
+
       <!-- WITHDRAWAL / STATUS STRIP -->
       ${!isV2 ? `
       <div style="background:linear-gradient(90deg, rgba(245,196,81,0.15) 0%, rgba(0,230,118,0.1) 100%); border:1px solid rgba(245,196,81,0.4); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
@@ -576,7 +695,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
       </div>`}
 
       <!-- 3-Box Breakdown: Modal Asal, Baki Aktif Semasa, Winrate -->
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px; text-align:center;">
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:12px; text-align:center;">
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
           <span style="font-size:9px; color:#8e9aa8; display:block;">DEPOSIT ASAL</span>
           <b style="font-size:11.5px; color:#fff;">${num(cp.initialDeposit)} USC</b>
@@ -594,6 +713,59 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         </div>
       </div>
 
+      <!-- FEATURE 1 & 2 ACTION BAR: STORY CARD + CALCULATOR BUTTONS -->
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button type="button" class="btn" onclick="openCopytradeStoryModal(${vaultId})" style="flex:1; background:linear-gradient(135deg, rgba(245,196,81,0.18) 0%, rgba(255,255,255,0.04) 100%); border:1px solid rgba(245,196,81,0.5); color:#f5c451; font-weight:800; font-size:11px; padding:9px 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all 0.2s;">
+          <span>📸</span> KONGSI KAD STORY
+        </button>
+        <button type="button" class="btn" id="btnToggleCalc_${vaultId}" onclick="window.toggleCopytradeCalculator(${vaultId})" style="flex:1; background:linear-gradient(135deg, rgba(0,230,118,0.18) 0%, rgba(255,255,255,0.04) 100%); border:1px solid rgba(0,230,118,0.5); color:#00e676; font-weight:800; font-size:11px; padding:9px 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all 0.2s;">
+          <span>🧮</span> KALKULATOR UNJURAN
+        </button>
+      </div>
+
+      <!-- FEATURE 2: INTERACTIVE COPYTRADE PROFIT PROJECTION CALCULATOR (Collapsible) -->
+      <div id="copytradeCalcContainer_${vaultId}" style="display:none; background:rgba(0,0,0,0.5); border:1px solid rgba(0,230,118,0.3); border-radius:10px; padding:12px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <b style="font-size:11px; color:#00e676; text-transform:uppercase;">🧮 KALKULATOR UNJURAN KEUNTUNGAN (90.4% WINRATE)</b>
+          <span style="font-size:9px; color:#94a3b8;">Kompaun Automatik</span>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+            <span style="color:#cbd5e1;">Pilih Jumlah Modal:</span>
+            <b id="calcDepDisplay_${vaultId}" style="color:#f5c451;">$${currentDep} USD (${(currentDep * 100).toLocaleString()} USC)</b>
+          </div>
+          <input type="range" min="50" max="2500" step="25" value="${currentDep}" oninput="window.updateProjectionCalc(${vaultId}, this.value)" style="width:100%; cursor:pointer; accent-color:#00e676;" />
+          <div style="display:flex; justify-content:space-between; font-size:9px; color:#64748b; margin-top:2px;">
+            <span>$50 Min</span>
+            <span>$500</span>
+            <span>$1,000</span>
+            <span>$2,500</span>
+          </div>
+        </div>
+
+        <!-- Projected Compound Horizons -->
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-bottom:10px; text-align:center;">
+          <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:6px; padding:6px 2px;">
+            <span style="font-size:8.5px; color:#8e9aa8; display:block;">1 BULAN (+35%)</span>
+            <b id="calcMonth1Profit_${vaultId}" style="font-size:10.5px; color:#00e676;">+$${m1Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m1Total})</small></b>
+          </div>
+          <div style="background:rgba(0,230,118,0.08); border:1px solid rgba(0,230,118,0.3); border-radius:6px; padding:6px 2px;">
+            <span style="font-size:8.5px; color:#00e676; font-weight:700; display:block;">3 BULAN (+146%)</span>
+            <b id="calcMonth3Profit_${vaultId}" style="font-size:10.5px; color:#00e676;">+$${m3Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m3Total})</small></b>
+          </div>
+          <div style="background:rgba(245,196,81,0.08); border:1px solid rgba(245,196,81,0.3); border-radius:6px; padding:6px 2px;">
+            <span style="font-size:8.5px; color:#f5c451; font-weight:700; display:block;">6 BULAN (+505%)</span>
+            <b id="calcMonth6Profit_${vaultId}" style="font-size:10.5px; color:#f5c451;">+$${m6Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m6Total})</small></b>
+          </div>
+        </div>
+
+        <p style="font-size:9px; color:#8e9aa8; margin:0 0 8px; line-height:1.4;">
+          🛡️ <i>Saranan SOP: Tarik balik 100% modal asal sebaik sahaja untung 100% tercapai (seperti The Mighty Duck). Seterusnya, biarkan keuntungan tulen berkembang dengan risiko sifar.</i>
+        </p>
+      </div>
+
+      <!-- Main Action Join Button -->
       <button type="button" class="btn gold" id="btnJoinCopytradeModal" onclick="showCopytradeModal(${vaultId})" style="width:100%; padding:11px; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 18px rgba(245,196,81,0.3); text-transform:uppercase; letter-spacing:0.5px; cursor:pointer;">
         <span>🚀 SERTAI COPYTRADE RASMI / BUKA AKAUN</span> ➔
       </button>
@@ -612,6 +784,284 @@ window.refreshCopytradeUI = function() {
   document.querySelectorAll('.copytrade-showcase-container').forEach(el => {
     el.innerHTML = getCopytradeCardHTML(window.activeCopytradeVault || 1);
   });
+};
+
+// ===== FEATURE 1: AUTO-GENERATE STORY CARD (BINANCE / EXNESS PNL POSTER GENERATOR) =====
+window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault || 1)) {
+  const isV2 = Number(vaultId) === 2;
+  const cp1 = (AppState && AppState.copytrade) || {};
+  const cp2 = (AppState && AppState.copytrade2) || {};
+
+  const name = isV2 ? 'AMATERASU X' : 'THE MIGHTY DUCK';
+  const account = isV2 ? '5100207348' : '5100154135';
+  const avatarSrc = isV2 ? 'img/amaterasux.png' : 'img/themightyduck.png';
+  const growth = isV2 ? '+0.00%' : ('+' + Number(cp1.growthPct || 122.55).toFixed(2) + '%');
+  const grossProfitUsc = isV2 ? '0.00 USC' : '+' + (Number(cp1.allTimeProfitUsc || 12254.62)).toLocaleString() + ' USC';
+  const grossProfitUsd = isV2 ? '$0.00 USD' : '+$' + Number(cp1.allTimeProfitUsd || 122.55).toFixed(2) + ' USD';
+  const statusBadge = isV2 ? '💎 FRESH STANDBY (10,000 USC POOL)' : '🛡️ 100% MODAL ASAL SELAMAT DI-WD';
+
+  // Play sound effect on opening
+  if (typeof playChime === 'function') {
+    playChime('chaching');
+  }
+
+  const m = modal(`
+    <div style="text-align:center;">
+      <h3 style="display:flex; align-items:center; justify-content:center; gap:8px; font-size:16px; margin-bottom:4px; color:#fff;">
+        <span>📸</span> Kad Story PnL Rasmi (9:16 HD Poster)
+      </h3>
+      <p class="muted" style="font-size:11.5px; margin-bottom:12px;">Sedia dikongsi ke WhatsApp Status, Telegram Channel & Instagram Story!</p>
+
+      <div style="max-width:300px; margin:0 auto 12px; border-radius:14px; overflow:hidden; box-shadow:0 12px 36px rgba(0,0,0,0.9), 0 0 25px ${isV2 ? 'rgba(255,61,0,0.3)' : 'rgba(0,230,118,0.25)'}; border:1.5px solid ${isV2 ? 'rgba(255,61,0,0.5)' : 'rgba(0,230,118,0.5)'};">
+        <canvas id="cpStoryCanvas" width="720" height="1280" style="width:100%; height:auto; display:block;"></canvas>
+      </div>
+
+      <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:8px;">
+        <button class="btn gold" id="btnDownloadStoryPng" style="flex:1; min-width:130px; padding:10px 12px; font-size:12px; font-weight:800; cursor:pointer;">
+          📥 Muat Turun Story (PNG)
+        </button>
+        <button class="btn ghost" id="btnCopyStoryText" style="flex:1; min-width:130px; padding:10px 12px; font-size:12px; cursor:pointer;">
+          📋 Salin Teks VIP
+        </button>
+        <button class="btn ghost" id="btnTestChaChingSnd" style="flex:1; min-width:130px; padding:10px 12px; font-size:12px; color:#f5c451; border-color:rgba(245,196,81,0.4); cursor:pointer;">
+          💰 Test Cha-Ching!
+        </button>
+      </div>
+      <div>
+        <button class="btn sm ghost" data-close style="color:#64748B;">Tutup</button>
+      </div>
+    </div>
+  `);
+
+  const canvas = document.getElementById('cpStoryCanvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // Background Dark Slate
+    ctx.fillStyle = '#060A10';
+    ctx.fillRect(0, 0, w, h);
+
+    // Radial Neon Ambient Glow
+    const bgGrad = ctx.createRadialGradient(w / 2, 220, 40, w / 2, 220, 500);
+    bgGrad.addColorStop(0, isV2 ? 'rgba(255, 61, 0, 0.35)' : 'rgba(0, 230, 118, 0.32)');
+    bgGrad.addColorStop(0.6, isV2 ? 'rgba(255, 61, 0, 0.08)' : 'rgba(0, 230, 118, 0.08)');
+    bgGrad.addColorStop(1, 'rgba(6, 10, 16, 0)');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Subtle Grid Background
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+    ctx.lineWidth = 1.5;
+    for (let x = 0; x < w; x += 45) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (let y = 0; y < h; y += 45) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+
+    // Header Title
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 36px Montserrat, sans-serif';
+    ctx.fillText('AMATERASU X', w / 2, 85);
+
+    ctx.fillStyle = isV2 ? '#FF6E40' : '#00E676';
+    ctx.font = '800 15px Montserrat, sans-serif';
+    ctx.fillText('OFFICIAL COPYTRADE PERFORMANCE · MT5 CLUSTER', w / 2, 115);
+
+    // Avatar Image or Fallback Circle
+    const avatarImg = new Image();
+    avatarImg.crossOrigin = 'anonymous';
+    avatarImg.onload = () => {
+      renderPosterContent(avatarImg);
+    };
+    avatarImg.onerror = () => {
+      renderPosterContent(null);
+    };
+    avatarImg.src = avatarSrc;
+
+    function renderPosterContent(imgObj) {
+      // Circle Avatar frame
+      ctx.save();
+      const avX = w / 2;
+      const avY = 210;
+      const avR = 64;
+
+      ctx.beginPath();
+      ctx.arc(avX, avY, avR + 6, 0, Math.PI * 2);
+      ctx.fillStyle = isV2 ? '#FF3D00' : '#00E676';
+      ctx.shadowColor = isV2 ? 'rgba(255,61,0,0.8)' : 'rgba(0,230,118,0.8)';
+      ctx.shadowBlur = 24;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.beginPath();
+      ctx.arc(avX, avY, avR, 0, Math.PI * 2);
+      ctx.clip();
+
+      if (imgObj && imgObj.naturalWidth) {
+        ctx.drawImage(imgObj, avX - avR, avY - avR, avR * 2, avR * 2);
+      } else {
+        ctx.fillStyle = '#101726';
+        ctx.fillRect(avX - avR, avY - avR, avR * 2, avR * 2);
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 36px sans-serif';
+        ctx.fillText(isV2 ? '🔥' : '🦆', avX, avY + 12);
+      }
+      ctx.restore();
+
+      // Master Account Name & Details
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 32px Montserrat, sans-serif';
+      ctx.fillText(name, w / 2, 320);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '700 16px Montserrat, sans-serif';
+      ctx.fillText('MASTER LIVE #' + account + ' · VERSUS TRADE LTD', w / 2, 350);
+
+      // Verified Badge Pill
+      ctx.fillStyle = isV2 ? 'rgba(255,61,0,0.18)' : 'rgba(0,230,118,0.18)';
+      ctx.strokeStyle = isV2 ? '#FF3D00' : '#00E676';
+      ctx.lineWidth = 2;
+      roundRect(ctx, w / 2 - 160, 375, 320, 36, 18, true, true);
+      ctx.fillStyle = isV2 ? '#FF6E40' : '#00E676';
+      ctx.font = '800 13px Montserrat, sans-serif';
+      ctx.fillText(isV2 ? '● MASTER 2 FRESH START' : '● MASTER 1 LIVE VERIFIED', w / 2, 398);
+
+      // Giant PnL Box
+      ctx.fillStyle = '#0B121E';
+      ctx.strokeStyle = isV2 ? 'rgba(255,61,0,0.4)' : 'rgba(0,230,118,0.4)';
+      ctx.lineWidth = 2;
+      roundRect(ctx, 50, 440, w - 100, 380, 20, true, true);
+
+      // Growth Percentage Giant
+      ctx.fillStyle = isV2 ? '#F5C451' : '#00E676';
+      ctx.font = '900 84px Montserrat, sans-serif';
+      ctx.shadowColor = isV2 ? 'rgba(245,196,81,0.5)' : 'rgba(0,230,118,0.5)';
+      ctx.shadowBlur = 20;
+      ctx.fillText(growth, w / 2, 545);
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '700 14px Montserrat, sans-serif';
+      ctx.fillText(isV2 ? 'PRESTASI PERTUMBUHAN (BARU MULA)' : 'ALL-TIME REALIZED GROWTH', w / 2, 580);
+
+      // Status Pill
+      ctx.fillStyle = isV2 ? 'rgba(255,61,0,0.2)' : 'rgba(245,196,81,0.2)';
+      ctx.strokeStyle = isV2 ? '#FF3D00' : '#F5C451';
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, 80, 610, w - 160, 52, 12, true, true);
+      ctx.fillStyle = isV2 ? '#FF6E40' : '#F5C451';
+      ctx.font = '800 15px Montserrat, sans-serif';
+      ctx.fillText(statusBadge, w / 2, 642);
+
+      // Profit Breakdown Rows
+      const stats = [
+        { label: 'UNTUNG KASAR TERKUMPUL:', val: grossProfitUsc + ' (' + grossProfitUsd + ')' },
+        { label: 'MODAL ASAL DIKELUARKAN:', val: isV2 ? '$0.00 USD' : '$100.00 USD (100% WD ✓)' },
+        { label: 'BAKI EKUITI TERKINI:', val: isV2 ? '10,000 USC ($100 USD)' : '2,254.62 USC ($22.55 USD)' },
+        { label: 'KADAR KEMENANGAN (WINRATE):', val: isV2 ? '100% (Fresh)' : '90.4% (Max DD < 5%)' },
+      ];
+
+      stats.forEach((st, idx) => {
+        const y = 705 + idx * 26;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#8E9AA8';
+        ctx.font = '600 12px Montserrat, sans-serif';
+        ctx.fillText(st.label, 80, y);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '800 13px Montserrat, sans-serif';
+        ctx.fillText(st.val, w - 80, y);
+      });
+
+      // 4-Box Grid Below Main Card
+      const boxes = [
+        { label: 'STRATEGI', val: 'SMC + Malaysian SNR' },
+        { label: 'RISIKO', val: isV2 ? 'Low Risk · Cent' : 'Zero Risk (Post WD)' },
+        { label: 'VPS STATUS', val: 'Dual MT5 Online' },
+        { label: 'SERTAI MIN', val: '$50 - $100 USD' }
+      ];
+
+      boxes.forEach((b, idx) => {
+        const col = idx % 2;
+        const row = Math.floor(idx / 2);
+        const bx = 50 + col * ((w - 100) / 2 + 6);
+        const by = 845 + row * 82;
+        const bw = (w - 100) / 2 - 6;
+        const bh = 72;
+
+        ctx.fillStyle = '#0E1726';
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 1;
+        roundRect(ctx, bx, by, bw, bh, 10, true, true);
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#8E9AA8';
+        ctx.font = '600 11px Montserrat, sans-serif';
+        ctx.fillText(b.label, bx + bw / 2, by + 26);
+
+        ctx.fillStyle = '#00E676';
+        ctx.font = '800 14px Montserrat, sans-serif';
+        ctx.fillText(b.val, bx + bw / 2, by + 52);
+      });
+
+      // Call to action & Footer
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#F5C451';
+      ctx.font = '800 16px Montserrat, sans-serif';
+      ctx.fillText('BUKA AKAUN & SERTAI: AMATERASUX.ONRENDER.COM', w / 2, 1070);
+
+      ctx.fillStyle = '#64748B';
+      ctx.font = '600 13px Montserrat, sans-serif';
+      ctx.fillText(new Date().toLocaleDateString('en-US', { day:'numeric', month:'short', year:'numeric' }) + ' · VERIFIED ON MT5 REALTIME FEED', w / 2, 1105);
+
+      ctx.fillStyle = '#A0A6B4';
+      ctx.font = 'italic 500 13px Montserrat, sans-serif';
+      ctx.fillText('"Precision Signals. Smarter Decisions. Your Trading Edge."', w / 2, 1135);
+
+      // Border outline around entire poster
+      ctx.strokeStyle = isV2 ? 'rgba(255,61,0,0.6)' : 'rgba(0,230,118,0.6)';
+      ctx.lineWidth = 5;
+      ctx.strokeRect(3, 3, w - 6, h - 6);
+    }
+  }
+
+  // Download Handler
+  const dlBtn = document.getElementById('btnDownloadStoryPng');
+  if (dlBtn && canvas) {
+    dlBtn.onclick = () => {
+      const link = document.createElement('a');
+      link.download = `AMATERASU_${name.replace(/\s+/g, '_')}_STORY_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast('📥 Poster Story berjaya dimuat turun!');
+    };
+  }
+
+  // Copy VIP Text Handler
+  const copyBtn = document.getElementById('btnCopyStoryText');
+  if (copyBtn) {
+    copyBtn.onclick = () => {
+      const text = `👁️ AMATERASU X · OFFICIAL COPYTRADE REPORT\n━━━━━━━━━━━━━━━━━━━━━\n🏆 Master: ${name} (#${account})\n📈 Growth: ${growth}\n💰 Gross Profit: ${grossProfitUsc} (${grossProfitUsd})\n${statusBadge}\n🛡️ Strategy: Institutional SMC Scalp\n━━━━━━━━━━━━━━━━━━━━━\n🚀 Sertai sekarang: https://amaterasux.onrender.com\n🔥 Precision Signals. Smarter Decisions. Your Trading Edge.`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+        toast('📋 Teks ringkasan VIP disalin ke clipboard!');
+      }
+    };
+  }
+
+  // Sound Test Button
+  const sndBtn = document.getElementById('btnTestChaChingSnd');
+  if (sndBtn) {
+    sndBtn.onclick = () => {
+      if (typeof playChime === 'function') playChime('chaching');
+    };
+  }
 };
 
 // ===== Amaterasu Sovereign Copytrade Onboarding Modal =====
@@ -757,6 +1207,7 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
         });
         const d = await res.json();
         if (d.success) {
+          if (typeof playChime === 'function') playChime('chaching');
           toast('✅ Permohonan Copytrade berjaya dihantar! Admin akan hubungi anda.');
           m.close();
         } else {

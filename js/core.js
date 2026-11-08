@@ -237,33 +237,65 @@ const AmaterasuSound = {
     } catch(e) {}
   },
 
-  // 3. Crisp Alert Chime
-  alert() {
+  // 4. Institutional Cha-Ching! Profit Bell (TP Target Hit / Copytrade Cashflow)
+  chaChing() {
     const ctx = this.getContext();
     if (!ctx) return;
     try {
       const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(659.25, now);
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+      // Part 1: Mechanical Cash Register Drawer Clink-Clink
+      [0, 0.045].forEach((offset, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
 
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(i === 0 ? 1150 : 1650, now + offset);
 
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(i === 0 ? 1200 : 1800, now + offset);
+        filter.Q.value = 8;
 
-      osc.start(now);
-      osc.stop(now + 0.38);
+        gain.gain.setValueAtTime(0.01, now + offset);
+        gain.gain.linearRampToValueAtTime(0.25, now + offset + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.05);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.06);
+      });
+
+      // Part 2: High Harmonic Brass Bell Ring ("Dingggg!")
+      const bellStartTime = now + 0.09;
+      const bellFreqs = [1760, 2093, 2637, 3520]; // A6, C7, E7, A7 Major Shimmer
+      bellFreqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, bellStartTime);
+
+        const initialVol = idx === 0 ? 0.22 : (0.16 / (idx + 1));
+        gain.gain.setValueAtTime(0.01, bellStartTime);
+        gain.gain.linearRampToValueAtTime(initialVol, bellStartTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0005, bellStartTime + 1.25);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(bellStartTime);
+        osc.stop(bellStartTime + 1.3);
+      });
     } catch(e) {}
   }
 };
 
 function playChime(type = 'bell') {
-  if (type === 'tp' || type === 'win') AmaterasuSound.tpWin();
+  if (type === 'tp' || type === 'win' || type === 'chaching' || type === 'profit') AmaterasuSound.chaChing();
   else if (type === 'sharingan' || type === 'signal') AmaterasuSound.sharingan();
   else AmaterasuSound.alert();
 }

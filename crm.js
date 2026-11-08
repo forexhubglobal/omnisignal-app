@@ -855,6 +855,32 @@ if ($('#telegramConfigForm')) {
   };
 }
 
+
+if ($('#btnBroadcastCopytradeTg')) {
+  $('#btnBroadcastCopytradeTg').onclick = async () => {
+    const vaultId = $('#tgCopytradeVaultSelect')?.value || '1';
+    const vaultName = vaultId === '2' ? 'Amaterasu X' : 'The Mighty Duck';
+    if (!confirm(`Adakah anda pasti mahu menyiarkan prestasi akaun ${vaultName} ke Telegram VIP sekarang?`)) return;
+
+    toast('Menyiarkan prestasi Copytrade ke Telegram VIP...');
+    try {
+      const res = await fetch('/api/telegram/broadcast-copytrade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vaultId })
+      });
+      const d = await res.json();
+      if (d.success) {
+        alert(`✅ BERJAYA! Prestasi ${vaultName} telah disiarkan ke Telegram VIP!`);
+      } else {
+        alert('❌ Ralat penyiaran: ' + (d.details?.error || d.error || 'Semak sambungan Telegram'));
+      }
+    } catch (err) {
+      alert('Ralat sambungan: ' + err.message);
+    }
+  };
+}
+
 if ($('#btnTestTgPing')) {
   $('#btnTestTgPing').onclick = async () => {
     const payload = {

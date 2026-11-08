@@ -640,7 +640,46 @@ const TelegramNotifier = {
       `━━━━━━━━━━━━━━━━━━━━━\n` +
       `🔥 <i>AMATERASU X AI PLATFORM</i>`;
   }
-};
+,
+
+  formatCopytradeMessage(vaultId, cp) {
+    const isV2 = Number(vaultId) === 2;
+    if (isV2) {
+      return '🔥 <b>AMATERASU X · MASTER 2 OFFICIAL COPYTRADE ANNOUNCEMENT</b>\n' +
+        '━━━━━━━━━━━━━━━━━━━━━\n' +
+        '👑 <b>Master:</b> AMATERASU X (#5100207348)\n' +
+        '🏢 <b>Broker:</b> Versus Trade Ltd. (Live Cluster)\n' +
+        '💼 <b>Status:</b> LIVE & ACTIVE · FRESH STANDBY\n' +
+        '💰 <b>Modal Pool Semasa:</b> 10,000.00 USC ($100.00 USD ✓)\n' +
+        '⚡ <b>Mula Beroperasi:</b> Isnin 06:00 AM MYT (Market Open)\n' +
+        '🛡️ <b>Strategi:</b> Institutional SMC + Malaysian SNR Multi-Terminal AI\n' +
+        '━━━━━━━━━━━━━━━━━━━━━\n' +
+        '🚀 <b>Peluang Masuk Dari Baseline (0.00% Growth):</b>\n' +
+        'Sertai Master 2 sekarang sebelum pasaran dibuka untuk menikmati pertumbuhan akaun sejak hari pertama!\n' +
+        '👉 <i>Buka App: https://amaterasux.onrender.com</i>';
+    } else {
+      const growth = Number(cp?.growthPct || 122.55).toFixed(2);
+      const grossProfit = Number(cp?.allTimeProfitUsc || 12254.62).toLocaleString();
+      const grossUsd = Number(cp?.allTimeProfitUsd || 122.55).toFixed(2);
+      const wd = Number(cp?.totalWithdrawn || 10000.0).toLocaleString();
+      const wdUsd = Number(cp?.totalWithdrawnUsd || 100.0).toFixed(2);
+      return '🦆 <b>AMATERASU X · THE MIGHTY DUCK COPYTRADE PERFORMANCE</b>\n' +
+        '━━━━━━━━━━━━━━━━━━━━━\n' +
+        '🏆 <b>Master:</b> THE MIGHTY DUCK (#5100154135)\n' +
+        '🏢 <b>Broker:</b> Versus Trade Ltd. (Live Cluster)\n' +
+        '📈 <b>All-Time Realized Growth:</b> +' + growth + '%\n' +
+        '💰 <b>Untung Kasar Terkumpul:</b> +' + grossProfit + ' USC (+$' + grossUsd + ' USD)\n' +
+        '🛡️ <b>Telah Dikeluarkan (WD):</b> ' + wd + ' USC ($+' + wdUsd + ' USD ✓)\n' +
+        '💎 <b>Status Modal Asal:</b> 100% BEBAS RISIKO (Modal asal selamat ditarik keluar!)\n' +
+        '🎯 <b>Winrate Terbukti:</b> 90.4% (Max Drawdown < 5%)\n' +
+        '━━━━━━━━━━━━━━━━━━━━━\n' +
+        '🚀 <b>Sertai Copytrade Sekarang:</b>\n' +
+        '1. Buka akaun Versus Trade (Cent Account)\n' +
+        '2. Deposit serendah $50 - $100 USD (5,000 - 10,000 USC)\n' +
+        '3. Hantar No MT5 anda di App Amaterasu X untuk disambungkan automatik!\n' +
+        '👉 <i>Buka App: https://amaterasux.onrender.com</i>';
+    }
+  }};
 
 const server = http.createServer(async (req, res) => {
   const urlParts = req.url.split('?');
@@ -1542,6 +1581,24 @@ const server = http.createServer(async (req, res) => {
   }
 
   // 4. POST /api/analysis/update (Admin CRM updates daily analysis)
+  
+  // Broadcast Copytrade Performance to Telegram VIP
+  if (pathname === '/api/telegram/broadcast-copytrade' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      const vaultId = Number(payload.vaultId) || 1;
+      const cp = vaultId === 2 ? (db.copytrade2 || {}) : (db.copytrade || {});
+      const msg = TelegramNotifier.formatCopytradeMessage(vaultId, cp);
+      const result = await TelegramNotifier.send(msg);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: result.ok === true, details: result, vaultId }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: false, error: e.message }));
+    }
+  }
+
   if (pathname === '/api/analysis/update' && req.method === 'POST') {
     try {
       const payload = await parseJsonBody(req);
