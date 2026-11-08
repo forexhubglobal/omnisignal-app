@@ -334,7 +334,7 @@ function init() {
     overlay.className = 'login-screen-overlay';
     overlay.innerHTML = `
       <div class="login-card">
-        <div class="login-hero-artwork" style="background-image: url('img/itachi_login.jpg');">
+        <div class="login-hero-artwork" id="secretMasterTrigger" style="background-image: url('img/itachi_login.jpg'); cursor:pointer; user-select:none;">
           <div class="login-hero-badges">
             <span class="kanji-badge">天照 AMATERASU</span>
             <span style="font-size:11px; font-weight:700; color:#EF2D3D; background:rgba(8,13,20,0.85); border:1px solid rgba(239,45,61,0.4); padding:3px 8px; border-radius:10px;">
@@ -352,7 +352,7 @@ function init() {
         </div>
 
         <div class="login-body">
-          <div style="display:flex; background:rgba(255,255,255,0.04); border-radius:10px; padding:3px; margin-bottom:14px; border:1px solid rgba(255,255,255,0.08);">
+          <div id="loginTabSwitcher" style="display:none; background:rgba(255,255,255,0.04); border-radius:10px; padding:3px; margin-bottom:14px; border:1px solid rgba(255,255,255,0.08);">
             <button type="button" id="tabModeTrader" style="flex:1; padding:8px; font-size:11.5px; font-weight:700; border-radius:8px; background:#EF2D3D; color:#FFF; border:none; cursor:pointer;">
               👤 Trader MT5
             </button>
@@ -484,10 +484,60 @@ function init() {
     };
 
     // Switch between Trader MT5 and Master Admin tab
+    const tabSwitcher = $('#loginTabSwitcher', overlay);
     const tabTrader = $('#tabModeTrader', overlay);
     const tabMaster = $('#tabModeMaster', overlay);
     const secTrader = $('#sectionTraderLogin', overlay);
     const secMaster = $('#sectionMasterLogin', overlay);
+
+    const unlockMasterAdmin = (silent = false) => {
+      if (tabSwitcher) tabSwitcher.style.display = 'flex';
+      if (tabMaster) {
+        tabMaster.style.background = '#EF2D3D';
+        tabMaster.style.color = '#FFF';
+      }
+      if (tabTrader) {
+        tabTrader.style.background = 'transparent';
+        tabTrader.style.color = '#A0A6B4';
+      }
+      if (secMaster) secMaster.style.display = 'block';
+      if (secTrader) secTrader.style.display = 'none';
+
+      localStorage.setItem('ama_master_unlocked', '1');
+      if (!silent) {
+        toast('👁️ Portal Master Admin Diaktifkan!');
+        if (typeof AmaterasuSound !== 'undefined') AmaterasuSound.sharingan();
+      }
+    };
+
+    // Auto-reveal for owner: if previously authenticated or accessed via URL (?master=1 / ?admin=1)
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isMasterQuery = urlParams.has('master') || urlParams.has('admin');
+      const isMasterStored = localStorage.getItem('ama_master_unlocked') === '1';
+
+      if (isMasterStored || isMasterQuery) {
+        if (tabSwitcher) tabSwitcher.style.display = 'flex';
+        if (isMasterQuery) unlockMasterAdmin(true);
+      }
+    } catch(e) {}
+
+    // Secret Owner Trigger: Ketik / Tap 3 kali pada logo atau artwork gambar di atas
+    let secretTapCount = 0;
+    let secretTapTimer = null;
+    const heroTrigger = $('#secretMasterTrigger', overlay);
+    if (heroTrigger) {
+      heroTrigger.onclick = () => {
+        secretTapCount++;
+        clearTimeout(secretTapTimer);
+        if (secretTapCount >= 3) {
+          secretTapCount = 0;
+          unlockMasterAdmin(false);
+        } else {
+          secretTapTimer = setTimeout(() => { secretTapCount = 0; }, 600);
+        }
+      };
+    }
 
     if (tabTrader && tabMaster) {
       tabTrader.onclick = () => {
@@ -562,6 +612,7 @@ function init() {
           toast('Kunci Keselamatan Master tidak sah!');
           return;
         }
+        localStorage.setItem('ama_master_unlocked', '1');
         doLogin(opName);
       };
     }
