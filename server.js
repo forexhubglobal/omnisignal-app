@@ -1063,7 +1063,8 @@ const server = http.createServer(async (req, res) => {
   // 0.1c GET /api/copytrade/info
   if (pathname === '/api/copytrade/info' && req.method === 'GET') {
     const db = getDB();
-    const list = db.copytrades || [db.copytrade, db.copytrade2].filter(Boolean);
+    const list = [db.copytrade, db.copytrade2].filter(Boolean);
+    db.copytrades = list;
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({
       copytrade: db.copytrade || {},
