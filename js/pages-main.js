@@ -492,9 +492,11 @@ window.updateProjectionCalc = function(vaultId, val) {
 };
 
 function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
-  const isV2 = Number(vaultId) === 2;
+  const vNum = Number(vaultId) || 1;
+  const isV1 = vNum === 1;
+  const isV2 = vNum === 2;
+  const isV3 = vNum === 3;
 
-  // STRICT SEPARATION: Master 1 (The Mighty Duck) vs Master 2 (Amaterasu X)
   const cp1 = (AppState && AppState.copytrade) || {
     id: "master-1",
     name: "The Mighty Duck",
@@ -543,62 +545,76 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     winRate: 100.0
   };
 
-  // Dedicated data per vault (ZERO cross-contamination)
-  const isV3 = Number(vaultId) === 3;
   let cp;
+  let themeColor = '#00e676';
+  let themeBorder = 'rgba(0, 230, 118, 0.45)';
+  let themeShadow = 'rgba(0, 230, 118, 0.15)';
+  let themeBadge = 'MASTER 1 (VERIFIED LIVE)';
+
   if (isV3) {
+    themeColor = '#f5c451';
+    themeBorder = 'rgba(245, 196, 81, 0.5)';
+    themeShadow = 'rgba(245, 196, 81, 0.2)';
+    themeBadge = 'MASTER 3 (STANDARD $1,000 USD)';
     cp = {
       id: 3,
       name: "AMATERASU SOVEREIGN",
       avatar: "img/amaterasux.png",
       masterAccount: "5100209626",
       growthPct: (cp3 && typeof cp3.growthPct === 'number') ? cp3.growthPct : 0.00,
-      netProfitUsc: (cp3 && typeof cp3.netProfitUsd === 'number') ? cp3.netProfitUsd * 100 : 0.00,
-      netProfitUsd: (cp3 && typeof cp3.netProfitUsd === 'number') ? cp3.netProfitUsd : 0.00,
-      allTimeProfitUsc: (cp3 && typeof cp3.allTimeProfitUsd === 'number') ? cp3.allTimeProfitUsd * 100 : 0.00,
-      allTimeProfitUsd: (cp3 && typeof cp3.allTimeProfitUsd === 'number') ? cp3.allTimeProfitUsd : 0.00,
-      initialDeposit: 1000.0,
-      currentEquity: (cp3 && typeof cp3.currentEquity === 'number') ? cp3.currentEquity : 1000.0,
-      totalWithdrawn: 0.0,
-      currency: "USD",
+      netProfitDisplay: '+$' + Number(cp3.netProfitUsd || 0).toFixed(2) + ' USD',
+      allTimeProfitDisplay: '+$' + Number(cp3.allTimeProfitUsd || 0).toFixed(2) + ' USD',
+      initialDepositDisplay: '$1,000.00 USD',
+      currentEquityDisplay: '$' + Number(cp3.currentEquity || 1000).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD',
+      equitySubtitle: 'Modal Standard Penuh',
+      isUsd: true,
       winRate: 100.0
     };
   } else if (isV2) {
+    themeColor = '#ff6e40';
+    themeBorder = 'rgba(255, 61, 0, 0.5)';
+    themeShadow = 'rgba(255, 61, 0, 0.2)';
+    themeBadge = 'MASTER 2 (BARU START)';
     cp = {
       id: 2,
       name: "AMATERASU X",
       avatar: "img/amaterasux.png",
       masterAccount: "5100207348",
       growthPct: (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 0.00,
-      netProfitUsc: (cp2 && typeof cp2.netProfitUsc === 'number') ? cp2.netProfitUsc : 0.00,
-      netProfitUsd: (cp2 && typeof cp2.netProfitUsd === 'number') ? cp2.netProfitUsd : 0.00,
-      allTimeProfitUsc: (cp2 && typeof cp2.allTimeProfitUsc === 'number') ? cp2.allTimeProfitUsc : 0.00,
-      allTimeProfitUsd: (cp2 && typeof cp2.allTimeProfitUsd === 'number') ? cp2.allTimeProfitUsd : 0.00,
-      initialDeposit: 10000.0,
-      currentEquity: (cp2 && typeof cp2.currentEquity === 'number') ? cp2.currentEquity : 10000.0,
-      totalWithdrawn: 0.0,
+      netProfitDisplay: '+' + num(cp2.netProfitUsc || 0) + ' USC',
+      allTimeProfitDisplay: '+' + num(cp2.allTimeProfitUsc || 0) + ' USC',
+      usdProfitSubtitle: '(+$' + Number(cp2.allTimeProfitUsd || 0).toFixed(2) + ' USD)',
+      initialDepositDisplay: num(cp2.initialDeposit || 10000) + ' USC ($100.00 USD)',
+      currentEquityDisplay: num(cp2.currentEquity || 10000) + ' USC',
+      equitySubtitle: '(+$' + (Number(cp2.currentEquity || 10000) / 100).toFixed(2) + ' USD Modal Penuh)',
+      isUsd: false,
       winRate: 100.0
     };
   } else {
+    themeColor = '#00e676';
+    themeBorder = 'rgba(0, 230, 118, 0.45)';
+    themeShadow = 'rgba(0, 230, 118, 0.15)';
+    themeBadge = 'MASTER 1 (VERIFIED LIVE)';
     cp = {
       id: 1,
       name: "THE MIGHTY DUCK",
       avatar: "img/themightyduck.png",
       masterAccount: "5100154135",
       growthPct: (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 122.55,
-      netProfitUsc: (cp1 && typeof cp1.netProfitUsc === 'number') ? cp1.netProfitUsc : 12254.62,
-      netProfitUsd: (cp1 && typeof cp1.netProfitUsd === 'number') ? cp1.netProfitUsd : 122.55,
-      allTimeProfitUsc: (cp1 && typeof cp1.allTimeProfitUsc === 'number') ? cp1.allTimeProfitUsc : 12254.62,
-      allTimeProfitUsd: (cp1 && typeof cp1.allTimeProfitUsd === 'number') ? cp1.allTimeProfitUsd : 122.55,
-      initialDeposit: 10000.0,
-      currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 12254.62,
-      totalWithdrawn: 10000.0,
+      netProfitDisplay: '+' + num(cp1.allTimeProfitUsc || 12254.62) + ' USC',
+      allTimeProfitDisplay: '+' + num(cp1.allTimeProfitUsc || 12254.62) + ' USC',
+      usdProfitSubtitle: '(+$' + Number(cp1.allTimeProfitUsd || 122.55).toFixed(2) + ' USD)',
+      initialDepositDisplay: num(cp1.initialDeposit || 10000) + ' USC ($100.00 USD)',
+      currentEquityDisplay: num(cp1.currentEquity || 12254.62) + ' USC',
+      equitySubtitle: '(+$' + (Number(cp1.currentEquity || 12254.62) / 100).toFixed(2) + ' USD Untung Sahaja)',
+      totalWithdrawnDisplay: num(cp1.totalWithdrawn || 10000) + ' USC ($+100.00 USD ✓)',
+      isUsd: false,
       winRate: 90.4
     };
   }
 
   const isCalcOpen = Boolean(window.copytradeCalcState && window.copytradeCalcState.isExpanded);
-  const currentDep = window.copytradeCalcState.depositUsd || 100;
+  const currentDep = window.copytradeCalcState.depositUsd || (isV3 ? 1000 : 100);
   const m1Profit = (currentDep * 0.35).toFixed(1);
   const m1Total = (currentDep * 1.35).toFixed(1);
   const m3Total = (currentDep * Math.pow(1.35, 3)).toFixed(1);
@@ -607,18 +623,18 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
   const m6Profit = (Number(m6Total) - currentDep).toFixed(1);
 
   return `
-    <div class="copytrade-showcase-card" style="background: linear-gradient(135deg, rgba(8, 13, 20, 0.95) 0%, rgba(20, 30, 48, 0.92) 100%); border: 1.5px solid ${isV2 ? 'rgba(255, 61, 0, 0.5)' : 'rgba(0, 230, 118, 0.45)'}; border-radius: 14px; padding: 16px; box-shadow: 0 8px 32px ${isV2 ? 'rgba(255, 61, 0, 0.2)' : 'rgba(0, 230, 118, 0.15)'}; position: relative; overflow: hidden;">
-      <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle, ${isV2 ? 'rgba(255,61,0,0.25)' : 'rgba(0,230,118,0.2)'} 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+    <div class="copytrade-showcase-card" style="background: linear-gradient(135deg, rgba(8, 13, 20, 0.95) 0%, rgba(20, 30, 48, 0.92) 100%); border: 1.5px solid ${themeBorder}; border-radius: 14px; padding: 16px; box-shadow: 0 8px 32px ${themeShadow}; position: relative; overflow: hidden;">
+      <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle, ${themeBorder} 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
       
       <!-- Vault Selector Tabs -->
       <div style="display:flex; gap:5px; margin-bottom:14px; background:rgba(0,0,0,0.5); padding:4px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); overflow-x:auto;">
-        <button type="button" class="btn-vault-tab ${Number(vaultId) === 1 ? 'active' : ''}" onclick="window.switchCopytradeVault(1)" style="flex:1; min-width:85px; padding:7px 4px; border-radius:7px; border:none; background:${Number(vaultId) === 1 ? 'rgba(0,230,118,0.22)' : 'transparent'}; border:${Number(vaultId) === 1 ? '1px solid #00e676' : '1px solid transparent'}; color:${Number(vaultId) === 1 ? '#00e676' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+        <button type="button" class="btn-vault-tab ${isV1 ? 'active' : ''}" onclick="window.switchCopytradeVault(1)" style="flex:1; min-width:85px; padding:7px 4px; border-radius:7px; border:none; background:${isV1 ? 'rgba(0,230,118,0.22)' : 'transparent'}; border:${isV1 ? '1px solid #00e676' : '1px solid transparent'}; color:${isV1 ? '#00e676' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
           <span>🦆</span> Master 1 (Cent)
         </button>
-        <button type="button" class="btn-vault-tab ${Number(vaultId) === 2 ? 'active' : ''}" onclick="window.switchCopytradeVault(2)" style="flex:1; min-width:85px; padding:7px 4px; border-radius:7px; border:none; background:${Number(vaultId) === 2 ? 'rgba(255,61,0,0.25)' : 'transparent'}; border:${Number(vaultId) === 2 ? '1px solid #ff3d00' : '1px solid transparent'}; color:${Number(vaultId) === 2 ? '#ff6e40' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+        <button type="button" class="btn-vault-tab ${isV2 ? 'active' : ''}" onclick="window.switchCopytradeVault(2)" style="flex:1; min-width:85px; padding:7px 4px; border-radius:7px; border:none; background:${isV2 ? 'rgba(255,61,0,0.25)' : 'transparent'}; border:${isV2 ? '1px solid #ff3d00' : '1px solid transparent'}; color:${isV2 ? '#ff6e40' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
           <span>🔥</span> Master 2 (Cent)
         </button>
-        <button type="button" class="btn-vault-tab ${Number(vaultId) === 3 ? 'active' : ''}" onclick="window.switchCopytradeVault(3)" style="flex:1; min-width:95px; padding:7px 4px; border-radius:7px; border:none; background:${Number(vaultId) === 3 ? 'rgba(245,196,81,0.25)' : 'transparent'}; border:${Number(vaultId) === 3 ? '1px solid #f5c451' : '1px solid transparent'}; color:${Number(vaultId) === 3 ? '#f5c451' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+        <button type="button" class="btn-vault-tab ${isV3 ? 'active' : ''}" onclick="window.switchCopytradeVault(3)" style="flex:1; min-width:95px; padding:7px 4px; border-radius:7px; border:none; background:${isV3 ? 'rgba(245,196,81,0.25)' : 'transparent'}; border:${isV3 ? '1px solid #f5c451' : '1px solid transparent'}; color:${isV3 ? '#f5c451' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
           <span>👑</span> Master 3 ($1K USD)
         </button>
       </div>
@@ -626,145 +642,94 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
       <!-- Card Header -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
         <div style="display:flex; align-items:center; gap:10px;">
-          <img src="${cp.avatar}" alt="${cp.name}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid ${isV2 ? '#ff3d00' : '#00e676'}; box-shadow:0 0 14px ${isV2 ? 'rgba(255,61,0,0.5)' : 'rgba(0,230,118,0.45)'};" />
+          <img src="${cp.avatar}" alt="${cp.name}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid ${themeColor}; box-shadow:0 0 14px ${themeShadow};" />
           <div>
             <b style="font-size:13.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">${cp.name}</b>
             <span style="font-size:10px; color:#94a3b8; display:block;">MASTER LIVE #${cp.masterAccount} · VERSUS TRADE LTD</span>
           </div>
         </div>
-        <span style="background:${isV2 ? 'rgba(255,61,0,0.15)' : 'rgba(0,230,118,0.15)'}; border:1px solid ${isV2 ? '#ff3d00' : '#00e676'}; color:${isV2 ? '#ff6e40' : '#00e676'}; font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:5px;">
-          <span style="width:6px; height:6px; background:${isV2 ? '#ff3d00' : '#00e676'}; border-radius:50%; display:inline-block; animation:pulseDot 1.2s infinite;"></span> ${isV2 ? 'MASTER 2 (BARU START)' : 'MASTER 1 (VERIFIED LIVE)'}
+        <span style="background:${themeShadow}; border:1px solid ${themeColor}; color:${themeColor}; font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:5px;">
+          <span style="width:6px; height:6px; background:${themeColor}; border-radius:50%; display:inline-block; animation:pulseDot 1.2s infinite;"></span> ${themeBadge}
         </span>
       </div>
 
       <!-- Growth & Realized Profit Box -->
       <div style="display:flex; justify-content:space-between; align-items:flex-end; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:12px 14px; margin-bottom:10px;">
         <div>
-          <span style="font-size:9.5px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.5px; display:block;">${isV2 ? 'PRESTASI PERTUMBUHAN (BARU MULA)' : 'ALL-TIME REALIZED GROWTH (SEBELUM TOLAK WD)'}</span>
+          <span style="font-size:9.5px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.5px; display:block;">${isV1 ? 'ALL-TIME REALIZED GROWTH (SEBELUM TOLAK WD)' : 'PRESTASI PERTUMBUHAN (BARU MULA)'}</span>
           <div style="display:flex; align-items:baseline; gap:6px; margin-top:2px;">
-            <span class="cp-growth-num" style="font-size:26px; font-weight:900; color:${isV2 ? '#f5c451' : '#00e676'}; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px ${isV2 ? 'rgba(245,196,81,0.4)' : 'rgba(0,230,118,0.4)'};">+${Number(cp.growthPct).toFixed(2)}%</span>
-            <span style="font-size:11px; color:${isV2 ? '#f5c451' : '#00e676'}; font-weight:700;">${isV2 ? 'READY ▲' : 'GROW ▲'}</span>
+            <span class="cp-growth-num" style="font-size:26px; font-weight:900; color:${themeColor}; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px ${themeShadow};">+${Number(cp.growthPct).toFixed(2)}%</span>
+            <span style="font-size:11px; color:${themeColor}; font-weight:700;">${!isV1 ? 'READY ▲' : 'GROW ▲'}</span>
           </div>
         </div>
         <div style="text-align:right;">
           <span style="font-size:9.5px; color:#8e9aa8; text-transform:uppercase; display:block;">UNTUNG KASAR TERKUMPUL</span>
-          <b class="cp-gross-usc" style="font-size:14px; font-weight:800; color:#f5c451;">+${num(cp.allTimeProfitUsc)} USC</b>
-          <span class="cp-gross-usd" style="font-size:10px; color:#94a3b8; display:block;">(+$+${Number(cp.allTimeProfitUsd).toFixed(2)} USD)</span>
+          <b class="cp-gross-usc" style="font-size:14px; font-weight:800; color:#f5c451;">${cp.allTimeProfitDisplay}</b>
+          <span class="cp-gross-usd" style="font-size:10px; color:#94a3b8; display:block;">${cp.usdProfitSubtitle || ''}</span>
         </div>
       </div>
 
-      <!-- FEATURE 3: LIVE EQUITY CURVE SVG MINI-CHART -->
-      <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:10px 12px; margin-bottom:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-          <span style="font-size:9.5px; color:#94a3b8; text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">📈 LENGKUK EKUITI REAL-TIME (EQUITY CURVE)</span>
-          <span style="font-size:9px; color:${isV2 ? '#ff6e40' : '#00e676'}; font-weight:800;">${isV2 ? 'BASELINE POOL' : 'VERIFIED MT5 CLUSTER'}</span>
-        </div>
-        <div style="width:100%; height:76px; position:relative;">
-          ${!isV2 ? `
-          <svg viewBox="0 0 340 76" style="width:100%; height:100%; overflow:visible;">
-            <defs>
-              <linearGradient id="eqGrad1" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#00e676" stop-opacity="0.38"/>
-                <stop offset="100%" stop-color="#00e676" stop-opacity="0.0"/>
-              </linearGradient>
-            </defs>
-            <!-- Gridlines -->
-            <line x1="10" y1="65" x2="330" y2="65" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
-            <line x1="10" y1="38" x2="330" y2="38" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="3,3" />
-            <line x1="10" y1="12" x2="330" y2="12" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="3,3" />
-
-            <!-- Area Fill -->
-            <polygon points="15,65 55,56 120,44 185,32 250,14 285,10 295,52 325,50 325,65 15,65" fill="url(#eqGrad1)" />
-            <!-- Main Trend Line -->
-            <polyline points="15,65 55,56 120,44 185,32 250,14 285,10" fill="none" stroke="#00e676" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-            <!-- Post WD Step Down & Continuation -->
-            <line x1="285" y1="10" x2="295" y2="52" stroke="#f5c451" stroke-width="2" stroke-dasharray="2,2" />
-            <polyline points="295,52 325,50" fill="none" stroke="#00e676" stroke-width="2.5" stroke-linecap="round" />
-
-            <!-- Milestone Pins -->
-            <circle cx="15" cy="65" r="3.5" fill="#fff" stroke="#00e676" stroke-width="2" />
-            <text x="15" y="74" fill="#64748b" font-size="7.5" font-family="sans-serif">Mula $100</text>
-
-            <circle cx="285" cy="10" r="4.5" fill="#f5c451" stroke="#fff" stroke-width="1.5" />
-            <rect x="230" y="0" width="105" height="15" rx="3" fill="rgba(0,0,0,0.8)" stroke="#f5c451" stroke-width="1" />
-            <text x="234" y="11" fill="#f5c451" font-size="8" font-weight="bold" font-family="sans-serif">💰 +$100 WD TAKEN</text>
-
-            <circle cx="325" cy="50" r="3.5" fill="#00e676" />
-          </svg>
-          ` : `
-          <svg viewBox="0 0 340 76" style="width:100%; height:100%; overflow:visible;">
-            <defs>
-              <linearGradient id="eqGrad2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#ff3d00" stop-opacity="0.35"/>
-                <stop offset="100%" stop-color="#ff3d00" stop-opacity="0.0"/>
-              </linearGradient>
-            </defs>
-            <line x1="10" y1="52" x2="330" y2="52" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
-            <!-- Baseline -->
-            <polygon points="15,52 180,52 325,24 325,65 15,65" fill="url(#eqGrad2)" />
-            <line x1="15" y1="52" x2="180" y2="52" stroke="#ff3d00" stroke-width="2.5" stroke-linecap="round" />
-            <polyline points="180,52 245,38 325,24" fill="none" stroke="#f5c451" stroke-width="2" stroke-dasharray="4,4" stroke-linecap="round" />
-
-            <circle cx="15" cy="52" r="3.5" fill="#fff" stroke="#ff3d00" stroke-width="2" />
-            <text x="15" y="68" fill="#94a3b8" font-size="8" font-family="sans-serif">Pool 10,000 USC ($100)</text>
-
-            <circle cx="180" cy="52" r="4.5" fill="#ff6e40" stroke="#fff" stroke-width="1.5" />
-            <rect x="188" y="42" width="138" height="16" rx="3" fill="rgba(0,0,0,0.85)" stroke="#ff6e40" stroke-width="1" />
-            <text x="194" y="53" fill="#ff6e40" font-size="8" font-weight="bold" font-family="sans-serif">⚡ STANDBY ISNIN 06:00 AM</text>
-          </svg>
-          `}
-        </div>
-      </div>
-
-      <!-- WITHDRAWAL / STATUS STRIP -->
-      ${!isV2 ? `
+      <!-- Status Strip -->
+      ${isV1 ? `
       <div style="background:linear-gradient(90deg, rgba(245,196,81,0.15) 0%, rgba(0,230,118,0.1) 100%); border:1px solid rgba(245,196,81,0.4); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <div style="display:flex; align-items:center; gap:8px;">
           <span style="font-size:17px;">💰</span>
           <div>
             <div style="display:flex; align-items:center; gap:6px;">
               <span style="font-size:10px; color:#f5c451; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">TELAH DIKELUARKAN (WITHDRAWAL):</span>
-              <b style="font-size:11px; color:#00e676; font-weight:800;">${num(cp.totalWithdrawn)} USC ($+${(cp.totalWithdrawn / 100).toFixed(2)} USD ✓)</b>
+              <b style="font-size:11px; color:#00e676; font-weight:800;">${cp.totalWithdrawnDisplay}</b>
             </div>
             <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ 100% modal asal selamat ditarik balik · Trading risiko sifar</span>
           </div>
         </div>
         <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">PROFIT TAKEN</span>
-      </div>` : `
+      </div>` : isV2 ? `
       <div style="background:linear-gradient(90deg, rgba(255,61,0,0.15) 0%, rgba(245,196,81,0.1) 100%); border:1px solid rgba(255,61,0,0.4); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <div style="display:flex; align-items:center; gap:8px;">
           <span style="font-size:17px;">💎</span>
           <div>
             <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:10px; color:#ff6e40; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">AKAUN KEDUA (FRESH POOL - BARU START):</span>
-              <b style="font-size:11px; color:#00e676; font-weight:800;">${num(cp.initialDeposit)} USC ($+${(cp.initialDeposit / 100).toFixed(2)} USD ✓)</b>
+              <span style="font-size:10px; color:#ff6e40; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">AKAUN KEDUA (FRESH CENT POOL):</span>
+              <b style="font-size:11px; color:#00e676; font-weight:800;">10,000 USC ($100.00 USD ✓)</b>
             </div>
             <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Multi-Terminal VPS Active · Siap sedia untuk trade market Isnin 06:00 AM</span>
           </div>
         </div>
         <span style="background:rgba(255,61,0,0.2); border:1px solid #ff3d00; color:#ff6e40; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">FRESH STANDBY</span>
+      </div>` : `
+      <div style="background:linear-gradient(90deg, rgba(245,196,81,0.18) 0%, rgba(0,230,118,0.1) 100%); border:1px solid rgba(245,196,81,0.5); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:17px;">👑</span>
+          <div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:10px; color:#f5c451; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">AKAUN KETIGA (STANDARD USD POOL):</span>
+              <b style="font-size:11px; color:#00e676; font-weight:800;">$1,000.00 USD ✓</b>
+            </div>
+            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Multi-Terminal VPS Active · Siap sedia untuk trade market Isnin 06:00 AM</span>
+          </div>
+        </div>
+        <span style="background:rgba(245,196,81,0.2); border:1px solid #f5c451; color:#f5c451; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">$1K STANDARD</span>
       </div>`}
 
       <!-- 3-Box Breakdown: Modal Asal, Baki Aktif Semasa, Winrate -->
       <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:12px; text-align:center;">
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
           <span style="font-size:9px; color:#8e9aa8; display:block;">DEPOSIT ASAL</span>
-          <b style="font-size:11.5px; color:#fff;">${num(cp.initialDeposit)} USC</b>
-          <span style="font-size:9px; color:#64748b; display:block;">($+${(cp.initialDeposit / 100).toFixed(2)} USD)</span>
+          <b style="font-size:11.5px; color:#fff;">${cp.initialDepositDisplay}</b>
         </div>
         <div style="background:rgba(0,230,118,0.06); border:1px solid rgba(0,230,118,0.25); border-radius:8px; padding:8px 4px;">
-          <span style="font-size:9px; color:#00e676; font-weight:700; display:block;">${!isV2 ? 'BAKI AKTIF (POST-WD)' : 'BAKI AKTIF TERKINI'}</span>
-          <b class="cp-active-equity-usc" style="font-size:11.5px; color:#00e676;">${num(cp.currentEquity)} USC</b>
-          <span class="cp-active-equity-usd" style="font-size:9px; color:#8e9aa8; display:block;">($+${(cp.currentEquity / 100).toFixed(2)} USD ${!isV2 ? 'Untung Sahaja' : 'Modal Penuh'})</span>
+          <span style="font-size:9px; color:#00e676; font-weight:700; display:block;">${isV1 ? 'BAKI AKTIF (POST-WD)' : 'BAKI AKTIF TERKINI'}</span>
+          <b class="cp-active-equity-usc" style="font-size:11.5px; color:#00e676;">${cp.currentEquityDisplay}</b>
+          <span class="cp-active-equity-usd" style="font-size:9px; color:#8e9aa8; display:block;">${cp.equitySubtitle}</span>
         </div>
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
           <span style="font-size:9px; color:#8e9aa8; display:block;">WINRATE & RISK</span>
           <b style="font-size:11.5px; color:#f5c451;">${cp.winRate}%</b>
-          <span style="font-size:9px; color:#00e676; display:block;">${isV2 ? 'Fresh Account' : 'Max DD < 5%'}</span>
+          <span style="font-size:9px; color:#00e676; display:block;">${isV3 ? 'Standard USD' : isV2 ? 'Fresh Account' : 'Max DD < 5%'}</span>
         </div>
       </div>
 
-      <!-- FEATURE 1 & 2 ACTION BAR: STORY CARD + CALCULATOR BUTTONS -->
+      <!-- Action Buttons -->
       <div style="display:flex; gap:8px; margin-bottom:12px;">
         <button type="button" class="btn" onclick="openCopytradeStoryModal(${vaultId})" style="flex:1; background:linear-gradient(135deg, rgba(245,196,81,0.18) 0%, rgba(255,255,255,0.04) 100%); border:1px solid rgba(245,196,81,0.5); color:#f5c451; font-weight:800; font-size:11px; padding:9px 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all 0.2s;">
           <span>📸</span> KONGSI KAD STORY
@@ -774,7 +739,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         </button>
       </div>
 
-      <!-- FEATURE 2: INTERACTIVE COPYTRADE PROFIT PROJECTION CALCULATOR (Collapsible) -->
+      <!-- Interactive Calculator -->
       <div class="copytrade-calc-box" id="copytradeCalcContainer_${vaultId}" style="display:${isCalcOpen ? 'block' : 'none'}; background:rgba(0,0,0,0.5); border:1px solid rgba(0,230,118,0.3); border-radius:10px; padding:12px; margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <b style="font-size:11px; color:#00e676; text-transform:uppercase;">🧮 KALKULATOR UNJURAN KEUNTUNGAN (90.4% WINRATE)</b>
@@ -784,15 +749,9 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         <div style="margin-bottom:10px;">
           <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
             <span style="color:#cbd5e1;">Pilih Jumlah Modal:</span>
-            <b class="calc-dep-display" id="calcDepDisplay_${vaultId}" style="color:#f5c451;">$${currentDep} USD (${(currentDep * 100).toLocaleString()} USC)</b>
+            <b class="calc-dep-display" id="calcDepDisplay_${vaultId}" style="color:#f5c451;">$${currentDep} USD</b>
           </div>
-          <input type="range" class="copytrade-calc-slider" min="50" max="2500" step="25" value="${currentDep}" oninput="window.updateProjectionCalc(${vaultId}, this.value)" style="width:100%; cursor:pointer; accent-color:#00e676;" />
-          <div style="display:flex; justify-content:space-between; font-size:9px; color:#64748b; margin-top:2px;">
-            <span>$50 Min</span>
-            <span>$500</span>
-            <span>$1,000</span>
-            <span>$2,500</span>
-          </div>
+          <input type="range" class="copytrade-calc-slider" min="50" max="5000" step="50" value="${currentDep}" oninput="window.updateProjectionCalc(${vaultId}, this.value)" style="width:100%; cursor:pointer; accent-color:#00e676;" />
         </div>
 
         <!-- Projected Compound Horizons -->
@@ -810,10 +769,6 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
             <b class="calc-month6-profit" id="calcMonth6Profit_${vaultId}" style="font-size:10.5px; color:#f5c451;">+$${m6Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m6Total})</small></b>
           </div>
         </div>
-
-        <p style="font-size:9px; color:#8e9aa8; margin:0 0 8px; line-height:1.4;">
-          🛡️ <i>Saranan SOP: Tarik balik 100% modal asal sebaik sahaja untung 100% tercapai (seperti The Mighty Duck). Seterusnya, biarkan keuntungan tulen berkembang dengan risiko sifar.</i>
-        </p>
       </div>
 
       <!-- Main Action Join Button -->
@@ -833,60 +788,8 @@ window.switchCopytradeVault = function(vaultId) {
 
 window.refreshCopytradeUI = function() {
   const vId = window.activeCopytradeVault || 1;
-  const isV2 = Number(vId) === 2;
-  const isV3 = Number(vId) === 3;
-
-  const cp1 = (AppState && AppState.copytrade) || {};
-  const cp2 = (AppState && AppState.copytrade2) || {};
-  const cp3 = (AppState && AppState.copytrade3) || {};
-
-  let cp;
-  if (isV3) {
-    cp = {
-      growthPct: (cp3 && typeof cp3.growthPct === 'number') ? cp3.growthPct : 0.00,
-      allTimeProfitUsc: (cp3 && typeof cp3.allTimeProfitUsd === 'number') ? cp3.allTimeProfitUsd * 100 : 0.00,
-      allTimeProfitUsd: (cp3 && typeof cp3.allTimeProfitUsd === 'number') ? cp3.allTimeProfitUsd : 0.00,
-      currentEquity: (cp3 && typeof cp3.currentEquity === 'number') ? cp3.currentEquity : 1000.0,
-      isUsd: true
-    };
-  } else if (isV2) {
-    cp = {
-      growthPct: (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 0.00,
-      allTimeProfitUsc: (cp2 && typeof cp2.allTimeProfitUsc === 'number') ? cp2.allTimeProfitUsc : 0.00,
-      allTimeProfitUsd: (cp2 && typeof cp2.allTimeProfitUsd === 'number') ? cp2.allTimeProfitUsd : 0.00,
-      currentEquity: (cp2 && typeof cp2.currentEquity === 'number') ? cp2.currentEquity : 10000.0,
-      isUsd: false
-    };
-  } else {
-    cp = {
-      growthPct: (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 122.55,
-      allTimeProfitUsc: (cp1 && typeof cp1.allTimeProfitUsc === 'number') ? cp1.allTimeProfitUsc : 12254.62,
-      allTimeProfitUsd: (cp1 && typeof cp1.allTimeProfitUsd === 'number') ? cp1.allTimeProfitUsd : 122.55,
-      currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 12254.62,
-      isUsd: false
-    };
-  };
-
-  const containers = document.querySelectorAll('.copytrade-showcase-container');
-  containers.forEach(el => {
-    // If the card is already rendered, do smooth in-place update of live numbers
-    // DO NOT wipe el.innerHTML or collapse user's opened calculator!
-    const growthEl = el.querySelector('.cp-growth-num');
-    const profitUscEl = el.querySelector('.cp-gross-usc');
-    const profitUsdEl = el.querySelector('.cp-gross-usd');
-    const equityUscEl = el.querySelector('.cp-active-equity-usc');
-    const equityUsdEl = el.querySelector('.cp-active-equity-usd');
-
-    if (growthEl && profitUscEl && profitUsdEl) {
-      growthEl.textContent = '+' + Number(cp.growthPct).toFixed(2) + '%';
-      profitUscEl.textContent = '+' + num(cp.allTimeProfitUsc) + ' USC';
-      profitUsdEl.textContent = '(+$' + Number(cp.allTimeProfitUsd).toFixed(2) + ' USD)';
-      if (equityUscEl) equityUscEl.textContent = num(cp.currentEquity) + ' USC';
-      if (equityUsdEl) equityUsdEl.textContent = '(+$' + (cp.currentEquity / 100).toFixed(2) + ' USD ' + (!isV2 ? 'Untung Sahaja' : 'Modal Penuh') + ')';
-    } else {
-      // Not yet initialized
-      el.innerHTML = getCopytradeCardHTML(vId);
-    }
+  document.querySelectorAll('.copytrade-showcase-container').forEach(el => {
+    el.innerHTML = getCopytradeCardHTML(vId);
   });
 };
 
@@ -1170,7 +1073,33 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
 
 // ===== Amaterasu Sovereign Copytrade Onboarding Modal =====
 function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
-  const cp = (AppState && AppState.copytrade) || {
+  const vNum = Number(initialVault) || 1;
+  const isV3 = vNum === 3;
+  const isV2 = vNum === 2;
+
+  let cp = (AppState && AppState.copytrade) || {};
+  let targetName = 'THE MIGHTY DUCK';
+  let targetAcc = '5100154135';
+  let targetAvatar = 'img/themightyduck.png';
+  let targetTheme = '#00e676';
+  let targetType = 'Akaun Cent (USC)';
+
+  if (isV3) {
+    cp = (AppState && AppState.copytrade3) || {};
+    targetName = 'AMATERASU SOVEREIGN';
+    targetAcc = '5100209626';
+    targetAvatar = 'img/amaterasux.png';
+    targetTheme = '#f5c451';
+    targetType = 'Akaun Standard ($1,000 USD)';
+  } else if (isV2) {
+    cp = (AppState && AppState.copytrade2) || {};
+    targetName = 'AMATERASU X';
+    targetAcc = '5100207348';
+    targetAvatar = 'img/amaterasux.png';
+    targetTheme = '#ff6e40';
+    targetType = 'Akaun Cent (USC)';
+  }
+  const defaultCp = {
     masterAccount: "5100154135",
     broker: "Versus Trade Ltd. (Live1)",
     growthPct: 122.55,
