@@ -107,7 +107,7 @@ function route(isDataRefresh = false) {
     const isMaster = data.isMaster;
     const days = data.daysRemaining;
     const ibName = (data.ib && data.ib.name) ? data.ib.name : 'Amaterasu Partner';
-    const ibPhone = (data.ib && data.ib.phone) ? data.ib.phone : '+60123456789';
+    const ibPhone = (data.ib && data.ib.phone) ? data.ib.phone : '+601123236085';
 
     modal(`
       <div style="text-align:center; margin-bottom:14px;">
@@ -154,7 +154,7 @@ function route(isDataRefresh = false) {
     if (existing) existing.remove();
 
     const ibName = (data.ib && data.ib.name) ? data.ib.name : 'IB Rakan Niaga Anda';
-    const ibPhone = (data.ib && data.ib.phone) ? data.ib.phone : '+60123456789';
+    const ibPhone = (data.ib && data.ib.phone) ? data.ib.phone : '+601123236085';
 
     const overlay = document.createElement('div');
     overlay.id = 'deviceBlockedOverlay';
@@ -206,7 +206,7 @@ function route(isDataRefresh = false) {
     if (existing) existing.remove();
 
     const ibName = (data.ib && data.ib.name) ? data.ib.name : 'Rakan Niaga IB Anda';
-    const ibPhone = (data.ib && data.ib.phone) ? data.ib.phone : '+60123456789';
+    const ibPhone = (data.ib && data.ib.phone) ? data.ib.phone : '+601123236085';
 
     const overlay = document.createElement('div');
     overlay.id = 'expiredLockOverlay';
@@ -274,6 +274,54 @@ function init() {
     };
   }
 
+  
+  function showAccessDeniedModal(data) {
+    const existing = document.getElementById('accessDeniedOverlay');
+    if (existing) existing.remove();
+
+    const adminPhone = '+601123236085';
+    const waLink = "https://wa.me/601123236085?text=" + encodeURIComponent("Salam Admin Amaterasu X, saya berminat untuk memohon Kod Jemputan VIP (Invitation Code) bagi mengakses aplikasi.");
+
+    const overlay = document.createElement('div');
+    overlay.id = 'accessDeniedOverlay';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(8,13,20,0.96)';
+    overlay.style.backdropFilter = 'blur(16px)';
+    overlay.style.zIndex = '9999999';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.padding = '20px';
+
+    overlay.innerHTML = `
+      <div style="background:#0F1722; border:2px solid #EF2D3D; border-radius:20px; max-width:440px; width:100%; padding:28px 24px; text-align:center; box-shadow:0 0 60px rgba(239,45,61,0.5);">
+        <div style="width:68px; height:68px; margin:0 auto 16px; background:rgba(239,45,61,0.15); border:1.5px solid #EF2D3D; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:32px;">
+          🔒
+        </div>
+        <h2 style="font-family:'Space Grotesk',sans-serif; color:#FFF; font-size:20px; font-weight:900; margin-bottom:8px;">
+          AKSES KOD JEMPUTAN VIP SAHAJA
+        </h2>
+        <div style="background:rgba(239,45,61,0.1); border:1px solid rgba(239,45,61,0.3); border-radius:10px; padding:10px; margin-bottom:16px;">
+          <b style="color:#EF2D3D; font-size:12.5px;">PLATFORM TERTUTUP (PRIVATE VIP GATEWAY)</b>
+        </div>
+        <p style="font-size:12.5px; color:#A0A6B4; line-height:1.5; margin-bottom:18px;">
+          ${esc(data.message || 'Amaterasu X adalah sistem perdagangan tertutup. Anda memerlukan Kod Jemputan sah daripada Admin untuk mendaftar.')}
+        </p>
+
+        <a href="${waLink}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:14px; background:linear-gradient(135deg, #25D366, #128C7E); color:#FFF; font-weight:800; border-radius:10px; font-size:13px; text-decoration:none; margin-bottom:12px; box-shadow:0 4px 15px rgba(37,211,102,0.4);">
+          💬 WhatsApp Admin (+601123236085) Untuk Dapatkan Kod
+        </a>
+
+        <button type="button" onclick="document.getElementById('accessDeniedOverlay')?.remove(); showLoginScreen();" style="background:transparent; border:1px solid rgba(255,255,255,0.15); color:#A0A6B4; font-size:11px; padding:8px 16px; border-radius:8px; cursor:pointer;">
+          🔄 Cuba Masukkan Kod Lain
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+  }
+
   // Itachi Anime Login Screen Modal & Session Handler
   function showLoginScreen(onSuccess) {
     const existing = $('#loginScreenOverlay');
@@ -328,11 +376,24 @@ function init() {
                 </div>
               </div>
 
-              <div class="login-field" style="margin-bottom:14px;">
+              <div class="login-field" style="margin-bottom:12px;">
                 <label>Nama / Call-Sign Trader</label>
                 <div class="login-input-wrap">
                   <input type="text" id="loginTraderName" required placeholder="cth: Ahmad Fikri" />
                 </div>
+              </div>
+
+              <div class="login-field" style="margin-bottom:14px;">
+                <label style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Kod Jemputan VIP (Invitation Code)</span>
+                  <span style="font-size:10px; color:#EF2D3D; font-weight:800;">*WAJIB</span>
+                </label>
+                <div class="login-input-wrap">
+                  <input type="text" id="loginInviteCode" placeholder="cth: AMATERASU-VIP" style="font-family:monospace; font-weight:800; text-transform:uppercase; color:#F5C451; letter-spacing:1px;" />
+                </div>
+                <small style="font-size:10px; color:#8E9AA8; display:block; margin-top:3px;">
+                  *Pengguna baru wajib ada kod jemputan rasmi daripada Admin.
+                </small>
               </div>
 
               <button type="submit" class="btn-login-fire" style="width:100%;">
@@ -363,7 +424,7 @@ function init() {
               <div class="login-field">
                 <label>Kunci Keselamatan MT5</label>
                 <div class="login-input-wrap">
-                  <input type="password" id="loginPasscode" value="AMATERASU-2026" required placeholder="Kunci Keselamatan" autocomplete="current-password" />
+                  <input type="password" id="loginPasscode" value="" required placeholder="Kunci Keselamatan" autocomplete="current-password" />
                 </div>
               </div>
 
@@ -373,9 +434,12 @@ function init() {
             </form>
           </div>
 
-          <button type="button" class="btn btn-outline" id="btnGuestLogin" style="width:100%; margin-top:10px; padding:9px; font-size:11px; font-weight:700; border-color:rgba(255,255,255,0.12); color:#A0A6B4;">
-            <span>👁️</span> Masuk Sebagai Tetamu (Demo 14-Hari)
-          </button>
+          <div style="margin-top:14px; text-align:center; padding-top:12px; border-top:1px dashed rgba(255,255,255,0.1);">
+            <span style="font-size:11px; color:#A0A6B4; display:block; margin-bottom:6px;">Belum ada Kod Jemputan VIP?</span>
+            <a href="https://wa.me/601123236085?text=Salam%20Admin%20Amaterasu%20X,%20saya%20berminat%20untuk%20dapatkan%20Kod%20Jemputan%20VIP%20Amaterasu%20X." target="_blank" class="btn" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:10px; background:linear-gradient(135deg, #25D366, #128C7E); color:#FFF; font-weight:800; font-size:11.5px; border-radius:8px; text-decoration:none; box-shadow:0 4px 15px rgba(37,211,102,0.3);">
+              <span>💬</span> WhatsApp Admin Untuk Minta Kod (+601123236085)
+            </a>
+          </div>
 
           <div style="text-align:center; margin-top:14px; font-size:10.5px; color:#64748B;">
             Sambungan Disulitkan SSL · Polisi 1 Akaun = 1 Peranti
@@ -454,14 +518,21 @@ function init() {
         const devId = getOrCreateDeviceId();
         const devModel = navigator.userAgentData?.platform || navigator.platform || "Web Browser";
 
-        toast('Mengesahkan peranti dan akaun MT5...');
+        toast('Mengesahkan peranti dan Kod Jemputan...');
         try {
-          const res = await fetch(`/api/trader/verify-pass?mt5=${encodeURIComponent(mt5Acc)}&user=${encodeURIComponent(traderName)}&deviceId=${encodeURIComponent(devId)}&deviceModel=${encodeURIComponent(devModel)}`);
+          const inviteCode = ($('#loginInviteCode', overlay)?.value || '').trim();
+          const res = await fetch(`/api/trader/verify-pass?mt5=${encodeURIComponent(mt5Acc)}&user=${encodeURIComponent(traderName)}&deviceId=${encodeURIComponent(devId)}&deviceModel=${encodeURIComponent(devModel)}&inviteCode=${encodeURIComponent(inviteCode)}`);
           const data = await res.json();
 
           if (data.deviceBlocked) {
             overlay.remove();
             showDeviceBlockedModal(data);
+            return;
+          }
+
+          if (data.accessDenied || data.inviteRequired) {
+            overlay.remove();
+            showAccessDeniedModal(data);
             return;
           }
 
@@ -486,16 +557,16 @@ function init() {
       form.onsubmit = (e) => {
         e.preventDefault();
         const opName = ($('#loginCallSign', overlay).value || 'Tengku Khairi').trim();
+        const pass = ($('#loginPasscode', overlay).value || '').trim();
+        if (pass !== 'AMATERASU-2026') {
+          toast('Kunci Keselamatan Master tidak sah!');
+          return;
+        }
         doLogin(opName);
       };
     }
 
-    const guestBtn = $('#btnGuestLogin', overlay);
-    if (guestBtn) {
-      guestBtn.onclick = () => {
-        doLogin('Guest Trader');
-      };
-    }
+    // Guest login removed for private VIP security
   }
 
   $('#logout').onclick = e => {

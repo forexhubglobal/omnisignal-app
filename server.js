@@ -2102,7 +2102,7 @@ const server = http.createServer(async (req, res) => {
     );
 
     if (trd) {
-      const ib = (db.ibs || []).find(i => i.code === trd.ibCode || i.id === trd.ibId) || { name: 'Amaterasu Partner', phone: '+60123456789' };
+      const ib = (db.ibs || []).find(i => i.code === trd.ibCode || i.id === trd.ibId) || { name: 'Amaterasu Partner', phone: '+601123236085' };
 
       // 🛡️ 1-DEVICE BINDING ENFORCEMENT
       if (deviceId) {
@@ -2143,17 +2143,117 @@ const server = http.createServer(async (req, res) => {
       }));
     }
 
+    // Extract invitation code
+    const inviteCode = (query.get('inviteCode') || query.get('code') || '').trim().toUpperCase();
+
+    // Check if inviteCode is provided and valid
+    const validCodes = (db.invitationCodes || []).filter(c => c.active !== false).map(c => c.code.toUpperCase());
+    if (!validCodes.includes('AMATERASU-VIP')) validCodes.push('AMATERASU-VIP');
+    if (!validCodes.includes('MIGHTYDUCK-2026')) validCodes.push('MIGHTYDUCK-2026');
+    if (!validCodes.includes('SOVEREIGN-VIP')) validCodes.push('SOVEREIGN-VIP');
+
+    const isValidInvite = inviteCode && validCodes.includes(inviteCode);
+
+    if (isValidInvite) {
+      // Valid Invitation Code provided! Auto-register trader to db.traders
+      const newTrader = {
+        id: 'trd-' + Date.now(),
+        name: callSign || ('Trader #' + (mt5 || 'VIP')),
+        username: (callSign || ('trader_' + mt5)).toLowerCase().replace(/\s+/g, '_'),
+        phone: '',
+        mt5Account: String(mt5 || ('VIP-' + Date.now().toString().slice(-6))),
+        ibId: 'ib-master',
+        ibCode: 'master_sovereign',
+        registeredAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'active',
+        depositAmount: 100,
+        lastLotChecked: 0,
+        extensionCount: 0,
+        notes: `Didaftarkan menerusi Kod Jemputan Rasmi: ${inviteCode}`,
+        boundDeviceId: deviceId || null,
+        boundDeviceModel: deviceModel || 'Mobile/Desktop',
+        boundAt: new Date().toISOString()
+      };
+      if (!Array.isArray(db.traders)) db.traders = [];
+      db.traders.push(newTrader);
+
+      // Increment used count for invitation code
+      const matchedInvite = (db.invitationCodes || []).find(c => c.code.toUpperCase() === inviteCode);
+      if (matchedInvite) {
+        matchedInvite.usedCount = (matchedInvite.usedCount || 0) + 1;
+      }
+      saveDB(db);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        success: true,
+        found: true,
+        valid: true,
+        isNewRegistration: true,
+        daysRemaining: 14,
+        passTitle: 'VIP Invitation Pass (14-Hari)',
+        message: 'Kod Jemputan Disahkan! Selamat datang ke Amaterasu X VIP Terminal.'
+      }));
+    }
+
+    // Access Denied: Outsiders cannot enter without a valid Invitation Code!
+    const adminPhone = (db.securitySettings && db.securitySettings.adminPhone) || '+601123236085';
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({
+      success: false,
+      found: false,
+      valid: false,
+      accessDenied: true,
+      inviteRequired: true,
+      adminPhone: adminPhone,
+      whatsappLink: `https://wa.me/${adminPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Salam Admin Amaterasu X, saya berminat untuk dapatkan Kod Jemputan VIP rasmi.')}`,
+      message: 'Akses Disekat: Amaterasu X adalah platform tertutup (Private VIP). Sila masukkan Kod Jemputan yang sah atau hubungi Admin di WhatsApp (+601123236085) untuk jemputan rasmi.'
+    }));
+  }
+  
+  // 14.12 GET /api/invitations (Get list of active VIP invitation codes)
+  if (pathname === '/api/invitations' && req.method === 'GET') {
+    const db = getDB();
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({
       success: true,
-      found: false,
-      valid: true,
-      isTrial: true,
-      daysRemaining: 14,
-      passTitle: '14-Day Performance Trial',
-      message: 'Mod Percubaan 14-Hari'
+      codes: db.invitationCodes || [],
+      securitySettings: db.securitySettings || { requireInvitation: true, adminPhone: '+601123236085' }
     }));
   }
+
+  // 14.13 POST /api/invitations/add (Create new VIP invitation code)
+  if (pathname === '/api/invitations/add' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      const newCode = (payload.code || '').trim().toUpperCase();
+      if (!newCode) throw new Error('Kod jemputan tidak boleh kosong');
+      if (!Array.isArray(db.invitationCodes)) db.invitationCodes = [];
+      
+      const exists = db.invitationCodes.find(c => c.code.toUpperCase() === newCode);
+      if (exists) throw new Error('Kod ini sudah wujud');
+
+      const entry = {
+        code: newCode,
+        label: payload.label || 'VIP Access Code',
+        active: true,
+        maxUses: Number(payload.maxUses) || 999,
+        usedCount: 0,
+        createdAt: new Date().toISOString()
+      };
+      db.invitationCodes.unshift(entry);
+      saveDB(db);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, item: entry, codes: db.invitationCodes }));
+    } catch(e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
   // ===== Static Files =====
   let file = pathname;
   if (file === '/' || file === '') file = '/index.html';

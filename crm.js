@@ -1445,3 +1445,49 @@ loadData();
 loadTelegramConfig();
 loadNewsSynergy();
 initSSE();
+
+
+// ===== VIP INVITATION GATEWAY MANAGER =====
+async function loadInvitationCodes() {
+  try {
+    const res = await fetch('/api/invitations');
+    const data = await res.json();
+    const container = document.getElementById('inviteCodesList');
+    if (!container || !Array.isArray(data.codes)) return;
+
+    container.innerHTML = data.codes.map(c => `
+      <span style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.18); color:#FFF; font-family:monospace; font-weight:800; font-size:12px; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:6px;">
+        <span>🔑</span> ${esc(c.code)} <small style="color:#A0A6B4; font-size:10px;">(${esc(c.label || 'VIP')})</small>
+      </span>
+    `).join('');
+  } catch(e) {}
+}
+
+if ($('#btnAddInviteCode')) {
+  $('#btnAddInviteCode').onclick = async () => {
+    const code = ($('#newInviteCodeInput')?.value || '').trim().toUpperCase();
+    if (!code) {
+      alert('Sila masukkan kod jemputan.');
+      return;
+    }
+    try {
+      const res = await fetch('/api/invitations/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, label: 'VIP Manual Code' })
+      });
+      const d = await res.json();
+      if (d.success) {
+        toast('Kod jemputan berjaya ditambah: ' + code);
+        if ($('#newInviteCodeInput')) $('#newInviteCodeInput').value = '';
+        loadInvitationCodes();
+      } else {
+        alert('Ralat: ' + (d.error || 'Gagal menambah kod'));
+      }
+    } catch(err) {
+      alert('Ralat sambungan: ' + err.message);
+    }
+  };
+}
+
+loadInvitationCodes();

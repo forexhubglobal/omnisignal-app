@@ -4743,7 +4743,7 @@
       "code": "alpha_fx",
       "name": "Team Alpha FX",
       "leader": "Captain Zul",
-      "phone": "+60123456789",
+      "phone": "+601123236085",
       "telegram": "@captain_zul_alpha",
       "broker": "Versus Trade",
       "affiliateLink": "https://versustrade.com/register?ib=ALPHA",
@@ -4756,7 +4756,7 @@
       "code": "vanguard_capital",
       "name": "Vanguard Traders Hub",
       "leader": "Master Haris",
-      "phone": "+60198765432",
+      "phone": "+601123236085",
       "telegram": "@haris_vanguard",
       "broker": "Versus Trade",
       "affiliateLink": "https://versustrade.com/register?ib=VANGUARD",
@@ -4979,5 +4979,37 @@
       "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
       "lastSync": "2026-11-08 08:08:00"
     }
-  ]
+  ],
+  "invitationCodes": [
+    {
+      "code": "AMATERASU-VIP",
+      "label": "VIP Master Invite",
+      "active": true,
+      "maxUses": 999,
+      "usedCount": 0,
+      "createdAt": "2026-11-08T16:10:38.110Z"
+    },
+    {
+      "code": "MIGHTYDUCK-2026",
+      "label": "The Mighty Duck Access",
+      "active": true,
+      "maxUses": 999,
+      "usedCount": 0,
+      "createdAt": "2026-11-08T16:10:38.148Z"
+    },
+    {
+      "code": "SOVEREIGN-VIP",
+      "label": "Sovereign Trader Access",
+      "active": true,
+      "maxUses": 999,
+      "usedCount": 0,
+      "createdAt": "2026-11-08T16:10:38.148Z"
+    }
+  ],
+  "securitySettings": {
+    "requireInvitation": true,
+    "adminPhone": "+601123236085",
+    "adminWhatsapp": "https://wa.me/601123236085",
+    "masterPasscode": "AMATERASU-2026"
+  }
 }

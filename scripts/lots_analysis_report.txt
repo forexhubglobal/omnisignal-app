@@ -1,0 +1,53 @@
+=================================================================
+       LAPORAN SEBENAR & UNJURAN LOT SEBULAN (THE MIGHTY DUCK)    
+=================================================================
+Akaun MT5          : #5100154135 (MOHD RUDI HANIF BIN HUSIN HUSIN)
+Broker / Server    : VersusTrade-Live1 (Versus Trade Ltd.)
+Mata Wang Akaun    : USC (Cent Account)
+Baki Semasa        : 13,477.99 USC
+Ekuiti Semasa      : 12,254.62 USC ($122.55 USD)
+-----------------------------------------------------------------
+TEMPOH OPERASI:
+Tarikh Mula Trade  : 14 Oct 2026, 18:04 MYT
+Tarikh Terakhir    : 06 Nov 2026, 07:16 MYT
+Jumlah Hari Kalendar : 23 hari (~3.3 minggu)
+Hari Aktif Berdagang : 12 hari pasaran
+-----------------------------------------------------------------
+JUMLAH REKOD LOT TERKUMPUL (TERBUKTI DI MT5):
+Jumlah Posisi Ditutup  : 3,337 trade
+Jumlah Lot Cent Ditutup: 520.66 Cent Lot
+Nilai Standard Lot     : 5.21 Standard Lot
+Lot Floating (Sedang Jalan): 3.20 Cent Lot (16 posisi)
+JUMLAH KESELURUHAN LOT : 523.86 Cent Lot (5.24 Std Lot)
+-----------------------------------------------------------------
+PURATA PRODUKSI LOT:
+Purata Sehari (Hari Pasaran Aktif): 43.39 Cent Lot / hari (0.43 Std Lot)
+Purata Seminggu                   : 158.46 Cent Lot / minggu (1.58 Std Lot)
+-----------------------------------------------------------------
+KIRAAN LOT YANG DIHASILKAN SEBULAN (PROJECTED MONTHLY LOTS):
+[1] Berasaskan 22 Hari Bekerja Pasaran (Trading Days):
+    -> 954.54 CENT LOT sebulan
+    -> 9.55 STANDARD LOT sebulan
+
+[2] Berasaskan Purata Kalendar (30.4 hari):
+    -> 688.18 CENT LOT sebulan
+    -> 6.88 STANDARD LOT sebulan
+=================================================================
+PECAHAN MENGIK PASANGAN MATA WANG (SYMBOL):
+ - XAUUSD.c   :   453.96 Cent Lot ( 4.54 Std) | 2992 trade | WinRate:  58.0%
+ - XAGUSD.c   :    17.10 Cent Lot ( 0.17 Std) |   66 trade | WinRate:  48.5%
+ - EURUSD.c   :    14.60 Cent Lot ( 0.15 Std) |   78 trade | WinRate:  67.9%
+ - USDCHF.c   :    12.08 Cent Lot ( 0.12 Std) |   71 trade | WinRate:  64.8%
+ - USDCAD.c   :     9.16 Cent Lot ( 0.09 Std) |   30 trade | WinRate:  53.3%
+ - USDJPY.c   :     6.40 Cent Lot ( 0.06 Std) |   33 trade | WinRate:  24.2%
+ - GBPJPY.c   :     2.60 Cent Lot ( 0.03 Std) |   14 trade | WinRate:  21.4%
+ - GBPUSD.c   :     1.80 Cent Lot ( 0.02 Std) |   12 trade | WinRate:  41.7%
+ - EURJPY.c   :     1.70 Cent Lot ( 0.02 Std) |   23 trade | WinRate:  17.4%
+ - AUDUSD.c   :     1.26 Cent Lot ( 0.01 Std) |   18 trade | WinRate:   0.0%
+-----------------------------------------------------------------
+PECAHAN LOT MENGIK MINGGU:
+ - 2026-Minggu 41     :   300.90 Cent Lot ( 3.01 Std Lot)
+ - 2026-Minggu 42     :    84.50 Cent Lot ( 0.84 Std Lot)
+ - 2026-Minggu 43     :    76.41 Cent Lot ( 0.76 Std Lot)
+ - 2026-Minggu 44     :    58.85 Cent Lot ( 0.59 Std Lot)
+=================================================================
