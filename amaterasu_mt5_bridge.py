@@ -19,6 +19,7 @@ import sys
 import time
 import json
 import threading
+import random
 from datetime import datetime
 import requests
 
@@ -54,6 +55,8 @@ DEFAULT_CONFIG = {
     "lot_size": 0.20,
     "execution_mode": "SPLIT_TP", # "SPLIT_TP" (TP1, TP2, TP3), "SINGLE_TP1", "SINGLE_TP2", "SINGLE_TP3"
     "auto_breakeven": True,
+    "stealth_mode": True, # Mod Samaran Anti-Broker: Kosongkan komen untuk mengelak broker flag sebagai bot
+    "execution_jitter": True, # Kelewatan rawak manusia 0.35s - 1.20s sebelum order_send
     "gold_min_be_pips": 50.0,
     "max_concurrent_pairs": 4,
     "max_slippage_pips": 5,
@@ -131,6 +134,8 @@ class AmaterasuBridge:
         print(f" {Colors.CYAN}* Gold Trap Zone  :{Colors.RESET} 14:00 - 16:00 MYT (London Trap DIBLOK)")
         print(f" {Colors.CYAN}* Max Open Pairs  :{Colors.RESET} {self.config.get('max_concurrent_pairs', 4)}")
         print(f" {Colors.CYAN}* Magic Number    :{Colors.RESET} {self.magic_number}")
+        print(f" {Colors.CYAN}* Stealth Shield  :{Colors.RESET} {'AKTIF (Anti-Broker B-Book Cloaking)' if self.config.get('stealth_mode', True) else 'TIDAK'}")
+        print(f" {Colors.CYAN}* Human Jitter    :{Colors.RESET} {'AKTIF (0.35s - 1.20s Random Execution)' if self.config.get('execution_jitter', True) else 'TIDAK'}")
         print("  -------------------------------------------------------------------")
 
     def init_mt5(self):
@@ -493,11 +498,20 @@ class AmaterasuBridge:
                 is_ny_gold_boost = True
                 print(f"{Colors.GREEN}{Colors.BOLD}🔥 [TIME-PRICE THEORY: SESI EMAS NEW YORK] Menggandakan saiz posisi XAUUSD kepada {exec_lot} lot! (Waktu Emas 19:30 - 23:30 MYT | Rekod 98.3% Winrate){Colors.RESET}")
 
+        # Human Execution Jitter (Anti-Bot Timing Fingerprint Guard):
+        if self.config.get("execution_jitter", True):
+            jitter = round(random.uniform(0.35, 1.20), 2)
+            time.sleep(jitter)
+
         # Deviation in points
         deviation = int(self.max_slippage_pips * 10)
         filling = self.get_fill_type(symbol, order_type, price)
 
-        comment = f"AmaterasuX-NY-TP{tp_target}" if is_ny_gold_boost else f"AmaterasuX-TP{tp_target}"
+        # Stealth Mode Comment Protection (Sembunyikan cap jari bot daripada Broker B-Book):
+        if self.config.get("stealth_mode", True):
+            comment = ""  # Bersih tanpa watermark, sama seperti order manual dari MT5 Mobile
+        else:
+            comment = f"AmaterasuX-NY-TP{tp_target}" if is_ny_gold_boost else f"AmaterasuX-TP{tp_target}"
 
         request = {
             "action": mt5.TRADE_ACTION_DEAL,
@@ -799,7 +813,7 @@ class AmaterasuBridge:
             "price": round(price, sym_info.digits),
             "deviation": int(self.max_slippage_pips * 10),
             "magic": self.magic_number,
-            "comment": f"Close-{reason[:16]}",
+            "comment": "" if self.config.get("stealth_mode", True) else f"Close-{reason[:16]}",
             "type_time": mt5.ORDER_TIME_GTC,
             "type_filling": filling,
         }
