@@ -382,7 +382,7 @@ const AppState = {
         this.copytrade2 = d.copytrade2 || null;
         this.copytrade3 = d.copytrade3 || null;
         this.copytrades = d.copytrades || [this.copytrade, this.copytrade2, this.copytrade3].filter(Boolean);
-        if (typeof route === 'function') route();
+        if (typeof route === 'function') route(true);
       });
       s.addEventListener('copytrade_update', e => {
         try {
@@ -416,14 +416,14 @@ const AppState = {
         // Deduplication Guard: Never fire toast/sound twice for the same signal ID
         if (!this._seenSignalFired) this._seenSignalFired = new Set();
         if (newSig.id && this._seenSignalFired.has(newSig.id)) {
-          if (typeof route === 'function') route();
+          if (typeof route === 'function') route(true);
           return;
         }
         if (newSig.id) this._seenSignalFired.add(newSig.id);
 
         AmaterasuSound.sharingan();
         toast(`⚡ AMATERASU SIGNAL: ${newSig.type} ${newSig.symbol}!`);
-        if (typeof route === 'function') route();
+        if (typeof route === 'function') route(true);
       });
       s.addEventListener('on_pips_update', e => {
         const list = JSON.parse(e.data);

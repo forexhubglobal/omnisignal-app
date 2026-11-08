@@ -20,6 +20,15 @@ function route(isDataRefresh = false) {
   const isNavigating = (currentActiveRoute !== r);
   currentActiveRoute = r;
 
+  // In-place refresh optimization: If not navigating and this is an automated background data refresh
+  if (!isNavigating && (isDataRefresh || r === 'signal')) {
+    if (r === 'signal' && typeof window.refreshSignalPageUI === 'function') {
+      if (window.refreshSignalPageUI()) {
+        return;
+      }
+    }
+  }
+
   // Preserve scroll position if this is an automated background data refresh or same page
   const savedScrollY = (!isNavigating || isDataRefresh) ? (window.scrollY || document.documentElement.scrollTop || 0) : 0;
 

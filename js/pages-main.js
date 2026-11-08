@@ -1257,12 +1257,7 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
 window.showCopytradeModal = showCopytradeModal;
 
 // ---------- 1. Signal ----------
-function SignalPage(main) {
-  let activeSymId = store.get('selected_signal_sym') || 'XAUUSD';
-  let inst = ALL_INSTRUMENTS.find(i => i.id === activeSymId) || ALL_INSTRUMENTS[0];
-  Market.activeSymbol = inst.id;
-  Market.updateUI();
-
+function getSignalPageState(inst) {
   const globalSig = (AppState && AppState.activeSignal) || { status: 'WAITING', type: 'BUY', symbol: 'XAUUSD', entry: 4013.00, tp1: 4016.00, tp2: 4020.50, sl: 4009.50 };
   const cp = (AppState && AppState.copytrade) || {
     masterAccount: "5100154135",
@@ -1312,14 +1307,30 @@ function SignalPage(main) {
   const lastClosedForAsset = closedSignals.find(s => s.symbol === inst.id);
   const activeOnPipsTab = window._activeOnPipsTab || 'running';
 
-  function getDisplayPrice() {
-    const liveP = Market.getLivePrice(inst.id);
-    if (liveP) return num(liveP);
-    if (inst.id === 'XAUUSD') return num(Market.price);
-    return num(inst.basePrice);
-  }
+  return {
+    globalSig,
+    cp,
+    isLiveOrTp1,
+    activeList,
+    matchedActiveSig,
+    isCurrentAssetActive,
+    isAnyActive,
+    currentSig,
+    isTp1,
+    curLivePrice,
+    isBuy,
+    liveFloatingPips,
+    lastRes,
+    closedSignals,
+    lastClosedForAsset,
+    activeOnPipsTab
+  };
+}
 
-  const ticketHtml = isCurrentAssetActive ? `
+function getSignalTicketHtml(state, inst) {
+  const { isCurrentAssetActive, isTp1, currentSig, liveFloatingPips, curLivePrice, lastClosedForAsset, isAnyActive, activeList, lastRes } = state;
+
+  return isCurrentAssetActive ? `
     <div class="solar-ticket ${isTp1 ? 'tp1-secured' : ''}">
       <div class="solar-ticket-head">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -1564,8 +1575,11 @@ function SignalPage(main) {
       </div>
     </div>
   `;
+}
 
-  const onPipsHtml = `
+function getSignalOnPipsHtml(state) {
+  const { activeList, closedSignals, activeOnPipsTab } = state;
+  return `
     <!-- ⚡ ON PIPS: LIVE RUNNING SIGNALS & CLOSED SUITE -->
     <div class="on-pips-container" id="onPipsSection" style="margin-top:16px; background:#0b1118; border:1px solid rgba(239,45,61,0.35); border-radius:12px; padding:14px 16px; box-shadow:0 6px 24px rgba(0,0,0,0.4);">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px; flex-wrap:wrap; gap:8px;">
@@ -1756,500 +1770,24 @@ function SignalPage(main) {
       </div>
     </div>
   `;
+}
 
-  main.innerHTML = `<section class="page" style="padding-top: 4px;">
-    ${solarGlow()}
-
-    ${isAnyActive ? `
-      <div class="top-active-signal-bar" id="topActiveSignalBar" style="background: linear-gradient(90deg, rgba(0, 230, 118, 0.16) 0%, rgba(255, 160, 0, 0.16) 100%); border: 1px solid ${isCurrentAssetActive ? '#00e676' : 'var(--solar-gold)'}; border-radius: 8px; padding: 9px 13px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" title="Klik untuk lihat signal aktif">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="width:8px; height:8px; border-radius:50%; background:#00e676; animation:pulseDot 1.2s infinite; display:inline-block;"></span>
-          <span style="font-size:12px; font-weight:700; color:#fff;">⚡ ON PIPS: <b style="color:#f5c451;">${activeList.length} POSISI AKTIF</b> (${activeList.map(s => s.symbol).join(', ')})</span>
-        </div>
-        <span style="font-size:11px; font-weight:700; color:#00e676;">PANTAU RUNNING ➔</span>
+function getSignalTopActiveBarHtml(state) {
+  const { isAnyActive, activeList, isCurrentAssetActive } = state;
+  if (!isAnyActive) return '';
+  return `
+    <div class="top-active-signal-bar" id="topActiveSignalBar" style="background: linear-gradient(90deg, rgba(0, 230, 118, 0.16) 0%, rgba(255, 160, 0, 0.16) 100%); border: 1px solid ${isCurrentAssetActive ? '#00e676' : 'var(--solar-gold)'}; border-radius: 8px; padding: 9px 13px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s;" title="Klik untuk lihat signal aktif">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="width:8px; height:8px; border-radius:50%; background:#00e676; animation:pulseDot 1.2s infinite; display:inline-block;"></span>
+        <span style="font-size:12px; font-weight:700; color:#fff;">⚡ ON PIPS: <b style="color:#f5c451;">${activeList.length} POSISI AKTIF</b> (${activeList.map(s => s.symbol).join(', ')})</span>
       </div>
-    ` : ''}
-
-    <!-- AMATERASU X: Itachi Anime Hero Banner -->
-    <div class="itachi-hero-banner">
-      <div class="itachi-banner-bg" style="background-image: url('img/itachi_banner.jpg');"></div>
-      <div class="itachi-banner-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-          <span class="kanji-badge">天照 · AMATERASU X</span>
-          <span style="font-size:10px; font-weight:800; color:#00D68F; background:rgba(0,214,143,0.15); border:1px solid #00D68F; padding:2px 7px; border-radius:10px;">
-            AI 2.4 ONLINE
-          </span>
-        </div>
-        <div style="font-size:14px; font-weight:900; color:#FFF; font-family:'Space Grotesk',sans-serif; letter-spacing:0.3px;">
-          AI SIGNALS. REAL OPPORTUNITIES.
-        </div>
-        <div style="font-size:11px; color:#A0A6B4; margin-top:2px; line-height:1.35;">
-          Advanced Institutional SMC & Malaysian SNR analysis. Precise entries. Higher probability.
-        </div>
-      </div>
+      <span style="font-size:11px; font-weight:700; color:#00e676;">PANTAU RUNNING ➔</span>
     </div>
-    
-    <div class="copytrade-showcase-container" id="copytradeShowcaseSignal" style="margin-bottom:14px;">${getCopytradeCardHTML(window.activeCopytradeVault || 1)}</div>
+  `;
+}
 
-    <!-- 1. 100% Match Interactive SNR Chart Card with Screener Trends (Gambar Pertama Exact) -->
-    <div class="snr-chart-card">
-      <div class="snr-screener-block">
-        <div class="trend-row-snr">
-          <span class="tf-code">M1</span>
-          <span class="trend-val ${inst.m1 === 'UP' ? 'up' : inst.m1 === 'DOWN' ? 'down' : 'side'}">TREND ${inst.m1 === 'UP' ? 'UP' : inst.m1 === 'DOWN' ? 'DOWN' : 'SIDE'}</span>
-          <span class="trend-circle ${inst.m1 === 'UP' ? 'up' : inst.m1 === 'DOWN' ? 'down' : 'side'}"></span>
-        </div>
-        <div class="trend-row-snr">
-          <span class="tf-code">M5</span>
-          <span class="trend-val ${inst.m5 === 'UP' ? 'up' : inst.m5 === 'DOWN' ? 'down' : 'side'}">TREND ${inst.m5 === 'UP' ? 'UP' : inst.m5 === 'DOWN' ? 'DOWN' : 'SIDE'}</span>
-          <span class="trend-circle ${inst.m5 === 'UP' ? 'up' : inst.m5 === 'DOWN' ? 'down' : 'side'}"></span>
-        </div>
-        <div class="trend-row-snr">
-          <span class="tf-code">M15</span>
-          <span class="trend-val ${inst.m15 === 'UP' ? 'up' : inst.m15 === 'DOWN' ? 'down' : 'side'}">TREND ${inst.m15 === 'UP' ? 'UP' : inst.m15 === 'DOWN' ? 'DOWN' : 'SIDE'}</span>
-          <span class="trend-circle ${inst.m15 === 'UP' ? 'up' : inst.m15 === 'DOWN' ? 'down' : 'side'}"></span>
-        </div>
-      </div>
-
-      <div class="snr-toolbar">
-        <div class="snr-tf-pills" id="snrTfPills">
-          <button class="snr-pill" data-tf="M1">M1</button>
-          <button class="snr-pill" data-tf="M5">M5</button>
-          <button class="snr-pill active" data-tf="M15">M15</button>
-          <button class="snr-pill" data-tf="H1">H1</button>
-          <div class="snr-dropdown-wrap">
-            <button class="snr-pill tf-dropdown" id="snrTfDropdownBtn">TF ▾</button>
-            <div class="snr-dropdown-menu" id="snrTfMenu" style="display:none;">
-              <div data-tf="M3">M3</div>
-              <div data-tf="M30">M30</div>
-              <div data-tf="H4">H4</div>
-              <div data-tf="D1">D1</div>
-            </div>
-          </div>
-        </div>
-        <div class="snr-tools">
-          <button class="snr-icon-btn snr-btn-lines active" id="btnToggleSnrLines" title="Togol Garisan SNR Rays & Order Block">📐</button>
-          <button class="snr-icon-btn" id="snrZoomOut" title="Zoom Out">−</button>
-          <button class="snr-icon-btn" id="snrZoomIn" title="Zoom In">+</button>
-          <button class="snr-icon-btn" id="snrReset" title="Reset View">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-            </svg>
-          </button>
-          <button class="snr-icon-btn snr-btn-fs" id="snrFullscreen" title="Buka Full Chart">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Chart Engine View Mode Selector (Amaterasu SNR AI vs TradingView Live Real-Time) -->
-      <div style="display:flex; justify-content:center; gap:8px; margin: 6px 0 10px;">
-        <button class="snr-mode-toggle active" id="btnModeSnr">⚡ Amaterasu SNR AI</button>
-        <button class="snr-mode-toggle" id="btnModeTv">📊 TradingView Live Feed</button>
-      </div>
-
-      <div class="tv-live-embed-wrap" id="tvLiveEmbedWrap" style="display:block; width:100%; height:460px; border-radius:10px; overflow:hidden; border:1px solid rgba(239,45,61,0.25); background:#06070a; margin-bottom:10px; position:relative;"></div>
-      <div class="snr-canvas-wrap" id="snrCanvasWrap" style="display:none;"></div>
-
-      <div class="snr-disclaimer">
-        For educational purposes only. Not financial advice.
-      </div>
-
-      <button class="btn-full-chart" id="btnOpenFullChart">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
-        </svg>
-        <span>Buka Full Chart (Zoom In / Out)</span>
-      </button>
-
-      <button class="btn-tv-app" id="btnOpenTradingView">
-        <svg class="tv-icon" width="22" height="15" viewBox="0 0 36 24" fill="currentColor">
-          <path d="M0 19.5V4.5C0 3.67 0.67 3 1.5 3H6.5C7.33 3 8 3.67 8 4.5V19.5C8 20.33 7.33 21 6.5 21H1.5C0.67 21 0 20.33 0 19.5ZM13 14.5V4.5C13 3.67 13.67 3 14.5 3H19.5C20.33 3 21 3.67 21 4.5V14.5C21 15.33 20.33 16 19.5 16H14.5C13.67 16 13 15.33 13 14.5ZM26 21.5V4.5C26 3.67 26.67 3 27.5 3H32.5C33.33 3 34 3.67 34 4.5V21.5C34 22.33 33.33 23 32.5 23H27.5C26.67 23 26 22.33 26 21.5Z"/>
-        </svg>
-        <span>Open in TradingView app</span>
-      </button>
-    </div>
-
-    <!-- 2. Interactive Asset Switcher with Drag-to-Scroll & Navigation Arrows -->
-    <div class="pair-switcher-container">
-      <div class="pair-switcher-head">
-        <span class="lbl-assets">MARKET ASSETS (${ALL_INSTRUMENTS.length})</span>
-        <button class="btn-all-pairs" id="btnAllPairsDropdown">Semua Pair ▾</button>
-      </div>
-      <div class="pair-chips-track-wrap">
-        <button class="pair-scroll-arrow left" id="pairScrollLeft" title="Scroll Kiri">‹</button>
-        <div class="pair-chips-scroll" id="pairChips">
-          ${ALL_INSTRUMENTS.map(p => `
-            <button class="pair-chip-btn ${p.id === inst.id ? 'active' : ''}" data-sym="${p.id}" style="display:flex; align-items:center; gap:6px; white-space:nowrap; padding:7px 13px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid ${p.id === inst.id ? 'var(--solar-gold)' : (globalSig.status === 'ACTIVE' && globalSig.symbol === p.id ? '#00e676' : 'rgba(255,255,255,0.1)')}; background:${p.id === inst.id ? 'rgba(255,160,0,0.18)' : (globalSig.status === 'ACTIVE' && globalSig.symbol === p.id ? 'rgba(0,230,118,0.12)' : 'rgba(255,255,255,0.03)')}; color:${p.id === inst.id ? '#fff' : (globalSig.status === 'ACTIVE' && globalSig.symbol === p.id ? '#00e676' : '#8e9aa8')}; cursor:pointer; transition:all 0.18s ease; flex-shrink:0;">
-              <span>${p.icon}</span>
-              <span>${p.id}</span>
-              ${globalSig.status === 'ACTIVE' && globalSig.symbol === p.id ? '<span style="background:#00e676; color:#06070a; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:10px; margin-left:2px; animation:pulseDot 1.2s infinite; letter-spacing:0.5px;">LIVE</span>' : ''}
-            </button>
-          `).join('')}
-        </div>
-        <button class="pair-scroll-arrow right" id="pairScrollRight" title="Scroll Kanan">›</button>
-      </div>
-    </div>
-
-    <!-- 3. AI Execution Ticket / Scanner, SOP Guide & Recent Telemetry -->
-    <div style="max-width:440px; margin:0 auto;">
-      <!-- SOP Guide Button -->
-      <button class="btn-sop-guide" id="btnOpenSopGuide">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-        </svg>
-        <span>Panduan SOP Signal & Kawalan Risiko</span>
-        <span class="sop-tag">4 LANGKAH</span>
-      </button>
-
-      ${ticketHtml}
-
-      ${onPipsHtml}
-
-      <!-- Recent Verified Signals History Section -->
-      <div class="recent-signals-card" style="margin-top:16px; background:#0b1118; border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px 16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.07); padding-bottom:8px;">
-          <b style="font-family:'Space Grotesk',sans-serif; font-size:13px; color:#f1f5f9; display:flex; align-items:center; gap:6px;">
-            <span>📊</span> Rekod Telemetri Signal Terkini
-          </b>
-          <span style="font-size:11px; color:#f5c451; font-weight:700;">Winrate 94% · Verified</span>
-        </div>
-        <div class="recent-signals-list" style="display:flex; flex-direction:column; gap:8px;">
-          ${((AppState && AppState.signals) || []).slice(0, 5).map(s => {
-            const isBe = s.status === 'BE' || (s.status === 'SL' && s.peak >= 25);
-            const pips = isBe ? 0 : s.pips;
-            const pipsLabel = isBe ? '🛡️ BE (0p)' : (pips > 0 ? `+${pips}p` : `${pips}p`);
-            const pipsColor = isBe ? 'var(--solar-gold)' : (pips > 0 ? '#00e676' : '#ef5350');
-            const pipsBg = isBe ? 'rgba(245,196,81,0.15)' : (pips > 0 ? 'rgba(0,230,118,0.12)' : 'rgba(239,83,80,0.12)');
-            const pipsBorder = isBe ? 'rgba(245,196,81,0.4)' : (pips > 0 ? 'rgba(0,230,118,0.3)' : 'rgba(239,83,80,0.3)');
-
-            return `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:#111722; border-radius:8px; border:1px solid rgba(255,255,255,0.05); font-size:12px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-weight:800; color:${s.type === 'BUY' ? '#00e676' : '#ef5350'};">${s.type}</span>
-                <b style="color:#fff;">${s.symbol}</b>
-                <span class="muted" style="font-size:11px;">@ ${num(s.entry)}</span>
-              </div>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span class="muted" style="font-size:11px;">${s.time}</span>
-                <span style="font-weight:800; font-size:11.5px; color:${pipsColor}; background:${pipsBg}; padding:2px 7px; border-radius:6px; border:1px solid ${pipsBorder};">
-                  ${pipsLabel}
-                </span>
-              </div>
-            </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    </div>
-  </section>`;
-
-  // Unified Real-Time Chart Engine (Amaterasu SNR AI + TradingView Live Sync)
-  let currentActiveTf = 'M15';
-  let currentChartMode = 'snr'; // 'snr' | 'tv'
-  let snrLinesVisible = true;
-
-  const btnModeSnr = $('#btnModeSnr', main);
-  const btnModeTv = $('#btnModeTv', main);
-  const tvEmbedWrap = $('#tvLiveEmbedWrap', main);
-  const canvasWrap = $('#snrCanvasWrap', main);
-  if (canvasWrap) canvasWrap.style.display = 'none';
-
-  const updateActiveTrendRow = () => {
-    $$('.trend-row-snr', main).forEach(row => {
-      const tfEl = row.querySelector('.tf-code');
-      const tf = tfEl ? tfEl.textContent.trim() : null;
-      if (tf === currentActiveTf) {
-        row.style.border = '1px solid var(--solar-gold)';
-        row.style.background = 'rgba(245, 196, 81, 0.12)';
-        row.style.boxShadow = '0 0 10px rgba(245, 196, 81, 0.2)';
-      } else {
-        row.style.border = '1px solid rgba(255, 255, 255, 0.06)';
-        row.style.background = 'rgba(255, 255, 255, 0.02)';
-        row.style.boxShadow = 'none';
-      }
-    });
-  };
-
-  const renderTvChart = () => {
-    if (!tvEmbedWrap) return;
-    const sym = tvSymbols[inst.id] || 'PEPPERSTONE:XAUUSD';
-    const interval = tfToTvInterval[currentActiveTf] || '15';
-    const liveP = parseFloat(Market.getLivePrice(inst.id) || inst.basePrice);
-    const d = inst.decimals || (inst.id === 'XAUUSD' || inst.id === 'WTI' ? 2 : inst.id.includes('JPY') ? 3 : inst.category === 'Forex' ? 4 : 1);
-    
-    // Automatically calibrate to active timeframe!
-    const tfConf = TF_AUTO_CONFIG[currentActiveTf] || TF_AUTO_CONFIG.M15;
-    
-    const isGold = inst.id === 'XAUUSD';
-    const isCrypto = inst.id === 'BTCUSD';
-    const isIdx = inst.category === 'Indices';
-    const isJpy = inst.id.includes('JPY');
-
-    const baseStep1 = isGold ? 5.5 : isCrypto ? 280 : isIdx ? 75 : isJpy ? 0.35 : 0.0025;
-    const baseStep2 = isGold ? 12.0 : isCrypto ? 650 : isIdx ? 160 : isJpy ? 0.80 : 0.0055;
-
-    // Timeframe-adapted pip steps
-    const step1 = Number((baseStep1 * tfConf.mult).toFixed(d));
-    const step2 = Number((baseStep2 * tfConf.mult).toFixed(d));
-
-    const r2Val = (liveP + step2).toFixed(d);
-    const r1Val = (liveP + step1).toFixed(d);
-    const s1Val = (liveP - step1).toFixed(d);
-    const s2Val = (liveP - step2).toFixed(d);
-
-    const isBull = inst.bias === 'BULLISH' || (globalSig.status === 'ACTIVE' && globalSig.type === 'BUY');
-    
-    // Proportional Y levels in the 460px viewport:
-    // Upper quadrant (Supply): R2 at 115px, R1 at 175px
-    // Center reference (Live quote): 240px
-    // Lower quadrant (Demand): S1 at 305px, S2 at 365px
-    const yR2 = 115;
-    const yR1 = 175;
-    const yLive = 240;
-    const yS1 = 305;
-    const yS2 = 365;
-
-    const hudHtml = currentChartMode === 'snr' ? `
-      <div class="amaterasu-snr-hud" style="position:absolute; top:8px; left:8px; z-index:11; pointer-events:none; background:rgba(7,10,15,0.92); backdrop-filter:blur(8px); border:1px solid rgba(239,45,61,0.35); border-radius:8px; padding:7px 10px; font-family:'Space Grotesk',sans-serif; box-shadow:0 6px 20px rgba(0,0,0,0.65); max-width:85%;">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:4px;">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#00e676; box-shadow:0 0 8px #00e676; animation:pulseDot 1.2s infinite;"></span>
-            <b style="font-size:11px; color:#fff; letter-spacing:0.4px;">AMATERASU SNR AI · LIVE</b>
-          </div>
-          <span style="font-size:9.5px; background:rgba(239,45,61,0.22); color:#ff5252; border:1px solid rgba(239,45,61,0.4); padding:1px 5px; border-radius:4px; font-weight:800;">${tfConf.label}</span>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px 10px; font-size:10px;">
-          <div style="color:#ef5350;"><b>R2 (${currentActiveTf}):</b> ${r2Val}</div>
-          <div style="color:#00e676;"><b>S1 (${currentActiveTf}):</b> ${s1Val}</div>
-          <div style="color:#ff8a80;"><b>R1 (${currentActiveTf}):</b> ${r1Val}</div>
-          <div style="color:#69f0ae;"><b>S2 (${currentActiveTf}):</b> ${s2Val}</div>
-        </div>
-        <div style="margin-top:4px; font-size:9px; color:#f5c451; font-weight:600; display:flex; align-items:center; gap:4px;">
-          <span>⚡</span> Amaterasu SMC ${currentActiveTf} Auto-Synced · Target: ${tfConf.pipsTarget} · Live Quote: ${num(liveP, d)}
-        </div>
-      </div>
-    ` : '';
-
-    const raysHtml = (currentChartMode === 'snr' && snrLinesVisible) ? `
-      <div class="snr-forward-rays-wrap" id="snrForwardRaysWrap">
-        <!-- Amaterasu SMC Shaded Order Block Zone (Projected forward from latest candle) -->
-        <div class="amaterasu-smc-block-zone ${isBull ? 'demand' : 'supply'}" style="top:${isBull ? yS1 : yR2}px; height:${isBull ? (yS2 - yS1) : (yR1 - yR2)}px;">
-          <span class="amaterasu-smc-label" style="color:${isBull ? '#00e676' : '#ef5350'};">
-            <span>⚡</span> AMATERASU SMC ${isBull ? 'DEMAND' : 'SUPPLY'} ORDER BLOCK (${tfConf.label})
-          </span>
-        </div>
-
-        <!-- 1. 🔴 R2 Major Supply Ray Line -->
-        <div class="snr-ray-container ray-r2" style="top:${yR2}px;">
-          <div class="snr-ray-dot"></div>
-          <div class="snr-ray-line"></div>
-          <span class="snr-ray-tag tag-r2">🔴 R2 · ${tfConf.tagR2} · ${r2Val}</span>
-        </div>
-
-        <!-- 2. 🔴 R1 Rejection Resistance Ray Line -->
-        <div class="snr-ray-container ray-r1" style="top:${yR1}px;">
-          <div class="snr-ray-dot"></div>
-          <div class="snr-ray-line"></div>
-          <span class="snr-ray-tag tag-r1">🔴 R1 · ${tfConf.tagR1} · ${r1Val}</span>
-        </div>
-
-        <!-- 3. ⚡ Live Market Quote Ray Line -->
-        <div class="snr-ray-container ray-live" style="top:${yLive}px;">
-          <div class="snr-ray-dot"></div>
-          <div class="snr-ray-line"></div>
-          <span class="snr-ray-tag tag-live">● LIVE ${num(liveP, d)}</span>
-        </div>
-
-        <!-- 4. 🟢 S1 Instant Demand Ray Line -->
-        <div class="snr-ray-container ray-s1" style="top:${yS1}px;">
-          <div class="snr-ray-dot"></div>
-          <div class="snr-ray-line"></div>
-          <span class="snr-ray-tag tag-s1">🟢 S1 · ${tfConf.tagS1} · ${s1Val}</span>
-        </div>
-
-        <!-- 5. 🟢 S2 Major Support Base Ray Line -->
-        <div class="snr-ray-container ray-s2" style="top:${yS2}px;">
-          <div class="snr-ray-dot"></div>
-          <div class="snr-ray-line"></div>
-          <span class="snr-ray-tag tag-s2">🟢 S2 · ${tfConf.tagS2} · ${s2Val}</span>
-        </div>
-      </div>
-    ` : '';
-
-    updateActiveTrendRow();
-
-    tvEmbedWrap.style.display = 'block';
-    tvEmbedWrap.innerHTML = `
-      ${hudHtml}
-      ${raysHtml}
-      <iframe 
-        src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(sym)}&interval=${interval}&theme=dark&style=1&timezone=Asia%2FKuala_Lumpur&hide_top_toolbar=${currentChartMode === 'snr' ? '1' : '0'}&studies=%5B%5D&hide_side_toolbar=1" 
-        style="width:100%; height:100%; border:none; display:block;"
-        loading="lazy">
-      </iframe>
-    `;
-  };
-
-  // Initial Load - render real live chart immediately
-  renderTvChart();
-
-  if (btnModeSnr && btnModeTv) {
-    btnModeSnr.onclick = () => {
-      btnModeSnr.classList.add('active');
-      btnModeTv.classList.remove('active');
-      currentChartMode = 'snr';
-      renderTvChart();
-    };
-
-    btnModeTv.onclick = () => {
-      btnModeTv.classList.add('active');
-      btnModeSnr.classList.remove('active');
-      currentChartMode = 'tv';
-      renderTvChart();
-    };
-  }
-
-  // Toggle SNR Rays & Amaterasu SMC Lines
-  const btnToggleLines = $('#btnToggleSnrLines', main);
-  if (btnToggleLines) {
-    btnToggleLines.onclick = () => {
-      snrLinesVisible = !snrLinesVisible;
-      btnToggleLines.classList.toggle('active', snrLinesVisible);
-      renderTvChart();
-      toast(snrLinesVisible ? '📐 Garisan Forward SNR Rays & Order Block Diaktifkan' : '📐 Garisan Forward SNR Rays Disembunyikan');
-    };
-  }
-
-  // Timeframe Pills Interactions
-  const pills = $$('#snrTfPills .snr-pill:not(.tf-dropdown)', main);
-  const dropBtn = $('#snrTfDropdownBtn', main);
-  const dropMenu = $('#snrTfMenu', main);
-
-  pills.forEach(p => {
-    p.onclick = () => {
-      pills.forEach(b => b.classList.remove('active'));
-      p.classList.add('active');
-      if (dropBtn) {
-        dropBtn.classList.remove('active');
-        dropBtn.textContent = 'TF ▾';
-      }
-      currentActiveTf = p.dataset.tf;
-      renderTvChart();
-    };
-  });
-
-  // Timeframe Dropdown
-  if (dropBtn && dropMenu) {
-    dropBtn.onclick = (e) => {
-      e.stopPropagation();
-      dropMenu.style.display = dropMenu.style.display === 'none' ? 'block' : 'none';
-    };
-    $$('#snrTfMenu div', main).forEach(item => {
-      item.onclick = (e) => {
-        e.stopPropagation();
-        pills.forEach(b => b.classList.remove('active'));
-        currentActiveTf = item.dataset.tf;
-        dropBtn.textContent = currentActiveTf + ' ▾';
-        dropBtn.classList.add('active');
-        dropMenu.style.display = 'none';
-        renderTvChart();
-      };
-    });
-  }
-
-  const closeMenu = (e) => {
-    if (dropMenu && !dropMenu.contains(e.target) && e.target !== dropBtn) {
-      dropMenu.style.display = 'none';
-    }
-  };
-  document.addEventListener('click', closeMenu);
-
-  // Screener Rows Click to Switch Timeframe (M1, M5, M15)
-  $$('.trend-row-snr', main).forEach(row => {
-    row.style.cursor = 'pointer';
-    row.onclick = () => {
-      const tfEl = row.querySelector('.tf-code');
-      const tf = tfEl ? tfEl.textContent.trim() : null;
-      if (!tf) return;
-      currentActiveTf = tf;
-      const matchedPill = Array.from(pills).find(b => b.dataset.tf === tf);
-      if (matchedPill) {
-        pills.forEach(b => b.classList.remove('active'));
-        matchedPill.classList.add('active');
-        if (dropBtn) {
-          dropBtn.classList.remove('active');
-          dropBtn.textContent = 'TF ▾';
-        }
-      } else if (dropBtn) {
-        pills.forEach(b => b.classList.remove('active'));
-        dropBtn.textContent = tf + ' ▾';
-        dropBtn.classList.add('active');
-      }
-      renderTvChart();
-    };
-  });
-
-  // Pair Chips Switcher Interactions (Smooth Drag-to-Scroll + Wheel + Arrows)
-  const chips = $('#pairChips', main);
-  if (chips) {
-    // Auto-scroll active chip into view on load
-    const activeChip = chips.querySelector('.pair-chip-btn.active');
-    if (activeChip) {
-      setTimeout(() => {
-        activeChip.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
-      }, 60);
-    }
-
-    // Left and Right Arrow navigation
-    const arrowL = $('#pairScrollLeft', main);
-    const arrowR = $('#pairScrollRight', main);
-    if (arrowL) arrowL.onclick = () => chips.scrollBy({ left: -140, behavior: 'smooth' });
-    if (arrowR) arrowR.onclick = () => chips.scrollBy({ left: 140, behavior: 'smooth' });
-
-    // Mouse wheel horizontal scroll
-    chips.addEventListener('wheel', (e) => {
-      if (e.deltaY !== 0) {
-        e.preventDefault();
-        chips.scrollLeft += e.deltaY * 0.9;
-      }
-    }, { passive: false });
-
-    // Mouse drag-to-scroll
-    let isDown = false;
-    let startX = 0, scrollStart = 0;
-    chips.addEventListener('mousedown', (e) => {
-      isDown = true;
-      chips.classList.add('dragging');
-      startX = e.pageX - chips.offsetLeft;
-      scrollStart = chips.scrollLeft;
-    });
-    window.addEventListener('mouseup', () => {
-      isDown = false;
-      if (chips) chips.classList.remove('dragging');
-    });
-    window.addEventListener('mousemove', (e) => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - chips.offsetLeft;
-      const walk = (x - startX) * 1.5;
-      chips.scrollLeft = scrollStart - walk;
-    });
-  }
-
-  // Handle clicking on pair chips
-  $$('.pair-chip-btn', main).forEach(btn => {
-    btn.onclick = () => {
-      const sym = btn.dataset.sym;
-      store.set('selected_signal_sym', sym);
-      Market.activeSymbol = sym;
-      Market.updateUI();
-      SignalPage(main);
-    };
-  });
+function bindSignalInteractiveEvents(main, state, inst) {
+  const { activeList, globalSig, isTp1 } = state;
 
   // Top Active Signal Bar Navigation (Scroll down to On Pips section)
   const topActiveBar = $('#topActiveSignalBar', main);
@@ -2277,7 +1815,6 @@ function SignalPage(main) {
         Market.activeSymbol = sym;
         Market.updateUI();
         SignalPage(main);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     };
   }
@@ -2291,7 +1828,6 @@ function SignalPage(main) {
         Market.activeSymbol = sym;
         Market.updateUI();
         SignalPage(main);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
         toast(`🔍 Membuka analisis chart & tiket ${sym}`);
       }
     };
@@ -2501,6 +2037,527 @@ function SignalPage(main) {
       openShareWinModal(setupSig, false);
     };
   }
+}
+
+// In-place UI updater for Signal Page (Preserves 100% of scroll position and avoids reloading TradingView iframe)
+window.refreshSignalPageUI = function() {
+  const mainEl = document.getElementById('main');
+  const ticketArea = document.getElementById('signalTicketArea');
+  const onPipsArea = document.getElementById('signalOnPipsArea');
+  const topBarWrap = document.getElementById('topActiveSignalBarWrap');
+  if (!mainEl || !ticketArea || !onPipsArea) return false;
+
+  const activeSym = store.get('selected_signal_sym') || 'XAUUSD';
+  const currentInst = ALL_INSTRUMENTS.find(i => i.id === activeSym) || ALL_INSTRUMENTS[0];
+  const state = getSignalPageState(currentInst);
+
+  if (topBarWrap) topBarWrap.innerHTML = getSignalTopActiveBarHtml(state);
+  ticketArea.innerHTML = getSignalTicketHtml(state, currentInst);
+  onPipsArea.innerHTML = getSignalOnPipsHtml(state);
+
+  bindSignalInteractiveEvents(mainEl, state, currentInst);
+  Market.updateUI();
+  return true;
+};
+
+function SignalPage(main) {
+  let activeSymId = store.get('selected_signal_sym') || 'XAUUSD';
+  let inst = ALL_INSTRUMENTS.find(i => i.id === activeSymId) || ALL_INSTRUMENTS[0];
+  Market.activeSymbol = inst.id;
+  Market.updateUI();
+
+  const state = getSignalPageState(inst);
+  const ticketHtml = getSignalTicketHtml(state, inst);
+  const onPipsHtml = getSignalOnPipsHtml(state);
+  const topActiveBarHtml = getSignalTopActiveBarHtml(state);
+
+  main.innerHTML = `<section class="page" style="padding-top: 4px;">
+    ${solarGlow()}
+
+    <div id="topActiveSignalBarWrap">${topActiveBarHtml}</div>
+
+    <!-- AMATERASU X: Itachi Anime Hero Banner -->
+    <div class="itachi-hero-banner">
+      <div class="itachi-banner-bg" style="background-image: url('img/itachi_banner.jpg');"></div>
+      <div class="itachi-banner-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span class="kanji-badge">天照 · AMATERASU X</span>
+          <span style="font-size:10px; font-weight:800; color:#00D68F; background:rgba(0,214,143,0.15); border:1px solid #00D68F; padding:2px 7px; border-radius:10px;">
+            AI 2.4 ONLINE
+          </span>
+        </div>
+        <div style="font-size:14px; font-weight:900; color:#FFF; font-family:'Space Grotesk',sans-serif; letter-spacing:0.3px;">
+          AI SIGNALS. REAL OPPORTUNITIES.
+        </div>
+        <div style="font-size:11px; color:#A0A6B4; margin-top:2px; line-height:1.35;">
+          Advanced Institutional SMC & Malaysian SNR analysis. Precise entries. Higher probability.
+        </div>
+      </div>
+    </div>
+    
+    <div class="copytrade-showcase-container" id="copytradeShowcaseSignal" style="margin-bottom:14px;">${getCopytradeCardHTML(window.activeCopytradeVault || 1)}</div>
+
+    <!-- 1. 100% Match Interactive SNR Chart Card with Screener Trends (Gambar Pertama Exact) -->
+    <div class="snr-chart-card">
+      <div class="snr-screener-block">
+        <div class="trend-row-snr">
+          <span class="tf-code">M1</span>
+          <span class="trend-val ${inst.m1 === 'UP' ? 'up' : inst.m1 === 'DOWN' ? 'down' : 'side'}">TREND ${inst.m1 === 'UP' ? 'UP' : inst.m1 === 'DOWN' ? 'DOWN' : 'SIDE'}</span>
+          <span class="trend-circle ${inst.m1 === 'UP' ? 'up' : inst.m1 === 'DOWN' ? 'down' : 'side'}"></span>
+        </div>
+        <div class="trend-row-snr">
+          <span class="tf-code">M5</span>
+          <span class="trend-val ${inst.m5 === 'UP' ? 'up' : inst.m5 === 'DOWN' ? 'down' : 'side'}">TREND ${inst.m5 === 'UP' ? 'UP' : inst.m5 === 'DOWN' ? 'DOWN' : 'SIDE'}</span>
+          <span class="trend-circle ${inst.m5 === 'UP' ? 'up' : inst.m5 === 'DOWN' ? 'down' : 'side'}"></span>
+        </div>
+        <div class="trend-row-snr">
+          <span class="tf-code">M15</span>
+          <span class="trend-val ${inst.m15 === 'UP' ? 'up' : inst.m15 === 'DOWN' ? 'down' : 'side'}">TREND ${inst.m15 === 'UP' ? 'UP' : inst.m15 === 'DOWN' ? 'DOWN' : 'SIDE'}</span>
+          <span class="trend-circle ${inst.m15 === 'UP' ? 'up' : inst.m15 === 'DOWN' ? 'down' : 'side'}"></span>
+        </div>
+      </div>
+
+      <div class="snr-toolbar">
+        <div class="snr-tf-pills" id="snrTfPills">
+          <button class="snr-pill" data-tf="M1">M1</button>
+          <button class="snr-pill" data-tf="M5">M5</button>
+          <button class="snr-pill active" data-tf="M15">M15</button>
+          <button class="snr-pill" data-tf="H1">H1</button>
+          <div class="snr-dropdown-wrap">
+            <button class="snr-pill tf-dropdown" id="snrTfDropdownBtn">TF ▾</button>
+            <div class="snr-dropdown-menu" id="snrTfMenu" style="display:none;">
+              <div data-tf="M3">M3</div>
+              <div data-tf="M30">M30</div>
+              <div data-tf="H4">H4</div>
+              <div data-tf="D1">D1</div>
+            </div>
+          </div>
+        </div>
+        <div class="snr-tools">
+          <button class="snr-icon-btn snr-btn-lines active" id="btnToggleSnrLines" title="Togol Garisan SNR Rays & Order Block">📐</button>
+          <button class="snr-icon-btn" id="snrZoomOut" title="Zoom Out">−</button>
+          <button class="snr-icon-btn" id="snrZoomIn" title="Zoom In">+</button>
+          <button class="snr-icon-btn" id="snrReset" title="Reset View">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+          </button>
+          <button class="snr-icon-btn snr-btn-fs" id="snrFullscreen" title="Buka Full Chart">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chart Engine View Mode Selector (Amaterasu SNR AI vs TradingView Live Real-Time) -->
+      <div style="display:flex; justify-content:center; gap:8px; margin: 6px 0 10px;">
+        <button class="snr-mode-toggle active" id="btnModeSnr">⚡ Amaterasu SNR AI</button>
+        <button class="snr-mode-toggle" id="btnModeTv">📊 TradingView Live Feed</button>
+      </div>
+
+      <div class="tv-live-embed-wrap" id="tvLiveEmbedWrap" style="display:block; width:100%; height:460px; border-radius:10px; overflow:hidden; border:1px solid rgba(239,45,61,0.25); background:#06070a; margin-bottom:10px; position:relative;"></div>
+      <div class="snr-canvas-wrap" id="snrCanvasWrap" style="display:none;"></div>
+
+      <div class="snr-disclaimer">
+        For educational purposes only. Not financial advice.
+      </div>
+
+      <button class="btn-full-chart" id="btnOpenFullChart">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+        </svg>
+        <span>Buka Full Chart (Zoom In / Out)</span>
+      </button>
+
+      <button class="btn-tv-app" id="btnOpenTradingView">
+        <svg class="tv-icon" width="22" height="15" viewBox="0 0 36 24" fill="currentColor">
+          <path d="M0 19.5V4.5C0 3.67 0.67 3 1.5 3H6.5C7.33 3 8 3.67 8 4.5V19.5C8 20.33 7.33 21 6.5 21H1.5C0.67 21 0 20.33 0 19.5ZM13 14.5V4.5C13 3.67 13.67 3 14.5 3H19.5C20.33 3 21 3.67 21 4.5V14.5C21 15.33 20.33 16 19.5 16H14.5C13.67 16 13 15.33 13 14.5ZM26 21.5V4.5C26 3.67 26.67 3 27.5 3H32.5C33.33 3 34 3.67 34 4.5V21.5C34 22.33 33.33 23 32.5 23H27.5C26.67 23 26 22.33 26 21.5Z"/>
+        </svg>
+        <span>Open in TradingView app</span>
+      </button>
+    </div>
+
+    <!-- 2. Interactive Asset Switcher with Drag-to-Scroll & Navigation Arrows -->
+    <div class="pair-switcher-container">
+      <div class="pair-switcher-head">
+        <span class="lbl-assets">MARKET ASSETS (${ALL_INSTRUMENTS.length})</span>
+        <button class="btn-all-pairs" id="btnAllPairsDropdown">Semua Pair ▾</button>
+      </div>
+      <div class="pair-chips-track-wrap">
+        <button class="pair-scroll-arrow left" id="pairScrollLeft" title="Scroll Kiri">‹</button>
+        <div class="pair-chips-scroll" id="pairChips">
+          ${ALL_INSTRUMENTS.map(p => `
+            <button class="pair-chip-btn ${p.id === inst.id ? 'active' : ''}" data-sym="${p.id}" style="display:flex; align-items:center; gap:6px; white-space:nowrap; padding:7px 13px; border-radius:20px; font-size:12px; font-weight:700; border:1px solid ${p.id === inst.id ? 'var(--solar-gold)' : (state.globalSig.status === 'ACTIVE' && state.globalSig.symbol === p.id ? '#00e676' : 'rgba(255,255,255,0.1)')}; background:${p.id === inst.id ? 'rgba(255,160,0,0.18)' : (state.globalSig.status === 'ACTIVE' && state.globalSig.symbol === p.id ? 'rgba(0,230,118,0.12)' : 'rgba(255,255,255,0.03)')}; color:${p.id === inst.id ? '#fff' : (state.globalSig.status === 'ACTIVE' && state.globalSig.symbol === p.id ? '#00e676' : '#8e9aa8')}; cursor:pointer; transition:all 0.18s ease; flex-shrink:0;">
+              <span>${p.icon}</span>
+              <span>${p.id}</span>
+              ${state.globalSig.status === 'ACTIVE' && state.globalSig.symbol === p.id ? '<span style="background:#00e676; color:#06070a; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:10px; margin-left:2px; animation:pulseDot 1.2s infinite; letter-spacing:0.5px;">LIVE</span>' : ''}
+            </button>
+          `).join('')}
+        </div>
+        <button class="pair-scroll-arrow right" id="pairScrollRight" title="Scroll Kanan">›</button>
+      </div>
+    </div>
+
+    <!-- 3. AI Execution Ticket / Scanner, SOP Guide & Recent Telemetry -->
+    <div style="max-width:440px; margin:0 auto;">
+      <!-- SOP Guide Button -->
+      <button class="btn-sop-guide" id="btnOpenSopGuide">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+        <span>Panduan SOP Signal & Kawalan Risiko</span>
+        <span class="sop-tag">4 LANGKAH</span>
+      </button>
+
+      <div id="signalTicketArea">${ticketHtml}</div>
+
+      <div id="signalOnPipsArea">${onPipsHtml}</div>
+
+      <!-- Recent Verified Signals History Section -->
+      <div class="recent-signals-card" style="margin-top:16px; background:#0b1118; border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.07); padding-bottom:8px;">
+          <b style="font-family:'Space Grotesk',sans-serif; font-size:13px; color:#f1f5f9; display:flex; align-items:center; gap:6px;">
+            <span>📊</span> Rekod Telemetri Signal Terkini
+          </b>
+          <span style="font-size:11px; color:#f5c451; font-weight:700;">Winrate 94% · Verified</span>
+        </div>
+        <div class="recent-signals-list" style="display:flex; flex-direction:column; gap:8px;">
+          ${((AppState && AppState.signals) || []).slice(0, 5).map(s => {
+            const isBe = s.status === 'BE' || (s.status === 'SL' && s.peak >= 25);
+            const pips = isBe ? 0 : s.pips;
+            const pipsLabel = isBe ? '🛡️ BE (0p)' : (pips > 0 ? `+${pips}p` : `${pips}p`);
+            const pipsColor = isBe ? 'var(--solar-gold)' : (pips > 0 ? '#00e676' : '#ef5350');
+            const pipsBg = isBe ? 'rgba(245,196,81,0.15)' : (pips > 0 ? 'rgba(0,230,118,0.12)' : 'rgba(239,83,80,0.12)');
+            const pipsBorder = isBe ? 'rgba(245,196,81,0.4)' : (pips > 0 ? 'rgba(0,230,118,0.3)' : 'rgba(239,83,80,0.3)');
+
+            return `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:#111722; border-radius:8px; border:1px solid rgba(255,255,255,0.05); font-size:12px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-weight:800; color:${s.type === 'BUY' ? '#00e676' : '#ef5350'};">${s.type}</span>
+                <b style="color:#fff;">${s.symbol}</b>
+                <span class="muted" style="font-size:11px;">@ ${num(s.entry)}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="muted" style="font-size:11px;">${s.time}</span>
+                <span style="font-weight:800; font-size:11.5px; color:${pipsColor}; background:${pipsBg}; padding:2px 7px; border-radius:6px; border:1px solid ${pipsBorder};">
+                  ${pipsLabel}
+                </span>
+              </div>
+            </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  </section>`;
+
+  // Unified Real-Time Chart Engine (Amaterasu SNR AI + TradingView Live Sync)
+  let currentActiveTf = 'M15';
+  let currentChartMode = 'snr'; // 'snr' | 'tv'
+  let snrLinesVisible = true;
+
+  const btnModeSnr = $('#btnModeSnr', main);
+  const btnModeTv = $('#btnModeTv', main);
+  const tvEmbedWrap = $('#tvLiveEmbedWrap', main);
+  const canvasWrap = $('#snrCanvasWrap', main);
+  if (canvasWrap) canvasWrap.style.display = 'none';
+
+  const updateActiveTrendRow = () => {
+    $$('.trend-row-snr', main).forEach(row => {
+      const tfEl = row.querySelector('.tf-code');
+      const tf = tfEl ? tfEl.textContent.trim() : null;
+      if (tf === currentActiveTf) {
+        row.style.border = '1px solid var(--solar-gold)';
+        row.style.background = 'rgba(245, 196, 81, 0.12)';
+        row.style.boxShadow = '0 0 10px rgba(245, 196, 81, 0.2)';
+      } else {
+        row.style.border = '1px solid rgba(255, 255, 255, 0.06)';
+        row.style.background = 'rgba(255, 255, 255, 0.02)';
+        row.style.boxShadow = 'none';
+      }
+    });
+  };
+
+  const renderTvChart = () => {
+    if (!tvEmbedWrap) return;
+    const sym = tvSymbols[inst.id] || 'PEPPERSTONE:XAUUSD';
+    const interval = tfToTvInterval[currentActiveTf] || '15';
+    const liveP = parseFloat(Market.getLivePrice(inst.id) || inst.basePrice);
+    const d = inst.decimals || (inst.id === 'XAUUSD' || inst.id === 'WTI' ? 2 : inst.id.includes('JPY') ? 3 : inst.category === 'Forex' ? 4 : 1);
+    
+    // Automatically calibrate to active timeframe!
+    const tfConf = TF_AUTO_CONFIG[currentActiveTf] || TF_AUTO_CONFIG.M15;
+    
+    const isGold = inst.id === 'XAUUSD';
+    const isCrypto = inst.id === 'BTCUSD';
+    const isIdx = inst.category === 'Indices';
+    const isJpy = inst.id.includes('JPY');
+
+    const baseStep1 = isGold ? 5.5 : isCrypto ? 280 : isIdx ? 75 : isJpy ? 0.35 : 0.0025;
+    const baseStep2 = isGold ? 12.0 : isCrypto ? 650 : isIdx ? 160 : isJpy ? 0.80 : 0.0055;
+
+    // Timeframe-adapted pip steps
+    const step1 = Number((baseStep1 * tfConf.mult).toFixed(d));
+    const step2 = Number((baseStep2 * tfConf.mult).toFixed(d));
+
+    const r2Val = (liveP + step2).toFixed(d);
+    const r1Val = (liveP + step1).toFixed(d);
+    const s1Val = (liveP - step1).toFixed(d);
+    const s2Val = (liveP - step2).toFixed(d);
+
+    const isBull = inst.bias === 'BULLISH' || (state.globalSig.status === 'ACTIVE' && state.globalSig.type === 'BUY');
+    
+    const yR2 = 115;
+    const yR1 = 175;
+    const yLive = 240;
+    const yS1 = 305;
+    const yS2 = 365;
+
+    const hudHtml = currentChartMode === 'snr' ? `
+      <div class="amaterasu-snr-hud" style="position:absolute; top:8px; left:8px; z-index:11; pointer-events:none; background:rgba(7,10,15,0.92); backdrop-filter:blur(8px); border:1px solid rgba(239,45,61,0.35); border-radius:8px; padding:7px 10px; font-family:'Space Grotesk',sans-serif; box-shadow:0 6px 20px rgba(0,0,0,0.65); max-width:85%;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#00e676; box-shadow:0 0 8px #00e676; animation:pulseDot 1.2s infinite;"></span>
+            <b style="font-size:11px; color:#fff; letter-spacing:0.4px;">AMATERASU SNR AI · LIVE</b>
+          </div>
+          <span style="font-size:9.5px; background:rgba(239,45,61,0.22); color:#ff5252; border:1px solid rgba(239,45,61,0.4); padding:1px 5px; border-radius:4px; font-weight:800;">${tfConf.label}</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px 10px; font-size:10px;">
+          <div style="color:#ef5350;"><b>R2 (${currentActiveTf}):</b> ${r2Val}</div>
+          <div style="color:#00e676;"><b>S1 (${currentActiveTf}):</b> ${s1Val}</div>
+          <div style="color:#ff8a80;"><b>R1 (${currentActiveTf}):</b> ${r1Val}</div>
+          <div style="color:#69f0ae;"><b>S2 (${currentActiveTf}):</b> ${s2Val}</div>
+        </div>
+        <div style="margin-top:4px; font-size:9px; color:#f5c451; font-weight:600; display:flex; align-items:center; gap:4px;">
+          <span>⚡</span> Amaterasu SMC ${currentActiveTf} Auto-Synced · Target: ${tfConf.pipsTarget} · Live Quote: ${num(liveP, d)}
+        </div>
+      </div>
+    ` : '';
+
+    const raysHtml = (currentChartMode === 'snr' && snrLinesVisible) ? `
+      <div class="snr-forward-rays-wrap" id="snrForwardRaysWrap">
+        <!-- Amaterasu SMC Shaded Order Block Zone (Projected forward from latest candle) -->
+        <div class="amaterasu-smc-block-zone ${isBull ? 'demand' : 'supply'}" style="top:${isBull ? yS1 : yR2}px; height:${isBull ? (yS2 - yS1) : (yR1 - yR2)}px;">
+          <span class="amaterasu-smc-label" style="color:${isBull ? '#00e676' : '#ef5350'};">
+            <span>⚡</span> AMATERASU SMC ${isBull ? 'DEMAND' : 'SUPPLY'} ORDER BLOCK (${tfConf.label})
+          </span>
+        </div>
+
+        <!-- 1. 🔴 R2 Major Supply Ray Line -->
+        <div class="snr-ray-container ray-r2" style="top:${yR2}px;">
+          <div class="snr-ray-dot"></div>
+          <div class="snr-ray-line"></div>
+          <span class="snr-ray-tag tag-r2">🔴 R2 · ${tfConf.tagR2} · ${r2Val}</span>
+        </div>
+
+        <!-- 2. 🔴 R1 Rejection Resistance Ray Line -->
+        <div class="snr-ray-container ray-r1" style="top:${yR1}px;">
+          <div class="snr-ray-dot"></div>
+          <div class="snr-ray-line"></div>
+          <span class="snr-ray-tag tag-r1">🔴 R1 · ${tfConf.tagR1} · ${r1Val}</span>
+        </div>
+
+        <!-- 3. ⚡ Live Market Quote Ray Line -->
+        <div class="snr-ray-container ray-live" style="top:${yLive}px;">
+          <div class="snr-ray-dot"></div>
+          <div class="snr-ray-line"></div>
+          <span class="snr-ray-tag tag-live">● LIVE ${num(liveP, d)}</span>
+        </div>
+
+        <!-- 4. 🟢 S1 Instant Demand Ray Line -->
+        <div class="snr-ray-container ray-s1" style="top:${yS1}px;">
+          <div class="snr-ray-dot"></div>
+          <div class="snr-ray-line"></div>
+          <span class="snr-ray-tag tag-s1">🟢 S1 · ${tfConf.tagS1} · ${s1Val}</span>
+        </div>
+
+        <!-- 5. 🟢 S2 Major Support Base Ray Line -->
+        <div class="snr-ray-container ray-s2" style="top:${yS2}px;">
+          <div class="snr-ray-dot"></div>
+          <div class="snr-ray-line"></div>
+          <span class="snr-ray-tag tag-s2">🟢 S2 · ${tfConf.tagS2} · ${s2Val}</span>
+        </div>
+      </div>
+    ` : '';
+
+    updateActiveTrendRow();
+
+    tvEmbedWrap.style.display = 'block';
+    tvEmbedWrap.innerHTML = `
+      ${hudHtml}
+      ${raysHtml}
+      <iframe 
+        src="https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(sym)}&interval=${interval}&theme=dark&style=1&timezone=Asia%2FKuala_Lumpur&hide_top_toolbar=${currentChartMode === 'snr' ? '1' : '0'}&studies=%5B%5D&hide_side_toolbar=1" 
+        style="width:100%; height:100%; border:none; display:block;"
+        loading="lazy">
+      </iframe>
+    `;
+  };
+
+  // Initial Load - render real live chart immediately
+  renderTvChart();
+
+  if (btnModeSnr && btnModeTv) {
+    btnModeSnr.onclick = () => {
+      btnModeSnr.classList.add('active');
+      btnModeTv.classList.remove('active');
+      currentChartMode = 'snr';
+      renderTvChart();
+    };
+
+    btnModeTv.onclick = () => {
+      btnModeTv.classList.add('active');
+      btnModeSnr.classList.remove('active');
+      currentChartMode = 'tv';
+      renderTvChart();
+    };
+  }
+
+  // Toggle SNR Rays & Amaterasu SMC Lines
+  const btnToggleLines = $('#btnToggleSnrLines', main);
+  if (btnToggleLines) {
+    btnToggleLines.onclick = () => {
+      snrLinesVisible = !snrLinesVisible;
+      btnToggleLines.classList.toggle('active', snrLinesVisible);
+      renderTvChart();
+      toast(snrLinesVisible ? '📐 Garisan Forward SNR Rays & Order Block Diaktifkan' : '📐 Garisan Forward SNR Rays Disembunyikan');
+    };
+  }
+
+  // Timeframe Pills Interactions
+  const pills = $$('#snrTfPills .snr-pill:not(.tf-dropdown)', main);
+  const dropBtn = $('#snrTfDropdownBtn', main);
+  const dropMenu = $('#snrTfMenu', main);
+
+  pills.forEach(p => {
+    p.onclick = () => {
+      pills.forEach(b => b.classList.remove('active'));
+      p.classList.add('active');
+      if (dropBtn) {
+        dropBtn.classList.remove('active');
+        dropBtn.textContent = 'TF ▾';
+      }
+      currentActiveTf = p.dataset.tf;
+      renderTvChart();
+    };
+  });
+
+  // Timeframe Dropdown
+  if (dropBtn && dropMenu) {
+    dropBtn.onclick = (e) => {
+      e.stopPropagation();
+      dropMenu.style.display = dropMenu.style.display === 'none' ? 'block' : 'none';
+    };
+    $$('#snrTfMenu div', main).forEach(item => {
+      item.onclick = (e) => {
+        e.stopPropagation();
+        pills.forEach(b => b.classList.remove('active'));
+        currentActiveTf = item.dataset.tf;
+        dropBtn.textContent = currentActiveTf + ' ▾';
+        dropBtn.classList.add('active');
+        dropMenu.style.display = 'none';
+        renderTvChart();
+      };
+    });
+  }
+
+  const closeMenu = (e) => {
+    if (dropMenu && !dropMenu.contains(e.target) && e.target !== dropBtn) {
+      dropMenu.style.display = 'none';
+    }
+  };
+  document.addEventListener('click', closeMenu);
+
+  // Screener Rows Click to Switch Timeframe (M1, M5, M15)
+  $$('.trend-row-snr', main).forEach(row => {
+    row.style.cursor = 'pointer';
+    row.onclick = () => {
+      const tfEl = row.querySelector('.tf-code');
+      const tf = tfEl ? tfEl.textContent.trim() : null;
+      if (!tf) return;
+      currentActiveTf = tf;
+      const matchedPill = Array.from(pills).find(b => b.dataset.tf === tf);
+      if (matchedPill) {
+        pills.forEach(b => b.classList.remove('active'));
+        matchedPill.classList.add('active');
+        if (dropBtn) {
+          dropBtn.classList.remove('active');
+          dropBtn.textContent = 'TF ▾';
+        }
+      } else if (dropBtn) {
+        pills.forEach(b => b.classList.remove('active'));
+        dropBtn.textContent = tf + ' ▾';
+        dropBtn.classList.add('active');
+      }
+      renderTvChart();
+    };
+  });
+
+  // Pair Chips Switcher Interactions (Horizontal Smooth Drag-to-Scroll + Wheel + Arrows)
+  const chips = $('#pairChips', main);
+  if (chips) {
+    // Horizontal centering inside chips container ONLY - DOES NOT TOUCH VERTICAL WINDOW SCROLL!
+    const activeChip = chips.querySelector('.pair-chip-btn.active');
+    if (activeChip) {
+      const chipOffset = activeChip.offsetLeft - (chips.clientWidth / 2) + (activeChip.clientWidth / 2);
+      chips.scrollTo({ left: Math.max(0, chipOffset), behavior: 'smooth' });
+    }
+
+    // Left and Right Arrow navigation
+    const arrowL = $('#pairScrollLeft', main);
+    const arrowR = $('#pairScrollRight', main);
+    if (arrowL) arrowL.onclick = () => chips.scrollBy({ left: -140, behavior: 'smooth' });
+    if (arrowR) arrowR.onclick = () => chips.scrollBy({ left: 140, behavior: 'smooth' });
+
+    // Mouse wheel horizontal scroll
+    chips.addEventListener('wheel', (e) => {
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        chips.scrollLeft += e.deltaY * 0.9;
+      }
+    }, { passive: false });
+
+    // Mouse drag-to-scroll
+    let isDown = false;
+    let startX = 0, scrollStart = 0;
+    chips.addEventListener('mousedown', (e) => {
+      isDown = true;
+      chips.classList.add('dragging');
+      startX = e.pageX - chips.offsetLeft;
+      scrollStart = chips.scrollLeft;
+    });
+    window.addEventListener('mouseup', () => {
+      isDown = false;
+      if (chips) chips.classList.remove('dragging');
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - chips.offsetLeft;
+      const walk = (x - startX) * 1.5;
+      chips.scrollLeft = scrollStart - walk;
+    });
+  }
+
+  // Handle clicking on pair chips - PRESERVES SCROLL POSITION!
+  $$('.pair-chip-btn', main).forEach(btn => {
+    btn.onclick = () => {
+      const sym = btn.dataset.sym;
+      store.set('selected_signal_sym', sym);
+      Market.activeSymbol = sym;
+      Market.updateUI();
+      const savedY = window.scrollY || document.documentElement.scrollTop || 0;
+      SignalPage(main);
+      if (savedY > 0) {
+        requestAnimationFrame(() => window.scrollTo({ top: savedY, behavior: 'instant' }));
+      }
+    };
+  });
+
+  // Bind interactive events for ticket and On Pips section
+  bindSignalInteractiveEvents(main, state, inst);
 
   // "Semua Pair ▾" Modal
   const btnAllPairs = $('#btnAllPairsDropdown', main);
@@ -2557,7 +2614,11 @@ function SignalPage(main) {
           Market.activeSymbol = sym;
           Market.updateUI();
           modal.remove();
+          const savedY = window.scrollY || document.documentElement.scrollTop || 0;
           SignalPage(main);
+          if (savedY > 0) {
+            requestAnimationFrame(() => window.scrollTo({ top: savedY, behavior: 'instant' }));
+          }
         };
       });
     };
@@ -2619,7 +2680,6 @@ function SignalPage(main) {
     document.removeEventListener('click', closeMenu);
   };
 }
-
 // ---------- 2. Stat (Dynamic Multi-Day Historical Analytics) ----------
 function StatPage(main) {
   const cp = (AppState && AppState.copytrade) || {

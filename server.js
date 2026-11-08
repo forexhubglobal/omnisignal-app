@@ -402,6 +402,21 @@ function broadcastEvent(type, data) {
   }
 }
 
+// SSE Keep-Alive Heartbeat: Send ping comment every 15s to keep connections alive and prevent proxy disconnects
+setInterval(() => {
+  for (const client of sseClients) {
+    try {
+      if (client.writable && !client.destroyed) {
+        client.write(': ping\n\n');
+      } else {
+        sseClients.delete(client);
+      }
+    } catch (e) {
+      sseClients.delete(client);
+    }
+  }
+}, 15000);
+
 // ===== LIVE REAL-TIME TRADINGVIEW MARKET FEED SERVICE =====
 // Queries TradingView's official scanners directly to achieve 100% 1:1 price synchronization
 const TV_SYMBOLS_MAP = {
