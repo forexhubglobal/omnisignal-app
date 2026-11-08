@@ -1339,8 +1339,12 @@ const server = http.createServer(async (req, res) => {
         AiEngine.scanIntervalSec = payload.frequencyMode === 'SCALP_PRO' ? 120 : 300;
       }
       if (typeof payload.targetWinrate === 'number') {
-        AiEngine.targetWinrate = Math.max(75, Math.min(95, payload.targetWinrate));
+        AiEngine.targetWinrate = Math.max(80, Math.min(98, payload.targetWinrate));
       }
+      if (!db.aiConfig) db.aiConfig = {};
+      db.aiConfig.frequencyMode = AiEngine.frequencyMode;
+      db.aiConfig.targetWinrate = AiEngine.targetWinrate;
+      saveDB(db);
       broadcastEvent('ai_engine_status', AiEngine.getStatus());
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: true, status: AiEngine.getStatus() }));
@@ -2368,14 +2372,14 @@ let currentMarketPrice = 3986.50;
 const AiEngine = {
   enabled: true, // LIVE AUTONOMOUS PRODUCTION MODE: ACTIVE
   frequencyMode: 'SCALP_PRO', // 'SCALP_PRO' (10-15 signals/day) | 'INTRADAY' (5-8 signals/day)
-  targetWinrate: 88, // 85% - 90% Winrate Calibration Model
+  targetWinrate: 94, // 90%+ Sovereign Institutional Model (94% Target Winrate)
   scanIntervalSec: 150, // 2.5 minutes interval in waiting mode (Ultra-Scalp)
   secondsInState: 0,
   activeTradeTicks: 0,
   maxTradeTicks: 45, // Fast resolution (~1.5 to 2 mins) so signals cycle frequently
   tp1Triggered: false,
   logHistory: [
-    `[${getMYTTimeWithSeconds()}] Amaterasu Neural Core v4.3 Initialized: High-Winrate Model (88%) & Ultra-Scalp Scanner Active.`
+    `[${getMYTTimeWithSeconds()}] Amaterasu Neural Core v4.3 Initialized: Sovereign Precision Model (94% Target Winrate) & Ultra-Scalp Scanner Active.`
   ],
   assetCooldowns: {},
   liveMT5Positions: [],

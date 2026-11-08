@@ -1491,3 +1491,20 @@ if ($('#btnAddInviteCode')) {
 }
 
 loadInvitationCodes();
+
+// Auto-sync AI config on CRM load
+(function initAiConfigFromStatus() {
+  fetch('/api/ai/status')
+    .then(r => r.json())
+    .then(s => {
+      if (s) {
+        const sf = document.getElementById('selAiFrequency');
+        const sw = document.getElementById('selAiWinrate');
+        const badge = document.getElementById('aiConfigStatusBadge');
+        if (sf && s.frequencyMode) sf.value = s.frequencyMode;
+        if (sw && s.targetWinrate) sw.value = String(s.targetWinrate);
+        if (badge) badge.textContent = (s.targetWinrate || 94) + '% WINRATE · ' + (s.frequencyMode === 'SCALP_PRO' ? 'SCALP PRO' : 'INTRADAY');
+      }
+    })
+    .catch(() => {});
+})();
