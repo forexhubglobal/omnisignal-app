@@ -998,21 +998,26 @@ const server = http.createServer(async (req, res) => {
         // 4. PURGE CLOSED POSITIONS (ZERO GHOST SIGNALS IN ON PIPS):
         // Jika sesuatu signal dalam db.activeSignals tiada lagi dalam posisi terbuka MT5,
         // dan ia bukan signal baharu (< 20 saat), bermakna ia telahpun DITUTUP oleh MT5!
-        // Padamkan serta-merta dari activeSignals dan simpan ke rekod sejarah!
+        // Gunakan debounce perlindungan (sekurang-kurangnya 5 kitaran berturut-turut tiada) sebelum menutup!
         for (let i = db.activeSignals.length - 1; i >= 0; i--) {
           const sig = db.activeSignals[i];
           const sym = (sig.symbol || '').toUpperCase();
-          if (allowedWhitelist.includes(sym) && !mt5BySymbol[sym]) {
-            if ((sig.ticks || 0) > 5 || sig.mt5Verified) {
-              console.log(`🧹 [AUTO-PURGE CLOSED TRADE] #${sym} sudah tiada dalam MT5 (telah ditutup/SL). Memadamkan dari On Pips!`);
-              const asset = AiEngine.assets.find(a => a.symbol === sym) || AiEngine.assets[0];
-              const curP = liveMarketQuotes[sym] ? liveMarketQuotes[sym].price : sig.entry;
-              const isBuy = sig.type === 'BUY';
-              const isSlHit = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
-              const outcome = isSlHit ? (sig.beLocked ? 'BE' : 'SL') : (sig.status === 'TP1_HIT' ? 'TP1' : 'CLOSED');
-              const finalPips = outcome === 'SL' ? -asset.slPips : (outcome === 'BE' ? 0 : (sig.floatingPips || 0));
-              AiEngine.resolveTrade(db, sig, outcome, finalPips, asset);
-              dbChanged = true;
+          if (allowedWhitelist.includes(sym)) {
+            if (!mt5BySymbol[sym]) {
+              sig._missingFromMt5Count = (sig._missingFromMt5Count || 0) + 1;
+              if (((sig.ticks || 0) > 5 || sig.mt5Verified) && sig._missingFromMt5Count >= 5) {
+                console.log(`🧹 [AUTO-PURGE CLOSED TRADE] #${sym} sudah tiada dalam MT5 selama 5 kitaran berturut-turut (${sig._missingFromMt5Count}). Memadamkan dari On Pips!`);
+                const asset = AiEngine.assets.find(a => a.symbol === sym) || AiEngine.assets[0];
+                const curP = liveMarketQuotes[sym] ? liveMarketQuotes[sym].price : sig.entry;
+                const isBuy = sig.type === 'BUY';
+                const isSlHit = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
+                const outcome = isSlHit ? (sig.beLocked ? 'BE' : 'SL') : (sig.status === 'TP1_HIT' ? 'TP1' : 'CLOSED');
+                const finalPips = outcome === 'SL' ? -asset.slPips : (outcome === 'BE' ? 0 : (sig.floatingPips || 0));
+                AiEngine.resolveTrade(db, sig, outcome, finalPips, asset);
+                dbChanged = true;
+              }
+            } else {
+              sig._missingFromMt5Count = 0;
             }
           }
         }

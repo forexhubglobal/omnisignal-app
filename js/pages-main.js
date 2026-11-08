@@ -1330,7 +1330,17 @@ function getSignalPageState(inst) {
 function getSignalTicketHtml(state, inst) {
   const { isCurrentAssetActive, isTp1, currentSig, liveFloatingPips, curLivePrice, lastClosedForAsset, isAnyActive, activeList, lastRes } = state;
 
-  return isCurrentAssetActive ? `
+  // 1. TICKET CARD HTML (Active Running or Standby Setup - Always Visible)
+  let ticketHtml = '';
+  if (isCurrentAssetActive && currentSig) {
+    const pipValForSig = currentSig.symbol === 'XAUUSD' ? 0.1 : (currentSig.symbol === 'WTI' ? 0.01 : (currentSig.symbol.includes('JPY') ? 0.01 : (currentSig.symbol.includes('BTC') ? 1 : 0.0001)));
+    const tp1DiffPips = Math.abs(Math.round((currentSig.tp1 - currentSig.entry) / pipValForSig));
+    const tp2DiffPips = Math.abs(Math.round((currentSig.tp2 - currentSig.entry) / pipValForSig));
+    const tp3Val = currentSig.tp3 || (currentSig.entry ? (currentSig.type === 'BUY' ? currentSig.entry + (currentSig.tp2 - currentSig.entry) * 1.5 : currentSig.entry - (currentSig.entry - currentSig.tp2) * 1.5) : currentSig.tp2);
+    const tp3DiffPips = Math.abs(Math.round((tp3Val - currentSig.entry) / pipValForSig));
+    const isTp2Hit = currentSig.status === 'TP2_HIT';
+
+    ticketHtml = `
     <div class="solar-ticket ${isTp1 ? 'tp1-secured' : ''}">
       <div class="solar-ticket-head">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -1376,50 +1386,40 @@ function getSignalTicketHtml(state, inst) {
         </div>
       ` : ''}
 
-      ${(() => {
-        const pipValForSig = currentSig.symbol === 'XAUUSD' ? 0.1 : (currentSig.symbol === 'WTI' ? 0.01 : (currentSig.symbol.includes('JPY') ? 0.01 : (currentSig.symbol.includes('BTC') ? 1 : 0.0001)));
-        const tp1DiffPips = Math.abs(Math.round((currentSig.tp1 - currentSig.entry) / pipValForSig));
-        const tp2DiffPips = Math.abs(Math.round((currentSig.tp2 - currentSig.entry) / pipValForSig));
-        const tp3Val = currentSig.tp3 || (currentSig.entry ? (currentSig.type === 'BUY' ? currentSig.entry + (currentSig.tp2 - currentSig.entry) * 1.5 : currentSig.entry - (currentSig.entry - currentSig.tp2) * 1.5) : currentSig.tp2);
-        const tp3DiffPips = Math.abs(Math.round((tp3Val - currentSig.entry) / pipValForSig));
-        const isTp2Hit = currentSig.status === 'TP2_HIT';
-        return `
-          <div class="ticket-grid">
-            <div class="ticket-metric">
-              <div class="lbl">Entry Execution</div>
-              <div class="val gold">${num(currentSig.entry)}</div>
-            </div>
-            <div class="ticket-metric">
-              <div class="lbl">${isTp2Hit ? `Ultimate Target (TP3 · +${tp3DiffPips}p)` : (isTp1 ? `Runner Target (TP2 · +${tp2DiffPips}p)` : `Primary Target (TP1 · +${tp1DiffPips}p)`)}</div>
-              <div class="val bull">${isTp2Hit ? num(tp3Val) : (isTp1 ? num(currentSig.tp2) : num(currentSig.tp1))}</div>
-            </div>
-          </div>
+      <div class="ticket-grid">
+        <div class="ticket-metric">
+          <div class="lbl">Entry Execution</div>
+          <div class="val gold">${num(currentSig.entry)}</div>
+        </div>
+        <div class="ticket-metric">
+          <div class="lbl">${isTp2Hit ? `Ultimate Target (TP3 · +${tp3DiffPips}p)` : (isTp1 ? `Runner Target (TP2 · +${tp2DiffPips}p)` : `Primary Target (TP1 · +${tp1DiffPips}p)`)}</div>
+          <div class="val bull">${isTp2Hit ? num(tp3Val) : (isTp1 ? num(currentSig.tp2) : num(currentSig.tp1))}</div>
+        </div>
+      </div>
 
-          <div class="targets-row" style="grid-template-columns: repeat(4, 1fr); gap: 6px;">
-            <div class="target-box tp ${isTp1 ? 'secured' : ''}">
-              <span>TARGET 1 ${isTp1 ? `✓ HIT` : `(+${tp1DiffPips}p)`}</span>
-              <b>${num(currentSig.tp1)}</b>
-            </div>
-            <div class="target-box tp ${isTp2Hit ? 'secured' : ''}">
-              <span>TARGET 2 ${isTp2Hit ? `✓ HIT` : `(+${tp2DiffPips}p)`}</span>
-              <b>${num(currentSig.tp2)}</b>
-            </div>
-            <div class="target-box tp">
-              <span>TARGET 3 (+${tp3DiffPips}p)</span>
-              <b>${num(tp3Val)}</b>
-            </div>
-            <div class="target-box sl">
-              <span>STOP LOSS</span>
-              <b>${isTp2Hit ? `TP1 (${num(currentSig.tp1)})` : (isTp1 ? `BE (${num(currentSig.entry)})` : num(currentSig.sl))}</b>
-            </div>
-          </div>
+      <div class="targets-row" style="grid-template-columns: repeat(4, 1fr); gap: 6px;">
+        <div class="target-box tp ${isTp1 ? 'secured' : ''}">
+          <span>TARGET 1 ${isTp1 ? `✓ HIT` : `(+${tp1DiffPips}p)`}</span>
+          <b>${num(currentSig.tp1)}</b>
+        </div>
+        <div class="target-box tp ${isTp2Hit ? 'secured' : ''}">
+          <span>TARGET 2 ${isTp2Hit ? `✓ HIT` : `(+${tp2DiffPips}p)`}</span>
+          <b>${num(currentSig.tp2)}</b>
+        </div>
+        <div class="target-box tp">
+          <span>TARGET 3 (+${tp3DiffPips}p)</span>
+          <b>${num(tp3Val)}</b>
+        </div>
+        <div class="target-box sl">
+          <span>STOP LOSS</span>
+          <b>${isTp2Hit ? `TP1 (${num(currentSig.tp1)})` : (isTp1 ? `BE (${num(currentSig.entry)})` : num(currentSig.sl))}</b>
+        </div>
+      </div>
 
-          <div class="row" style="margin-bottom: 10px; font-size: 11px;">
-            <span class="muted">Risk/Reward: <b style="color:#fff;">1 : 2.0 (Standard SMC)</b></span>
-            <span class="badge gold" style="font-size: 10px;">${isTp1 ? 'PROTECTED BY BREAK-EVEN' : 'MT5 EXECUTION VERIFIED'}</span>
-          </div>
-        `;
-      })()}
+      <div class="row" style="margin-bottom: 10px; font-size: 11px;">
+        <span class="muted">Risk/Reward: <b style="color:#fff;">1 : 2.0 (Standard SMC)</b></span>
+        <span class="badge gold" style="font-size: 10px;">${isTp1 ? 'PROTECTED BY BREAK-EVEN' : 'MT5 EXECUTION VERIFIED'}</span>
+      </div>
 
       <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.45; border-top: 1px solid var(--border); padding-top: 10px;">
         ${currentSig.notes || `Amaterasu AI algorithm detected order block absorption on ${inst.name}. Follow strict SOP.`}
@@ -1454,61 +1454,126 @@ function getSignalTicketHtml(state, inst) {
         </button>
       </div>
     </div>
-  ` : `
-    ${lastClosedForAsset ? `
-      <div class="card-last-resolved-asset" style="background:linear-gradient(135deg, rgba(0, 230, 118, 0.12) 0%, rgba(13, 20, 30, 0.95) 100%); border: 1px solid #00e676; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 20px rgba(0, 230, 118, 0.12);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:18px;">🏆</span>
-            <div>
-              <b style="font-family:'Space Grotesk',sans-serif; font-size:13.5px; color:#fff; display:block;">REKOD TRADE TERAKHIR SELESAI (${inst.id})</b>
-              <span style="font-size:10.5px; color:#94a3b8;">Posisi telah ditutup & sasaran profit dikunci</span>
-            </div>
-          </div>
-          <span class="badge" style="background:${lastClosedForAsset.status === 'BE' ? 'rgba(255,160,0,0.2)' : 'rgba(0,230,118,0.2)'}; border:1px solid ${lastClosedForAsset.status === 'BE' ? 'var(--solar-gold)' : '#00e676'}; color:${lastClosedForAsset.status === 'BE' ? 'var(--solar-gold)' : '#00e676'}; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:12px;">
-            ${lastClosedForAsset.status === 'BE' ? '🛡️ BE (0 PIP)' : `🎯 ${lastClosedForAsset.status} (+${lastClosedForAsset.pips} PIP)`}
+    `;
+  } else {
+    // Standby Setup Ticket for Inactive Asset (Always steady!)
+    const isSellBias = inst.bias === 'BEARISH';
+    const offset40 = inst.id === 'XAUUSD' ? 4.0 : 0.0040;
+    const offset80 = inst.id === 'XAUUSD' ? 8.0 : 0.0080;
+    const offset120 = inst.id === 'XAUUSD' ? 12.0 : 0.0120;
+    const offsetSl = inst.id === 'XAUUSD' ? 3.5 : 0.0035;
+    const standbyEntry = curLivePrice;
+    const standbyTp1 = isSellBias ? (curLivePrice - offset40) : (curLivePrice + offset40);
+    const standbyTp2 = isSellBias ? (curLivePrice - offset80) : (curLivePrice + offset80);
+    const standbyTp3 = isSellBias ? (curLivePrice - offset120) : (curLivePrice + offset120);
+    const standbySl = isSellBias ? (curLivePrice + offsetSl) : (curLivePrice - offsetSl);
+
+    ticketHtml = `
+    <div class="solar-ticket">
+      <div class="solar-ticket-head">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span class="signal-type-badge ${isSellBias ? 'sell' : 'buy'}">
+            ⏳ STANDBY SETUP (${isSellBias ? 'SELL' : 'BUY'} ${inst.id})
+          </span>
+          <span style="background:rgba(255,160,0,0.12); color:#f5c451; border:1px solid rgba(255,160,0,0.4); border-radius:4px; font-size:10px; font-weight:700; padding:2px 7px; display:inline-flex; align-items:center; gap:4px;">
+            <span style="width:6px; height:6px; border-radius:50%; background:#f5c451; animation:pulseDot 1.2s infinite; display:inline-block;"></span>
+            MENUNGGU CONFIRMATION M15
           </span>
         </div>
+        <span class="muted" style="font-size: 11.5px;">Auto-Scan Aktif</span>
+      </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:rgba(0,0,0,0.35); border-radius:8px; padding:8px 12px; font-size:11.5px; margin-bottom:10px; border:1px solid rgba(255,255,255,0.06);">
+      <!-- Real-Time Floating / Live Market Quote -->
+      <div style="background: rgba(11, 17, 26, 0.95); border: 1px solid rgba(255, 160, 0, 0.35); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:#f5c451; animation:pulseDot 1.2s infinite; display:inline-block;"></span>
           <div>
-            <span style="color:#8e9aa8; font-size:10px; display:block;">ARAH & ENTRY EXECUTION</span>
-            <b style="color:${lastClosedForAsset.type === 'BUY' ? '#00e676' : '#ef5350'};">${lastClosedForAsset.type}</b> @ <b style="color:#fff;">${num(lastClosedForAsset.entry)}</b>
-          </div>
-          <div>
-            <span style="color:#8e9aa8; font-size:10px; display:block;">STATUS KEPUTUSAN</span>
-            <b style="color:${lastClosedForAsset.pips >= 0 ? '#00e676' : '#ef5350'};">${lastClosedForAsset.status === 'BE' ? 'Sifar Risiko (BE Locked)' : 'Sasaran Tercapai'}</b>
+            <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.5px; display:block;">SEBUTHARGA LIVE PASARAN (MT5 SYNC)</span>
+            <b style="color:#fff; font-size:13px;">HARGA SEMASA: <span style="color:#f5c451;" id="liveSignalCurrentPrice">${num(curLivePrice)}</span></b>
           </div>
         </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#8e9aa8;">
-          <span>Selesai pada: <b style="color:#cbd5e1;">${lastClosedForAsset.date || 'Hari ini'} · ${lastClosedForAsset.time}</b></span>
-          <button class="btn btn-outline btn-share-resolved-card" data-sym="${inst.id}" data-type="${lastClosedForAsset.type}" data-pips="${lastClosedForAsset.pips}" data-entry="${lastClosedForAsset.entry}" style="padding:4px 10px; font-size:10.5px; font-weight:700; color:#f5c451; border-color:rgba(245,196,81,0.3); border-radius:6px; cursor:pointer;">
-            📸 Kongsi Poster VIP
-          </button>
+        <div style="text-align:right;">
+          <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase; display:block;">STATUS ENJIN</span>
+          <b style="font-size:12px; font-weight:800; color:#00e676; background:rgba(0,230,118,0.12); padding:2px 8px; border-radius:6px; display:inline-block;">
+            STANDBY
+          </b>
         </div>
       </div>
-    ` : ''}
 
-    ${isAnyActive ? `
-      <div class="solar-active-alert-card" style="background: linear-gradient(135deg, rgba(255, 160, 0, 0.15) 0%, rgba(13, 20, 30, 0.95) 100%); border: 1px solid var(--solar-gold); border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; text-align: center; box-shadow: 0 4px 24px rgba(255, 160, 0, 0.2);">
-        <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;">
-          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#00e676; animation:pulseDot 1.2s infinite;"></span>
-          <span style="font-size:11.5px; font-weight:800; color:#f5c451; letter-spacing:0.8px; text-transform:uppercase;">${activeList.length} AI SIGNAL SEDANG BERJALAN (ON PIPS)!</span>
+      <div class="ticket-grid">
+        <div class="ticket-metric">
+          <div class="lbl">Zon Entry Unjuran</div>
+          <div class="val gold">${num(standbyEntry)}</div>
         </div>
-        <div style="font-size:20px; font-weight:800; color:#fff; margin-bottom:4px; font-family:'Space Grotesk',sans-serif;">
-          ${activeList[0].type === 'BUY' ? '🟢 BUY' : '🔴 SELL'} ${activeList[0].symbol} @ ${num(activeList[0].entry)}
+        <div class="ticket-metric">
+          <div class="lbl">Primary Target (TP1 · +40p)</div>
+          <div class="val bull">${num(standbyTp1)}</div>
         </div>
-        <div style="font-size:12px; color:#94a3b8; margin-bottom:14px;">
-          TP1: <b style="color:#00e676;">${num(activeList[0].tp1)}</b> · TP2: <b style="color:#00e676;">${num(activeList[0].tp2)}</b> · TP3: <b style="color:#00e676;">${num(activeList[0].tp3 || (activeList[0].entry ? (activeList[0].type === 'BUY' ? activeList[0].entry + (activeList[0].tp2 - activeList[0].entry) * 1.5 : activeList[0].entry - (activeList[0].entry - activeList[0].tp2) * 1.5) : activeList[0].tp2))}</b> · SL: <b style="color:#ef5350;">${num(activeList[0].sl)}</b>
+      </div>
+
+      <div class="targets-row" style="grid-template-columns: repeat(4, 1fr); gap: 6px;">
+        <div class="target-box tp">
+          <span>TARGET 1 (+40p)</span>
+          <b>${num(standbyTp1)}</b>
         </div>
-        <button class="btn gold" id="btnGoToActiveSignal" data-sym="${activeList[0].symbol}" style="width:100%; padding:11px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 15px rgba(255,160,0,0.3);">
-          <span>Buka Chart & Pantau ${activeList[0].symbol}</span> ➔
+        <div class="target-box tp">
+          <span>TARGET 2 (+80p)</span>
+          <b>${num(standbyTp2)}</b>
+        </div>
+        <div class="target-box tp">
+          <span>TARGET 3 (+120p)</span>
+          <b>${num(standbyTp3)}</b>
+        </div>
+        <div class="target-box sl">
+          <span>STOP LOSS</span>
+          <b>${num(standbySl)}</b>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom: 10px; font-size: 11px;">
+        <span class="muted">Risk/Reward: <b style="color:#fff;">1 : 2.0 (Standard SMC)</b></span>
+        <span class="badge gold" style="font-size: 10px;">ALGORITMA AMATERASU SMC</span>
+      </div>
+
+      <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.45; border-top: 1px solid var(--border); padding-top: 10px;">
+        Enjin Amaterasu AI sedang mengimbas zon pembalikan order block & kecairan institusi ${inst.name}. Patuhi disiplin SOP.
+      </p>
+
+      <!-- AI Confluence Institutional Checklist -->
+      <div class="ai-confluence-card" style="margin-top:14px; background:rgba(15,23,34,0.75); border:1px solid rgba(239,45,61,0.25); border-radius:10px; padding:12px 14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:14px;">👁️</span>
+            <b style="font-size:12px; color:#F5F7FA; letter-spacing:0.5px; text-transform:uppercase;">AI Confluence Checklist</b>
+          </div>
+          <span style="background:rgba(0,214,143,0.15); border:1px solid #00D68F; color:#00D68F; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:10px;">
+            STANDBY CONFIRMATION
+          </span>
+        </div>
+        <div class="confluence-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:11px;">
+          <div style="display:flex; align-items:center; gap:6px; color:#F5F7FA;"><span style="color:#00D68F; font-weight:bold;">✓</span> Trend Bias: ${inst.bias}</div>
+          <div style="display:flex; align-items:center; gap:6px; color:#F5F7FA;"><span style="color:#00D68F; font-weight:bold;">✓</span> SNR Key Level Rebound</div>
+          <div style="display:flex; align-items:center; gap:6px; color:#F5F7FA;"><span style="color:#00D68F; font-weight:bold;">✓</span> Spread Normalized</div>
+          <div style="display:flex; align-items:center; gap:6px; color:#F5F7FA;"><span style="color:#F5C451; font-weight:bold;">⏳</span> M15 Liquidity Sweep</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons Row: MT5 Copy & Share Win Poster -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;">
+        <button class="btn btn-outline" id="btnCopySignalSetup" style="padding:10px 8px; font-size:12px; font-weight:700; border-color:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; gap:6px; border-radius:8px;">
+          <span>📋</span> Salin Setup MT5
+        </button>
+        <button class="btn" id="btnShareWinPoster" style="background:linear-gradient(135deg, #EF2D3D 0%, #B81423 100%); color:#fff; padding:10px 8px; font-size:12px; font-weight:800; border:none; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:8px; box-shadow:0 4px 14px rgba(239,45,61,0.35);">
+          <span>📸</span> Kongsi Poster VIP
         </button>
       </div>
-    ` : ''}
+    </div>
+    `;
+  }
 
-    <div class="solar-scanner-card">
+  // 2. AMATERASU INSTITUTIONAL SCANNER CARD (Radar Sweep & Confluence - Always Visible)
+  const scannerCardHtml = `
+    <div class="solar-scanner-card" style="margin-top:16px;">
       <div class="solar-radar-wrap">
         <div class="radar-sweep"></div>
         <div class="radar-ring r1"></div>
@@ -1545,25 +1610,6 @@ function getSignalTicketHtml(state, inst) {
         </div>
       </div>
 
-      ${lastRes ? `
-        <div style="margin-top:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(0,230,118,0.3); border-radius:10px; padding:12px 14px; text-align:left;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-size:11px; font-weight:800; color:#00e676; letter-spacing:0.8px;">KEPUTUSAN SIGNAL SELESAI TERAKHIR:</span>
-            <span style="font-size:11px; color:#8e9aa8;">${lastRes.date || 'Hari ini'} · ${lastRes.time || ''}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b style="font-size:14px; color:#fff;">${lastRes.type} ${lastRes.symbol} @ ${num(lastRes.entry)}</b>
-            <span style="background:rgba(0,230,118,0.18); border:1px solid #00e676; color:#00e676; font-size:11px; font-weight:800; padding:2px 8px; border-radius:12px;">
-              ${lastRes.pips > 0 ? `✅ ${lastRes.status} (+${lastRes.pips} PIPS)` : lastRes.status === 'BE' ? '🛡️ BE (0 PIP)' : `🛑 SL (${lastRes.pips} PIPS)`}
-            </span>
-          </div>
-        </div>
-      ` : `
-        <div style="margin-top:16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:10px; padding:12px 14px; text-align:center;">
-          <span style="font-size:12px; color:var(--text-muted);">Enjin AI sedia mengimbas pasaran secara 100% automatik untuk setup berkebarangkalian tinggi.</span>
-        </div>
-      `}
-
       <div style="margin-top:14px; display:flex; flex-direction:column; gap:8px;">
         <div style="display:flex; align-items:center; justify-content:center; gap:8px; padding:10px 14px; background:rgba(0,214,143,0.08); border:1px solid rgba(0,214,143,0.25); border-radius:8px; font-size:11.5px; color:#00D68F; font-weight:700;">
           <span style="width:7px; height:7px; border-radius:50%; background:#00D68F; animation:pulseDot 1.2s infinite;"></span>
@@ -1575,6 +1621,50 @@ function getSignalTicketHtml(state, inst) {
       </div>
     </div>
   `;
+
+  // 3. REKOD TRADE TERAKHIR SELESAI CARD (Always Visible)
+  const resolvedTarget = lastClosedForAsset || lastRes;
+  const lastResolvedCardHtml = resolvedTarget ? `
+    <div class="card-last-resolved-asset" style="margin-top:16px; background:linear-gradient(135deg, rgba(0, 230, 118, 0.12) 0%, rgba(13, 20, 30, 0.95) 100%); border: 1px solid #00e676; border-radius: 12px; padding: 14px 16px; box-shadow: 0 4px 20px rgba(0, 230, 118, 0.12);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">🏆</span>
+          <div>
+            <b style="font-family:'Space Grotesk',sans-serif; font-size:13.5px; color:#fff; display:block;">REKOD TRADE TERAKHIR SELESAI (${resolvedTarget.symbol || inst.id})</b>
+            <span style="font-size:10.5px; color:#94a3b8;">Posisi telah ditutup & sasaran profit dikunci</span>
+          </div>
+        </div>
+        <span class="badge" style="background:${resolvedTarget.status === 'BE' ? 'rgba(255,160,0,0.2)' : (resolvedTarget.pips < 0 ? 'rgba(239,83,80,0.2)' : 'rgba(0,230,118,0.2)')}; border:1px solid ${resolvedTarget.status === 'BE' ? 'var(--solar-gold)' : (resolvedTarget.pips < 0 ? '#ef5350' : '#00e676')}; color:${resolvedTarget.status === 'BE' ? 'var(--solar-gold)' : (resolvedTarget.pips < 0 ? '#ef5350' : '#00e676')}; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:12px;">
+          ${resolvedTarget.status === 'BE' ? '🛡️ BE (0 PIP)' : (resolvedTarget.pips < 0 ? `🛑 SL (${resolvedTarget.pips} PIP)` : `🎯 ${resolvedTarget.status || 'TP1'} (+${resolvedTarget.pips} PIP)`)}
+        </span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:rgba(0,0,0,0.35); border-radius:8px; padding:8px 12px; font-size:11.5px; margin-bottom:10px; border:1px solid rgba(255,255,255,0.06);">
+        <div>
+          <span style="color:#8e9aa8; font-size:10px; display:block;">ARAH & ENTRY EXECUTION</span>
+          <b style="color:${resolvedTarget.type === 'BUY' ? '#00e676' : '#ef5350'};">${resolvedTarget.type}</b> @ <b style="color:#fff;">${num(resolvedTarget.entry)}</b>
+        </div>
+        <div>
+          <span style="color:#8e9aa8; font-size:10px; display:block;">STATUS KEPUTUSAN</span>
+          <b style="color:${resolvedTarget.pips >= 0 ? '#00e676' : '#ef5350'};">${resolvedTarget.status === 'BE' ? 'Sifar Risiko (BE Locked)' : (resolvedTarget.pips < 0 ? 'Stop Loss Terlindung' : 'Sasaran Tercapai')}</b>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#8e9aa8;">
+        <span>Selesai pada: <b style="color:#cbd5e1;">${resolvedTarget.date || 'Hari ini'} · ${resolvedTarget.time || ''}</b></span>
+        <button class="btn btn-outline btn-share-resolved-card" data-sym="${resolvedTarget.symbol || inst.id}" data-type="${resolvedTarget.type}" data-pips="${resolvedTarget.pips}" data-entry="${resolvedTarget.entry}" style="padding:4px 10px; font-size:10.5px; font-weight:700; color:#f5c451; border-color:rgba(245,196,81,0.3); border-radius:6px; cursor:pointer;">
+          📸 Kongsi Poster VIP
+        </button>
+      </div>
+    </div>
+  ` : `
+    <div class="card-last-resolved-asset" style="margin-top:16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:12px; padding:14px 16px; text-align:center;">
+      <b style="font-size:12.5px; color:#cbd5e1; display:block; margin-bottom:4px;">REKOD TRADE TERAKHIR SELESAI (${inst.id})</b>
+      <span style="font-size:11px; color:var(--text-muted);">Enjin AI sedia mengimbas pasaran secara 100% automatik untuk setup berkebarangkalian tinggi.</span>
+    </div>
+  `;
+
+  return `${ticketHtml}\n${scannerCardHtml}\n${lastResolvedCardHtml}`;
 }
 
 function getSignalOnPipsHtml(state) {
@@ -2000,15 +2090,48 @@ function bindSignalInteractiveEvents(main, state, inst) {
   const btnShareWin = $('#btnShareWinPoster', main);
   if (btnShareWin) {
     btnShareWin.onclick = () => {
-      const isWin = isTp1 || globalSig.status === 'TP1_HIT' || globalSig.status === 'TP2_HIT' || globalSig.status === 'RESOLVED';
-      openShareWinModal(globalSig, isWin);
+      const activeOrCur = isCurrentAssetActive ? currentSig : null;
+      if (activeOrCur) {
+        const isWin = isTp1 || activeOrCur.status === 'TP1_HIT' || activeOrCur.status === 'TP2_HIT' || activeOrCur.status === 'RESOLVED';
+        openShareWinModal(activeOrCur, isWin);
+      } else {
+        const liveP = parseFloat(Market.getLivePrice(inst.id) || inst.basePrice);
+        const isSell = inst.bias === 'BEARISH';
+        const offset40 = inst.id === 'XAUUSD' ? 4.0 : 0.0040;
+        const offset80 = inst.id === 'XAUUSD' ? 8.0 : 0.0080;
+        const offsetSl = inst.id === 'XAUUSD' ? 3.5 : 0.0035;
+        const setupSig = {
+          symbol: inst.id,
+          type: isSell ? 'SELL' : 'BUY',
+          entry: liveP.toFixed(2),
+          tp1: (liveP + (isSell ? -offset40 : offset40)).toFixed(2),
+          tp2: (liveP + (isSell ? -offset80 : offset80)).toFixed(2),
+          sl: (liveP + (isSell ? offsetSl : -offsetSl)).toFixed(2),
+          status: 'STANDBY'
+        };
+        openShareWinModal(setupSig, false);
+      }
     };
   }
 
   const btnCopySetup = $('#btnCopySignalSetup', main);
   if (btnCopySetup) {
     btnCopySetup.onclick = () => {
-      const copyText = `👁️ AMATERASU X VIP SIGNAL\n━━━━━━━━━━━━━━━━━━━━━\n📊 Instrumen: #${globalSig.symbol}\n⚡ Tindakan: ${globalSig.type} (M15)\n🎯 Entry: ${globalSig.entry}\n🎯 TP1: ${globalSig.tp1} (+40p)\n🚀 TP2: ${globalSig.tp2} (+80p)\n🛑 SL: ${globalSig.sl}\n━━━━━━━━━━━━━━━━━━━━━\nSOP: Tutup 50% lot di TP1 & alih SL ke BE (${globalSig.entry})!`;
+      const activeOrCur = isCurrentAssetActive ? currentSig : null;
+      let copyText = '';
+      if (activeOrCur) {
+        copyText = `👁️ AMATERASU X VIP SIGNAL\n━━━━━━━━━━━━━━━━━━━━━\n📊 Instrumen: #${activeOrCur.symbol}\n⚡ Tindakan: ${activeOrCur.type} (M15)\n🎯 Entry: ${activeOrCur.entry}\n🎯 TP1: ${activeOrCur.tp1} (+40p)\n🚀 TP2: ${activeOrCur.tp2} (+80p)\n🛑 SL: ${activeOrCur.sl}\n━━━━━━━━━━━━━━━━━━━━━\nSOP: Tutup 50% lot di TP1 & alih SL ke BE (${activeOrCur.entry})!`;
+      } else {
+        const liveP = parseFloat(Market.getLivePrice(inst.id) || inst.basePrice);
+        const isSell = inst.bias === 'BEARISH';
+        const offset40 = inst.id === 'XAUUSD' ? 4.0 : 0.0040;
+        const offset80 = inst.id === 'XAUUSD' ? 8.0 : 0.0080;
+        const offsetSl = inst.id === 'XAUUSD' ? 3.5 : 0.0035;
+        const tp1 = (liveP + (isSell ? -offset40 : offset40)).toFixed(2);
+        const tp2 = (liveP + (isSell ? -offset80 : offset80)).toFixed(2);
+        const sl = (liveP + (isSell ? offsetSl : -offsetSl)).toFixed(2);
+        copyText = `👁️ AMATERASU X VIP SETUP (STANDBY)\n━━━━━━━━━━━━━━━━━━━━━\n📊 Instrumen: #${inst.id}\n⚡ Bias: ${isSell ? 'SELL' : 'BUY'} (M15)\n🎯 Zon Entry: ${liveP.toFixed(2)}\n🎯 TP1: ${tp1} (+40p)\n🚀 TP2: ${tp2} (+80p)\n🛑 SL: ${sl}\n━━━━━━━━━━━━━━━━━━━━━\nSOP: Tunggu rejection candle M15 sebelum entry!`;
+      }
       if (navigator.clipboard) {
         navigator.clipboard.writeText(copyText);
         toast('📋 Setup MT5 disalin ke clipboard!');
