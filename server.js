@@ -823,11 +823,63 @@ const server = http.createServer(async (req, res) => {
             db.copytrade2.lastSync = getMYTTimeWithSeconds();
 
             if (!Array.isArray(db.copytrades)) {
-              db.copytrades = [db.copytrade, db.copytrade2];
+              db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean);
             } else {
               db.copytrades[1] = db.copytrade2;
             }
-            broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrades: db.copytrades });
+            broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrades: db.copytrades });
+          }
+
+          // SYNC MASTER COPYTRADE 3 (#5100209626 - $1,000 USD Standard Account):
+          if (String(acc.login) === '5100209626') {
+            if (!db.copytrade3) {
+              db.copytrade3 = {
+                id: "master-3",
+                name: "Amaterasu Sovereign",
+                avatar: "img/amaterasux.png",
+                masterAccount: "5100209626",
+                broker: "Versus Trade Ltd. (Live1)",
+                accountType: "Standard USD",
+                currency: "USD",
+                initialDeposit: 1000.0,
+                totalWithdrawn: 0.0,
+                totalWithdrawnUsd: 0.0,
+                allTimeProfitUsd: 0.0,
+                allTimeGrowthPct: 0.0,
+                growthPct: 0.0,
+                netProfitUsd: 0.0,
+                currentBalance: 1000.0,
+                currentEquity: 1000.0,
+                activeEquity: 1000.0,
+                activeEquityUsd: 1000.0,
+                winRate: 100.0,
+                maxDrawdown: 0.0,
+                status: "LIVE & ACTIVE",
+                copiersCount: 12,
+                affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255"
+              };
+            }
+            const initDep3 = Number(db.copytrade3.initialDeposit) || 1000.0;
+            const eq3 = Number(acc.equity) || db.copytrade3.currentEquity;
+            const bal3 = Number(acc.balance) || db.copytrade3.currentBalance;
+            const totalWd3 = Number(db.copytrade3.totalWithdrawn) || 0.0;
+            db.copytrade3.currentEquity = eq3;
+            db.copytrade3.currentBalance = bal3;
+            db.copytrade3.activeEquity = eq3;
+            db.copytrade3.activeEquityUsd = eq3;
+            const netProfit3 = +(eq3 + totalWd3 - initDep3).toFixed(2);
+            db.copytrade3.netProfitUsd = netProfit3;
+            db.copytrade3.growthPct = +((netProfit3 / initDep3) * 100).toFixed(2);
+            db.copytrade3.allTimeProfitUsd = Math.max(netProfit3, 0);
+            db.copytrade3.allTimeGrowthPct = Math.max(db.copytrade3.growthPct, 0);
+            db.copytrade3.lastSync = getMYTTimeWithSeconds();
+
+            if (!Array.isArray(db.copytrades)) {
+              db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean);
+            } else {
+              db.copytrades[2] = db.copytrade3;
+            }
+            broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrades: db.copytrades });
           }
           saveDB(db);
         }

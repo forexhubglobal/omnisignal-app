@@ -527,36 +527,75 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     winRate: 100.0
   };
 
-  // Dedicated data per vault (ZERO cross-contamination)
-  const cp = isV2 ? {
-    id: 2,
-    name: "AMATERASU X",
+  const cp3 = (AppState && AppState.copytrade3) || {
+    id: "master-3",
+    name: "Amaterasu Sovereign",
     avatar: "img/amaterasux.png",
-    masterAccount: "5100207348",
-    growthPct: (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 0.00,
-    netProfitUsc: (cp2 && typeof cp2.netProfitUsc === 'number') ? cp2.netProfitUsc : 0.00,
-    netProfitUsd: (cp2 && typeof cp2.netProfitUsd === 'number') ? cp2.netProfitUsd : 0.00,
-    allTimeProfitUsc: (cp2 && typeof cp2.allTimeProfitUsc === 'number') ? cp2.allTimeProfitUsc : 0.00,
-    allTimeProfitUsd: (cp2 && typeof cp2.allTimeProfitUsd === 'number') ? cp2.allTimeProfitUsd : 0.00,
-    initialDeposit: 10000.0,
-    currentEquity: (cp2 && typeof cp2.currentEquity === 'number') ? cp2.currentEquity : 10000.0,
+    masterAccount: "5100209626",
+    broker: "Versus Trade Ltd. (Live1)",
+    initialDeposit: 1000.0,
+    currency: "USD",
     totalWithdrawn: 0.0,
+    totalWithdrawnUsd: 0.0,
+    allTimeProfitUsd: 0.0,
+    growthPct: 0.00,
+    currentEquity: 1000.0,
     winRate: 100.0
-  } : {
-    id: 1,
-    name: "THE MIGHTY DUCK",
-    avatar: "img/themightyduck.png",
-    masterAccount: "5100154135",
-    growthPct: (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 122.55,
-    netProfitUsc: (cp1 && typeof cp1.netProfitUsc === 'number') ? cp1.netProfitUsc : 12254.62,
-    netProfitUsd: (cp1 && typeof cp1.netProfitUsd === 'number') ? cp1.netProfitUsd : 122.55,
-    allTimeProfitUsc: (cp1 && typeof cp1.allTimeProfitUsc === 'number') ? cp1.allTimeProfitUsc : 12254.62,
-    allTimeProfitUsd: (cp1 && typeof cp1.allTimeProfitUsd === 'number') ? cp1.allTimeProfitUsd : 122.55,
-    initialDeposit: 10000.0,
-    currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 12254.62,
-    totalWithdrawn: 10000.0,
-    winRate: 90.4
   };
+
+  // Dedicated data per vault (ZERO cross-contamination)
+  const isV3 = Number(vaultId) === 3;
+  let cp;
+  if (isV3) {
+    cp = {
+      id: 3,
+      name: "AMATERASU SOVEREIGN",
+      avatar: "img/amaterasux.png",
+      masterAccount: "5100209626",
+      growthPct: (cp3 && typeof cp3.growthPct === 'number') ? cp3.growthPct : 0.00,
+      netProfitUsc: (cp3 && typeof cp3.netProfitUsd === 'number') ? cp3.netProfitUsd * 100 : 0.00,
+      netProfitUsd: (cp3 && typeof cp3.netProfitUsd === 'number') ? cp3.netProfitUsd : 0.00,
+      allTimeProfitUsc: (cp3 && typeof cp3.allTimeProfitUsd === 'number') ? cp3.allTimeProfitUsd * 100 : 0.00,
+      allTimeProfitUsd: (cp3 && typeof cp3.allTimeProfitUsd === 'number') ? cp3.allTimeProfitUsd : 0.00,
+      initialDeposit: 1000.0,
+      currentEquity: (cp3 && typeof cp3.currentEquity === 'number') ? cp3.currentEquity : 1000.0,
+      totalWithdrawn: 0.0,
+      currency: "USD",
+      winRate: 100.0
+    };
+  } else if (isV2) {
+    cp = {
+      id: 2,
+      name: "AMATERASU X",
+      avatar: "img/amaterasux.png",
+      masterAccount: "5100207348",
+      growthPct: (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 0.00,
+      netProfitUsc: (cp2 && typeof cp2.netProfitUsc === 'number') ? cp2.netProfitUsc : 0.00,
+      netProfitUsd: (cp2 && typeof cp2.netProfitUsd === 'number') ? cp2.netProfitUsd : 0.00,
+      allTimeProfitUsc: (cp2 && typeof cp2.allTimeProfitUsc === 'number') ? cp2.allTimeProfitUsc : 0.00,
+      allTimeProfitUsd: (cp2 && typeof cp2.allTimeProfitUsd === 'number') ? cp2.allTimeProfitUsd : 0.00,
+      initialDeposit: 10000.0,
+      currentEquity: (cp2 && typeof cp2.currentEquity === 'number') ? cp2.currentEquity : 10000.0,
+      totalWithdrawn: 0.0,
+      winRate: 100.0
+    };
+  } else {
+    cp = {
+      id: 1,
+      name: "THE MIGHTY DUCK",
+      avatar: "img/themightyduck.png",
+      masterAccount: "5100154135",
+      growthPct: (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 122.55,
+      netProfitUsc: (cp1 && typeof cp1.netProfitUsc === 'number') ? cp1.netProfitUsc : 12254.62,
+      netProfitUsd: (cp1 && typeof cp1.netProfitUsd === 'number') ? cp1.netProfitUsd : 122.55,
+      allTimeProfitUsc: (cp1 && typeof cp1.allTimeProfitUsc === 'number') ? cp1.allTimeProfitUsc : 12254.62,
+      allTimeProfitUsd: (cp1 && typeof cp1.allTimeProfitUsd === 'number') ? cp1.allTimeProfitUsd : 122.55,
+      initialDeposit: 10000.0,
+      currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 12254.62,
+      totalWithdrawn: 10000.0,
+      winRate: 90.4
+    };
+  }
 
   const isCalcOpen = Boolean(window.copytradeCalcState && window.copytradeCalcState.isExpanded);
   const currentDep = window.copytradeCalcState.depositUsd || 100;
@@ -572,12 +611,15 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
       <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle, ${isV2 ? 'rgba(255,61,0,0.25)' : 'rgba(0,230,118,0.2)'} 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
       
       <!-- Vault Selector Tabs -->
-      <div style="display:flex; gap:6px; margin-bottom:14px; background:rgba(0,0,0,0.5); padding:4px; border-radius:10px; border:1px solid rgba(255,255,255,0.08);">
-        <button type="button" class="btn-vault-tab ${!isV2 ? 'active' : ''}" onclick="window.switchCopytradeVault(1)" style="flex:1; padding:8px 6px; border-radius:7px; border:none; background:${!isV2 ? 'rgba(0,230,118,0.22)' : 'transparent'}; border:${!isV2 ? '1px solid #00e676' : '1px solid transparent'}; color:${!isV2 ? '#00e676' : '#94a3b8'}; font-weight:800; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; transition:all 0.2s;">
-          <span>🦆</span> The Mighty Duck (#5100154135)
+      <div style="display:flex; gap:5px; margin-bottom:14px; background:rgba(0,0,0,0.5); padding:4px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); overflow-x:auto;">
+        <button type="button" class="btn-vault-tab ${Number(vaultId) === 1 ? 'active' : ''}" onclick="window.switchCopytradeVault(1)" style="flex:1; min-width:85px; padding:7px 4px; border-radius:7px; border:none; background:${Number(vaultId) === 1 ? 'rgba(0,230,118,0.22)' : 'transparent'}; border:${Number(vaultId) === 1 ? '1px solid #00e676' : '1px solid transparent'}; color:${Number(vaultId) === 1 ? '#00e676' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+          <span>🦆</span> Master 1 (Cent)
         </button>
-        <button type="button" class="btn-vault-tab ${isV2 ? 'active' : ''}" onclick="window.switchCopytradeVault(2)" style="flex:1; padding:8px 6px; border-radius:7px; border:none; background:${isV2 ? 'rgba(255,61,0,0.25)' : 'transparent'}; border:${isV2 ? '1px solid #ff3d00' : '1px solid transparent'}; color:${isV2 ? '#ff6e40' : '#94a3b8'}; font-weight:800; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; transition:all 0.2s;">
-          <span>🔥</span> Amaterasu X (#5100207348)
+        <button type="button" class="btn-vault-tab ${Number(vaultId) === 2 ? 'active' : ''}" onclick="window.switchCopytradeVault(2)" style="flex:1; min-width:85px; padding:7px 4px; border-radius:7px; border:none; background:${Number(vaultId) === 2 ? 'rgba(255,61,0,0.25)' : 'transparent'}; border:${Number(vaultId) === 2 ? '1px solid #ff3d00' : '1px solid transparent'}; color:${Number(vaultId) === 2 ? '#ff6e40' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+          <span>🔥</span> Master 2 (Cent)
+        </button>
+        <button type="button" class="btn-vault-tab ${Number(vaultId) === 3 ? 'active' : ''}" onclick="window.switchCopytradeVault(3)" style="flex:1; min-width:95px; padding:7px 4px; border-radius:7px; border:none; background:${Number(vaultId) === 3 ? 'rgba(245,196,81,0.25)' : 'transparent'}; border:${Number(vaultId) === 3 ? '1px solid #f5c451' : '1px solid transparent'}; color:${Number(vaultId) === 3 ? '#f5c451' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+          <span>👑</span> Master 3 ($1K USD)
         </button>
       </div>
 
@@ -792,19 +834,37 @@ window.switchCopytradeVault = function(vaultId) {
 window.refreshCopytradeUI = function() {
   const vId = window.activeCopytradeVault || 1;
   const isV2 = Number(vId) === 2;
+  const isV3 = Number(vId) === 3;
 
   const cp1 = (AppState && AppState.copytrade) || {};
   const cp2 = (AppState && AppState.copytrade2) || {};
-  const cp = isV2 ? {
-    growthPct: (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 0.00,
-    allTimeProfitUsc: (cp2 && typeof cp2.allTimeProfitUsc === 'number') ? cp2.allTimeProfitUsc : 0.00,
-    allTimeProfitUsd: (cp2 && typeof cp2.allTimeProfitUsd === 'number') ? cp2.allTimeProfitUsd : 0.00,
-    currentEquity: (cp2 && typeof cp2.currentEquity === 'number') ? cp2.currentEquity : 10000.0
-  } : {
-    growthPct: (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 122.55,
-    allTimeProfitUsc: (cp1 && typeof cp1.allTimeProfitUsc === 'number') ? cp1.allTimeProfitUsc : 12254.62,
-    allTimeProfitUsd: (cp1 && typeof cp1.allTimeProfitUsd === 'number') ? cp1.allTimeProfitUsd : 122.55,
-    currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 12254.62
+  const cp3 = (AppState && AppState.copytrade3) || {};
+
+  let cp;
+  if (isV3) {
+    cp = {
+      growthPct: (cp3 && typeof cp3.growthPct === 'number') ? cp3.growthPct : 0.00,
+      allTimeProfitUsc: (cp3 && typeof cp3.allTimeProfitUsd === 'number') ? cp3.allTimeProfitUsd * 100 : 0.00,
+      allTimeProfitUsd: (cp3 && typeof cp3.allTimeProfitUsd === 'number') ? cp3.allTimeProfitUsd : 0.00,
+      currentEquity: (cp3 && typeof cp3.currentEquity === 'number') ? cp3.currentEquity : 1000.0,
+      isUsd: true
+    };
+  } else if (isV2) {
+    cp = {
+      growthPct: (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 0.00,
+      allTimeProfitUsc: (cp2 && typeof cp2.allTimeProfitUsc === 'number') ? cp2.allTimeProfitUsc : 0.00,
+      allTimeProfitUsd: (cp2 && typeof cp2.allTimeProfitUsd === 'number') ? cp2.allTimeProfitUsd : 0.00,
+      currentEquity: (cp2 && typeof cp2.currentEquity === 'number') ? cp2.currentEquity : 10000.0,
+      isUsd: false
+    };
+  } else {
+    cp = {
+      growthPct: (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 122.55,
+      allTimeProfitUsc: (cp1 && typeof cp1.allTimeProfitUsc === 'number') ? cp1.allTimeProfitUsc : 12254.62,
+      allTimeProfitUsd: (cp1 && typeof cp1.allTimeProfitUsd === 'number') ? cp1.allTimeProfitUsd : 122.55,
+      currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 12254.62,
+      isUsd: false
+    };
   };
 
   const containers = document.querySelectorAll('.copytrade-showcase-container');

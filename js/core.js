@@ -345,7 +345,8 @@ const AppState = {
       this.contests = this.db.contests;
       this.copytrade = this.db.copytrade || null;
       this.copytrade2 = this.db.copytrade2 || null;
-      this.copytrades = this.db.copytrades || [this.copytrade, this.copytrade2].filter(Boolean);
+      this.copytrade3 = this.db.copytrade3 || null;
+      this.copytrades = this.db.copytrades || [this.copytrade, this.copytrade2, this.copytrade3].filter(Boolean);
 
       // Fetch initial live quotes
       try {
@@ -379,7 +380,8 @@ const AppState = {
         this.contests = d.contests;
         this.copytrade = d.copytrade || null;
         this.copytrade2 = d.copytrade2 || null;
-        this.copytrades = d.copytrades || [this.copytrade, this.copytrade2].filter(Boolean);
+        this.copytrade3 = d.copytrade3 || null;
+        this.copytrades = d.copytrades || [this.copytrade, this.copytrade2, this.copytrade3].filter(Boolean);
         if (typeof route === 'function') route();
       });
       s.addEventListener('copytrade_update', e => {
@@ -387,9 +389,11 @@ const AppState = {
           const raw = JSON.parse(e.data);
           if (raw.copytrade) this.copytrade = raw.copytrade;
           if (raw.copytrade2) this.copytrade2 = raw.copytrade2;
+          if (raw.copytrade3) this.copytrade3 = raw.copytrade3;
           if (raw.copytrades) this.copytrades = raw.copytrades;
           if (raw.masterAccount === '5100154135') this.copytrade = raw;
           if (raw.masterAccount === '5100207348') this.copytrade2 = raw;
+          if (raw.masterAccount === '5100209626') this.copytrade3 = raw;
           if (typeof window.refreshCopytradeUI === 'function') {
             window.refreshCopytradeUI();
           }
