@@ -2274,12 +2274,16 @@ const server = http.createServer(async (req, res) => {
       return res.end('404 Not Found');
     }
     const ext = path.extname(filePath).toLowerCase();
-    res.writeHead(200, {
+    const headers = {
       'Content-Type': MIME[ext] || 'application/octet-stream',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
       'Expires': '0'
-    });
+    };
+    if (ext === '.bat') {
+      headers['Content-Disposition'] = 'attachment; filename="' + path.basename(filePath) + '"';
+    }
+    res.writeHead(200, headers);
     res.end(data);
   });
 });
