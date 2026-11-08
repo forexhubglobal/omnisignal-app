@@ -510,15 +510,13 @@ function init() {
       }
     };
 
-    // Auto-reveal for owner: if previously authenticated or accessed via URL (?master=1 / ?admin=1)
+    // Reveal Master Admin ONLY if accessed via secret URL (?master=1 / ?admin=1)
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const isMasterQuery = urlParams.has('master') || urlParams.has('admin');
-      const isMasterStored = localStorage.getItem('ama_master_unlocked') === '1';
 
-      if (isMasterStored || isMasterQuery) {
-        if (tabSwitcher) tabSwitcher.style.display = 'flex';
-        if (isMasterQuery) unlockMasterAdmin(true);
+      if (isMasterQuery) {
+        unlockMasterAdmin(true);
       }
     } catch(e) {}
 
