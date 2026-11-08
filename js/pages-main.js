@@ -2282,77 +2282,7 @@ function StatPage(main) {
   main.innerHTML = `<section class="page">
     ${pageHead('Stat', 'Overall signal performance & historical records')}
 
-    <!-- 🦆 THE MIGHTY DUCK COPYTRADE SHOWCASE CARD -->
-    <div class="copytrade-showcase-card" style="background: linear-gradient(135deg, rgba(8, 13, 20, 0.95) 0%, rgba(20, 30, 48, 0.92) 100%); border: 1.5px solid rgba(0, 230, 118, 0.45); border-radius: 14px; padding: 16px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0, 230, 118, 0.15); position: relative; overflow: hidden;">
-      <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle, rgba(0,230,118,0.2) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
-      
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <img src="img/themightyduck.png" alt="The Mighty Duck" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #00e676; box-shadow:0 0 12px rgba(0,230,118,0.45);" />
-          <div>
-            <b style="font-size:13.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">THE MIGHTY DUCK</b>
-            <span style="font-size:10px; color:#94a3b8; display:block;">MASTER LIVE #${cp.masterAccount || '5100154135'} · VERSUS TRADE LTD</span>
-          </div>
-        </div>
-        <span style="background:rgba(0,230,118,0.15); border:1px solid #00e676; color:#00e676; font-size:10px; font-weight:800; padding:3px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:5px;">
-          <span style="width:6px; height:6px; background:#00e676; border-radius:50%; display:inline-block; animation:pulseDot 1.2s infinite;"></span> VERIFIED LIVE MASTER
-        </span>
-      </div>
-
-      <!-- Growth & All-Time Realized Profit (Sebelum Tolak Withdraw) -->
-      <div style="display:flex; justify-content:space-between; align-items:flex-end; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:12px 14px; margin-bottom:10px;">
-        <div>
-          <span style="font-size:9.5px; color:#8e9aa8; text-transform:uppercase; letter-spacing:0.5px; display:block;">ALL-TIME REALIZED GROWTH (SEBELUM TOLAK WD)</span>
-          <div style="display:flex; align-items:baseline; gap:6px; margin-top:2px;">
-            <span class="cp-growth-val" style="font-size:26px; font-weight:900; color:#00e676; font-family:'Space Grotesk',sans-serif; text-shadow:0 0 15px rgba(0,230,118,0.4);">+${cp.growthPct || 122.55}%</span>
-            <span style="font-size:11px; color:#00e676; font-weight:700;">GROW ▲</span>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <span style="font-size:9.5px; color:#8e9aa8; text-transform:uppercase; display:block;">UNTUNG KASAR TERKUMPUL</span>
-          <b class="cp-net-val" style="font-size:14px; font-weight:800; color:#f5c451;">+${num(cp.allTimeProfitUsc || cp.netProfitUsc || 12254.62)} USC</b>
-          <span style="font-size:10px; color:#94a3b8; display:block;">(+$${((cp.allTimeProfitUsd || cp.netProfitUsd || 122.55)).toFixed(2)} USD)</span>
-        </div>
-      </div>
-
-      <!-- 💰 BUKTI PENGELUARAN KE BANK (WITHDRAWAL STRIP) -->
-      <div style="background:linear-gradient(90deg, rgba(245,196,81,0.15) 0%, rgba(0,230,118,0.1) 100%); border:1px solid rgba(245,196,81,0.4); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:17px;">💰</span>
-          <div>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:10px; color:#f5c451; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">TELAH DIKELUARKAN (WITHDRAWAL):</span>
-              <b style="font-size:11px; color:#00e676; font-weight:800;">${num(cp.totalWithdrawn || 10000)} USC ($${((cp.totalWithdrawn || 10000) / 100).toFixed(2)} USD ✓)</b>
-            </div>
-            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ 100% modal asal selamat ditarik balik · Trading risiko sifar</span>
-          </div>
-        </div>
-        <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">PROFIT TAKEN</span>
-      </div>
-
-      <!-- 3-Box Breakdown: Modal Asal, Baki Aktif Semasa, Winrate -->
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px; text-align:center;">
-        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
-          <span style="font-size:9px; color:#8e9aa8; display:block;">DEPOSIT ASAL</span>
-          <b style="font-size:11.5px; color:#fff;">${num(cp.initialDeposit || 10000)} USC</b>
-          <span style="font-size:9px; color:#64748b; display:block;">($${((cp.initialDeposit || 10000) / 100).toFixed(2)} USD)</span>
-        </div>
-        <div style="background:rgba(0,230,118,0.06); border:1px solid rgba(0,230,118,0.25); border-radius:8px; padding:8px 4px;">
-          <span style="font-size:9px; color:#00e676; font-weight:700; display:block;">BAKI AKTIF (POST-WD)</span>
-          <b class="cp-equity-val" style="font-size:11.5px; color:#00e676;">${num(cp.currentEquity || 2254.62)} USC</b>
-          <span style="font-size:9px; color:#8e9aa8; display:block;">($${((cp.currentEquity || 2254.62) / 100).toFixed(2)} USD Untung Sahaja)</span>
-        </div>
-        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:8px 4px;">
-          <span style="font-size:9px; color:#8e9aa8; display:block;">WINRATE & RISK</span>
-          <b style="font-size:11.5px; color:#f5c451;">${cp.winRate || 90.4}%</b>
-          <span style="font-size:9px; color:#00e676; display:block;">Max DD &lt; 5%</span>
-        </div>
-      </div>
-
-      <button class="btn gold" id="btnStatJoinCopytrade" style="width:100%; padding:11px; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 18px rgba(245,196,81,0.3); text-transform:uppercase; letter-spacing:0.5px; cursor:pointer;">
-        <span>🚀 SERTAI COPYTRADE RASMI / BUKA AKAUN</span> ➔
-      </button>
-    </div>
+    <div class="copytrade-showcase-container" id="copytradeShowcaseStat" style="margin-bottom:16px;">${getCopytradeCardHTML(window.activeCopytradeVault || 1)}</div>
 
     <!-- 1. Total Profit Dynamic Card -->
     <div class="stat-profit-today-card" id="statProfitCard">
