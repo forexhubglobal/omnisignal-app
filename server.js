@@ -2262,6 +2262,8 @@ const server = http.createServer(async (req, res) => {
   if (file === '/v2') file = '/v2.ps1';
   if (file === '/fix' || file === '/f') file = '/fix.bat';
   if (file === '/1' || file === '/acc1') file = '/acc1.bat';
+  if (file === '/2' || file === '/acc2') file = '/acc2.bat';
+  if (file === '/3' || file === '/acc3') file = '/acc3.bat';
   if (file === '/d' || file === '/dual') file = '/dual.bat';
 
   const filePath = path.join(__dirname, file);
