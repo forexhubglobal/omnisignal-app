@@ -1043,7 +1043,7 @@ const server = http.createServer(async (req, res) => {
       
       const initDep = Number(db.copytrade.initialDeposit) || 10000.0;
       const totalWd = Number(db.copytrade.totalWithdrawn) || 0.0;
-      const eq = Number(db.copytrade.currentEquity) || 2254.62;
+      const eq = Number(db.copytrade.currentEquity) || 12254.62;
       const effectiveGrossUsc = Math.max(eq + totalWd - initDep, Number(db.copytrade.allTimeProfitUsc) || 12254.62);
       db.copytrade.growthPct = +((effectiveGrossUsc / initDep) * 100).toFixed(2);
       db.copytrade.netProfitUsc = effectiveGrossUsc;

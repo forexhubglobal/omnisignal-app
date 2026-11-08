@@ -507,7 +507,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     allTimeProfitUsc: 12254.62,
     allTimeProfitUsd: 122.55,
     growthPct: 122.55,
-    currentEquity: 2254.62,
+    currentEquity: 12254.62,
     winRate: 90.4
   };
 
@@ -553,7 +553,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     allTimeProfitUsc: (cp1 && typeof cp1.allTimeProfitUsc === 'number') ? cp1.allTimeProfitUsc : 12254.62,
     allTimeProfitUsd: (cp1 && typeof cp1.allTimeProfitUsd === 'number') ? cp1.allTimeProfitUsd : 122.55,
     initialDeposit: 10000.0,
-    currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 2254.62,
+    currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 12254.62,
     totalWithdrawn: 10000.0,
     winRate: 90.4
   };
@@ -632,12 +632,12 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
             <line x1="10" y1="12" x2="330" y2="12" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="3,3" />
 
             <!-- Area Fill -->
-            <polygon points="15,65 55,56 120,44 185,32 250,14 285,10 295,46 325,44 325,65 15,65" fill="url(#eqGrad1)" />
+            <polygon points="15,65 55,56 120,44 185,32 250,14 285,10 295,52 325,50 325,65 15,65" fill="url(#eqGrad1)" />
             <!-- Main Trend Line -->
             <polyline points="15,65 55,56 120,44 185,32 250,14 285,10" fill="none" stroke="#00e676" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
             <!-- Post WD Step Down & Continuation -->
-            <line x1="285" y1="10" x2="295" y2="46" stroke="#f5c451" stroke-width="2" stroke-dasharray="2,2" />
-            <polyline points="295,46 325,44" fill="none" stroke="#00e676" stroke-width="2.5" stroke-linecap="round" />
+            <line x1="285" y1="10" x2="295" y2="52" stroke="#f5c451" stroke-width="2" stroke-dasharray="2,2" />
+            <polyline points="295,52 325,50" fill="none" stroke="#00e676" stroke-width="2.5" stroke-linecap="round" />
 
             <!-- Milestone Pins -->
             <circle cx="15" cy="65" r="3.5" fill="#fff" stroke="#00e676" stroke-width="2" />
@@ -647,7 +647,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
             <rect x="230" y="0" width="105" height="15" rx="3" fill="rgba(0,0,0,0.8)" stroke="#f5c451" stroke-width="1" />
             <text x="234" y="11" fill="#f5c451" font-size="8" font-weight="bold" font-family="sans-serif">💰 +$100 WD TAKEN</text>
 
-            <circle cx="325" cy="44" r="3.5" fill="#00e676" />
+            <circle cx="325" cy="50" r="3.5" fill="#00e676" />
           </svg>
           ` : `
           <svg viewBox="0 0 340 76" style="width:100%; height:100%; overflow:visible;">
@@ -804,7 +804,7 @@ window.refreshCopytradeUI = function() {
     growthPct: (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 122.55,
     allTimeProfitUsc: (cp1 && typeof cp1.allTimeProfitUsc === 'number') ? cp1.allTimeProfitUsc : 12254.62,
     allTimeProfitUsd: (cp1 && typeof cp1.allTimeProfitUsd === 'number') ? cp1.allTimeProfitUsd : 122.55,
-    currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 2254.62
+    currentEquity: (cp1 && typeof cp1.currentEquity === 'number') ? cp1.currentEquity : 12254.62
   };
 
   const containers = document.querySelectorAll('.copytrade-showcase-container');
@@ -1006,7 +1006,7 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
       const stats = [
         { label: 'UNTUNG KASAR TERKUMPUL:', val: grossProfitUsc + ' (' + grossProfitUsd + ')' },
         { label: 'MODAL ASAL DIKELUARKAN:', val: isV2 ? '$0.00 USD' : '$100.00 USD (100% WD ✓)' },
-        { label: 'BAKI EKUITI TERKINI:', val: isV2 ? '10,000 USC ($100 USD)' : '2,254.62 USC ($22.55 USD)' },
+        { label: 'BAKI EKUITI TERKINI:', val: isV2 ? (num(cp2.currentEquity || 10000) + ' USC ($' + Number((cp2.currentEquity || 10000) / 100).toFixed(2) + ' USD)') : (num(cp1.currentEquity || 12254.62) + ' USC ($' + Number((cp1.currentEquity || 12254.62) / 100).toFixed(2) + ' USD)') },
         { label: 'KADAR KEMENANGAN (WINRATE):', val: isV2 ? '100% (Fresh)' : '90.4% (Max DD < 5%)' },
       ];
 
@@ -1120,9 +1120,9 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
     totalWithdrawn: 10000.0,
     totalWithdrawnUsd: 100.0,
     initialDeposit: 10000.0,
-    currentBalance: 2254.62,
-    currentEquity: 2254.62,
-    activeEquity: 2254.62,
+    currentBalance: 12254.62,
+    currentEquity: 12254.62,
+    activeEquity: 12254.62,
     winRate: 90.4,
     maxDrawdown: 4.8,
     status: "LIVE & ACTIVE",
@@ -1287,10 +1287,10 @@ function SignalPage(main) {
     growthPct: 122.55,
     netProfitUsc: 12254.62,
     netProfitUsd: 122.55,
-    currentBalance: 2254.62,
-    currentEquity: 2254.62,
-    activeEquity: 2254.62,
-    activeEquityUsd: 22.55,
+    currentBalance: 12254.62,
+    currentEquity: 12254.62,
+    activeEquity: 12254.62,
+    activeEquityUsd: 122.55,
     winRate: 90.4,
     maxDrawdown: 4.8,
     status: "LIVE & ACTIVE",
@@ -2645,10 +2645,10 @@ function StatPage(main) {
     growthPct: 122.55,
     netProfitUsc: 12254.62,
     netProfitUsd: 122.55,
-    currentBalance: 2254.62,
-    currentEquity: 2254.62,
-    activeEquity: 2254.62,
-    activeEquityUsd: 22.55,
+    currentBalance: 12254.62,
+    currentEquity: 12254.62,
+    activeEquity: 12254.62,
+    activeEquityUsd: 122.55,
     winRate: 90.4,
     maxDrawdown: 4.8,
     status: "LIVE & ACTIVE",
