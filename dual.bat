@@ -2,7 +2,7 @@
 title AMATERASU X - DUAL TERMINAL RUNNER
 color 0B
 echo =====================================================================
-echo    AMATERASU X - AUTO SETUP & DUAL RUNNER (AKAUN 1 & AKAUN 2)
+echo    AMATERASU X - AUTO SETUP ^& DUAL RUNNER (AKAUN 1 ^& AKAUN 2)
 echo =====================================================================
 echo.
 
@@ -12,7 +12,8 @@ set "T2="
 if exist "C:\Program Files\Versus Trade MetaTrader 5 Terminal\terminal64.exe" set "T1=C:\Program Files\Versus Trade MetaTrader 5 Terminal\terminal64.exe"
 if exist "C:\Program Files\MetaTrader 5\terminal64.exe" if not defined T1 set "T1=C:\Program Files\MetaTrader 5\terminal64.exe"
 
-if exist "C:\Program Files\Versus Trade MetaTrader 5 Terminal - Acc2\terminal64.exe" set "T2=C:\Program Files\Versus Trade MetaTrader 5 Terminal - Acc2\terminal64.exe"
+if exist "C:\VersusTrade_Acc2\terminal64.exe" set "T2=C:\VersusTrade_Acc2\terminal64.exe"
+if exist "C:\Program Files\Versus Trade MetaTrader 5 Terminal - Acc2\terminal64.exe" if not defined T2 set "T2=C:\Program Files\Versus Trade MetaTrader 5 Terminal - Acc2\terminal64.exe"
 if exist "C:\Program Files\MetaTrader 5 - Acc2\terminal64.exe" if not defined T2 set "T2=C:\Program Files\MetaTrader 5 - Acc2\terminal64.exe"
 
 :: If T2 doesn't exist, clone T1
@@ -49,7 +50,7 @@ python -c "import json, os; cfg={'server_url':'https://amaterasux.onrender.com',
 echo [3/4] Konfigurasi kedua-dua akaun siap!
 
 :: 6. Launch Terminals
-echo [4/4] Memulakan Terminal & Bridge...
+echo [4/4] Memulakan Terminal ^& Bridge...
 if defined T1 start "" "%T1%" /portable
 timeout /t 2 >nul
 if defined T2 start "" "%T2%" /portable
