@@ -393,24 +393,28 @@ class AmaterasuBridge:
         # 0.3 STRICT PULLBACK RETEST GUARD (ANTI-CHASING / DILARANG MASUK DI PUNCAK ATAU DASAR):
         # Mencegah sama sekali 'selling at the bottom' atau 'buying at the top'.
         # Wajib ada ruang pullback sebelum sebarang order dihantar ke pasaran sebenar!
-        try:
-            m15_rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M15, 0, 5)
-            if m15_rates is not None and len(m15_rates) >= 3:
-                recent_low = float(min(r['low'] for r in m15_rates))
-                recent_high = float(max(r['high'] for r in m15_rates))
+        is_test_mode = bool(signal.get("isTest") or signal.get("test") or signal.get("manual"))
+        if not is_test_mode:
+            try:
+                m15_rates = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M15, 0, 5)
+                if m15_rates is not None and len(m15_rates) >= 3:
+                    recent_low = float(min(r['low'] for r in m15_rates))
+                    recent_high = float(max(r['high'] for r in m15_rates))
 
-                if not is_buy: # SELL ORDER
-                    buffer_floor = 4.0 if clean_raw_sym == "XAUUSD" else (0.0008 if "JPY" not in clean_raw_sym else 0.08)
-                    if price <= (recent_low + buffer_floor):
-                        print(f"{Colors.YELLOW}🛡️ [STRICT PULLBACK GUARD] Menolak order SELL #{clean_raw_sym} @ {price:.{digits}f}! Harga berada di zon lantai dasar ({recent_low:.{digits}f} + {buffer_floor}). DILARANG SELL di lantai dasar! Wajib tunggu Pullback melantun ke atas dahulu sebelum SELL!{Colors.RESET}")
-                        return None
-                else: # BUY ORDER
-                    buffer_roof = 4.0 if clean_raw_sym == "XAUUSD" else (0.0008 if "JPY" not in clean_raw_sym else 0.08)
-                    if price >= (recent_high - buffer_roof):
-                        print(f"{Colors.YELLOW}🛡️ [STRICT PULLBACK GUARD] Menolak order BUY #{clean_raw_sym} @ {price:.{digits}f}! Harga berada di zon bumbung puncak ({recent_high:.{digits}f} - {buffer_roof}). DILARANG BUY di puncak! Wajib tunggu Pullback melantun ke bawah dahulu sebelum BUY!{Colors.RESET}")
-                        return None
-        except Exception as e:
-            pass
+                    if not is_buy: # SELL ORDER
+                        buffer_floor = 4.0 if clean_raw_sym == "XAUUSD" else (0.0008 if "JPY" not in clean_raw_sym else 0.08)
+                        if price <= (recent_low + buffer_floor):
+                            print(f"{Colors.YELLOW}🛡️ [STRICT PULLBACK GUARD] Menolak order SELL #{clean_raw_sym} @ {price:.{digits}f}! Harga berada di zon lantai dasar ({recent_low:.{digits}f} + {buffer_floor}). DILARANG SELL di lantai dasar! Wajib tunggu Pullback melantun ke atas dahulu sebelum SELL!{Colors.RESET}")
+                            return None
+                    else: # BUY ORDER
+                        buffer_roof = 4.0 if clean_raw_sym == "XAUUSD" else (0.0008 if "JPY" not in clean_raw_sym else 0.08)
+                        if price >= (recent_high - buffer_roof):
+                            print(f"{Colors.YELLOW}🛡️ [STRICT PULLBACK GUARD] Menolak order BUY #{clean_raw_sym} @ {price:.{digits}f}! Harga berada di zon bumbung puncak ({recent_high:.{digits}f} - {buffer_roof}). DILARANG BUY di puncak! Wajib tunggu Pullback melantun ke bawah dahulu sebelum BUY!{Colors.RESET}")
+                            return None
+            except Exception as e:
+                pass
+        else:
+            print(f"{Colors.GREEN}{Colors.BOLD}⚡ [ADMIN TEST MODE] Menjalankan ujian eksekusi pasaran untuk akaun ini...{Colors.RESET}")
 
         # Entry & distance calculation
         signal_entry = float(signal.get("entry", price))
@@ -581,6 +585,14 @@ class AmaterasuBridge:
         sig_id = sig.get("id")
         if not sig_id or sig_id in self.executed_signal_ids:
             return
+
+        # TARGET ACCOUNT GUARD: Jika isyarat disasarkan kepada akaun tertentu (cth: Akaun 3 #5100209626)
+        target_acc = sig.get("targetAccount")
+        if target_acc:
+            acc_info = mt5.account_info()
+            my_login = str(acc_info.login) if acc_info else str(self.config.get("mt5_login", ""))
+            if str(target_acc).strip() != my_login.strip():
+                return
 
         now_t = time.time()
         if not hasattr(self, "signal_retry_cooldown"):

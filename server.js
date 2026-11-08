@@ -1387,11 +1387,13 @@ const server = http.createServer(async (req, res) => {
         asset: targetSymbol,
         type: targetType,
         timeframe: payload.timeframe || 'M15',
-        entry: Number(payload.entry) || 3986.50,
-        tp1: Number(payload.tp1) || 3994.50,
-        tp2: Number(payload.tp2) || 4005.00,
-        sl: Number(payload.sl) || 3978.00,
+        entry: Number(payload.entry) || (liveMarketQuotes[targetSymbol]?.price || 1.1147),
+        tp1: Number(payload.tp1) || (targetType === 'BUY' ? Number((Number(payload.entry || 1.1147) + 0.0020).toFixed(4)) : Number((Number(payload.entry || 1.1147) - 0.0020).toFixed(4))),
+        tp2: Number(payload.tp2) || (targetType === 'BUY' ? Number((Number(payload.entry || 1.1147) + 0.0040).toFixed(4)) : Number((Number(payload.entry || 1.1147) - 0.0040).toFixed(4))),
+        sl: Number(payload.sl) || (targetType === 'BUY' ? Number((Number(payload.entry || 1.1147) - 0.0025).toFixed(4)) : Number((Number(payload.entry || 1.1147) + 0.0025).toFixed(4))),
         firedAt: getMYTTime(),
+        targetAccount: payload.targetAccount || null,
+        isTest: !!payload.isTest,
         notes: payload.notes || 'Signal generated from Amaterasu X AI Desk'
       };
       db.activeSignals = db.activeSignals.filter(s => s.symbol !== newSig.symbol);
