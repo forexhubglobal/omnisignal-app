@@ -754,6 +754,19 @@ const server = http.createServer(async (req, res) => {
 
   // ===== REST API Endpoints =====
 
+  // 0.05 GET /api/autopsy/xauusd (Live Multi-Timeframe Telemetry for Gold)
+  if (pathname === '/api/autopsy/xauusd' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({
+      goldQuote: liveMarketQuotes.XAUUSD || null,
+      asianSession: AiEngine.goldAsianSession || null,
+      volumeFlow: (AiEngine.liveVolumeFlow && AiEngine.liveVolumeFlow.XAUUSD) || null,
+      mtfMaFlow: (AiEngine.liveMtfMaFlow && AiEngine.liveMtfMaFlow.XAUUSD) || null,
+      openPositions: (AiEngine.liveMT5Positions || []).filter(p => (p.symbol || '').toUpperCase().includes('XAU')),
+      serverTimeMYT: getMYTTimeWithSeconds()
+    }));
+  }
+
   // 0. GET /api/market/quotes (Live TradingView-synchronized market feeds)
   if (pathname === '/api/market/quotes' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
