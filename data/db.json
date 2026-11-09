@@ -1,35 +1,15 @@
 {
   "stats": {
-    "totalSignals": 297,
-    "totalSignalsClosed": 297,
-    "totalProfitAllTime": 9163,
+    "totalSignals": 306,
+    "totalSignalsClosed": 305,
+    "totalProfitAllTime": 9277,
     "winRate": 92,
-    "tp1Hit": 274,
+    "tp1Hit": 251,
     "tp2Hit": 0,
     "tp3Hit": 0,
-    "slHit": 23,
-    "totalProfitToday": 303,
+    "slHit": 25,
+    "totalProfitToday": 0,
     "last7Days": [
-      {
-        "day": "Sat",
-        "date": "Oct 31",
-        "pips": 0
-      },
-      {
-        "day": "Sun",
-        "date": "Nov 1",
-        "pips": 0
-      },
-      {
-        "day": "Mon",
-        "date": "Nov 2",
-        "pips": 1090
-      },
-      {
-        "day": "Tue",
-        "date": "Nov 3",
-        "pips": 1600
-      },
       {
         "day": "Wed",
         "date": "Nov 4",
@@ -41,12 +21,32 @@
         "pips": 1205
       },
       {
-        "day": "Today",
+        "day": "Fri",
         "date": "Nov 6",
         "pips": 303
+      },
+      {
+        "day": "Sat",
+        "date": "Nov 7",
+        "pips": 0
+      },
+      {
+        "day": "Sun",
+        "date": "Nov 8",
+        "pips": 0
+      },
+      {
+        "day": "Mon",
+        "date": "Nov 9",
+        "pips": 114
+      },
+      {
+        "day": "Today",
+        "date": "Nov 10",
+        "pips": 0
       }
     ],
-    "lastUpdated": "2026-11-05T21:52:35.000Z"
+    "lastUpdated": "2026-11-09T22:02:06.736Z"
   },
   "activeSignal": {
     "status": "WAITING",
@@ -61,6 +61,134 @@
     "notes": "Amaterasu AI mengimbas zon kecairan pasaran untuk setup seterusnya..."
   },
   "signals": [
+    {
+      "id": "sig-1793500100000",
+      "time": "01:15",
+      "date": "Nov 9",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4110.5,
+      "status": "TP1",
+      "pips": 50,
+      "tags": [
+        "TP1",
+        "TP2"
+      ],
+      "peak": 100
+    },
+    {
+      "id": "sig-1793500200000",
+      "time": "01:25",
+      "date": "Nov 9",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1218,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793500300000",
+      "time": "01:45",
+      "date": "Nov 9",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1221,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793500400000",
+      "time": "02:10",
+      "date": "Nov 9",
+      "symbol": "USDCHF",
+      "type": "BUY",
+      "entry": 0.8235,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793500500000",
+      "time": "02:45",
+      "date": "Nov 9",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4147.25,
+      "status": "TP1",
+      "pips": 50,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 60
+    },
+    {
+      "id": "sig-1793500600000",
+      "time": "03:15",
+      "date": "Nov 9",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1224,
+      "status": "TP1",
+      "pips": 20,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 20
+    },
+    {
+      "id": "sig-1793500700000",
+      "time": "03:45",
+      "date": "Nov 9",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.1226,
+      "status": "SL",
+      "pips": -18,
+      "tags": [
+        "SL"
+      ],
+      "peak": 10
+    },
+    {
+      "id": "sig-1793500800000",
+      "time": "04:10",
+      "date": "Nov 9",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4149,
+      "status": "SL",
+      "pips": -48,
+      "tags": [
+        "SL"
+      ],
+      "peak": 15
+    },
+    {
+      "id": "sig-1793500900000",
+      "time": "04:30",
+      "date": "Nov 9",
+      "symbol": "USDCHF",
+      "type": "BUY",
+      "entry": 0.8239,
+      "status": "BE",
+      "pips": 0,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
     {
       "id": "sig-1793324551264",
       "time": "09:42",
