@@ -360,6 +360,15 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}🛡️ [RISK GUARD] Had {max_pairs} Pair serentak telah dicapai ({', '.join(open_unique_symbols)}). Order #{clean_raw_sym} ditolak bagi melindungi modal.{Colors.RESET}")
             return None
 
+        # SYMBOL LAYER LIMIT GUARD: Maksimum 3 layer (TP1, TP2, TP3) bagi satu simbol
+        existing_symbol_orders = [
+            p for p in (mt5.positions_get(symbol=symbol) or [])
+            if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX"))
+        ]
+        if len(existing_symbol_orders) >= 3:
+            print(f"{Colors.YELLOW}🛡️ [HAD LAYER DICAPAI] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} layer aktif. Menolak order tambahan demi menjaga saiz modal.{Colors.RESET}")
+            return None
+
         # Anti-Hedging check: Elak buka posisi bertentangan jika sudah ada posisi aktif untuk simbol ini di MT5
         all_sym_pos = mt5.positions_get(symbol=symbol)
         if all_sym_pos:
