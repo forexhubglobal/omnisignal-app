@@ -2878,13 +2878,12 @@ const AiEngine = {
     const dynTp3Pips = Math.round((asset.tp3Pips || Math.round(asset.tp2Pips * 1.5)) * volMult);
     let dynSlPips = Math.round(asset.slPips * volMult);
 
-    // STOP LOSS PROTECTION (ANTI-RUGI TERUK):
-    // Hadkan Stop Loss ketat dan jimat (45 - 52 pips untuk Gold, 18 - 22 pips untuk Forex)
-    // Elakkan sama sekali SL 120+ pips yang membebankan modal pengguna!
+    // INSTITUTIONAL BREATHING ROOM BUFFER (ANTI-WICK HUNTING):
+    // Beri ruang nafas selamat (100 - 135 pips untuk Gold, 35 - 48 pips untuk Forex)
     if (asset.symbol === 'XAUUSD') {
-      dynSlPips = Math.min(Math.max(dynSlPips, 45), 52); // Ketat 45 - 52 pips ($4.50 - $5.20)
+      dynSlPips = Math.min(Math.max(dynSlPips, 100), 135); // Institutional buffer 100 - 135 pips ($10.00 - $13.50)
     } else {
-      dynSlPips = Math.min(Math.max(dynSlPips, 18), 22); // Ketat 18 - 22 pips
+      dynSlPips = Math.min(Math.max(dynSlPips, 35), 48);   // Institutional buffer 35 - 48 pips
     }
 
     const sign = type === 'BUY' ? 1 : -1;
