@@ -2507,20 +2507,23 @@ const AiEngine = {
         const m1_ma200 = mtf.m1_ma200 || (curPrice - 12.0);
 
         supportFloor = Number(Math.min(m1_ma20, curPrice - 2.5).toFixed(2));
-        resistanceCeiling = Number(Math.max(curPrice + 9.0, Math.ceil(curPrice / 10) * 10).toFixed(2));
+        resistanceCeiling = Number(Math.max(curPrice + 8.0, Math.ceil(curPrice / 10) * 10).toFixed(2));
 
-        if (macro === 'STRONG_BUYER' || (m15.includes('BULLISH') && buyerPct >= 65)) {
-          verdict = 'BUY ON PULLBACK (DILARANG SELL)';
-          biasClass = 'bullish';
-          advisory = `D1 & H4 Pembeli Gergasi mendominasi (${buyerPct}% Buyer Volume). Penurunan di M1 hanyalah retracement. Sasaran: ${resistanceCeiling.toFixed(2)}. Sokongan: ${supportFloor.toFixed(2)}.`;
-        } else if (macro === 'STRONG_SELLER' || (m15.includes('BEARISH') && buyerPct <= 35)) {
-          verdict = 'SELL ON RALLY (DILARANG BUY)';
+        const isNearCeiling = curPrice >= (resistanceCeiling - 2.0) || (mtf.d1_high > 0 && curPrice >= mtf.d1_high - 1.5);
+        const isNearFloor = curPrice <= (supportFloor + 2.0) || (mtf.d1_low > 0 && curPrice <= mtf.d1_low + 1.5);
+
+        if (isNearCeiling || (m15.includes('BEARISH') && buyerPct <= 40) || macro === 'STRONG_SELLER') {
+          verdict = isNearCeiling ? 'SELL AT RESISTANCE (REJECTION ZON BUMBUNG)' : 'SELL ON RALLY (M15 BEARISH FLOW)';
           biasClass = 'bearish';
-          advisory = `D1 & H4 Penjual Gergasi mendominasi (${(100 - buyerPct).toFixed(1)}% Seller Volume). Sasaran: ${(curPrice - 15).toFixed(2)}. Rintangan: ${(curPrice + 5).toFixed(2)}.`;
+          advisory = `Zon rintangan / liquidity sweep (${curPrice.toFixed(2)} vs bumbung ${resistanceCeiling.toFixed(2)}). Data logik untuk SELL pembetulan ke arah sokongan ${supportFloor.toFixed(2)}. SL ketat di atas puncak.`;
+        } else if (isNearFloor || (m15.includes('BULLISH') && buyerPct >= 60) || macro === 'STRONG_BUYER') {
+          verdict = isNearFloor ? 'BUY AT SUPPORT (DEMAND REBOUND)' : 'BUY ON PULLBACK (M15 BULLISH FLOW)';
+          biasClass = 'bullish';
+          advisory = `Zon sokongan / demand (${curPrice.toFixed(2)} vs lantai ${supportFloor.toFixed(2)}). Data logik untuk BUY lantunan ke arah sasaran bumbung ${resistanceCeiling.toFixed(2)}. SL ketat di bawah lantai.`;
         } else {
-          verdict = 'RANGE OSCILLATOR (SMC WAVE)';
+          verdict = '2-WAY SMC WAVE (BUY LANTAI, SELL BUMBUNG)';
           biasClass = 'neutral';
-          advisory = `Pasaran berombak antara lantai ${supportFloor.toFixed(2)} dan bumbung ${resistanceCeiling.toFixed(2)}.`;
+          advisory = `Pasaran bergerak berombak dua hala. Logik: Masuk BUY di lantai sokongan (${supportFloor.toFixed(2)}) dan masuk SELL di bumbung rintangan (${resistanceCeiling.toFixed(2)}). Dilarang kejar lilin di tengah ombak.`;
         }
       } else {
         const pipVal = sym.includes('JPY') ? 0.01 : 0.0001;
@@ -2528,14 +2531,18 @@ const AiEngine = {
         supportFloor = Number((curPrice - 20 * pipVal).toFixed(pipDec));
         resistanceCeiling = Number((curPrice + 20 * pipVal).toFixed(pipDec));
 
-        if (macro === 'STRONG_BUYER' || m15.includes('BULLISH')) {
-          verdict = 'BUY ON DIP (M15 BULLISH)';
-          biasClass = 'bullish';
-          advisory = `Struktur M15 di atas MA 20/100/200. Sasaran: ${resistanceCeiling}.`;
-        } else if (macro === 'STRONG_SELLER' || m15.includes('BEARISH')) {
+        if (m15.includes('BEARISH') || macro === 'STRONG_SELLER' || buyerPct <= 40) {
           verdict = 'SELL ON RALLY (M15 BEARISH)';
           biasClass = 'bearish';
-          advisory = `Struktur M15 di bawah MA 20/100/200. Sasaran: ${supportFloor}.`;
+          advisory = `Struktur lilin & MA di bawah tekanan penjual. Data logik untuk SELL rally ke arah lantai ${supportFloor}.`;
+        } else if (m15.includes('BULLISH') || macro === 'STRONG_BUYER' || buyerPct >= 60) {
+          verdict = 'BUY ON DIP (M15 BULLISH)';
+          biasClass = 'bullish';
+          advisory = `Struktur lilin & MA di atas zon sokongan pembeli. Data logik untuk BUY celupan ke arah sasaran ${resistanceCeiling}.`;
+        } else {
+          verdict = '2-WAY RANGE (BUY SUPPORT, SELL RESISTANCE)';
+          biasClass = 'neutral';
+          advisory = `Pasaran berombak dua hala. Masuk BUY di zon sokongan ${supportFloor} atau SELL di zon rintangan ${resistanceCeiling}.`;
         }
       }
 
@@ -3061,14 +3068,27 @@ const AiEngine = {
         this.log(`📉 [MTF TRIPLE MA] #${asset.symbol} D1/H4 STRONG_SELLER & MA sejajar Bearish. Menyelaraskan isyarat ke SELL.`);
       }
 
-      // Guard: Sekat isyarat yang melawan jajaran MA & Bias Makro
+      // Guard: Sekat isyarat yang melawan jajaran MA & Bias Makro KECUALI jika harga berada di zon puncak/bumbung atau dasar/lantai
+      const floorRef = asset.symbol === 'XAUUSD' ? (this.goldAsianSession.low || (liveP - 15.0)) : (liveMtf.d1_low || (liveP - 0.0030));
+      const roofRef = asset.symbol === 'XAUUSD' ? (this.goldAsianSession.high || (liveP + 15.0)) : (liveMtf.d1_high || (liveP + 0.0030));
+      const isAtRoof = liveP >= (roofRef - 3.0);
+      const isAtFloor = liveP <= (floorRef + 3.0);
+
       if (type === 'SELL' && (liveMtf.macro === 'STRONG_BUYER' || liveMtf.alignment === 'FULL_BULLISH')) {
-        this.log(`🛡️ [TRIPLE MA GUARD] Menolak isyarat SELL #${asset.symbol} kerana lilin D1/H4 kukuh menaik & MA M1/M5/M15 di atas MA 20/100/200. Penurunan TF kecil hanyalah retracement!`);
-        return;
+        if (!isAtRoof) {
+          this.log(`🛡️ [TRIPLE MA GUARD] Menolak isyarat SELL #${asset.symbol} di tengah aliran Bullish (bukan di zon bumbung rintangan).`);
+          return;
+        } else {
+          this.log(`🎯 [SMC ROOF REJECTION] Membenarkan isyarat SELL #${asset.symbol} pada zon bumbung rintangan (${liveP.toFixed(2)} vs ${roofRef.toFixed(2)}) untuk menunggang retracement!`);
+        }
       }
       if (type === 'BUY' && (liveMtf.macro === 'STRONG_SELLER' || liveMtf.alignment === 'FULL_BEARISH')) {
-        this.log(`🛡️ [TRIPLE MA GUARD] Menolak isyarat BUY #${asset.symbol} kerana lilin D1/H4 kukuh menurun & MA M1/M5/M15 di bawah MA 20/100/200. Kenaikan TF kecil hanyalah retracement!`);
-        return;
+        if (!isAtFloor) {
+          this.log(`🛡️ [TRIPLE MA GUARD] Menolak isyarat BUY #${asset.symbol} di tengah aliran Bearish (bukan di zon lantai sokongan).`);
+          return;
+        } else {
+          this.log(`🎯 [SMC FLOOR REBOUND] Membenarkan isyarat BUY #${asset.symbol} pada zon lantai sokongan (${liveP.toFixed(2)} vs ${floorRef.toFixed(2)}) untuk menunggang lantunan!`);
+        }
       }
     }
 
