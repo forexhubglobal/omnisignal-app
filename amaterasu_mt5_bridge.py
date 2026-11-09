@@ -157,12 +157,18 @@ class AmaterasuBridge:
 
         if init_kwargs:
             init_ok = mt5.initialize(**init_kwargs)
-        else:
+            if not init_ok and path and os.path.exists(path):
+                print(f"[MT5] Menguji sambungan langsung ke terminal yang sedang berjalan: {path}")
+                init_ok = mt5.initialize(path=path)
+
+        if not init_ok:
             init_ok = mt5.initialize()
 
         if not init_ok:
             # Check standard known terminal paths if default init fails
             candidates = [
+                r"C:\VersusTrade_Acc2\terminal64.exe",
+                r"C:\VersusTrade_Acc3\terminal64.exe",
                 r"C:\Program Files\Versus Trade MetaTrader 5 Terminal - Acc2\terminal64.exe",
                 r"C:\Program Files\Versus Trade MetaTrader 5 Terminal\terminal64.exe",
                 r"C:\Program Files\MetaTrader 5 - Acc2\terminal64.exe",
@@ -183,6 +189,13 @@ class AmaterasuBridge:
                         self.config["mt5_terminal_path"] = c
                         save_config(self.config)
                         break
+                    if mt5.initialize(path=c):
+                        acc = mt5.account_info()
+                        if not login or (acc and str(acc.login) == str(login)):
+                            init_ok = True
+                            self.config["mt5_terminal_path"] = c
+                            save_config(self.config)
+                            break
 
         if not init_ok:
             err = mt5.last_error()
