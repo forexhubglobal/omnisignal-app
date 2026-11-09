@@ -2716,9 +2716,9 @@ const AiEngine = {
     if (this.secondsInState >= this.scanIntervalSec) {
       this.secondsInState = 0;
       // STRICT 1-SETUP PER PAIR (BULAN LEPAS STYLE):
-      // Dilarang keras stacking berkali-kali! Satu pair hanya boleh ada 1 setup aktif sahaja.
+      // Dilarang keras stacking berkali-kali! Selagi simbol wujud dalam activeSignals, DILARANG BUKA TRADE!
       const activePendingSymbols = new Set(
-        db.activeSignals.filter(s => s.status === 'ACTIVE').map(s => s.symbol)
+        db.activeSignals.map(s => s.symbol)
       );
       if (Array.isArray(this.liveMT5Positions)) {
         for (const p of this.liveMT5Positions) {
@@ -2759,9 +2759,10 @@ const AiEngine = {
     const asset = forceAsset || this.assets[Math.floor(Math.random() * this.assets.length)];
 
     // 0. STRICT 1-SETUP GUARD (BULAN LEPAS LOCKED SOP):
-    // Sekiranya simbol ini sudah ada trade yang sedang ACTIVE di web atau MT5, jangan buka trade!
-    const existingActive = (db.activeSignals || []).find(s => s.symbol === asset.symbol && s.status === 'ACTIVE');
+    // Sekiranya simbol ini sudah ada trade di dalam activeSignals (ACTIVE / TP1_HIT / TP2_HIT), DILARANG KERAS BUKA TRADE BAHARU!
+    const existingActive = (db.activeSignals || []).find(s => s.symbol === asset.symbol);
     if (existingActive) {
+      this.log(`🛡️ [1-SETUP LOCK] #${asset.symbol} masih mempunyai setup aktif (${existingActive.status} @ ${existingActive.entry}). Order baharu ditolak sehingga kitaran selesai.`);
       return;
     }
     if (Array.isArray(this.liveMT5Positions) && this.liveMT5Positions.some(p => (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() === asset.symbol.toUpperCase())) {
@@ -2939,27 +2940,10 @@ const AiEngine = {
     if (!Array.isArray(db.activeSignals)) db.activeSignals = [];
     const existingIdx = db.activeSignals.findIndex(s => s.symbol === asset.symbol);
     if (existingIdx !== -1) {
-      const oldSig = db.activeSignals[existingIdx];
-      if (oldSig.status === 'TP1_HIT' || oldSig.beLocked) {
-        const oldHistoryItem = {
-          id: oldSig.id || ('sig-' + Date.now()),
-          time: getMYTTime(),
-          date: getMYTDate(),
-          symbol: oldSig.symbol,
-          type: oldSig.type,
-          entry: oldSig.entry,
-          status: 'TP1',
-          pips: asset.tp1Pips,
-          tags: ['TP1'],
-          peak: asset.tp1Pips
-        };
-        if (!Array.isArray(db.signals)) db.signals = [];
-        db.signals.unshift(oldHistoryItem);
-      }
-      db.activeSignals[existingIdx] = newSig;
-    } else {
-      db.activeSignals.unshift(newSig);
+      this.log(`🛡️ [1-SETUP LOCK] #${asset.symbol} sudah wujud dalam senarai aktif (${db.activeSignals[existingIdx].status}). Dilarang bertimbun atau ditimpa.`);
+      return;
     }
+    db.activeSignals.unshift(newSig);
 
     db.activeSignal = db.activeSignals[0];
     saveDB(db);
