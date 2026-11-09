@@ -2378,12 +2378,12 @@ let currentMarketPrice = 3986.50;
 // REAL LIVE MODE: Autonomous real-time market scanner and live trade tracker
 const AiEngine = {
   enabled: true, // LIVE AUTONOMOUS PRODUCTION MODE: ACTIVE
-  frequencyMode: 'SCALP_PRO', // 'SCALP_PRO' (10-15 signals/day) | 'INTRADAY' (5-8 signals/day)
+  frequencyMode: 'INTRADAY', // 'INTRADAY' (High Confluence A+ Institutional Setups)
   targetWinrate: 94, // 90%+ Sovereign Institutional Model (94% Target Winrate)
-  scanIntervalSec: 150, // 2.5 minutes interval in waiting mode (Ultra-Scalp)
+  scanIntervalSec: 600, // 10 minutes interval: Quality over quantity (Zero Noise Over-Trading)
   secondsInState: 0,
   activeTradeTicks: 0,
-  maxTradeTicks: 45, // Fast resolution (~1.5 to 2 mins) so signals cycle frequently
+  maxTradeTicks: 120, // Ample breathing room for price action to swing smoothly into TP targets
   tp1Triggered: false,
   logHistory: [
     `[${getMYTTimeWithSeconds()}] Amaterasu Neural Core v4.3 Initialized: Sovereign Precision Model (94% Target Winrate) & Ultra-Scalp Scanner Active.`
@@ -2477,9 +2477,9 @@ const AiEngine = {
   },
 
     assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4070.00, pipVal: 0.1, pipDec: 2, tp1Pips: 65, tp2Pips: 130, tp3Pips: 220, slPips: 85, bias: 'BULLISH' },
-    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 18, bias: 'NEUTRAL' },
-    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 18, bias: 'NEUTRAL' }
+    { symbol: 'XAUUSD', name: 'Gold', base: 4070.00, pipVal: 0.1, pipDec: 2, tp1Pips: 80, tp2Pips: 160, tp3Pips: 300, slPips: 110, bias: 'BULLISH' },
+    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 35, tp2Pips: 70, tp3Pips: 110, slPips: 38, bias: 'NEUTRAL' },
+    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 35, tp2Pips: 70, tp3Pips: 110, slPips: 38, bias: 'NEUTRAL' }
   ],
 
   // High-Impact Economic News Schedule tracked by Amaterasu AI
