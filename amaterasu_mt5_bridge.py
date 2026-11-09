@@ -402,15 +402,15 @@ class AmaterasuBridge:
 
         if live_atr and live_atr > 0:
             if clean_raw_sym == "XAUUSD":
-                # Gold Tight & Protected Risk Model (Anti-Rugi Teruk):
-                # Hadkan SL Gold ketat antara 4.8 hingga 5.2 mata (48 - 52 pips sahaja)
-                sl_dist = min(max(1.0 * live_atr, 4.8), 5.2)
+                # Gold Macro-Volatility Protected Risk Model:
+                # Berikan ruang nafas selamat antara 8.0 hingga 10.5 mata (80 - 105 pips) agar tidak mudah dijilat wick noise
+                sl_dist = min(max(1.5 * live_atr, 8.0), 10.5)
                 if tp_target == 3:
-                    tp_dist = max(2.5 * live_atr, 18.0)
+                    tp_dist = max(3.5 * live_atr, 22.0)
                 elif tp_target == 2:
-                    tp_dist = max(1.6 * live_atr, 10.0)
+                    tp_dist = max(2.2 * live_atr, 14.0)
                 else: # TP1
-                    tp_dist = max(0.8 * live_atr, 5.0)
+                    tp_dist = max(1.1 * live_atr, 7.0)
                 print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr:.2f} mata | SL: {sl_dist:.2f} | TP{tp_target}: {tp_dist:.2f} mata (Autonomi Pasaran){Colors.RESET}")
             else:
                 # Forex (USDCAD, USDJPY, USDCHF, EURUSD):
@@ -431,8 +431,8 @@ class AmaterasuBridge:
                 print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr * pip_mult:.1f} pips | SL: {sl_dist * pip_mult:.1f}p | TP{tp_target}: {tp_dist * pip_mult:.1f}p (Autonomi Pasaran){Colors.RESET}")
         else:
             # Fallback jika ATR tidak aktif / gagal dibaca
-            tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (18.0 if tp_target == 3 else (10.0 if tp_target == 2 else 5.0))
-            sl_dist = min(abs(raw_sl - signal_entry), 5.2) if raw_sl > 0 else (4.8 if clean_raw_sym == "XAUUSD" else 0.0018)
+            tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (22.0 if tp_target == 3 else (14.0 if tp_target == 2 else 7.0))
+            sl_dist = min(max(abs(raw_sl - signal_entry), 8.0), 10.5) if (raw_sl > 0 and clean_raw_sym == "XAUUSD") else (abs(raw_sl - signal_entry) if raw_sl > 0 else (8.5 if clean_raw_sym == "XAUUSD" else 0.0018))
 
         # Gunakan jarak relatif dari harga kemasukan sebenar (Market Price)
         # Ini mengelakkan ralat 'Invalid Stops' jika harga sudah bergerak

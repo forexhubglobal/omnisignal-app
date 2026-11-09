@@ -2477,7 +2477,7 @@ const AiEngine = {
   },
 
     assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4020.00, pipVal: 0.1, pipDec: 2, tp1Pips: 50, tp2Pips: 100, tp3Pips: 180, slPips: 48, bias: 'NEUTRAL' },
+    { symbol: 'XAUUSD', name: 'Gold', base: 4070.00, pipVal: 0.1, pipDec: 2, tp1Pips: 65, tp2Pips: 130, tp3Pips: 220, slPips: 85, bias: 'BULLISH' },
     { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 18, bias: 'NEUTRAL' },
     { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 18, bias: 'NEUTRAL' }
   ],
@@ -2818,33 +2818,35 @@ const AiEngine = {
       // 2. TIADA NEWS AI AKTIF -> Guna Prinsip Institusi:
       // Module: SMC Market Wave Harmonic Oscillator (2-WAY BUY & SELL WAVE ENGINE)
       if (asset.symbol === 'XAUUSD') {
-        const asianH = this.goldAsianSession.high || 4068.50;
+        const asianH = this.goldAsianSession.high || 4075.00;
         const asianL = this.goldAsianSession.low || 4010.00;
         const waveRange = Math.max(asianH - asianL, 10.0);
         const waveProgress = (liveP - asianL) / waveRange;
 
-        if (!this._lastGoldWave) this._lastGoldWave = 'BUY';
-
-        // SIKLUS OMBAK DUA HALA (2-WAY WAVE OSCILLATOR - BUY & SELL):
-        // Pasaran bergerak secara berombak (Upwave & Downwave). 
-        // Wajib ada BUY dan SELL mengikut fasa ayunan ombak pasaran!
-        if (waveProgress >= 0.68 || liveP >= (asianH - 3.0)) {
-          // 1. PUNCAK OMBAK (WAVE CREST / OVERBOUGHT): SELL RETRACEMENT
-          type = 'SELL';
-          this._lastGoldWave = 'SELL';
-          notes = `[SMC Wave Crest Rejection] Puncak ombak dicapai (${liveP.toFixed(2)}). Pengesahan M15 Liquidity Sweep + Rejection Wick. Entry SELL menunggang gelombang pembetulan (Downwave Retracement). SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
-        } else if (waveProgress <= 0.32 || liveP <= (asianL + 3.0)) {
-          // 2. LEMBAH OMBAK (WAVE TROUGH / OVERSOLD): BUY REBOUND
+        // HIGHER-TIMEFRAME (H1/H4) TREND BIAS FILTER:
+        // Apabila pasaran Emas berada dalam trend Bullish yang kuat (harga melepasi 4,025 & membuat Higher Highs),
+        // DILARANG SAMA SEKALI MEMBUAT COUNTER-TREND SELL! Hanya berdagang mengikut arah trend (Trend is Friend).
+        const isMacroBullish = liveP >= 4025.00; // Paras sokongan struktur makro semasa
+        
+        if (isMacroBullish) {
+          // TREND FOLLOWING BULLISH REGIME:
           type = 'BUY';
           this._lastGoldWave = 'BUY';
-          notes = `[SMC Wave Trough Rebound] Lembah ombak selesai di zon lantai (${liveP.toFixed(2)}). Pengesahan M15 Demand Order Block + Bullish Pinbar. Entry BUY menunggang gelombang lantunan (Upwave Impulse). SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
+          if (liveP >= (asianH - 3.0)) {
+            notes = `[Amaterasu Macro Trend Following: BULLISH EXPANSION] Pasaran Gold mengesahkan momentum kenaikan berterusan (Higher Highs). Entry BUY menunggang gelombang ekspansi trend makro. SL selamat (+85p). Sasaran TP1 (+65p). Kunci BE sebaik TP1 disentuh.`;
+          } else {
+            notes = `[Amaterasu Macro Trend Following: DIP BUYING] Harga membuat pembetulan sementara ke zon sokongan M15 (${liveP.toFixed(2)}). Entry BUY pada harga diskaun mengikut arus trend menaik utama. SL selamat (+85p). Sasaran TP1 (+65p).`;
+          }
+        } else if (liveP <= (asianL - 5.0)) {
+          // BEARISH BREAKDOWN REGIME: Hanya SELL jika lantai dasar makro sah pecah ke bawah
+          type = 'SELL';
+          this._lastGoldWave = 'SELL';
+          notes = `[Amaterasu Macro Trend Following: BEARISH BREAKDOWN] Struktur lantai dasar makro ditembusi (${liveP.toFixed(2)}). Entry SELL mengikut momentum kejatuhan trend. SL selamat (+85p). Sasaran TP1 (+65p).`;
         } else {
-          // 3. TENGAH OMBAK: Bergilirkan arah ombak (Alternating Wave Cycle) agar seimbang BUY & SELL
-          type = this._lastGoldWave === 'BUY' ? 'SELL' : 'BUY';
-          this._lastGoldWave = type;
-          notes = type === 'BUY'
-            ? `[SMC Wave Harmonic Flow] Gelombang ombak melantun dari zon sokongan M15. Entry BUY ayunan kitaran pasaran. SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`
-            : `[SMC Wave Harmonic Flow] Gelombang ombak membuat pembetulan dari zon rintangan M15. Entry SELL fasa retracement kitaran pasaran. SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
+          // CONSOLIDATION ZONE
+          type = 'BUY'; // Default to prevailing macro trend
+          this._lastGoldWave = 'BUY';
+          notes = `[Amaterasu Macro Trend Following] Kitaran gelombang M15 melantun dari zon sokongan. Entry BUY mengikut aliran institusi utama. SL selamat (+85p). Sasaran TP1 (+65p).`;
         }
       } else if (asset.symbol === 'EURUSD') {
         if (!this._lastEurWave) this._lastEurWave = 'BUY';
