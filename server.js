@@ -779,6 +779,11 @@ const server = http.createServer(async (req, res) => {
         }
         broadcastEvent('market_quotes', liveMarketQuotes);
       }
+
+      if (payload && payload.volumeFlow) {
+        AiEngine.liveVolumeFlow = payload.volumeFlow;
+      }
+
       const isMasterAccount = !payload.accountInfo || String(payload.accountInfo.login) === '5100154135' || !payload.accountInfo.login;
 
       // Follower Accounts (e.g. Account 2 #5100207348) must NEVER overwrite Master positions or purge activeSignals!
@@ -2390,6 +2395,7 @@ const AiEngine = {
   ],
   assetCooldowns: {},
   liveMT5Positions: [],
+  liveVolumeFlow: {},
   goldAsianSession: {
     date: '',
     high: 4098.00,
@@ -2718,7 +2724,7 @@ const AiEngine = {
       // STRICT 1-SETUP PER PAIR (BULAN LEPAS STYLE):
       // Dilarang keras stacking berkali-kali! Satu pair hanya boleh ada 1 setup aktif sahaja.
       const activePendingSymbols = new Set(
-        db.activeSignals.filter(s => s.status === 'ACTIVE').map(s => s.symbol)
+        (db.activeSignals || []).map(s => s.symbol)
       );
       if (Array.isArray(this.liveMT5Positions)) {
         for (const p of this.liveMT5Positions) {
@@ -2759,8 +2765,8 @@ const AiEngine = {
     const asset = forceAsset || this.assets[Math.floor(Math.random() * this.assets.length)];
 
     // 0. STRICT 1-SETUP GUARD (BULAN LEPAS LOCKED SOP):
-    // Sekiranya simbol ini sudah ada trade yang sedang ACTIVE di web atau MT5, jangan buka trade!
-    const existingActive = (db.activeSignals || []).find(s => s.symbol === asset.symbol && s.status === 'ACTIVE');
+    // Sekiranya simbol ini sudah ada trade yang sedang aktif di web (ACTIVE, TP1_HIT, TP2_HIT) atau MT5, jangan buka trade baru!
+    const existingActive = (db.activeSignals || []).find(s => s.symbol === asset.symbol);
     if (existingActive) {
       return;
     }
@@ -2867,6 +2873,33 @@ const AiEngine = {
       }
     }
 
+    // 3. INSTITUTIONAL VOLUME FLOW RADAR:
+    // Menyelaras arah order mengikut lonjakan volume sebenar institusi M15 (Buyer vs Seller dominance)
+    const liveVFlow = (this.liveVolumeFlow && this.liveVolumeFlow[asset.symbol]) ? this.liveVolumeFlow[asset.symbol] : null;
+    if (liveVFlow && liveVFlow.vol_ratio >= 1.25) {
+      if (liveVFlow.flow === 'BUYER_SURGE') {
+        type = 'BUY';
+        notes = `[⚡ INSTITUTIONAL BUYER SURGE] Lonjakan belian institusi dikesan (${liveVFlow.vol_ratio}x purata M15, Dominasi Buyer ${liveVFlow.buyer_score}%). Entry BUY seiring kuasa jerung pasaran! SL ketat. Sasaran TP1 (+50p). SOP: Alih SL ke BE selepas TP1.`;
+        this.log(`🌊 [VOLUME RADAR] #${asset.symbol} BUYER_SURGE dikesan (${liveVFlow.vol_ratio}x purata, ${liveVFlow.buyer_score}% buyer). Menyelaraskan isyarat ke BUY.`);
+      } else if (liveVFlow.flow === 'SELLER_SURGE') {
+        type = 'SELL';
+        notes = `[⚡ INSTITUTIONAL SELLER SURGE] Lonjakan jualan institusi dikesan (${liveVFlow.vol_ratio}x purata M15, Dominasi Seller ${(100 - liveVFlow.buyer_score).toFixed(1)}%). Entry SELL seiring lambakan jerung pasaran! SL ketat. Sasaran TP1 (+50p). SOP: Alih SL ke BE selepas TP1.`;
+        this.log(`🌊 [VOLUME RADAR] #${asset.symbol} SELLER_SURGE dikesan (${liveVFlow.vol_ratio}x purata, ${(100 - liveVFlow.buyer_score).toFixed(1)}% seller). Menyelaraskan isyarat ke SELL.`);
+      }
+    }
+
+    // Sekiranya ada lonjakan volume bertentangan, jangan sekali-kali melawan arus!
+    if (liveVFlow && liveVFlow.vol_ratio >= 1.25) {
+      if (type === 'SELL' && liveVFlow.flow === 'BUYER_SURGE') {
+        this.log(`🛡️ [VOLUME RADAR GUARD] Menolak isyarat SELL #${asset.symbol} kerana lonjakan belian institusi (BUYER_SURGE) sedang aktif! Dilarang melawan arus.`);
+        return;
+      }
+      if (type === 'BUY' && liveVFlow.flow === 'SELLER_SURGE') {
+        this.log(`🛡️ [VOLUME RADAR GUARD] Menolak isyarat BUY #${asset.symbol} kerana lonjakan jualan institusi (SELLER_SURGE) sedang aktif! Dilarang menyambut pisau jatuh.`);
+        return;
+      }
+    }
+
     // Anti-Hedging Guard: Elakkan posisi bertentangan (cth: jangan buka BUY jika ada SELL aktif)
     if (Array.isArray(this.liveMT5Positions)) {
       const oppType = type === 'BUY' ? 1 : 0; // MT5 0=BUY, 1=SELL
@@ -2939,27 +2972,10 @@ const AiEngine = {
     if (!Array.isArray(db.activeSignals)) db.activeSignals = [];
     const existingIdx = db.activeSignals.findIndex(s => s.symbol === asset.symbol);
     if (existingIdx !== -1) {
-      const oldSig = db.activeSignals[existingIdx];
-      if (oldSig.status === 'TP1_HIT' || oldSig.beLocked) {
-        const oldHistoryItem = {
-          id: oldSig.id || ('sig-' + Date.now()),
-          time: getMYTTime(),
-          date: getMYTDate(),
-          symbol: oldSig.symbol,
-          type: oldSig.type,
-          entry: oldSig.entry,
-          status: 'TP1',
-          pips: asset.tp1Pips,
-          tags: ['TP1'],
-          peak: asset.tp1Pips
-        };
-        if (!Array.isArray(db.signals)) db.signals = [];
-        db.signals.unshift(oldHistoryItem);
-      }
-      db.activeSignals[existingIdx] = newSig;
-    } else {
-      db.activeSignals.unshift(newSig);
+      this.log(`🛡️ [1-SETUP GUARD] Menolak isyarat ${type} ${asset.symbol} kerana setup sedia ada (#${db.activeSignals[existingIdx].id}) masih berjalan.`);
+      return;
     }
+    db.activeSignals.unshift(newSig);
 
     db.activeSignal = db.activeSignals[0];
     saveDB(db);

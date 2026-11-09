@@ -302,6 +302,41 @@ class AmaterasuBridge:
             pass
         return None
 
+    def get_m15_volume_flow(self, symbol, period=20):
+        """Mengesan lonjakan volume pembeli vs penjual (Buyer/Seller Institutional Volume Surge) berasaskan data lilin M15"""
+        try:
+            broker_sym = self.resolve_symbol(symbol)
+            if not broker_sym:
+                return {'flow': 'NEUTRAL', 'vol_ratio': 1.0, 'buyer_score': 50.0, 'avg_vol': 0, 'cur_vol': 0}
+            rates = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_M15, 0, period + 2)
+            if rates is not None and len(rates) >= period:
+                past_volumes = [float(r['tick_volume']) for r in rates[:-1]]
+                avg_vol = sum(past_volumes) / len(past_volumes) if past_volumes else 1.0
+                latest = rates[-1]
+                cur_vol = float(latest['tick_volume'])
+                vol_ratio = (cur_vol / avg_vol) if avg_vol > 0 else 1.0
+                o = float(latest['open'])
+                h = float(latest['high'])
+                l = float(latest['low'])
+                c = float(latest['close'])
+                total_range = max(h - l, 0.00001)
+                buyer_score = ((c - l) / total_range) * 100.0
+                flow = 'NEUTRAL'
+                if vol_ratio >= 1.25 and buyer_score >= 65.0:
+                    flow = 'BUYER_SURGE'
+                elif vol_ratio >= 1.25 and buyer_score <= 35.0:
+                    flow = 'SELLER_SURGE'
+                return {
+                    'flow': flow,
+                    'vol_ratio': round(vol_ratio, 2),
+                    'buyer_score': round(buyer_score, 1),
+                    'avg_vol': round(avg_vol, 0),
+                    'cur_vol': round(cur_vol, 0)
+                }
+        except Exception:
+            pass
+        return {'flow': 'NEUTRAL', 'vol_ratio': 1.0, 'buyer_score': 50.0, 'avg_vol': 0, 'cur_vol': 0}
+
     def execute_order(self, signal, tp_target=1):
         symbol_raw = signal.get("symbol", "XAUUSD")
         symbol = self.resolve_symbol(symbol_raw)
@@ -376,15 +411,16 @@ class AmaterasuBridge:
         # STRICT 1-SETUP PER SYMBOL (MAX 3 SPLIT LAYERS - BULAN LEPAS LOCKED SOP):
         # 1 setup merangkumi TP1, TP2, TP3. Sekiranya simbol ini sudah mempunyai 3 layer, sekat order tambahan bagi menghalang over-exposure!
         existing_symbol_orders = [
-            p for p in (mt5.positions_get(symbol=symbol) or [])
-            if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX"))
+            p for p in (mt5.positions_get() or [])
+            if (p.symbol.split('.')[0].upper() == clean_raw_sym) and
+               (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
         ]
         if len(existing_symbol_orders) >= 3:
             print(f"{Colors.YELLOW}🛡️ [SOP BULAN LEPAS] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} layer aktif (TP1, TP2, TP3). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
             return None
 
         # Anti-Hedging check: Elak buka posisi bertentangan jika sudah ada posisi aktif untuk simbol ini di MT5
-        all_sym_pos = mt5.positions_get(symbol=symbol)
+        all_sym_pos = [p for p in (mt5.positions_get() or []) if p.symbol.split('.')[0].upper() == clean_raw_sym]
         if all_sym_pos:
             for ep in all_sym_pos:
                 if ep.magic == self.magic_number or (ep.comment and ep.comment.startswith("AmaterasuX")):
@@ -392,6 +428,18 @@ class AmaterasuBridge:
                        (order_type == mt5.ORDER_TYPE_SELL and ep.type == mt5.POSITION_TYPE_BUY):
                         print(f"{Colors.YELLOW}[ANTI-HEDGE] Menolak order {order_type_str} #{symbol} kerana sudah ada posisi bertentangan yang sedang aktif di MT5 (Ticket #{ep.ticket}). Menunggu selesai dahulu.{Colors.RESET}")
                         return None
+
+        # INSTITUTIONAL VOLUME FLOW RADAR:
+        # Menolak order yang melawan lonjakan volume institusi semasa
+        v_flow = self.get_m15_volume_flow(symbol)
+        if order_type_str == "SELL" and v_flow.get("flow") == "BUYER_SURGE":
+            print(f"{Colors.RED}🛑 [VOLUME RADAR DITOLAK] Order SELL #{clean_raw_sym} disekat! Pengesanan BUYER_SURGE aktif (Volume {v_flow['vol_ratio']}x purata, Dominasi Buyer {v_flow['buyer_score']}%). Elak melawan arus institusi!{Colors.RESET}")
+            return None
+        elif order_type_str == "BUY" and v_flow.get("flow") == "SELLER_SURGE":
+            print(f"{Colors.RED}🛑 [VOLUME RADAR DITOLAK] Order BUY #{clean_raw_sym} disekat! Pengesanan SELLER_SURGE aktif (Volume {v_flow['vol_ratio']}x purata, Dominasi Seller {100 - v_flow['buyer_score']:.1f}%). Elak menyambut pisau jatuh!{Colors.RESET}")
+            return None
+        else:
+            print(f"{Colors.CYAN}📊 [VOLUME RADAR] #{clean_raw_sym} Flow: {v_flow.get('flow', 'NEUTRAL')} | Vol Ratio: {v_flow.get('vol_ratio', 1.0)}x | Buyer Score: {v_flow.get('buyer_score', 50)}%{Colors.RESET}")
 
         tick = mt5.symbol_info_tick(symbol)
         if not tick:
@@ -1068,13 +1116,20 @@ class AmaterasuBridge:
                         "margin": float(acc.margin),
                         "login": int(acc.login)
                     }
+
+                # INSTITUTIONAL VOLUME FLOW RADAR TELEMETRY
+                volume_flow = {}
+                for raw_sym in ["XAUUSD", "EURUSD", "USDCHF"]:
+                    volume_flow[raw_sym] = self.get_m15_volume_flow(raw_sym)
+
                 urls = [self.server_url]
                 for u in urls:
                     try:
                         requests.post(f"{u.rstrip('/')}/api/market/sync-mt5", json={
                             "quotes": quotes, 
                             "openPositions": pos_list,
-                            "accountInfo": acc_info
+                            "accountInfo": acc_info,
+                            "volumeFlow": volume_flow
                         }, timeout=2)
                     except Exception:
                         pass
