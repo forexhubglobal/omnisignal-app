@@ -743,7 +743,8 @@ const server = http.createServer(async (req, res) => {
       contests: db.contests,
       ibs: db.ibs || [],
       traders: (db.traders || []).map(formatTraderData),
-      copytrade: db.copytrade || null
+      copytrade: db.copytrade || null,
+      marketBrain: db.marketBrain || AiEngine.updateMarketBrain()
     })}\n\n`);
 
     req.on('close', () => {
@@ -753,6 +754,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== REST API Endpoints =====
+
+  // 0.04 GET /api/market/brain (Live Institutional Market Brain Telemetry)
+  if (pathname === '/api/market/brain' && req.method === 'GET') {
+    const brain = AiEngine.updateMarketBrain();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(brain));
+  }
 
   // 0.05 GET /api/autopsy/xauusd (Live Multi-Timeframe Telemetry for Gold)
   if (pathname === '/api/autopsy/xauusd' && req.method === 'GET') {
@@ -799,6 +807,10 @@ const server = http.createServer(async (req, res) => {
       if (payload && payload.mtfMaFlow) {
         AiEngine.liveMtfMaFlow = payload.mtfMaFlow;
       }
+
+      const brain = AiEngine.updateMarketBrain();
+      db.marketBrain = brain;
+      broadcastEvent('market_brain', brain);
 
       const isMasterAccount = !payload.accountInfo || String(payload.accountInfo.login) === '5100154135' || !payload.accountInfo.login;
 
@@ -2465,6 +2477,99 @@ const AiEngine = {
         if (liveP < this.goldAsianSession.low) this.goldAsianSession.low = liveP;
       }
     } catch (e) {}
+  },
+
+  marketBrain: {},
+
+  updateMarketBrain() {
+    const assets = ['XAUUSD', 'EURUSD', 'USDCHF'];
+    const brain = {};
+
+    for (const sym of assets) {
+      const q = liveMarketQuotes[sym] || { price: 0 };
+      const curPrice = q.price || 0;
+      const vFlow = (this.liveVolumeFlow && this.liveVolumeFlow[sym]) || { flow: 'NEUTRAL', buyer_score: 50, vol_ratio: 1.0 };
+      const mtf = (this.liveMtfMaFlow && this.liveMtfMaFlow[sym]) || { macro: 'NEUTRAL', alignment: 'NEUTRAL', m15: 'NEUTRAL', m1: 'NEUTRAL' };
+
+      const macro = mtf.macro || 'NEUTRAL';
+      const m15 = mtf.m15 || 'NEUTRAL';
+      const m1 = mtf.m1 || 'NEUTRAL';
+      const buyerPct = vFlow.buyer_score || 50;
+
+      let supportFloor = 0;
+      let resistanceCeiling = 0;
+      let verdict = 'NEUTRAL (WAIT & SCAN)';
+      let biasClass = 'neutral';
+      let advisory = 'Pasaran dalam fasa pengumpulan. Menunggu konfluens lilin.';
+
+      if (sym === 'XAUUSD') {
+        const m1_ma20 = mtf.m1_ma20 || (curPrice - 3.0);
+        const m1_ma200 = mtf.m1_ma200 || (curPrice - 12.0);
+
+        supportFloor = Number(Math.min(m1_ma20, curPrice - 2.5).toFixed(2));
+        resistanceCeiling = Number(Math.max(curPrice + 9.0, Math.ceil(curPrice / 10) * 10).toFixed(2));
+
+        if (macro === 'STRONG_BUYER' || (m15.includes('BULLISH') && buyerPct >= 65)) {
+          verdict = 'BUY ON PULLBACK (DILARANG SELL)';
+          biasClass = 'bullish';
+          advisory = `D1 & H4 Pembeli Gergasi mendominasi (${buyerPct}% Buyer Volume). Penurunan di M1 hanyalah retracement. Sasaran: ${resistanceCeiling.toFixed(2)}. Sokongan: ${supportFloor.toFixed(2)}.`;
+        } else if (macro === 'STRONG_SELLER' || (m15.includes('BEARISH') && buyerPct <= 35)) {
+          verdict = 'SELL ON RALLY (DILARANG BUY)';
+          biasClass = 'bearish';
+          advisory = `D1 & H4 Penjual Gergasi mendominasi (${(100 - buyerPct).toFixed(1)}% Seller Volume). Sasaran: ${(curPrice - 15).toFixed(2)}. Rintangan: ${(curPrice + 5).toFixed(2)}.`;
+        } else {
+          verdict = 'RANGE OSCILLATOR (SMC WAVE)';
+          biasClass = 'neutral';
+          advisory = `Pasaran berombak antara lantai ${supportFloor.toFixed(2)} dan bumbung ${resistanceCeiling.toFixed(2)}.`;
+        }
+      } else {
+        const pipVal = sym.includes('JPY') ? 0.01 : 0.0001;
+        const pipDec = sym.includes('JPY') ? 3 : 4;
+        supportFloor = Number((curPrice - 20 * pipVal).toFixed(pipDec));
+        resistanceCeiling = Number((curPrice + 20 * pipVal).toFixed(pipDec));
+
+        if (macro === 'STRONG_BUYER' || m15.includes('BULLISH')) {
+          verdict = 'BUY ON DIP (M15 BULLISH)';
+          biasClass = 'bullish';
+          advisory = `Struktur M15 di atas MA 20/100/200. Sasaran: ${resistanceCeiling}.`;
+        } else if (macro === 'STRONG_SELLER' || m15.includes('BEARISH')) {
+          verdict = 'SELL ON RALLY (M15 BEARISH)';
+          biasClass = 'bearish';
+          advisory = `Struktur M15 di bawah MA 20/100/200. Sasaran: ${supportFloor}.`;
+        }
+      }
+
+      // Check opposing open positions risk
+      const symPositions = (this.liveMT5Positions || []).filter(p => (p.symbol || '').toUpperCase().replace(/\.[a-zA-Z0-9]+$/, '') === sym);
+      let opposingWarning = null;
+      if (symPositions.length > 0) {
+        const opposingCount = symPositions.filter(p => (biasClass === 'bullish' && p.type === 1) || (biasClass === 'bearish' && p.type === 0)).length;
+        if (opposingCount > 0) {
+          opposingWarning = `⚠️ Dikesan ${opposingCount} posisi ${biasClass === 'bullish' ? 'SELL' : 'BUY'} terapung melawan lilin gergasi D1/H4! Cadangan: Manfaatkan zon celupan/rebound untuk kurangkan pendedahan modal.`;
+        }
+      }
+
+      brain[sym] = {
+        symbol: sym,
+        curPrice: curPrice,
+        macro: macro,
+        m15Structure: m15,
+        m1Structure: m1,
+        buyerDominancePct: buyerPct,
+        volRatio: vFlow.vol_ratio || 1.0,
+        supportFloor: supportFloor,
+        resistanceCeiling: resistanceCeiling,
+        verdict: verdict,
+        biasClass: biasClass,
+        advisory: advisory,
+        opposingWarning: opposingWarning,
+        openPositionsCount: symPositions.length,
+        lastUpdated: getMYTTimeWithSeconds()
+      };
+    }
+
+    this.marketBrain = brain;
+    return brain;
   },
 
   tradingHours: {

@@ -1,10 +1,10 @@
 {
   "stats": {
-    "totalSignals": 306,
-    "totalSignalsClosed": 305,
+    "totalSignals": 305,
+    "totalSignalsClosed": 306,
     "totalProfitAllTime": 9277,
     "winRate": 92,
-    "tp1Hit": 251,
+    "tp1Hit": 280,
     "tp2Hit": 0,
     "tp3Hit": 0,
     "slHit": 25,
@@ -46,7 +46,7 @@
         "pips": 0
       }
     ],
-    "lastUpdated": "2026-11-09T22:02:06.736Z"
+    "lastUpdated": "2026-11-09T23:17:32.000Z"
   },
   "activeSignal": {
     "status": "WAITING",

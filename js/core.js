@@ -348,11 +348,15 @@ const AppState = {
       this.copytrade3 = this.db.copytrade3 || null;
       this.copytrades = this.db.copytrades || [this.copytrade, this.copytrade2, this.copytrade3].filter(Boolean);
 
-      // Fetch initial live quotes
+      // Fetch initial live quotes and market brain
       try {
         const qRes = await fetch('/api/market/quotes');
         const qData = await qRes.json();
         Market.updateQuotes(qData);
+      } catch (err) {}
+      try {
+        const bRes = await fetch('/api/market/brain');
+        this.marketBrain = await bRes.json();
       } catch (err) {}
     } catch (e) {
       console.warn('Running in offline/standalone mode', e);
@@ -370,6 +374,9 @@ const AppState = {
         this.signals = d.signals || [];
         if (d.marketQuotes) {
           Market.updateQuotes(d.marketQuotes);
+        }
+        if (d.marketBrain) {
+          this.marketBrain = d.marketBrain;
         }
         this.stats = d.stats;
         this.aiNewsStats = d.aiNewsStats || { totalNewsSignals: 0, winRate: 0, tpHit: 0, slHit: 0, totalPips: 0 };
@@ -577,6 +584,18 @@ const AppState = {
           Market.price = d.price;
         }
         Market.updateUI();
+      });
+      s.addEventListener('market_brain', e => {
+        try {
+          const d = JSON.parse(e.data);
+          this.marketBrain = d;
+          const wrap = document.getElementById('marketBrainCardWrap');
+          if (wrap && typeof getMarketBrainCardHtml === 'function') {
+            const sym = (Market && Market.activeSymbol) || 'XAUUSD';
+            const inst = (typeof ALL_INSTRUMENTS !== 'undefined' && ALL_INSTRUMENTS.find(i => i.id === sym)) || { id: sym };
+            wrap.innerHTML = getMarketBrainCardHtml(this.marketBrain[sym], inst);
+          }
+        } catch (err) {}
       });
     } catch (e) {
       console.warn('SSE not connected');

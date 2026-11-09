@@ -1274,6 +1274,116 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
 }
 window.showCopytradeModal = showCopytradeModal;
 
+// ---------- AMATERASU NEURAL MARKET BRAIN COMPONENT ----------
+function getMarketBrainCardHtml(brain, inst) {
+  if (!inst) inst = { id: 'XAUUSD', name: 'Gold / USD' };
+  const sym = inst.id || 'XAUUSD';
+
+  if (!brain) {
+    return `
+    <div class="market-brain-card" style="background:linear-gradient(145deg, rgba(20,24,36,0.95), rgba(12,15,24,0.98)); border:1px solid rgba(0,214,143,0.25); border-radius:14px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,0.4); position:relative; overflow:hidden;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">🧠</span>
+          <span style="font-size:12px; font-weight:800; color:#FFF; font-family:'Space Grotesk',sans-serif; letter-spacing:0.5px;">AMATERASU NEURAL MARKET BRAIN</span>
+        </div>
+        <span style="font-size:9.5px; color:#A0A6B4;">Memuatkan telemetri pasaran...</span>
+      </div>
+    </div>`;
+  }
+
+  const isBull = brain.biasClass === 'bullish';
+  const isBear = brain.biasClass === 'bearish';
+  const themeColor = isBull ? '#00e676' : isBear ? '#ef5350' : '#f5c451';
+  const themeBg = isBull ? 'rgba(0,230,118,0.1)' : isBear ? 'rgba(239,83,80,0.1)' : 'rgba(245,196,81,0.1)';
+  const themeBorder = isBull ? 'rgba(0,230,118,0.35)' : isBear ? 'rgba(239,83,80,0.35)' : 'rgba(245,196,81,0.35)';
+
+  const buyerPct = brain.buyerDominancePct || 50;
+  const sellerPct = (100 - buyerPct).toFixed(1);
+
+  return `
+  <div class="market-brain-card" style="background:linear-gradient(145deg, rgba(16,20,32,0.97) 0%, rgba(10,12,20,0.98) 100%); border:1px solid ${themeBorder}; border-radius:14px; padding:13px 14px; box-shadow:0 8px 28px rgba(0,0,0,0.45); position:relative; overflow:hidden;">
+    
+    <!-- Top Bar: Header & Live Telemetry Badge -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:18px; filter:drop-shadow(0 0 6px ${themeColor});">🧠</span>
+        <div>
+          <div style="font-size:12px; font-weight:900; color:#FFF; font-family:'Space Grotesk',sans-serif; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+            OTAK STRUKTUR PASARAN AI
+            <span style="font-size:9px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); padding:1px 5px; border-radius:4px; color:#A0A6B4;">${sym}</span>
+          </div>
+          <span style="font-size:9.5px; color:#8e9aa8;">SMC Institutional Order Flow & Macro Bias Scanner</span>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <span style="font-size:9px; font-weight:800; color:${themeColor}; background:${themeBg}; border:1px solid ${themeBorder}; padding:2px 7px; border-radius:10px; display:inline-flex; align-items:center; gap:4px;">
+          <span style="width:6px; height:6px; border-radius:50%; background:${themeColor}; display:inline-block; box-shadow:0 0 6px ${themeColor};"></span>
+          LIVE D1/H4
+        </span>
+      </div>
+    </div>
+
+    <!-- Supreme Verdict Banner -->
+    <div style="background:${themeBg}; border:1px solid ${themeBorder}; border-radius:8px; padding:8px 10px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div>
+        <span style="font-size:9px; color:#A0A6B4; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; display:block;">KEPUTUSAN TERTINGGI AI (INSTITUTIONAL VERDICT):</span>
+        <b style="font-size:12px; color:${themeColor}; font-weight:900; letter-spacing:0.3px;">${brain.verdict}</b>
+      </div>
+      <div style="text-align:right;">
+        <span style="font-size:9px; color:#8e9aa8; display:block;">M15 STRUCTURE</span>
+        <b style="font-size:10px; color:#FFF;">${brain.m15Structure || 'NEUTRAL'}</b>
+      </div>
+    </div>
+
+    <!-- Volume Dominance Dual-Bar -->
+    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:7px 10px; margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:9.5px; margin-bottom:4px;">
+        <span style="color:#00e676; font-weight:800;">🟢 Pembeli Gergasi: ${buyerPct}%</span>
+        <span style="color:#ef5350; font-weight:800;">Penjual: ${sellerPct}% 🔴</span>
+      </div>
+      <div style="width:100%; height:6px; background:rgba(239,83,80,0.6); border-radius:3px; overflow:hidden; position:relative;">
+        <div style="width:${buyerPct}%; height:100%; background:linear-gradient(90deg, #00D68F, #00e676); border-radius:3px 0 0 3px;"></div>
+      </div>
+    </div>
+
+    <!-- 3-Box Key Boundaries: Lantai Sokongan, Bumbung Sasaran, Lilin Dominan -->
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-bottom:10px; text-align:center;">
+      <div style="background:rgba(0,230,118,0.05); border:1px solid rgba(0,230,118,0.2); border-radius:8px; padding:7px 4px;">
+        <span style="font-size:8.5px; color:#00e676; font-weight:700; display:block;">LANTAI SOKONGAN</span>
+        <b style="font-size:11.5px; color:#FFF;">${brain.supportFloor || '-'}</b>
+      </div>
+      <div style="background:rgba(239,83,80,0.05); border:1px solid rgba(239,83,80,0.2); border-radius:8px; padding:7px 4px;">
+        <span style="font-size:8.5px; color:#ef5350; font-weight:700; display:block;">BUMBUNG SASARAN</span>
+        <b style="font-size:11.5px; color:#FFF;">${brain.resistanceCeiling || '-'}</b>
+      </div>
+      <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:7px 4px;">
+        <span style="font-size:8.5px; color:#8e9aa8; display:block;">D1/H4 BIAS</span>
+        <b style="font-size:10px; color:${themeColor};">${brain.macro || 'NEUTRAL'}</b>
+      </div>
+    </div>
+
+    <!-- Advisory / Institutional Rationale -->
+    <div style="font-size:10px; color:#cbd5e1; line-height:1.45; background:rgba(0,0,0,0.25); border-left:3px solid ${themeColor}; padding:6px 9px; border-radius:4px; margin-bottom:${brain.opposingWarning ? '8px' : '0'};">
+      <span style="color:#f5c451; font-weight:800;">💡 PANDUAN STRUKTUR: </span>
+      ${brain.advisory}
+    </div>
+
+    ${brain.opposingWarning ? `
+    <!-- Opposing Floating Position Risk Alert -->
+    <div style="background:rgba(255,61,0,0.12); border:1px solid rgba(255,61,0,0.35); border-radius:6px; padding:6px 9px; margin-top:8px; font-size:9.5px; color:#ff8a65; line-height:1.4;">
+      ${brain.opposingWarning}
+    </div>` : ''}
+
+    <div style="font-size:8.5px; color:#64748b; margin-top:8px; text-align:right;">
+      Disegerakkan dengan MT5 Master #5100154135 · Dikemaskini: ${brain.lastUpdated || '-'}
+    </div>
+
+  </div>
+  `;
+}
+window.getMarketBrainCardHtml = getMarketBrainCardHtml;
+
 // ---------- 1. Signal ----------
 function getSignalPageState(inst) {
   const globalSig = (AppState && AppState.activeSignal) || { status: 'WAITING', type: 'BUY', symbol: 'XAUUSD', entry: 4013.00, tp1: 4016.00, tp2: 4020.50, sl: 4009.50 };
@@ -1324,10 +1434,12 @@ function getSignalPageState(inst) {
   const closedSignals = (AppState && Array.isArray(AppState.signals)) ? AppState.signals : [];
   const lastClosedForAsset = closedSignals.find(s => s.symbol === inst.id);
   const activeOnPipsTab = window._activeOnPipsTab || 'running';
+  const brain = (AppState && AppState.marketBrain && (AppState.marketBrain[inst.id] || AppState.marketBrain.XAUUSD)) || null;
 
   return {
     globalSig,
     cp,
+    brain,
     isLiveOrTp1,
     activeList,
     matchedActiveSig,
@@ -2193,6 +2305,8 @@ window.refreshSignalPageUI = function() {
   const state = getSignalPageState(currentInst);
 
   if (topBarWrap) topBarWrap.innerHTML = getSignalTopActiveBarHtml(state);
+  const brainWrap = document.getElementById('marketBrainCardWrap');
+  if (brainWrap) brainWrap.innerHTML = getMarketBrainCardHtml(state.brain, currentInst);
   ticketArea.innerHTML = getSignalTicketHtml(state, currentInst);
   onPipsArea.innerHTML = getSignalOnPipsHtml(state);
 
@@ -2236,6 +2350,9 @@ function SignalPage(main) {
       </div>
     </div>
     
+    <!-- 🧠 AMATERASU NEURAL MARKET BRAIN -->
+    <div id="marketBrainCardWrap" style="margin-bottom:14px;">${getMarketBrainCardHtml(state.brain, inst)}</div>
+
     <div class="copytrade-showcase-container" id="copytradeShowcaseSignal" style="margin-bottom:14px;">${getCopytradeCardHTML(window.activeCopytradeVault || 1)}</div>
 
     <!-- 1. 100% Match Interactive SNR Chart Card with Screener Trends (Gambar Pertama Exact) -->

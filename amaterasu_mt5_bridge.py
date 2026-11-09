@@ -423,11 +423,23 @@ class AmaterasuBridge:
             elif "BEARISH" in m15_status and "BEARISH" in m5_status:
                 alignment = "M15_M5_BEARISH"
 
+            # D1 & H4 High / Low Liquidity Boundary
+            rates_d1 = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_D1, 0, 2)
+            d1_high = float(rates_d1[-1]['high']) if rates_d1 is not None and len(rates_d1) > 0 else 0
+            d1_low = float(rates_d1[-1]['low']) if rates_d1 is not None and len(rates_d1) > 0 else 0
+            rates_h4 = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_H4, 0, 2)
+            h4_high = float(rates_h4[-1]['high']) if rates_h4 is not None and len(rates_h4) > 0 else 0
+            h4_low = float(rates_h4[-1]['low']) if rates_h4 is not None and len(rates_h4) > 0 else 0
+
             return {
                 "alignment": alignment,
                 "macro": macro,
                 "d1": d1_status,
                 "h4": h4_status,
+                "d1_high": round(d1_high, 2),
+                "d1_low": round(d1_low, 2),
+                "h4_high": round(h4_high, 2),
+                "h4_low": round(h4_low, 2),
                 "m15": m15_status,
                 "m5": m5_status,
                 "m1": m1_status,
