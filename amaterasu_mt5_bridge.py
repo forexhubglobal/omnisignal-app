@@ -337,6 +337,108 @@ class AmaterasuBridge:
             pass
         return {'flow': 'NEUTRAL', 'vol_ratio': 1.0, 'buyer_score': 50.0, 'avg_vol': 0, 'cur_vol': 0}
 
+    def get_mtf_triple_ma(self, symbol):
+        """
+        Multi-Timeframe Triple MA (20, 100, 200) + D1/H4 Macro Direction Confluence:
+        - M1, M5, M15: Semak susunan lilin berbanding MA 20, 100, 200 serta kecerunan (slope).
+        - D1 & H4: Semak saiz badan lilin semasa (Dominasi Buyer vs Seller).
+        """
+        try:
+            broker_sym = self.resolve_symbol(symbol)
+            if not broker_sym:
+                return {"alignment": "NEUTRAL", "macro": "NEUTRAL", "m1": "NEUTRAL", "m5": "NEUTRAL", "m15": "NEUTRAL"}
+
+            def eval_ma(tf, count=215):
+                rates = mt5.copy_rates_from_pos(broker_sym, tf, 0, count)
+                if rates is None or len(rates) < 202:
+                    return "NEUTRAL", 0, 0, 0
+                closes = [float(r['close']) for r in rates]
+                p = closes[-1]
+                ma20 = sum(closes[-20:]) / 20.0
+                ma100 = sum(closes[-100:]) / 100.0
+                ma200 = sum(closes[-200:]) / 200.0
+                
+                prev_ma20 = sum(closes[-21:-1]) / 20.0
+                prev_ma100 = sum(closes[-101:-1]) / 100.0
+                prev_ma200 = sum(closes[-201:-1]) / 200.0
+                
+                slope20 = ma20 > prev_ma20
+                slope100 = ma100 > prev_ma100
+                slope200 = ma200 > prev_ma200
+                
+                # Susunan menegak ke atas (Bullish Fan)
+                if p > ma20 and ma20 > ma100 and ma100 > ma200 and slope20 and slope100:
+                    return "BULLISH_FAN", ma20, ma100, ma200
+                # Susunan menurun ke bawah (Bearish Fan)
+                elif p < ma20 and ma20 < ma100 and ma100 < ma200 and not slope20 and not slope100:
+                    return "BEARISH_FAN", ma20, ma100, ma200
+                elif p > ma20 and ma20 > ma100:
+                    return "BULLISH", ma20, ma100, ma200
+                elif p < ma20 and ma20 < ma100:
+                    return "BEARISH", ma20, ma100, ma200
+                return "NEUTRAL", ma20, ma100, ma200
+
+            def eval_htf_candle(tf):
+                rates = mt5.copy_rates_from_pos(broker_sym, tf, 0, 2)
+                if rates is None or len(rates) < 1:
+                    return "NEUTRAL"
+                r = rates[-1]
+                o, h, l, c = float(r['open']), float(r['high']), float(r['low']), float(r['close'])
+                rng = max(h - l, 0.00001)
+                body = abs(c - o)
+                if c > o and (body / rng) >= 0.40:
+                    return "STRONG_BUYER"
+                elif o > c and (body / rng) >= 0.40:
+                    return "STRONG_SELLER"
+                elif c > o:
+                    return "BUYER"
+                else:
+                    return "SELLER"
+
+            m1_status, m1_20, m1_100, m1_200 = eval_ma(mt5.TIMEFRAME_M1)
+            m5_status, _, _, _ = eval_ma(mt5.TIMEFRAME_M5)
+            m15_status, _, _, _ = eval_ma(mt5.TIMEFRAME_M15)
+            h4_status = eval_htf_candle(mt5.TIMEFRAME_H4)
+            d1_status = eval_htf_candle(mt5.TIMEFRAME_D1)
+
+            # Tentukan Bias Makro (D1 + H4):
+            macro = "NEUTRAL"
+            if "BUYER" in d1_status and "BUYER" in h4_status:
+                macro = "STRONG_BUYER" if ("STRONG" in d1_status or "STRONG" in h4_status) else "BUYER"
+            elif "SELLER" in d1_status and "SELLER" in h4_status:
+                macro = "STRONG_SELLER" if ("STRONG" in d1_status or "STRONG" in h4_status) else "SELLER"
+            elif "BUYER" in d1_status:
+                macro = "BUYER"
+            elif "SELLER" in d1_status:
+                macro = "SELLER"
+
+            # Keselarasan Penuh (Alignment Confluence):
+            alignment = "NEUTRAL"
+            if "BULLISH" in m1_status and "BULLISH" in m5_status and "BULLISH" in m15_status:
+                alignment = "FULL_BULLISH"
+            elif "BEARISH" in m1_status and "BEARISH" in m5_status and "BEARISH" in m15_status:
+                alignment = "FULL_BEARISH"
+            elif "BULLISH" in m15_status and "BULLISH" in m5_status:
+                alignment = "M15_M5_BULLISH"
+            elif "BEARISH" in m15_status and "BEARISH" in m5_status:
+                alignment = "M15_M5_BEARISH"
+
+            return {
+                "alignment": alignment,
+                "macro": macro,
+                "d1": d1_status,
+                "h4": h4_status,
+                "m15": m15_status,
+                "m5": m5_status,
+                "m1": m1_status,
+                "m1_ma20": round(m1_20, 5),
+                "m1_ma100": round(m1_100, 5),
+                "m1_ma200": round(m1_200, 5)
+            }
+        except Exception:
+            pass
+        return {"alignment": "NEUTRAL", "macro": "NEUTRAL", "m1": "NEUTRAL", "m5": "NEUTRAL", "m15": "NEUTRAL"}
+
     def execute_order(self, signal, tp_target=1):
         symbol_raw = signal.get("symbol", "XAUUSD")
         symbol = self.resolve_symbol(symbol_raw)
@@ -440,6 +542,33 @@ class AmaterasuBridge:
             return None
         else:
             print(f"{Colors.CYAN}📊 [VOLUME RADAR] #{clean_raw_sym} Flow: {v_flow.get('flow', 'NEUTRAL')} | Vol Ratio: {v_flow.get('vol_ratio', 1.0)}x | Buyer Score: {v_flow.get('buyer_score', 50)}%{Colors.RESET}")
+
+        # MULTI-TIMEFRAME TRIPLE MA (20, 100, 200) + D1/H4 MACRO FILTER:
+        mtf_ma = self.get_mtf_triple_ma(symbol)
+        macro_bias = mtf_ma.get("macro", "NEUTRAL")
+        m15_bias = mtf_ma.get("m15", "NEUTRAL")
+        m5_bias = mtf_ma.get("m5", "NEUTRAL")
+        m1_bias = mtf_ma.get("m1", "NEUTRAL")
+        alignment = mtf_ma.get("alignment", "NEUTRAL")
+
+        # 1. Macro Tide Guard: DILARANG SELL jika D1/H4 buyer gergasi mendominasi
+        if order_type_str == "SELL" and macro_bias == "STRONG_BUYER" and "BULLISH" in m15_bias:
+            print(f"{Colors.RED}🛑 [TRIPLE MA GUARD DITOLAK] Order SELL #{clean_raw_sym} disekat! D1/H4 didominasi pembeli gergasi (STRONG_BUYER) & M15 Bullish di atas MA 20/100/200. Penurunan di M1 hanyalah retracement!{Colors.RESET}")
+            return None
+        # DILARANG BUY jika D1/H4 seller gergasi mendominasi
+        elif order_type_str == "BUY" and macro_bias == "STRONG_SELLER" and "BEARISH" in m15_bias:
+            print(f"{Colors.RED}🛑 [TRIPLE MA GUARD DITOLAK] Order BUY #{clean_raw_sym} disekat! D1/H4 didominasi penjual gergasi (STRONG_SELLER) & M15 Bearish di bawah MA 20/100/200. Kenaikan di M1 hanyalah retracement!{Colors.RESET}")
+            return None
+
+        # 2. Triple MA Alignment Guard: Sekat order yang bertentangan dengan susunan 3 MA menegak (M1 + M5 + M15)
+        if order_type_str == "SELL" and alignment == "FULL_BULLISH":
+            print(f"{Colors.RED}🛑 [TRIPLE MA GUARD DITOLAK] Order SELL #{clean_raw_sym} disekat! M1, M5, dan M15 kesemuanya berada dalam jajaran BULLISH di atas MA 20, 100, 200.{Colors.RESET}")
+            return None
+        elif order_type_str == "BUY" and alignment == "FULL_BEARISH":
+            print(f"{Colors.RED}🛑 [TRIPLE MA GUARD DITOLAK] Order BUY #{clean_raw_sym} disekat! M1, M5, dan M15 kesemuanya berada dalam jajaran BEARISH di bawah MA 20, 100, 200.{Colors.RESET}")
+            return None
+        else:
+            print(f"{Colors.CYAN}📈 [TRIPLE MA RADAR] #{clean_raw_sym} Macro D1/H4: {macro_bias} | M15: {m15_bias} | M5: {m5_bias} | M1: {m1_bias} | Alignment: {alignment}{Colors.RESET}")
 
         tick = mt5.symbol_info_tick(symbol)
         if not tick:
@@ -1122,6 +1251,11 @@ class AmaterasuBridge:
                 for raw_sym in ["XAUUSD", "EURUSD", "USDCHF"]:
                     volume_flow[raw_sym] = self.get_m15_volume_flow(raw_sym)
 
+                # MULTI-TIMEFRAME TRIPLE MA (20, 100, 200) + D1/H4 CONFLUENCE
+                mtf_ma_flow = {}
+                for raw_sym in ["XAUUSD", "EURUSD", "USDCHF"]:
+                    mtf_ma_flow[raw_sym] = self.get_mtf_triple_ma(raw_sym)
+
                 urls = [self.server_url]
                 for u in urls:
                     try:
@@ -1129,7 +1263,8 @@ class AmaterasuBridge:
                             "quotes": quotes, 
                             "openPositions": pos_list,
                             "accountInfo": acc_info,
-                            "volumeFlow": volume_flow
+                            "volumeFlow": volume_flow,
+                            "mtfMaFlow": mtf_ma_flow
                         }, timeout=2)
                     except Exception:
                         pass

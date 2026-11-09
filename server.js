@@ -783,6 +783,9 @@ const server = http.createServer(async (req, res) => {
       if (payload && payload.volumeFlow) {
         AiEngine.liveVolumeFlow = payload.volumeFlow;
       }
+      if (payload && payload.mtfMaFlow) {
+        AiEngine.liveMtfMaFlow = payload.mtfMaFlow;
+      }
 
       const isMasterAccount = !payload.accountInfo || String(payload.accountInfo.login) === '5100154135' || !payload.accountInfo.login;
 
@@ -2396,6 +2399,7 @@ const AiEngine = {
   assetCooldowns: {},
   liveMT5Positions: [],
   liveVolumeFlow: {},
+  liveMtfMaFlow: {},
   goldAsianSession: {
     date: '',
     high: 4098.00,
@@ -2896,6 +2900,31 @@ const AiEngine = {
       }
       if (type === 'BUY' && liveVFlow.flow === 'SELLER_SURGE') {
         this.log(`🛡️ [VOLUME RADAR GUARD] Menolak isyarat BUY #${asset.symbol} kerana lonjakan jualan institusi (SELLER_SURGE) sedang aktif! Dilarang menyambut pisau jatuh.`);
+        return;
+      }
+    }
+
+    // 4. MULTI-TIMEFRAME TRIPLE MA (20, 100, 200) + D1/H4 MACRO FILTER:
+    // Selaraskan isyarat dengan susunan MA menegak M1/M5/M15 dan lilin makro D1/H4
+    const liveMtf = (this.liveMtfMaFlow && this.liveMtfMaFlow[asset.symbol]) ? this.liveMtfMaFlow[asset.symbol] : null;
+    if (liveMtf) {
+      if (liveMtf.macro === 'STRONG_BUYER' && (liveMtf.m15.includes('BULLISH') || liveMtf.m5.includes('BULLISH'))) {
+        type = 'BUY';
+        notes = `[⚡ MTF TRIPLE MA ALIGNMENT] D1/H4 Pembeli Gergasi (STRONG_BUYER) + M15/M5/M1 di atas MA 20, 100, 200. Entry BUY seiring arus utama institusi! SL ketat (+50p). Sasaran TP1 (+50p). SOP: Alih SL ke BE selepas TP1.`;
+        this.log(`📈 [MTF TRIPLE MA] #${asset.symbol} D1/H4 STRONG_BUYER & MA sejajar Bullish. Menyelaraskan isyarat ke BUY.`);
+      } else if (liveMtf.macro === 'STRONG_SELLER' && (liveMtf.m15.includes('BEARISH') || liveMtf.m5.includes('BEARISH'))) {
+        type = 'SELL';
+        notes = `[⚡ MTF TRIPLE MA ALIGNMENT] D1/H4 Penjual Gergasi (STRONG_SELLER) + M15/M5/M1 di bawah MA 20, 100, 200. Entry SELL seiring arus utama institusi! SL ketat (+50p). Sasaran TP1 (+50p). SOP: Alih SL ke BE selepas TP1.`;
+        this.log(`📉 [MTF TRIPLE MA] #${asset.symbol} D1/H4 STRONG_SELLER & MA sejajar Bearish. Menyelaraskan isyarat ke SELL.`);
+      }
+
+      // Guard: Sekat isyarat yang melawan jajaran MA & Bias Makro
+      if (type === 'SELL' && (liveMtf.macro === 'STRONG_BUYER' || liveMtf.alignment === 'FULL_BULLISH')) {
+        this.log(`🛡️ [TRIPLE MA GUARD] Menolak isyarat SELL #${asset.symbol} kerana lilin D1/H4 kukuh menaik & MA M1/M5/M15 di atas MA 20/100/200. Penurunan TF kecil hanyalah retracement!`);
+        return;
+      }
+      if (type === 'BUY' && (liveMtf.macro === 'STRONG_SELLER' || liveMtf.alignment === 'FULL_BEARISH')) {
+        this.log(`🛡️ [TRIPLE MA GUARD] Menolak isyarat BUY #${asset.symbol} kerana lilin D1/H4 kukuh menurun & MA M1/M5/M15 di bawah MA 20/100/200. Kenaikan TF kecil hanyalah retracement!`);
         return;
       }
     }
