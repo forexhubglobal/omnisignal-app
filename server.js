@@ -1005,7 +1005,8 @@ const server = http.createServer(async (req, res) => {
         // Gunakan debounce perlindungan (sekurang-kurangnya 5 kitaran berturut-turut tiada) sebelum menutup!
         for (let i = db.activeSignals.length - 1; i >= 0; i--) {
           const sig = db.activeSignals[i];
-          if (sig.isTest) continue;
+          if (sig.isTest || (sig.targetAccount && String(sig.targetAccount) !== '5100154135')) continue;
+          const sym = (sig.symbol || '').toUpperCase();
           if (allowedWhitelist.includes(sym)) {
             if (!mt5BySymbol[sym]) {
               sig._missingFromMt5Count = (sig._missingFromMt5Count || 0) + 1;
