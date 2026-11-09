@@ -40,17 +40,12 @@ echo [3/4] Menyediakan bridge_config.json untuk Master 3 (#5100209626)...
 python -c "import json, os; cfg={'server_url':'https://amaterasux.onrender.com','lot_size':0.02,'execution_mode':'SPLIT_TP','auto_breakeven':True,'gold_min_be_pips':50.0,'max_concurrent_pairs':3,'max_slippage_pips':5,'magic_number':888997,'mt5_login':5100209626,'mt5_password':'5t6639B!','mt5_server':'VersusTrade-Live1','mt5_terminal_path':r'%T3_EXE%','allowed_pairs':['XAUUSD','USDCHF','EURUSD'],'custom_lot_map':{'XAUUSD':0.02,'USDCHF':0.03,'EURUSD':0.03},'ny_gold_multiplier_active':True,'ny_gold_lot_size':0.03,'dynamic_floating_atr':True}; open(r'%B3_DIR%\bridge_config.json','w').write(json.dumps(cfg,indent=2))"
 
 :: 5. Launch Terminal 3
-echo [4/4] Memulakan Terminal 3 ^& Bridge Master 3...
+echo [4/4] Memulakan Terminal 3 & Bridge Master 3...
 start "" "%T3_EXE%" /portable
 timeout /t 3 >nul
 
-:: 6. Launch Bridge in separate window
-start "Amaterasu Bridge - Akaun 3 (#5100209626)" cmd /k "cd /d %B3_DIR% && python amaterasu_mt5_bridge.py"
-
-echo.
-echo =====================================================================
-echo  [SELESAI] Terminal 3 ^& Bridge Master 3 Berjaya Dimulakan!
-echo  Akaun #5100209626 ($1,000 USD) sedia mengeksekusi dagangan!
-echo  Pastikan butang 'Algo Trading' pada bar alat MT5 berwarna HIJAU!
-echo =====================================================================
+title Amaterasu Bridge - Akaun 3 (#5100209626)
+color 0E
+cd /d %B3_DIR%
+python amaterasu_mt5_bridge.py
 pause
