@@ -2715,10 +2715,21 @@ const AiEngine = {
     // All available market pairs can run simultaneously in On Pips until hitting TP2/SL!
     if (this.secondsInState >= this.scanIntervalSec) {
       this.secondsInState = 0;
+      // STRICT 1-SETUP PER PAIR (BULAN LEPAS STYLE):
+      // Dilarang keras stacking berkali-kali! Satu pair hanya boleh ada 1 setup aktif sahaja.
+      const activePendingSymbols = new Set(
+        db.activeSignals.filter(s => s.status === 'ACTIVE').map(s => s.symbol)
+      );
+      if (Array.isArray(this.liveMT5Positions)) {
+        for (const p of this.liveMT5Positions) {
+          if (p.symbol) activePendingSymbols.add(p.symbol.replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase());
+        }
+      }
       const nowMs = Date.now();
       const allowedWhitelist = ['XAUUSD', 'USDCHF', 'EURUSD'];
       const availableAssets = this.assets.filter(a => 
         allowedWhitelist.includes(a.symbol) &&
+        !activePendingSymbols.has(a.symbol) &&
         (!this.assetCooldowns[a.symbol] || nowMs > this.assetCooldowns[a.symbol])
       );
       if (availableAssets.length > 0) {
@@ -2747,7 +2758,15 @@ const AiEngine = {
   fireAutonomousSignal(db, forceAsset = null) {
     const asset = forceAsset || this.assets[Math.floor(Math.random() * this.assets.length)];
 
-    // Cooldown guard to avoid spamming multiple entries at the exact same second
+    // 0. STRICT 1-SETUP GUARD (BULAN LEPAS LOCKED SOP):
+    // Sekiranya simbol ini sudah ada trade yang sedang ACTIVE di web atau MT5, jangan buka trade!
+    const existingActive = (db.activeSignals || []).find(s => s.symbol === asset.symbol && s.status === 'ACTIVE');
+    if (existingActive) {
+      return;
+    }
+    if (Array.isArray(this.liveMT5Positions) && this.liveMT5Positions.some(p => (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() === asset.symbol.toUpperCase())) {
+      return;
+    }
     if (this.assetCooldowns && this.assetCooldowns[asset.symbol] && Date.now() < this.assetCooldowns[asset.symbol]) {
       return;
     }

@@ -29,7 +29,7 @@
 - **Allowed Trading Pairs**: Strictly whitelist `XAUUSD`, `USDCHF`, and `EURUSD`.
 
 ## 3. Order Execution & SMC Risk Rules
-- **No Rigid Layer Limit**: Do NOT hard-cap open layers per symbol. Allow the AI to scale in on "Buy the Dip" (at M15 Demand/Order Blocks) and "Sell at Top" (at M15 Supply Zones) as long as free margin is healthy (margin level >= 250%, free margin >= $5.00).
+- **Strict 1-Setup Per Symbol (Max 3 Split Layers - Bulan Lepas Locked SOP)**: A symbol can only have ONE active trade setup at a time (split into Layer 1 -> TP1, Layer 2 -> TP2, Layer 3 -> TP3). NEVER stack duplicate setups. Maximum total open positions for that symbol is 3. New setups for that symbol are strictly blocked until the current trade resolves.
 - **Strict Anti-Hedging**: NEVER open an opposing order on the same symbol if an opposite position is active in MT5 (e.g. forbid BUY if active SELL is open).
 - **Auto Break-Even (Risk-Free Guardian)**: Lock SL to Entry (BE) as soon as TP1 is hit (+50 pips for Gold, +18 pips for Forex).
 - **Institutional Breathing Room**:

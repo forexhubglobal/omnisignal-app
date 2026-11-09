@@ -373,13 +373,15 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}🛡️ [RISK GUARD] Had {max_pairs} Pair serentak telah dicapai ({', '.join(open_unique_symbols)}). Order #{clean_raw_sym} ditolak bagi melindungi modal.{Colors.RESET}")
             return None
 
-        # Dip Buying & Scale-In Allowed: Tiada sekatan layer rigid supaya sistem bebas Buy the Dip & Sell at Top mengikut SMC
+        # STRICT 1-SETUP PER SYMBOL (MAX 3 SPLIT LAYERS - BULAN LEPAS LOCKED SOP):
+        # 1 setup merangkumi TP1, TP2, TP3. Sekiranya simbol ini sudah mempunyai 3 layer, sekat order tambahan bagi menghalang over-exposure!
         existing_symbol_orders = [
             p for p in (mt5.positions_get(symbol=symbol) or [])
             if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX"))
         ]
-        if existing_symbol_orders:
-            print(f"{Colors.CYAN}ℹ️ [SMC SCALE-IN] Simbol #{clean_raw_sym} kini mempunyai {len(existing_symbol_orders)} layer. Melaksana order baharu mengikut zon diskaun/premium pasaran.{Colors.RESET}")
+        if len(existing_symbol_orders) >= 3:
+            print(f"{Colors.YELLOW}🛡️ [SOP BULAN LEPAS] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} layer aktif (TP1, TP2, TP3). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
+            return None
 
         # Anti-Hedging check: Elak buka posisi bertentangan jika sudah ada posisi aktif untuk simbol ini di MT5
         all_sym_pos = mt5.positions_get(symbol=symbol)
