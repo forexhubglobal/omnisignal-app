@@ -2715,20 +2715,10 @@ const AiEngine = {
     // All available market pairs can run simultaneously in On Pips until hitting TP2/SL!
     if (this.secondsInState >= this.scanIntervalSec) {
       this.secondsInState = 0;
-      // Only strictly ACTIVE signals (still pending TP1) block new setups for that pair
-      const activePendingSymbols = new Set(
-        db.activeSignals.filter(s => s.status === 'ACTIVE').map(s => s.symbol)
-      );
-      if (Array.isArray(this.liveMT5Positions)) {
-        for (const p of this.liveMT5Positions) {
-          if (p.symbol) activePendingSymbols.add(p.symbol.replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase());
-        }
-      }
       const nowMs = Date.now();
       const allowedWhitelist = ['XAUUSD', 'USDCHF', 'EURUSD'];
       const availableAssets = this.assets.filter(a => 
         allowedWhitelist.includes(a.symbol) &&
-        !activePendingSymbols.has(a.symbol) &&
         (!this.assetCooldowns[a.symbol] || nowMs > this.assetCooldowns[a.symbol])
       );
       if (availableAssets.length > 0) {
@@ -2757,15 +2747,7 @@ const AiEngine = {
   fireAutonomousSignal(db, forceAsset = null) {
     const asset = forceAsset || this.assets[Math.floor(Math.random() * this.assets.length)];
 
-    // 0. Anti-Hedging & MT5 Open Position Guard:
-    // Sekiranya simbol ini sudah ada trade yang sedang ACTIVE di web atau MT5, jangan buka trade!
-    const existingActive = (db.activeSignals || []).find(s => s.symbol === asset.symbol && s.status === 'ACTIVE');
-    if (existingActive) {
-      return;
-    }
-    if (Array.isArray(this.liveMT5Positions) && this.liveMT5Positions.some(p => (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() === asset.symbol.toUpperCase())) {
-      return;
-    }
+    // Cooldown guard to avoid spamming multiple entries at the exact same second
     if (this.assetCooldowns && this.assetCooldowns[asset.symbol] && Date.now() < this.assetCooldowns[asset.symbol]) {
       return;
     }
@@ -2865,6 +2847,19 @@ const AiEngine = {
       } else {
         type = Math.random() > 0.5 ? 'BUY' : 'SELL';
         notes = `[Amaterasu Quantitative Flow] Isyarat ayunan ombak ${type} #${asset.symbol}. SL ketat. Sasaran TP1.`;
+      }
+    }
+
+    // Anti-Hedging Guard: Elakkan posisi bertentangan (cth: jangan buka BUY jika ada SELL aktif)
+    if (Array.isArray(this.liveMT5Positions)) {
+      const oppType = type === 'BUY' ? 1 : 0; // MT5 0=BUY, 1=SELL
+      const hasOpposing = this.liveMT5Positions.some(p => 
+        (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() === asset.symbol.toUpperCase() &&
+        p.type === oppType
+      );
+      if (hasOpposing) {
+        this.log(`🛡️ [ANTI-HEDGE] Menolak isyarat ${type} #${asset.symbol} kerana ada posisi bertentangan sedang aktif di MT5.`);
+        return;
       }
     }
 
