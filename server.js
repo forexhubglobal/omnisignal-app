@@ -1219,12 +1219,37 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: true, symbol: rawSymbol, outcome, resolvedPips, activeSignalsCount: db.activeSignals.length }));
       } else {
+        // Fallback: Pastikan setiap deal MT5 yang ditutup direkodkan ke sejarah signals & statistik
+        if (rawSymbol && event && ['TP1', 'TP2', 'TP3', 'SL', 'BE'].includes(event)) {
+          const asset = AiEngine.assets.find(a => a.symbol === rawSymbol) || AiEngine.assets[0];
+          let outcome = event;
+          let resolvedPips = Number(pips) || (event === 'TP1' ? asset.tp1Pips : (event === 'TP2' ? asset.tp2Pips : (event === 'BE' ? 0 : -asset.slPips)));
+          const newHistoryItem = {
+            id: ticket ? `mt5-${ticket}` : `sig-${Date.now()}`,
+            time: getMYTTime(),
+            date: getMYTDate(),
+            symbol: rawSymbol,
+            type: 'BUY',
+            entry: Number(price) || asset.base,
+            status: outcome,
+            pips: resolvedPips,
+            tags: [outcome],
+            peak: Math.abs(resolvedPips)
+          };
+          if (!Array.isArray(db.signals)) db.signals = [];
+          if (!db.signals.some(s => s.id === newHistoryItem.id)) {
+            db.signals.unshift(newHistoryItem);
+            syncStatsWithSignals(db);
+            saveDB(db);
+            console.log(`[MT5 SYNC FALLBACK] ${rawSymbol} (#${ticket}) direkodkan ke sejarah isyarat sebagai ${outcome} (${resolvedPips}p).`);
+          }
+        }
         if (db.activeSignal && db.activeSignal.symbol === rawSymbol && db.activeSignal.status === 'ACTIVE') {
           db.activeSignal.status = 'WAITING';
           saveDB(db);
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: true, message: 'Symbol was not in activeSignals' }));
+        return res.end(JSON.stringify({ success: true, message: 'Deal processed and saved' }));
       }
     } catch (err) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
