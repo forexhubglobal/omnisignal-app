@@ -1081,9 +1081,9 @@ const server = http.createServer(async (req, res) => {
         db.copytrade.activeEquity = eq;
         db.copytrade.activeEquityUsd = +(eq / 100).toFixed(2);
         db.copytrade.lastSync = getMYTTimeWithSeconds();
+        dbChanged = true;
         if (isDiff) {
-          dbChanged = true;
-          broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrades: db.copytrades || [db.copytrade, db.copytrade2].filter(Boolean) });
+          broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrades: db.copytrades || [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean) });
         }
       }
 
