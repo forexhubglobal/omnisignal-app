@@ -2477,9 +2477,9 @@ const AiEngine = {
   },
 
     assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4070.00, pipVal: 0.1, pipDec: 2, tp1Pips: 80, tp2Pips: 160, tp3Pips: 300, slPips: 110, bias: 'BULLISH' },
-    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 35, tp2Pips: 70, tp3Pips: 110, slPips: 38, bias: 'NEUTRAL' },
-    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 35, tp2Pips: 70, tp3Pips: 110, slPips: 38, bias: 'NEUTRAL' }
+    { symbol: 'XAUUSD', name: 'Gold', base: 4070.00, pipVal: 0.1, pipDec: 2, tp1Pips: 50, tp2Pips: 100, tp3Pips: 180, slPips: 48, bias: 'BULLISH' },
+    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 18, bias: 'NEUTRAL' },
+    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 18, bias: 'NEUTRAL' }
   ],
 
   // High-Impact Economic News Schedule tracked by Amaterasu AI
@@ -2897,12 +2897,12 @@ const AiEngine = {
     const dynTp3Pips = Math.round((asset.tp3Pips || Math.round(asset.tp2Pips * 1.5)) * volMult);
     let dynSlPips = Math.round(asset.slPips * volMult);
 
-    // INSTITUTIONAL BREATHING ROOM BUFFER (ANTI-WICK HUNTING):
-    // Beri ruang nafas selamat (100 - 135 pips untuk Gold, 35 - 48 pips untuk Forex)
+    // STOP LOSS PROTECTION (ANTI-RUGI TERUK):
+    // Elakkan sama sekali SL lebar yang membebankan akaun!
     if (asset.symbol === 'XAUUSD') {
-      dynSlPips = Math.min(Math.max(dynSlPips, 100), 135); // Institutional buffer 100 - 135 pips ($10.00 - $13.50)
+      dynSlPips = Math.min(Math.max(dynSlPips, 45), 52); // Ketat 45 - 52 pips ($4.50 - $5.20)
     } else {
-      dynSlPips = Math.min(Math.max(dynSlPips, 35), 48);   // Institutional buffer 35 - 48 pips
+      dynSlPips = Math.min(Math.max(dynSlPips, 18), 22); // Ketat 18 - 22 pips
     }
 
     const sign = type === 'BUY' ? 1 : -1;
