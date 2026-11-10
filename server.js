@@ -2822,9 +2822,9 @@ let currentMarketPrice = 3986.50;
 // REAL LIVE MODE: Autonomous real-time market scanner and live trade tracker
 const AiEngine = {
   enabled: true, // LIVE AUTONOMOUS PRODUCTION MODE: ACTIVE
-  frequencyMode: 'INTRADAY', // 'INTRADAY' (High Confluence A+ Institutional Setups)
+  frequencyMode: 'SCALP_PRO', // 'SCALP_PRO' (Ultra-Scalp ~20 Setups/Day XAUUSD)
   targetWinrate: 94, // 90%+ Sovereign Institutional Model (94% Target Winrate)
-  scanIntervalSec: 600, // 10 minutes interval: Quality over quantity (Zero Noise Over-Trading)
+  scanIntervalSec: 120, // 2 minutes interval (Ultra-Scalp Rapid Scanner)
   secondsInState: 0,
   activeTradeTicks: 0,
   maxTradeTicks: 120, // Ample breathing room for price action to swing smoothly into TP targets
@@ -3546,17 +3546,31 @@ const AiEngine = {
       volMult = 1.10; // Sesi New York (20:00 - 02:00): Volatiliti lonjakan tinggi (XAUUSD 50p, FX 20-22p)
     }
 
-    const dynTp1Pips = Math.round(asset.tp1Pips * volMult);
-    const dynTp2Pips = Math.round(asset.tp2Pips * volMult);
-    const dynTp3Pips = Math.round((asset.tp3Pips || Math.round(asset.tp2Pips * 1.5)) * volMult);
+    let dynTp1Pips = Math.round(asset.tp1Pips * volMult);
+    let dynTp2Pips = Math.round(asset.tp2Pips * volMult);
+    let dynTp3Pips = Math.round((asset.tp3Pips || Math.round(asset.tp2Pips * 1.5)) * volMult);
     let dynSlPips = Math.round(asset.slPips * volMult);
 
-    // STOP LOSS CALIBRATION (BERDASARKAN BEDAH SIASAT PASARAN):
-    // Melindungi akaun daripada spread hunt & false breakouts mengikut sesi pasaran
-    if (asset.symbol === 'XAUUSD') {
-      dynSlPips = (nowH >= 6 && nowH < 14) ? 45 : 48; // Sesi Asia: 45 pips ($4.50) | London & NY: 48 pips ($4.80)
+    if (this.frequencyMode === 'SCALP_PRO') {
+      // MOD ULTRA-SCALP: Sasaran TP pantas (+25p) dan SL kemas untuk ~20 setup sehari
+      if (asset.symbol === 'XAUUSD') {
+        dynTp1Pips = 25; // Quick Scalp TP1 (+25 pips / $2.50)
+        dynTp2Pips = 45; // Scalp TP2 (+45 pips / $4.50)
+        dynTp3Pips = 75; // Scalp Runner TP3 (+75 pips / $7.50)
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 35 : 38; // Scalp SL ketat 35 - 38 pips
+      } else {
+        dynTp1Pips = 15;
+        dynTp2Pips = 30;
+        dynTp3Pips = 50;
+        dynSlPips = 15;
+      }
     } else {
-      dynSlPips = (nowH >= 6 && nowH < 14) ? 18 : 20; // Sesi Asia: 18 pips | London & NY: 20 pips
+      // STOP LOSS CALIBRATION (BERDASARKAN BEDAH SIASAT PASARAN INTRADAY):
+      if (asset.symbol === 'XAUUSD') {
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 45 : 48; // Sesi Asia: 45 pips ($4.50) | London & NY: 48 pips ($4.80)
+      } else {
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 18 : 20; // Sesi Asia: 18 pips | London & NY: 20 pips
+      }
     }
 
     const sign = type === 'BUY' ? 1 : -1;
@@ -3840,11 +3854,13 @@ const AiEngine = {
     }
     if (!this.assetCooldowns) this.assetCooldowns = {};
     if (outcome === 'SL') {
-      const cooldownMin = sig.symbol === 'XAUUSD' ? 45 : 30;
+      const cooldownMin = this.frequencyMode === 'SCALP_PRO' ? 12 : (sig.symbol === 'XAUUSD' ? 45 : 30);
       this.assetCooldowns[sig.symbol] = Date.now() + (cooldownMin * 60 * 1000);
       this.log(`🛑 [POST-SL LIQUIDITY SWEEP GUARD] ${sig.symbol} terkena SL! Re-entry disekat selama ${cooldownMin} minit bagi memastikan Liquidity Sweep reda sepenuhnya.`);
     } else {
-      this.assetCooldowns[sig.symbol] = Date.now() + (20 * 60 * 1000);
+      const winCooldownMin = this.frequencyMode === 'SCALP_PRO' ? 5 : 20;
+      this.assetCooldowns[sig.symbol] = Date.now() + (winCooldownMin * 60 * 1000);
+      this.log(`🎯 [SCALP COOLDOWN] ${sig.symbol} selesai (${outcome}). Rehat sekejap ${winCooldownMin} minit sebelum mengimbas setup seterusnya.`);
     }
     db.activeSignal = (db.activeSignals && db.activeSignals[0]) || {
       status: 'WAITING',
