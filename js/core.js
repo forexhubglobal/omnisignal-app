@@ -397,10 +397,10 @@ const AppState = {
           if (raw.copytrade) this.copytrade = raw.copytrade;
           if (raw.copytrade2) this.copytrade2 = raw.copytrade2;
           if (raw.copytrade3) this.copytrade3 = raw.copytrade3;
-          if (raw.copytrades) this.copytrades = raw.copytrades;
           if (raw.masterAccount === '5100154135') this.copytrade = raw;
           if (raw.masterAccount === '5100207348') this.copytrade2 = raw;
           if (raw.masterAccount === '5100209626') this.copytrade3 = raw;
+          this.copytrades = [this.copytrade, this.copytrade2, this.copytrade3].filter(Boolean);
           if (typeof window.refreshCopytradeUI === 'function') {
             window.refreshCopytradeUI();
           }

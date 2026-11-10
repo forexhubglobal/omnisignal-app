@@ -792,19 +792,39 @@ const TelegramNotifier = {
 ,
 
   formatCopytradeMessage(vaultId, cp) {
-    const isV2 = Number(vaultId) === 2;
-    if (isV2) {
+    const vNum = Number(vaultId);
+    if (vNum === 3) {
+      const growth = Number(cp?.growthPct || 188.76).toFixed(2);
+      const netUsd = Number(cp?.netProfitUsd || 1887.57).toFixed(2);
+      const balUsd = Number(cp?.currentBalance || 2887.57).toFixed(2);
+      return '👑 <b>AMATERASU X 2.0 · MASTER 3 OFFICIAL STANDARD COPYTRADE</b>\n' +
+        '━━━━━━━━━━━━━━━━━━━━━\n' +
+        '🏆 <b>Master:</b> AMATERASU X 2.0 (#5100209626)\n' +
+        '🏢 <b>Broker:</b> Versus Trade Ltd. (Live Cluster)\n' +
+        '💼 <b>Jenis Akaun:</b> Standard USD ($1,000 Pool)\n' +
+        '📈 <b>Live Growth:</b> +' + growth + '%\n' +
+        '💰 <b>Untung Bersih Terkumpul:</b> +$' + netUsd + ' USD\n' +
+        '💎 <b>Baki Semasa:</b> $' + balUsd + ' USD\n' +
+        '🎯 <b>Winrate Terbukti:</b> 91.5% (Max Drawdown < 4%)\n' +
+        '━━━━━━━━━━━━━━━━━━━━━\n' +
+        '🚀 <b>Sertai Akaun Standard VIP:</b>\n' +
+        '1. Buka akaun Versus Trade (Standard USD)\n' +
+        '2. Deposit modal $1,000 USD\n' +
+        '3. Hantar No MT5 anda di App Amaterasu X untuk disambungkan automatik!\n' +
+        '👉 <i>Buka App: https://amaterasux.onrender.com</i>';
+    } else if (vNum === 2) {
+      const growth = Number(cp?.growthPct !== undefined ? cp.growthPct : 0.0).toFixed(2);
       return '🔥 <b>AMATERASU X · MASTER 2 OFFICIAL COPYTRADE ANNOUNCEMENT</b>\n' +
         '━━━━━━━━━━━━━━━━━━━━━\n' +
         '👑 <b>Master:</b> AMATERASU X (#5100207348)\n' +
         '🏢 <b>Broker:</b> Versus Trade Ltd. (Live Cluster)\n' +
         '💼 <b>Status:</b> LIVE & ACTIVE · FRESH STANDBY\n' +
+        '📈 <b>Growth:</b> +' + growth + '%\n' +
         '💰 <b>Modal Pool Semasa:</b> 10,000.00 USC ($100.00 USD ✓)\n' +
-        '⚡ <b>Mula Beroperasi:</b> Isnin 06:00 AM MYT (Market Open)\n' +
         '🛡️ <b>Strategi:</b> Institutional SMC + Malaysian SNR Multi-Terminal AI\n' +
         '━━━━━━━━━━━━━━━━━━━━━\n' +
-        '🚀 <b>Peluang Masuk Dari Baseline (0.00% Growth):</b>\n' +
-        'Sertai Master 2 sekarang sebelum pasaran dibuka untuk menikmati pertumbuhan akaun sejak hari pertama!\n' +
+        '🚀 <b>Peluang Masuk Dari Baseline:</b>\n' +
+        'Sertai Master 2 sekarang untuk menikmati pertumbuhan akaun sejak hari pertama!\n' +
         '👉 <i>Buka App: https://amaterasux.onrender.com</i>';
     } else {
       const growth = Number(cp?.growthPct || 122.55).toFixed(2);
@@ -1300,28 +1320,35 @@ const server = http.createServer(async (req, res) => {
         db.copytrade.totalWithdrawnUsd = +(totalWd / 100).toFixed(2);
 
         // FORMULA INSTITUSI (MYFXBOOK / MQL5 SIGNALS STANDARD):
-        // Untung Kasar Sebenar = (Ekuiti Semasa + Jumlah Pengeluaran) - Deposit Asal
-        let grossProfitUsc = +(eq + totalWd - initDep).toFixed(2);
-        const baselineProfit = Number(db.copytrade.allTimeProfitUsc) || 12254.62;
-        if (grossProfitUsc < baselineProfit && eq < initDep) {
-          grossProfitUsc = +(eq + totalWd).toFixed(2);
-        }
-        const effectiveGrossUsc = Math.max(grossProfitUsc, baselineProfit);
+        // Untung Bersih Kasar = (Baki Semasa + Jumlah Pengeluaran) - Deposit Asal
+        const baselineAudit1 = 12254.62;
+        const liveNetProfit1 = +(bal + totalWd - initDep).toFixed(2);
+        const effectiveGrossUsc = Math.max(liveNetProfit1, baselineAudit1);
         const grossGrowthPct = +(((effectiveGrossUsc) / initDep) * 100).toFixed(2);
 
+        db.copytrade.id = "master-1";
+        db.copytrade.name = "The Mighty Duck";
+        db.copytrade.avatar = "img/themightyduck.png";
         db.copytrade.allTimeProfitUsc = effectiveGrossUsc;
         db.copytrade.allTimeProfitUsd = +(effectiveGrossUsc / 100).toFixed(2);
         db.copytrade.allTimeGrowthPct = grossGrowthPct;
-        db.copytrade.growthPct = grossGrowthPct; // Highlight untuk marketing
+        db.copytrade.growthPct = grossGrowthPct;
         db.copytrade.netProfitUsc = effectiveGrossUsc;
         db.copytrade.netProfitUsd = +(effectiveGrossUsc / 100).toFixed(2);
 
         db.copytrade.activeEquity = eq;
         db.copytrade.activeEquityUsd = +(eq / 100).toFixed(2);
         db.copytrade.lastSync = getMYTTimeWithSeconds();
+
+        // ALWAYS SYNC db.copytrades ARRAY SO EVERY ENDPOINT AND UI COMPONENT GETS IDENTICAL NUMBERS:
+        if (!Array.isArray(db.copytrades)) {
+          db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean);
+        } else {
+          db.copytrades[0] = db.copytrade;
+        }
         dbChanged = true;
         if (isDiff) {
-          broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrades: db.copytrades || [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean) });
+          broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrades: db.copytrades });
         }
       }
 
@@ -1366,10 +1393,16 @@ const server = http.createServer(async (req, res) => {
       db.copytrade.netProfitUsd = +(effectiveGrossUsc / 100).toFixed(2);
       db.copytrade.lastSync = getMYTTimeWithSeconds();
 
+      if (!Array.isArray(db.copytrades)) {
+        db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean);
+      } else {
+        db.copytrades[0] = db.copytrade;
+      }
+
       saveDB(db);
-      broadcastEvent('copytrade_update', db.copytrade);
+      broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrades: db.copytrades });
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, copytrade: db.copytrade }));
+      return res.end(JSON.stringify({ success: true, copytrade: db.copytrade, copytrades: db.copytrades }));
     } catch (err) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: err.message }));
@@ -1379,12 +1412,13 @@ const server = http.createServer(async (req, res) => {
   // 0.1c GET /api/copytrade/info
   if (pathname === '/api/copytrade/info' && req.method === 'GET') {
     const db = getDB();
-    const list = [db.copytrade, db.copytrade2].filter(Boolean);
+    const list = [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean);
     db.copytrades = list;
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({
       copytrade: db.copytrade || {},
       copytrade2: db.copytrade2 || {},
+      copytrade3: db.copytrade3 || {},
       copytrades: list
     }));
   }
@@ -1491,7 +1525,17 @@ const server = http.createServer(async (req, res) => {
   // 1. GET /api/data (Full state for App)
   if (pathname === '/api/data' && req.method === 'GET') {
     const db = getDB();
+    if (db.copytrade) {
+      if (!Array.isArray(db.copytrades)) {
+        db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean);
+      } else {
+        db.copytrades[0] = db.copytrade;
+        if (db.copytrade2) db.copytrades[1] = db.copytrade2;
+        if (db.copytrade3) db.copytrades[2] = db.copytrade3;
+      }
+    }
     const sanitized = { ...db };
+    sanitized.copytrades = [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean);
     delete sanitized.telegramConfig;
     delete sanitized.invitationCodes;
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1960,7 +2004,7 @@ const server = http.createServer(async (req, res) => {
       const payload = await parseJsonBody(req);
       const db = getDB();
       const vaultId = Number(payload.vaultId) || 1;
-      const cp = vaultId === 2 ? (db.copytrade2 || {}) : (db.copytrade || {});
+      const cp = vaultId === 3 ? (db.copytrade3 || {}) : (vaultId === 2 ? (db.copytrade2 || {}) : (db.copytrade || {}));
       const msg = TelegramNotifier.formatCopytradeMessage(vaultId, cp);
       const result = await TelegramNotifier.send(msg);
       res.writeHead(200, { 'Content-Type': 'application/json' });
