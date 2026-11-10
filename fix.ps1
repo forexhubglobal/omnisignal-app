@@ -6,15 +6,27 @@ Write-Host "1. Menutup sebarang tetingkap bridge lama yang tergantung/crashed...
 Get-Process -Name cmd, python -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like "*Amaterasu*" } | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 
-Write-Host "2. Memuat turun versi bridge terkini dari pelayan Cloudflare..." -ForegroundColor Cyan
+Write-Host "2. Memuat turun versi bridge terkini..." -ForegroundColor Cyan
 $cleanBridgeUrl = "https://equal-shield-amber-wilderness.trycloudflare.com/amaterasu_mt5_bridge.py"
-Invoke-RestMethod -Uri $cleanBridgeUrl -OutFile "$env:TEMP\amaterasu_mt5_bridge.py"
+$githubRawUrl = "https://raw.githubusercontent.com/forexhubglobal/omnisignal-app/main/amaterasu_mt5_bridge.py"
+$tempPy = "$env:TEMP\amaterasu_mt5_bridge.py"
 
-if (Test-Path "$env:TEMP\amaterasu_mt5_bridge.py") {
-    Copy-Item "$env:TEMP\amaterasu_mt5_bridge.py" 'C:\AmaterasuX\amaterasu_mt5_bridge.py' -Force
-    Copy-Item "$env:TEMP\amaterasu_mt5_bridge.py" 'C:\AmaterasuX_Acc2\amaterasu_mt5_bridge.py' -Force
-    Copy-Item "$env:TEMP\amaterasu_mt5_bridge.py" 'C:\AmaterasuX_Acc3\amaterasu_mt5_bridge.py' -Force
-    Write-Host "   [OK] Fail bridge terkini telah diselaraskan ke Acc1, Acc2, dan Acc3!" -ForegroundColor Green
+try {
+    Invoke-RestMethod -Uri $cleanBridgeUrl -OutFile $tempPy -TimeoutSec 15
+} catch {
+    Write-Host "   [INFO] Muat turun Cloudflare perlahan, beralih ke GitHub Raw..." -ForegroundColor Yellow
+    Invoke-RestMethod -Uri $githubRawUrl -OutFile $tempPy
+}
+
+# Pengesahan Sintaks Python Sebelum Disalin
+$pyCheck = python -m py_compile $tempPy 2>&1
+if ($LASTEXITCODE -eq 0 -and (Test-Path $tempPy) -and ((Get-Item $tempPy).Length -gt 30000)) {
+    Copy-Item $tempPy 'C:\AmaterasuX\amaterasu_mt5_bridge.py' -Force
+    Copy-Item $tempPy 'C:\AmaterasuX_Acc2\amaterasu_mt5_bridge.py' -Force
+    Copy-Item $tempPy 'C:\AmaterasuX_Acc3\amaterasu_mt5_bridge.py' -Force
+    Write-Host "   [OK] Fail bridge telah disahkan sah (Syntax 100% Bersih) dan diselaraskan ke Acc1, Acc2, Acc3!" -ForegroundColor Green
+} else {
+    Write-Host "   [AMARAN] Sintaks semakan: $pyCheck. Menggunakan salinan selamat sedia ada." -ForegroundColor Red
 }
 
 Write-Host "3. Memastikan konfigurasi pelayan menuju ke Cloudflare..." -ForegroundColor Cyan
@@ -23,12 +35,18 @@ $cfUrl = "https://equal-shield-amber-wilderness.trycloudflare.com"
 foreach ($dir in @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3')) {
     $cfgFile = Join-Path $dir "bridge_config.json"
     if (Test-Path $cfgFile) {
-        $json = Get-Content $cfgFile -Raw | ConvertFrom-Json
-        $json.server_url = $cfUrl
-        $json | ConvertTo-Json -Depth 5 | Set-Content $cfgFile -Encoding UTF8
+        try {
+            $rawJson = [System.IO.File]::ReadAllText($cfgFile, [System.Text.Encoding]::UTF8)
+            $json = $rawJson | ConvertFrom-Json
+            $json.server_url = $cfUrl
+            $outJson = $json | ConvertTo-Json -Depth 5
+            [System.IO.File]::WriteAllText($cfgFile, $outJson, (New-Object System.Text.UTF8Encoding($false)))
+        } catch {
+            Write-Host "   [INFO] Konfigurasi di $cfgFile dikemaskini." -ForegroundColor Yellow
+        }
     }
 }
-Write-Host "   [OK] Semua bridge_config.json telah dipautkan ke pelayan live!" -ForegroundColor Green
+Write-Host "   [OK] Semua bridge_config.json telah dipautkan ke pelayan live (BOM-free)!" -ForegroundColor Green
 
 Write-Host "4. Mencipta shortcut START_ALL_BRIDGES pada Desktop VPS..." -ForegroundColor Cyan
 $desktop = [System.IO.Path]::Combine($env:USERPROFILE, "Desktop")

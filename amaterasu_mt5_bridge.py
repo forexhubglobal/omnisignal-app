@@ -99,7 +99,7 @@ def save_config(cfg):
 class AmaterasuBridge:
     def __init__(self, config):
         self.config = config
-        self.server_url = config.get("server_url", "https://amaterasux.onrender.com").rstrip("/")
+        self.server_url = config.get("server_url", DEFAULT_CONFIG["server_url"]).rstrip("/")
         self.lot_size = float(config.get("lot_size", 0.01))
         self.execution_mode = config.get("execution_mode", "SPLIT_TP")
         self.auto_be = config.get("auto_breakeven", True)
@@ -1097,7 +1097,14 @@ class AmaterasuBridge:
         outcome = item.get("status")
         symbol = item.get("symbol")
         pips_raw = item.get("pips", 0)
-        pips_str = f"{pips_raw:+d}" if isinstance(pips_raw, int) else (f"{pips_raw:+.1f}" if isinstance(pips_raw, float) else str(pips_raw or 0))
+        pips_str = str(pips_raw or 0)
+        try:
+            if isinstance(pips_raw, float):
+                pips_str = f"{pips_raw:+.1f}"
+            elif isinstance(pips_raw, int):
+                pips_str = f"{pips_raw:+d}"
+        except Exception:
+            pips_str = str(pips_raw or 0)
         print(f"\n{Colors.CYAN}🏁 [TRADE RESOLVED] #{symbol} status: {outcome} ({pips_str} pips){Colors.RESET}")
 
         # Jika TP1 dicapai atau signal umumkan BE, segera kunci BE untuk layer seterusnya!
@@ -1260,28 +1267,9 @@ class AmaterasuBridge:
                 pass
 
     def auto_updater_loop(self):
-        """Menyemak kemas kini terkini dari pelayan setiap 45 saat dan memulakan semula bridge secara automatik"""
-        url = f"{self.server_url}/amaterasu_mt5_bridge.py"
+        """Penyemak kemas kini pasif (Dimatikan gelung auto-restart untuk kestabilan operasi MT5 tanpa henti)"""
         while self.running:
-            try:
-                time.sleep(45)
-                r = requests.get(url, timeout=10)
-                if r.status_code == 200 and len(r.text) > 10000:
-                    local_path = os.path.abspath(__file__)
-                    with open(local_path, "r", encoding="utf-8") as f:
-                        current_code = f.read()
-                    if current_code.strip() != r.text.strip():
-                        print(f"\n{Colors.GREEN}{Colors.BOLD}🚀 [AUTO-UPDATE] Versi baharu bridge dikesan dari pelayan! Mengemas kini secara automatik...{Colors.RESET}")
-                        with open(local_path, "w", encoding="utf-8") as f:
-                            f.write(r.text)
-                        print(f"{Colors.GREEN}✅ [AUTO-UPDATE] Berjaya dikemaskini. Memulakan semula Amaterasu Bridge...{Colors.RESET}")
-                        time.sleep(1.5)
-                        mt5.shutdown()
-                        import subprocess
-                        subprocess.Popen([sys.executable, local_path])
-                        os._exit(0)
-            except Exception:
-                pass
+            time.sleep(3600)
 
     def sync_quotes_loop(self):
         """Menghantar harga tick live daripada terminal MT5 ke server Amaterasu X setiap 2.5 saat"""
