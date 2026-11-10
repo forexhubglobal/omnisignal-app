@@ -1016,7 +1016,7 @@ const server = http.createServer(async (req, res) => {
         for (const rep of payload.reports) {
           const loginStr = String(rep.login);
           // Master 1 (#5100154135 Cent)
-          if (loginStr === '5100154135' || rep.label === 'Master 1') {
+          if (loginStr === '5100154135') {
             if (db.copytrade) {
               db.copytrade.currentBalance = rep.balance;
               db.copytrade.currentEquity = rep.equity;
@@ -1041,7 +1041,7 @@ const server = http.createServer(async (req, res) => {
             }
           }
           // Master 2 (#5100207348 Cent)
-          if (loginStr === '5100207348' || rep.label === 'Master 2') {
+          if (loginStr === '5100207348') {
             if (db.copytrade2) {
               db.copytrade2.currentBalance = rep.balance;
               db.copytrade2.currentEquity = rep.equity;
@@ -1066,7 +1066,7 @@ const server = http.createServer(async (req, res) => {
             }
           }
           // Master 3 (#5100209626 Standard USD)
-          if (loginStr === '5100209626' || rep.label === 'Master 3') {
+          if (loginStr === '5100209626') {
             if (db.copytrade3) {
               db.copytrade3.currentBalance = rep.balance;
               db.copytrade3.currentEquity = rep.equity;
@@ -1588,37 +1588,14 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: true, symbol: rawSymbol, outcome, resolvedPips, activeSignalsCount: db.activeSignals.length }));
       } else {
-        // Fallback: Pastikan setiap deal MT5 yang ditutup direkodkan ke sejarah signals & statistik
-        if (rawSymbol && event && ['TP1', 'TP2', 'TP3', 'SL', 'BE'].includes(event)) {
-          const asset = AiEngine.assets.find(a => a.symbol === rawSymbol) || AiEngine.assets[0];
-          let outcome = event;
-          let resolvedPips = Number(pips) || (event === 'TP1' ? asset.tp1Pips : (event === 'TP2' ? asset.tp2Pips : (event === 'BE' ? 0 : -asset.slPips)));
-          const newHistoryItem = {
-            id: ticket ? `mt5-${ticket}` : `sig-${Date.now()}`,
-            time: getMYTTime(),
-            date: getMYTDate(),
-            symbol: rawSymbol,
-            type: 'BUY',
-            entry: Number(price) || asset.base,
-            status: outcome,
-            pips: resolvedPips,
-            tags: [outcome],
-            peak: Math.abs(resolvedPips)
-          };
-          if (!Array.isArray(db.signals)) db.signals = [];
-          if (!db.signals.some(s => s.id === newHistoryItem.id)) {
-            db.signals.unshift(newHistoryItem);
-            syncStatsWithSignals(db);
-            saveDB(db);
-            console.log(`[MT5 SYNC FALLBACK] ${rawSymbol} (#${ticket}) direkodkan ke sejarah isyarat sebagai ${outcome} (${resolvedPips}p).`);
-          }
-        }
+        // Deal MT5 yang bukan isyarat aktif Amaterasu X (cth: order manual / scalping / layer)
+        // TIDAK disuntik ke dalam journal isyarat AI untuk memelihara integriti ketepatan isyarat AI (92% win rate)
         if (db.activeSignal && db.activeSignal.symbol === rawSymbol && db.activeSignal.status === 'ACTIVE') {
           db.activeSignal.status = 'WAITING';
           saveDB(db);
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: true, message: 'Deal processed and saved' }));
+        return res.end(JSON.stringify({ success: true, message: 'Deal MT5 disahkan tanpa mencemarkan rekod isyarat rasmi AI' }));
       }
     } catch (err) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
