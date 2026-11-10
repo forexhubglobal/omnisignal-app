@@ -533,15 +533,14 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}🛡️ [SOP BULAN LEPAS] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} layer aktif (TP1, TP2, TP3). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
             return None
 
-        # Anti-Hedging check: Elak buka posisi bertentangan jika sudah ada posisi aktif untuk simbol ini di MT5
+        # Anti-Hedging check: Elak buka posisi bertentangan jika sudah ada sebarang posisi aktif untuk simbol ini di MT5
         all_sym_pos = [p for p in (mt5.positions_get() or []) if p.symbol.split('.')[0].upper() == clean_raw_sym]
         if all_sym_pos:
             for ep in all_sym_pos:
-                if ep.magic == self.magic_number or (ep.comment and ep.comment.startswith("AmaterasuX")):
-                    if (order_type == mt5.ORDER_TYPE_BUY and ep.type == mt5.POSITION_TYPE_SELL) or \
-                       (order_type == mt5.ORDER_TYPE_SELL and ep.type == mt5.POSITION_TYPE_BUY):
-                        print(f"{Colors.YELLOW}[ANTI-HEDGE] Menolak order {order_type_str} #{symbol} kerana sudah ada posisi bertentangan yang sedang aktif di MT5 (Ticket #{ep.ticket}). Menunggu selesai dahulu.{Colors.RESET}")
-                        return None
+                if (order_type == mt5.ORDER_TYPE_BUY and ep.type == mt5.POSITION_TYPE_SELL) or \
+                   (order_type == mt5.ORDER_TYPE_SELL and ep.type == mt5.POSITION_TYPE_BUY):
+                    print(f"{Colors.YELLOW}[ANTI-HEDGE] Menolak order {order_type_str} #{symbol} kerana sudah ada posisi bertentangan yang sedang aktif di MT5 (Ticket #{ep.ticket}, Type: {'BUY' if ep.type == mt5.POSITION_TYPE_BUY else 'SELL'}). Menunggu selesai dahulu.{Colors.RESET}")
+                    return None
 
         # INSTITUTIONAL VOLUME FLOW RADAR:
         # Menolak order yang melawan lonjakan volume institusi semasa

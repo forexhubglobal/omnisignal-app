@@ -1145,6 +1145,7 @@ const server = http.createServer(async (req, res) => {
 
       if (payload && Array.isArray(payload.openPositions)) {
         AiEngine.liveMT5Positions = payload.openPositions;
+        if (db.copytrade) db.copytrade.openPositions = payload.openPositions;
 
         // =========================================================================
         // CONTINUOUS MT5 POSITION AUTO-RECONCILIATION ENGINE
@@ -3140,10 +3141,15 @@ const AiEngine = {
       const activePendingSymbols = new Set(
         (db.activeSignals || []).map(s => s.symbol)
       );
-      if (Array.isArray(this.liveMT5Positions)) {
-        for (const p of this.liveMT5Positions) {
-          if (p.symbol) activePendingSymbols.add(p.symbol.replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase());
-        }
+      const allMasterCheck = [
+        ...(Array.isArray(this.liveMT5Positions) ? this.liveMT5Positions : []),
+        ...(db.copytrade && Array.isArray(db.copytrade.openPositions) ? db.copytrade.openPositions : []),
+        ...(db.copytrade2 && Array.isArray(db.copytrade2.openPositions) ? db.copytrade2.openPositions : []),
+        ...(db.copytrade3 && Array.isArray(db.copytrade3.openPositions) ? db.copytrade3.openPositions : [])
+      ];
+      for (const p of allMasterCheck) {
+        const sym = (p.symbol || p.s || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase();
+        if (sym) activePendingSymbols.add(sym);
       }
       const nowMs = Date.now();
       const allowedWhitelist = ['XAUUSD', 'USDCHF', 'EURUSD'];
@@ -3184,7 +3190,13 @@ const AiEngine = {
     if (existingActive) {
       return;
     }
-    if (Array.isArray(this.liveMT5Positions) && this.liveMT5Positions.some(p => (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() === asset.symbol.toUpperCase())) {
+    const allMasterExisting = [
+      ...(Array.isArray(this.liveMT5Positions) ? this.liveMT5Positions : []),
+      ...(db.copytrade && Array.isArray(db.copytrade.openPositions) ? db.copytrade.openPositions : []),
+      ...(db.copytrade2 && Array.isArray(db.copytrade2.openPositions) ? db.copytrade2.openPositions : []),
+      ...(db.copytrade3 && Array.isArray(db.copytrade3.openPositions) ? db.copytrade3.openPositions : [])
+    ];
+    if (allMasterExisting.some(p => (p.symbol || p.s || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() === asset.symbol.toUpperCase())) {
       return;
     }
     if (this.assetCooldowns && this.assetCooldowns[asset.symbol] && Date.now() < this.assetCooldowns[asset.symbol]) {
@@ -3237,18 +3249,17 @@ const AiEngine = {
       this.log(`🔥 NEWS AI SYNERGY DIAKTIFKAN: Isyarat ${type} ${asset.symbol} mengikut unjuran News AI (${newsSynergy.newsName} Bias ${newsSynergy.bias})!`);
     } else {
       // 2. TIADA NEWS AI AKTIF -> Guna Prinsip Institusi:
-      // Module: SMC Market Wave Harmonic Oscillator (2-WAY BUY & SELL WAVE ENGINE)
+      // Module: SMC Market Wave Harmonic Oscillator (SEJAJAR MACRO TREND & SMC LEVELS)
+      const liveMtfInit = (this.liveMtfMaFlow && this.liveMtfMaFlow[asset.symbol]) ? this.liveMtfMaFlow[asset.symbol] : null;
+      const mtfMacroInit = liveMtfInit ? (liveMtfInit.macro || 'NEUTRAL') : 'NEUTRAL';
+      const mtfM15Init = liveMtfInit ? (liveMtfInit.m15 || 'NEUTRAL') : 'NEUTRAL';
+
       if (asset.symbol === 'XAUUSD') {
         const asianH = this.goldAsianSession.high || (liveP + 8.0);
         const asianL = this.goldAsianSession.low || (liveP - 8.0);
         const waveRange = Math.max(asianH - asianL, 10.0);
         const waveProgress = (liveP - asianL) / waveRange;
 
-        if (!this._lastGoldWave) this._lastGoldWave = 'BUY';
-
-        // SIKLUS OMBAK DUA HALA (2-WAY WAVE OSCILLATOR - BUY & SELL):
-        // Pasaran bergerak secara berombak (Upwave & Downwave). 
-        // Wajib ada BUY dan SELL mengikut fasa ayunan ombak pasaran!
         if (waveProgress >= 0.65 || liveP >= (asianH - 2.5)) {
           // 1. PUNCAK OMBAK (WAVE CREST / OVERBOUGHT / SUPPLY): SELL RETRACEMENT
           type = 'SELL';
@@ -3260,30 +3271,38 @@ const AiEngine = {
           this._lastGoldWave = 'BUY';
           notes = `[SMC Wave Trough Rebound] Lembah ombak selesai di zon lantai (${liveP.toFixed(2)}). Pengesahan M15 Demand Order Block + Bullish Pinbar. Entry BUY menunggang gelombang lantunan (Upwave Impulse). SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
         } else {
-          // 3. TENGAH OMBAK: Bergilirkan arah ombak (Alternating Wave Cycle) agar seimbang BUY & SELL
-          type = this._lastGoldWave === 'BUY' ? 'SELL' : 'BUY';
-          this._lastGoldWave = type;
-          notes = type === 'BUY'
-            ? `[SMC Wave Harmonic Flow] Gelombang ombak melantun dari zon sokongan M15. Entry BUY ayunan kitaran pasaran. SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`
-            : `[SMC Wave Harmonic Flow] Gelombang ombak membuat pembetulan dari zon rintangan M15. Entry SELL fasa retracement kitaran pasaran. SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
+          // 3. TENGAH OMBAK: Sejajar dengan Macro Trend & Jajaran MTF MA (DILARANG FLIP RAWAK!)
+          if (mtfMacroInit === 'STRONG_BUYER' || mtfM15Init.includes('BULLISH')) {
+            type = 'BUY';
+            this._lastGoldWave = 'BUY';
+            notes = `[SMC Wave Harmonic Flow] Gelombang melantun sokongan M15 sejajar Trend Makro Bullish. Entry BUY momentum utama. SL ketat (+48p). Sasaran TP1 (+50p).`;
+          } else if (mtfMacroInit === 'STRONG_SELLER' || mtfM15Init.includes('BEARISH')) {
+            type = 'SELL';
+            this._lastGoldWave = 'SELL';
+            notes = `[SMC Wave Harmonic Flow] Gelombang pembetulan rintangan M15 sejajar Trend Makro Bearish. Entry SELL momentum utama. SL ketat (+48p). Sasaran TP1 (+50p).`;
+          } else {
+            type = waveProgress >= 0.5 ? 'SELL' : 'BUY';
+            this._lastGoldWave = type;
+            notes = type === 'BUY'
+              ? `[SMC Wave Harmonic Flow] Gelombang ombak melantun dari zon sokongan M15. Entry BUY ayunan kitaran pasaran. SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`
+              : `[SMC Wave Harmonic Flow] Gelombang ombak membuat pembetulan dari zon rintangan M15. Entry SELL fasa retracement kitaran pasaran. SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
+          }
         }
       } else if (asset.symbol === 'EURUSD') {
-        if (!this._lastEurWave) this._lastEurWave = 'BUY';
-        type = this._lastEurWave === 'BUY' ? 'SELL' : 'BUY';
+        type = (mtfMacroInit === 'STRONG_SELLER' || mtfM15Init.includes('BEARISH')) ? 'SELL' : 'BUY';
         this._lastEurWave = type;
         notes = type === 'BUY'
           ? `[SMC Currency Wave] Lantunan pada Key Support ${entry.toFixed(4)} + M15 Bullish Pinbar. SL ketat (+18p). Sasaran TP1 (+20p).`
           : `[SMC Currency Wave] Penolakan pada Key Resistance ${entry.toFixed(4)} + M15 Bearish Wick. SL ketat (+18p). Sasaran TP1 (+20p).`;
       } else if (asset.symbol === 'USDCHF') {
-        if (!this._lastChfWave) this._lastChfWave = 'SELL';
-        type = this._lastChfWave === 'SELL' ? 'BUY' : 'SELL';
+        type = (mtfMacroInit === 'STRONG_BUYER' || mtfM15Init.includes('BULLISH')) ? 'BUY' : 'SELL';
         this._lastChfWave = type;
         notes = type === 'BUY'
           ? `[SMC Currency Wave] Lantunan pada Key Support ${entry.toFixed(4)} + M15 Demand Zone. SL ketat (+18p). Sasaran TP1 (+20p).`
           : `[SMC Currency Wave] Penolakan pada Key Resistance ${entry.toFixed(4)} + M15 Supply Zone. SL ketat (+18p). Sasaran TP1 (+20p).`;
       } else {
-        type = Math.random() > 0.5 ? 'BUY' : 'SELL';
-        notes = `[Amaterasu Quantitative Flow] Isyarat ayunan ombak ${type} #${asset.symbol}. SL ketat. Sasaran TP1.`;
+        type = (mtfMacroInit === 'STRONG_BUYER' || mtfM15Init.includes('BULLISH')) ? 'BUY' : 'SELL';
+        notes = `[Amaterasu Quantitative Flow] Isyarat aliran ombak ${type} #${asset.symbol}. SL ketat. Sasaran TP1.`;
       }
     }
 
@@ -3352,15 +3371,50 @@ const AiEngine = {
       }
     }
 
-    // Anti-Hedging Guard: Elakkan posisi bertentangan (cth: jangan buka BUY jika ada SELL aktif)
-    if (Array.isArray(this.liveMT5Positions)) {
-      const oppType = type === 'BUY' ? 1 : 0; // MT5 0=BUY, 1=SELL
-      const hasOpposing = this.liveMT5Positions.some(p => 
-        (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() === asset.symbol.toUpperCase() &&
-        p.type === oppType
-      );
+    // =========================================================================
+    // STRICT CROSS-ACCOUNT CONSOLIDATED ANTI-HEDGE & SINGLE DIRECTION CONSENSUS
+    // =========================================================================
+    const allMasterPositions = [
+      ...(Array.isArray(this.liveMT5Positions) ? this.liveMT5Positions : []),
+      ...(db.copytrade && Array.isArray(db.copytrade.openPositions) ? db.copytrade.openPositions : []),
+      ...(db.copytrade2 && Array.isArray(db.copytrade2.openPositions) ? db.copytrade2.openPositions : []),
+      ...(db.copytrade3 && Array.isArray(db.copytrade3.openPositions) ? db.copytrade3.openPositions : [])
+    ];
+
+    const symPositions = allMasterPositions.filter(p => {
+      const sym = (p.symbol || p.s || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase();
+      return sym === asset.symbol.toUpperCase();
+    });
+
+    if (symPositions.length > 0) {
+      const hasOpposing = symPositions.some(p => {
+        const rawT = (p.type !== undefined ? p.type : p.t);
+        const isBuy = rawT === 0 || rawT === '0' || String(rawT).toUpperCase() === 'BUY';
+        const isSell = rawT === 1 || rawT === '1' || String(rawT).toUpperCase() === 'SELL';
+        return (type === 'BUY' && isSell) || (type === 'SELL' && isBuy);
+      });
+
       if (hasOpposing) {
-        this.log(`🛡️ [ANTI-HEDGE] Menolak isyarat ${type} #${asset.symbol} kerana ada posisi bertentangan sedang aktif di MT5.`);
+        this.log(`🛡️ [CROSS-ACCOUNT ANTI-HEDGE] Menolak isyarat ${type} #${asset.symbol} kerana akaun Master MT5 sedang memegang posisi bertentangan!`);
+        return;
+      }
+
+      // Single-Direction Consensus: If master already has positions in same symbol, enforce identical direction
+      const existingBuy = symPositions.some(p => {
+        const rawT = (p.type !== undefined ? p.type : p.t);
+        return rawT === 0 || rawT === '0' || String(rawT).toUpperCase() === 'BUY';
+      });
+      const existingSell = symPositions.some(p => {
+        const rawT = (p.type !== undefined ? p.type : p.t);
+        return rawT === 1 || rawT === '1' || String(rawT).toUpperCase() === 'SELL';
+      });
+
+      if (existingBuy && type !== 'BUY') {
+        this.log(`🛡️ [SINGLE-DIRECTION CONSENSUS] Akaun Master sedang memegang BUY #${asset.symbol}. Menolak ${type} bagi memelihara konsensus.`);
+        return;
+      }
+      if (existingSell && type !== 'SELL') {
+        this.log(`🛡️ [SINGLE-DIRECTION CONSENSUS] Akaun Master sedang memegang SELL #${asset.symbol}. Menolak ${type} bagi memelihara konsensus.`);
         return;
       }
     }
