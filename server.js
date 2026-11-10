@@ -3203,11 +3203,14 @@ const AiEngine = {
       return;
     }
 
-    // London Trap Zone Guard (14:00 - 16:00 MYT):
-    // Data sejarah membuktikan pembukaan London penuh manipulasi Judas Swing. XAUUSD dilarang masuk!
-    const nowH = parseInt(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: '2-digit', hour12: false }).format(new Date()), 10);
-    if (asset.symbol === 'XAUUSD' && nowH >= 14 && nowH < 16) {
-      this.log(`🛡️ [LONDON TRAP ZONE] Isyarat XAUUSD disekat antara 14:00 - 16:00 MYT bagi melindungi modal daripada manipulasi Judas Swing.`);
+    // London Trap Zone Guard (13:30 - 16:00 MYT):
+    // Data sejarah membuktikan pembukaan London penuh manipulasi Judas Swing bermula seawal 13:30 MYT. XAUUSD dilarang masuk!
+    const mytNow = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kuala_Lumpur', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
+    const nowH = parseInt(mytNow.find(p => p.type === 'hour')?.value, 10);
+    const nowM = parseInt(mytNow.find(p => p.type === 'minute')?.value, 10);
+    const totalMinutes = nowH * 60 + nowM;
+    if (asset.symbol === 'XAUUSD' && totalMinutes >= (13 * 60 + 30) && totalMinutes < (16 * 60)) {
+      this.log(`🛡️ [LONDON TRAP ZONE] Isyarat XAUUSD disekat antara 13:30 - 16:00 MYT (${nowH.toString().padStart(2, '0')}:${nowM.toString().padStart(2, '0')}) bagi melindungi modal daripada manipulasi Judas Swing pembukaan London.`);
       return;
     }
 
@@ -3237,12 +3240,13 @@ const AiEngine = {
       if (asset.symbol === 'XAUUSD') {
         const floorRef = this.goldAsianSession.low || (liveP - 15.0);
         const roofRef = this.goldAsianSession.high || (liveP + 15.0);
-        if (type === 'SELL' && liveP <= (floorRef + 3.0)) {
-          this.log(`🛡️ [STRICT PULLBACK GUARD] Menyekat isyarat SELL XAUUSD pada ${liveP.toFixed(2)}. Harga berada betul-betul di lantai dasar (${floorRef.toFixed(2)} + 3.0). Wajib tunggu Pullback melantun ke atas dahulu sebelum SELL!`);
+        const midRef = (floorRef + roofRef) / 2;
+        if (type === 'SELL' && liveP <= (midRef + 1.0)) {
+          this.log(`🛡️ [STRICT PULLBACK GUARD] Menyekat isyarat SELL XAUUSD pada ${liveP.toFixed(2)}. Harga berada di bawah/tengah zon lantai (Mid: ${midRef.toFixed(2)}). Wajib tunggu Pullback melantun ke bumbung dahulu sebelum SELL!`);
           return;
         }
-        if (type === 'BUY' && liveP >= (roofRef - 3.0)) {
-          this.log(`🛡️ [STRICT PULLBACK GUARD] Menyekat isyarat BUY XAUUSD pada ${liveP.toFixed(2)}. Harga berada betul-betul di bumbung puncak (${roofRef.toFixed(2)} - 3.0). Wajib tunggu Pullback melantun ke bawah dahulu sebelum BUY!`);
+        if (type === 'BUY' && liveP >= (midRef - 1.0)) {
+          this.log(`🛡️ [STRICT PULLBACK GUARD] Menyekat isyarat BUY XAUUSD pada ${liveP.toFixed(2)}. Harga berada di atas/tengah zon puncak (Mid: ${midRef.toFixed(2)}). Wajib tunggu Pullback melantun ke lantai diskaun dahulu sebelum BUY!`);
           return;
         }
       }
@@ -3271,22 +3275,10 @@ const AiEngine = {
           this._lastGoldWave = 'BUY';
           notes = `[SMC Wave Trough Rebound] Lembah ombak selesai di zon lantai (${liveP.toFixed(2)}). Pengesahan M15 Demand Order Block + Bullish Pinbar. Entry BUY menunggang gelombang lantunan (Upwave Impulse). SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
         } else {
-          // 3. TENGAH OMBAK: Sejajar dengan Macro Trend & Jajaran MTF MA (DILARANG FLIP RAWAK!)
-          if (mtfMacroInit === 'STRONG_BUYER' || mtfM15Init.includes('BULLISH')) {
-            type = 'BUY';
-            this._lastGoldWave = 'BUY';
-            notes = `[SMC Wave Harmonic Flow] Gelombang melantun sokongan M15 sejajar Trend Makro Bullish. Entry BUY momentum utama. SL ketat (+48p). Sasaran TP1 (+50p).`;
-          } else if (mtfMacroInit === 'STRONG_SELLER' || mtfM15Init.includes('BEARISH')) {
-            type = 'SELL';
-            this._lastGoldWave = 'SELL';
-            notes = `[SMC Wave Harmonic Flow] Gelombang pembetulan rintangan M15 sejajar Trend Makro Bearish. Entry SELL momentum utama. SL ketat (+48p). Sasaran TP1 (+50p).`;
-          } else {
-            type = waveProgress >= 0.5 ? 'SELL' : 'BUY';
-            this._lastGoldWave = type;
-            notes = type === 'BUY'
-              ? `[SMC Wave Harmonic Flow] Gelombang ombak melantun dari zon sokongan M15. Entry BUY ayunan kitaran pasaran. SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`
-              : `[SMC Wave Harmonic Flow] Gelombang ombak membuat pembetulan dari zon rintangan M15. Entry SELL fasa retracement kitaran pasaran. SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
-          }
+          // 3. TENGAH OMBAK: EQUILIBRIUM / NO-MAN'S LAND (DILARANG KEJAR LILIN DI TENGAH/PUCUK!)
+          // Wajib tunggu harga buat Pullback ke zon Diskaun (Lantai) untuk BUY, atau zon Premium (Bumbung) untuk SELL!
+          this.log(`🛡️ [SMC PULLBACK GUARD] Menolak isyarat XAUUSD pada ${liveP.toFixed(2)}. Harga berada di zon pertengahan ombak (Progress: ${(waveProgress * 100).toFixed(1)}%). Wajib tunggu Pullback ke lantai diskaun (<= ${(asianL + 2.5).toFixed(2)}) untuk BUY, atau bumbung rintangan (>= ${(asianH - 2.5).toFixed(2)}) untuk SELL!`);
+          return;
         }
       } else if (asset.symbol === 'EURUSD') {
         type = (mtfMacroInit === 'STRONG_SELLER' || mtfM15Init.includes('BEARISH')) ? 'SELL' : 'BUY';

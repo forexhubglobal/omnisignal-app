@@ -462,14 +462,15 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}🛡️ [PAIR DITAPIS] Simbol #{clean_raw_sym} ditolak. Hanya {', '.join(allowed_pairs)} dibenarkan mengikut arahan bos.{Colors.RESET}")
             return None
 
-        # 0.2 LONDON TRAP ZONE GUARD (14:00 - 16:00 MYT):
-        # Data sejarah 2,732 trade membuktikan 14:00 - 16:00 MYT penuh manipulasi Judas Swing.
-        # XAUUSD DILARANG MASUK sepanjang 2 jam ini demi melindungi modal!
+        # 0.2 LONDON TRAP ZONE GUARD (13:30 - 16:00 MYT):
+        # Data sejarah 2,732 trade membuktikan 13:30 - 16:00 MYT penuh manipulasi Judas Swing.
+        # XAUUSD DILARANG MASUK sepanjang zon ini demi melindungi modal!
         if clean_raw_sym == "XAUUSD":
             from datetime import timezone, timedelta
             now_myt = datetime.now(timezone(timedelta(hours=8)))
-            if 14 <= now_myt.hour < 16:
-                print(f"{Colors.YELLOW}🛡️ [LONDON TRAP ZONE] Menolak order XAUUSD pada jam {now_myt.strftime('%H:%M')} MYT. Zon 14:00 - 16:00 disekat bagi mengelak manipulasi Judas Swing.{Colors.RESET}")
+            now_mins = now_myt.hour * 60 + now_myt.minute
+            if (13 * 60 + 30) <= now_mins < (16 * 60):
+                print(f"{Colors.YELLOW}🛡️ [LONDON TRAP ZONE] Menolak order XAUUSD pada jam {now_myt.strftime('%H:%M')} MYT. Zon 13:30 - 16:00 disekat bagi mengelak manipulasi Judas Swing pembukaan London.{Colors.RESET}")
                 return None
         
         # Pastikan simbol aktif dalam MarketWatch
@@ -589,6 +590,25 @@ class AmaterasuBridge:
         price = tick.ask if is_buy else tick.bid
         digits = sym_info.digits
         point = sym_info.point
+
+        # 3. SMC PULLBACK & ANTI-CHASING GUARD (NO BUYING AT PUCUK / NO SELLING AT LANTAI)
+        # Menghalang kemasukan BUY di zon puncak atau SELL di zon dasar. Wajib tunggu pullback!
+        rates_m15 = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M15, 0, 16)
+        if rates_m15 is not None and len(rates_m15) >= 8:
+            recent_high = max(float(r['high']) for r in rates_m15)
+            recent_low = min(float(r['low']) for r in rates_m15)
+            rng = recent_high - recent_low
+            min_rng = 4.0 if clean_raw_sym == "XAUUSD" else 0.0020
+            if rng >= min_rng:
+                pos_ratio = (price - recent_low) / rng
+                # BUY: Dilarang sama sekali jika harga berada melebihi 45% julat M15 (Zon Pucuk/Tengah)
+                if is_buy and pos_ratio > 0.45:
+                    print(f"{Colors.RED}🛑 [SMC PULLBACK GUARD DITOLAK] Order BUY #{clean_raw_sym} disekat! Harga di zon PUCUK / RINTANGAN ({price:.2f}, {pos_ratio*100:.1f}% julat M15). Wajib tunggu pullback ke zon diskaun/lantai (<= 45%) sebelum masuk BUY!{Colors.RESET}")
+                    return None
+                # SELL: Dilarang sama sekali jika harga berada di bawah 55% julat M15 (Zon Lantai/Tengah)
+                elif not is_buy and pos_ratio < 0.55:
+                    print(f"{Colors.RED}🛑 [SMC PULLBACK GUARD DITOLAK] Order SELL #{clean_raw_sym} disekat! Harga di zon LANTAI / SOKONGAN ({price:.2f}, {pos_ratio*100:.1f}% julat M15). Wajib tunggu pullback ke zon premium/bumbung (>= 55%) sebelum masuk SELL!{Colors.RESET}")
+                    return None
 
 
 
