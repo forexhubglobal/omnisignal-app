@@ -1,13 +1,10 @@
-$bridgeUrl = "https://equal-shield-amber-wilderness.trycloudflare.com/amaterasu_mt5_bridge.py"
-$tempFile = Join-Path $env:TEMP "amaterasu_mt5_bridge.py"
-
 Write-Host "Memuat turun fail bridge terkini yang bersih..." -ForegroundColor Cyan
-Invoke-RestMethod -Uri $bridgeUrl -OutFile $tempFile
+Invoke-RestMethod -Uri "https://equal-shield-amber-wilderness.trycloudflare.com/amaterasu_mt5_bridge.py" -OutFile "$env:TEMP\amaterasu_mt5_bridge.py"
 
-if (Test-Path $tempFile) {
-    Copy-Item $tempFile 'C:\AmaterasuX\amaterasu_mt5_bridge.py' -Force
-    Copy-Item $tempFile 'C:\AmaterasuX_Acc2\amaterasu_mt5_bridge.py' -Force
-    Copy-Item $tempFile 'C:\AmaterasuX_Acc3\amaterasu_mt5_bridge.py' -Force
+if (Test-Path "$env:TEMP\amaterasu_mt5_bridge.py") {
+    Copy-Item "$env:TEMP\amaterasu_mt5_bridge.py" 'C:\AmaterasuX\amaterasu_mt5_bridge.py' -Force
+    Copy-Item "$env:TEMP\amaterasu_mt5_bridge.py" 'C:\AmaterasuX_Acc2\amaterasu_mt5_bridge.py' -Force
+    Copy-Item "$env:TEMP\amaterasu_mt5_bridge.py" 'C:\AmaterasuX_Acc3\amaterasu_mt5_bridge.py' -Force
     Write-Host "[OK] Fail bridge telah dikemas kini ke versi terkini tanpa sebarang ralat!" -ForegroundColor Green
 }
 
