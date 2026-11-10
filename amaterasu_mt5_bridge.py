@@ -908,47 +908,58 @@ class AmaterasuBridge:
             if sig_matches_direction and (sig_data.get("status") == "TP1_HIT" or sig_data.get("beLocked") or sig_data.get("tp1Triggered")):
                 server_be = True
 
-        buffer_pts = 6 * point if is_gold else 2 * point
-
-        # MULTI-STAGE DYNAMIC TRAILING PROFIT LOCK (PINTAR & BERAKAL):
-        # Tahap 1: BE (+50p Gold / +18p Forex) -> Kunci ke paras Entri + buffer
+        # MULTI-STAGE DYNAMIC TRAILING PROFIT LOCK (SOLUSI A: RUANG NAFAS RETEST):
+        # Tahap 1: TP1 Hit (+50p Gold / +18p Forex) -> Alih SL ke Ruang Nafas Retest (+15p buffer Gold / +8p Forex)
+        #          Layer 1 dah kutip +50p. Risiko baki runner hanya 15p. Net keseluruhan tetap UNTUNG +35p!
+        #          Wick retest 5-12p tidak akan menyapu trade pada BE (0p)!
         # Tahap 2: Menghampiri TP2 (+80p Gold / +30p Forex) -> Kunci untung kekal +40p Gold / +15p Forex!
         # Tahap 3: Melepasi TP2 (+120p Gold / +45p Forex) -> Kunci untung kekal +80p Gold / +30p Forex!
         # Tahap 4: Menghampiri TP3 (+160p Gold / +65p Forex) -> Kunci untung kekal +120p Gold / +45p Forex!
-        lock_pips = 0.0
         stage_name = ""
+        cand_sl = 0.0
 
         if is_gold:
             if floating_pips >= 160.0:
                 lock_pips = 120.0
+                cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
                 stage_name = "Tahap 4 Trailing (Kunci Untung +120p)"
             elif floating_pips >= 120.0:
                 lock_pips = 80.0
+                cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
                 stage_name = "Tahap 3 Trailing (Kunci Untung +80p)"
             elif floating_pips >= 80.0:
                 lock_pips = 40.0
+                cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
                 stage_name = "Tahap 2 Trailing (Kunci Untung +40p)"
             elif floating_pips >= min_be_pips or server_be:
-                lock_pips = (buffer_pts / pip_size)
-                stage_name = "Tahap 1 Break-Even (Sifar Risiko)"
+                # SOLUSI A: Ruang Nafas Retest 15 pips ($1.50) dari Entry
+                # BUY: Entry - 15 pips | SELL: Entry + 15 pips
+                # Risiko baki trade cuma 15p (Net tetap untung +35p dari TP1 Layer 1)
+                retest_buffer_pips = 15.0
+                cand_sl = (open_price - retest_buffer_pips * pip_size) if is_buy else (open_price + retest_buffer_pips * pip_size)
+                stage_name = "Tahap 1 Solusi A (Ruang Nafas Retest 15p | Net Untung Terjamin +35p)"
         else:
             if floating_pips >= 65.0:
                 lock_pips = 45.0
+                cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
                 stage_name = "Tahap 4 Trailing (Kunci Untung +45p)"
             elif floating_pips >= 45.0:
                 lock_pips = 30.0
+                cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
                 stage_name = "Tahap 3 Trailing (Kunci Untung +30p)"
             elif floating_pips >= 30.0:
                 lock_pips = 15.0
+                cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
                 stage_name = "Tahap 2 Trailing (Kunci Untung +15p)"
             elif floating_pips >= min_be_pips or server_be:
-                lock_pips = (buffer_pts / pip_size)
-                stage_name = "Tahap 1 Break-Even (Sifar Risiko)"
+                # SOLUSI A Forex: Ruang Nafas Retest 8 pips dari Entry
+                retest_buffer_pips = 8.0
+                cand_sl = (open_price - retest_buffer_pips * pip_size) if is_buy else (open_price + retest_buffer_pips * pip_size)
+                stage_name = "Tahap 1 Solusi A (Ruang Nafas Retest 8p | Net Untung Terjamin)"
 
-        if lock_pips <= 0.0:
+        if not stage_name or cand_sl <= 0.0:
             return
 
-        cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
         target_sl = round(cand_sl, digits)
 
         # Semak sama ada SL baharu lebih menguntungkan daripada SL semasa

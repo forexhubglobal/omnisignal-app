@@ -3210,33 +3210,55 @@ const AiEngine = {
       // =========================================================================
       const slCondition = isBuy ? (curP <= sig.sl) : (curP >= sig.sl);
       if (slCondition) {
-        const lossPips = sig.beLocked ? 0 : -Math.abs(sig.slPips || asset.slPips);
-        const outcome = sig.beLocked ? 'BE' : 'SL';
-        this.log(`🛑 [SL TRIGGERED] ${sig.symbol} hit Stop Loss @ ${curP} (SL: ${sig.sl})! Memadamkan daripada On Pips serta-merta.`);
+        let lossPips;
+        let outcome;
+        if (sig.beLocked) {
+          // Solusi A: Jika retest wick mencecah buffer 15p selepas TP1 disahkan,
+          // Layer 1 telah mengunci +50p (atau +20p Forex). Runner ditutup pada -15p buffer.
+          // Net keseluruhan tetap UNTUNG BERSIH (+35p untuk Gold / +12p untuk Forex)!
+          const bufferP = sig.breathingBufferPips || ((sig.symbol === 'XAUUSD' || (sig.symbol || '').includes('GOLD')) ? 15 : 8);
+          const netWin = Math.max(0, (sig.tp1Pips || asset.tp1Pips) - bufferP);
+          lossPips = netWin;
+          outcome = 'BE';
+          this.log(`🛡️ [SOLUSI A RETEST EXIT] ${sig.symbol} terkena buffer retest SL @ ${curP} selepas TP1 disahkan. Net trade tetap UNTUNG +${netWin} pip! Modal & untung selamat.`);
+        } else {
+          lossPips = -Math.abs(sig.slPips || asset.slPips);
+          outcome = 'SL';
+          this.log(`🛑 [SL TRIGGERED] ${sig.symbol} hit Stop Loss @ ${curP} (SL: ${sig.sl})! Memadamkan daripada On Pips serta-merta.`);
+        }
         this.resolveTrade(db, sig, outcome, lossPips, asset);
         continue;
       }
 
-      // Stage 1: Hit TP1 (Trigger + Lock Breakeven)
+      // Stage 1: Hit TP1 (Trigger + Lock Breakeven with Solusi A Breathing Buffer)
       // SOP: Trade must develop for at least 40 ticks (~1.5 mins) and reach TP1 price or maturity
       const tp1Condition = isBuy ? (curP >= sig.tp1) : (curP <= sig.tp1);
       if (!sig.tp1Triggered && sig.status === 'ACTIVE' && (tp1Condition || (sig.willWin && (sig.ticks || 0) >= 120)) && (sig.ticks || 0) >= 40) {
         sig.tp1Triggered = true;
         sig.status = 'TP1_HIT';
         sig.beLocked = true;
-        sig.sl = sig.entry; // Move SL to Entry (Break-Even)
+
+        // SOLUSI A: RUANG NAFAS RETEST (15 pips Gold / 8 pips Forex)
+        // Jangan bunuh trade di 0 pip! Beri ruang nafas 15 pip di belakang entry
+        // agar wick retest normal (5-12p) tidak mematikan runner ke TP2 & TP3.
+        const breathingBufferPips = (sig.symbol === 'XAUUSD' || (sig.symbol || '').includes('GOLD')) ? 15 : 8;
+        sig.breathingBufferPips = breathingBufferPips;
+        sig.sl = isBuy
+          ? Number((sig.entry - breathingBufferPips * asset.pipVal).toFixed(asset.pipDec))
+          : Number((sig.entry + breathingBufferPips * asset.pipVal).toFixed(asset.pipDec));
+
         sig.tp1HitAt = getMYTTime();
         sig.tp1Pips = asset.tp1Pips;
         db.stats.tp1Hit = (db.stats.tp1Hit || 0) + 1;
         db.stats.totalProfitToday = (db.stats.totalProfitToday || 0) + asset.tp1Pips;
 
-        this.log(`🎯 AI Engine: Target 1 Hit for ${sig.symbol} (+${asset.tp1Pips} pips)! Stop Loss dialih ke Break-Even (Sifar Risiko).`);
+        this.log(`🎯 AI Engine: Target 1 Hit for ${sig.symbol} (+${asset.tp1Pips} pips)! Stop Loss dialih ke Ruang Nafas Retest Solusi A (${breathingBufferPips}p buffer dari Entry). Net untung terjamin.`);
         broadcastEvent('signal_update', {
           type: 'TP1_HIT',
           symbol: sig.symbol,
           pips: asset.tp1Pips,
           activeSignal: sig,
-          message: `🎯 Target 1 Disahkan (+${asset.tp1Pips} pip)! Alih SL ke Break-Even (BE)!`
+          message: `🎯 Target 1 Disahkan (+${asset.tp1Pips} pip)! SL dialih ke Ruang Nafas Retest (Buffer ${breathingBufferPips} pip)!`
         });
         TelegramNotifier.send(TelegramNotifier.formatTp1Message(sig, asset.tp1Pips)).catch(() => {});
         remaining.push(sig);
@@ -3326,12 +3348,14 @@ const AiEngine = {
             continue;
           }
         } else {
-          // Break-Even Exit: Hanya jika trade telah melepasi TP1 dan kemudian patah balik penuh melepasi entry
-          const beBuffer = 1.5 * asset.pipVal;
-          const beExitHit = isBuy ? (curP <= (sig.entry - beBuffer)) : (curP >= (sig.entry + beBuffer));
+          // Break-Even Exit (Solusi A): Hanya jika trade telah melepasi TP1 dan retest melepasi paras buffer ruang nafas
+          const beBufferPips = sig.breathingBufferPips || ((sig.symbol === 'XAUUSD' || (sig.symbol || '').includes('GOLD')) ? 15 : 8);
+          const beBufferPrice = beBufferPips * asset.pipVal;
+          const beExitHit = isBuy ? (curP <= (sig.entry - beBufferPrice)) : (curP >= (sig.entry + beBufferPrice));
           if (beExitHit && (sig.ticks || 0) >= 150 && !sig.willWin) {
-            this.log(`🛡️ SOP Break-Even Closed: ${sig.symbol} returned to Entry after securing TP1. Exit as BE (0 pip). Capital 100% Protected.`);
-            this.resolveTrade(db, sig, 'BE', 0, asset);
+            const netWin = Math.max(0, (sig.tp1Pips || asset.tp1Pips) - beBufferPips);
+            this.log(`🛡️ SOP Break-Even Closed: ${sig.symbol} hit buffer limit after securing TP1. Exit as BE (+${netWin} pip net). Capital & profit protected.`);
+            this.resolveTrade(db, sig, 'BE', netWin, asset);
             continue;
           }
         }
