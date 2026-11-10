@@ -523,6 +523,14 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}🛡️ [RISK GUARD] Had {max_pairs} Pair serentak telah dicapai ({', '.join(open_unique_symbols)}). Order #{clean_raw_sym} ditolak bagi melindungi modal.{Colors.RESET}")
             return None
 
+        # HARD CEILING: Maximum Total Account Open Lots & Positions (Anti-Overtrading & Anti-Liquidation)
+        all_pos_raw = mt5.positions_get() or []
+        tot_vol = sum(p.volume for p in all_pos_raw)
+        max_tot_vol = float(self.config.get("max_account_lots", 1.0))
+        if tot_vol >= max_tot_vol or len(all_pos_raw) >= 6:
+            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= 6) telah mencapai had maksimum keselamatan! Menolak order baharu.{Colors.RESET}")
+            return None
+
         # STRICT 1-SETUP PER SYMBOL (MAX 3 SPLIT LAYERS - BULAN LEPAS LOCKED SOP):
         # 1 setup merangkumi TP1, TP2, TP3. Sekiranya simbol ini sudah mempunyai 3 layer, sekat order tambahan bagi menghalang over-exposure!
         existing_symbol_orders = [
@@ -670,9 +678,20 @@ class AmaterasuBridge:
             tp = round(price - tp_dist, digits)
             sl = round(price + sl_dist, digits)
 
+        # STRICT ANTI-CHASING PUCUK/LANTAI GUARD:
+        max_slip_dist = (self.max_slippage_pips * 10 * point)
+        if is_buy and price > (signal_entry + max_slip_dist):
+            slip_pips = (price - signal_entry) / (10 * point)
+            print(f"{Colors.RED}🛑 [ANTI-PUCUK DITOLAK] Order BUY #{clean_raw_sym} disekat! Harga semasa ({price:.{digits}f}) telah melambung +{slip_pips:.1f} pips melepasi Entry Signal ({signal_entry:.{digits}f}). Dilarang beli di pucuk!{Colors.RESET}")
+            return None
+        elif not is_buy and price < (signal_entry - max_slip_dist):
+            slip_pips = (signal_entry - price) / (10 * point)
+            print(f"{Colors.RED}🛑 [ANTI-LANTAI DITOLAK] Order SELL #{clean_raw_sym} disekat! Harga semasa ({price:.{digits}f}) telah menjunam -{slip_pips:.1f} pips di bawah Entry Signal ({signal_entry:.{digits}f}). Dilarang sell di lantai!{Colors.RESET}")
+            return None
+
         diff = abs(price - signal_entry)
-        if diff > (self.max_slippage_pips * 10 * point):
-            print(f"{Colors.YELLOW}[PASARAN BERGERAK] Harga semasa ({price:.{digits}f}) vs Signal ({signal_entry:.{digits}f}). TP/SL diselaraskan secara dinamik: TP{tp_target}={tp:.{digits}f}, SL={sl:.{digits}f}.{Colors.RESET}")
+        if diff > 0:
+            print(f"{Colors.CYAN}[PENGESAHAN ENTRY] Harga semasa ({price:.{digits}f}) vs Signal ({signal_entry:.{digits}f}) | TP{tp_target}={tp:.{digits}f}, SL={sl:.{digits}f}.{Colors.RESET}")
 
         # Saiz lot: Semak jika simbol mempunyai custom lot (cth: USDCAD 0.50 lot, XAU/JPY/CHF 0.20 lot)
         exec_lot = self.lot_size
@@ -744,6 +763,17 @@ class AmaterasuBridge:
             if request["tp"] >= request["price"]:
                 print(f"{Colors.RED}❌ [INVALID TP] TP bagi SELL mestilah di bawah harga semasa! Order dibatalkan.{Colors.RESET}")
                 return None
+
+        # HARD ZERO-SL GUARD (DILARANG MASUK TANPA STOP LOSS):
+        if not request.get("sl") or request["sl"] <= 0:
+            print(f"{Colors.RED}❌ [FATAL STOP LOSS ERROR] SL bernilai 0.0! Dilarang membuka posisi tanpa Stop Loss! Execution dibatalkan.{Colors.RESET}")
+            return None
+        if is_buy and request["sl"] >= request["price"]:
+            print(f"{Colors.RED}❌ [INVALID SL] SL bagi BUY mestilah di bawah harga semasa! Order dibatalkan.{Colors.RESET}")
+            return None
+        if not is_buy and request["sl"] <= request["price"]:
+            print(f"{Colors.RED}❌ [INVALID SL] SL bagi SELL mestilah di atas harga semasa! Order dibatalkan.{Colors.RESET}")
+            return None
 
         print(f"\n{Colors.CYAN}⚡ [MENGHANTAR ORDER] {order_type_str} {self.lot_size} lot #{symbol} @ {price:.{digits}f}{Colors.RESET}")
         print(f"   SL: {sl:.{digits}f} | TP{tp_target}: {tp:.{digits}f} | Filling Mode: {filling}")
@@ -1146,7 +1176,12 @@ class AmaterasuBridge:
             # Payload adalah list db.activeSignals
             if isinstance(payload, list):
                 for s in payload:
-                    if s.get("status") == "ACTIVE" and s.get("id") not in self.executed_signal_ids:
+                    sig_id = str(s.get("id", ""))
+                    # Jangan re-execute signal yang diselaraskan semula dari tiket MT5 (elak duplicate / feedback loop)
+                    if sig_id.startswith("mt5-"):
+                        self.executed_signal_ids.add(sig_id)
+                        continue
+                    if s.get("status") == "ACTIVE" and sig_id not in self.executed_signal_ids:
                         self.process_new_signal(s)
                     elif s.get("status") == "TP1_HIT" or s.get("beLocked") or s.get("tp1Triggered"):
                         sym = s.get("symbol")
