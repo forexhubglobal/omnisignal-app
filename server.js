@@ -1239,12 +1239,14 @@ const server = http.createServer(async (req, res) => {
             const initDep3 = Number(db.copytrade3.initialDeposit) || 1000.0;
             const eq3 = Number(acc.equity) || db.copytrade3.currentEquity;
             const bal3 = Number(acc.balance) || db.copytrade3.currentBalance;
-            const totalWd3 = Number(db.copytrade3.totalWithdrawn) || 0.0;
+            const totalWd3 = Number(acc.totalWithdrawn && acc.totalWithdrawn > 0 ? acc.totalWithdrawn : (db.copytrade3.totalWithdrawn || 4100.0));
+            db.copytrade3.totalWithdrawn = totalWd3;
+            db.copytrade3.totalWithdrawnUsd = totalWd3;
             db.copytrade3.currentEquity = eq3;
             db.copytrade3.currentBalance = bal3;
             db.copytrade3.activeEquity = eq3;
             db.copytrade3.activeEquityUsd = eq3;
-            const netProfit3 = +(eq3 + totalWd3 - initDep3).toFixed(2);
+            const netProfit3 = +(eq3 + totalWd3).toFixed(2);
             db.copytrade3.netProfitUsd = netProfit3;
             db.copytrade3.growthPct = +((netProfit3 / initDep3) * 100).toFixed(2);
             db.copytrade3.allTimeProfitUsd = Math.max(netProfit3, 0);
