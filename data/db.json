@@ -1,14 +1,14 @@
 {
   "stats": {
-    "totalSignals": 324,
-    "totalSignalsClosed": 342,
-    "totalProfitAllTime": 9910.8,
+    "totalSignals": 325,
+    "totalSignalsClosed": 343,
+    "totalProfitAllTime": 9916.5,
     "winRate": 90,
-    "tp1Hit": 285,
+    "tp1Hit": 286,
     "tp2Hit": 8,
     "tp3Hit": 0,
     "slHit": 31,
-    "totalProfitToday": 496.79999999999995,
+    "totalProfitToday": 502.5,
     "last7Days": [
       {
         "day": "Thu",
@@ -43,10 +43,10 @@
       {
         "day": "Today",
         "date": "Nov 11",
-        "pips": 496.79999999999995
+        "pips": 502.5
       }
     ],
-    "lastUpdated": "2026-11-10T23:27:25.000Z"
+    "lastUpdated": "2026-11-10T23:32:15.000Z"
   },
   "activeSignal": {
     "id": "mt5-511069834",
@@ -68,10 +68,22 @@
     "mt5Ticket": 511069834,
     "notes": "[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #511069834)",
     "_missingFromMt5Count": 0,
-    "ticks": 346,
+    "ticks": 422,
     "peakPips": 0
   },
   "signals": [
+    {
+      "id": "sig-1794353507125",
+      "time": "07:31",
+      "date": "Nov 11",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 4035.6,
+      "status": "CLOSED",
+      "pips": 5.7,
+      "tags": [],
+      "peak": 6
+    },
     {
       "id": "sig-1794353221751",
       "time": "07:27",
@@ -5305,16 +5317,16 @@
     }
   ],
   "lastResolvedSignal": {
-    "id": "sig-1794353221751",
-    "time": "07:27",
+    "id": "sig-1794353507125",
+    "time": "07:31",
     "date": "Nov 11",
     "symbol": "XAUUSD",
     "type": "SELL",
-    "entry": 4037.37,
+    "entry": 4035.6,
     "status": "CLOSED",
-    "pips": 7.3,
+    "pips": 5.7,
     "tags": [],
-    "peak": 8
+    "peak": 6
   },
   "aiNewsStats": {
     "totalNewsSignals": 10,
@@ -5472,7 +5484,7 @@
       "mt5Ticket": 511069834,
       "notes": "[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #511069834)",
       "_missingFromMt5Count": 0,
-      "ticks": 346,
+      "ticks": 422,
       "peakPips": 0
     },
     {
@@ -5495,7 +5507,7 @@
       "mt5Ticket": 511068842,
       "notes": "[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #511068842)",
       "_missingFromMt5Count": 0,
-      "ticks": 1850,
+      "ticks": 1926,
       "peakPips": 3.2
     }
   ],
@@ -5651,16 +5663,16 @@
     "netProfitUsc": 34268.6,
     "netProfitUsd": 342.69,
     "currentBalance": 10746.6,
-    "currentEquity": 10743.28,
-    "activeEquity": 10743.28,
-    "activeEquityUsd": 107.43,
+    "currentEquity": 10745.92,
+    "activeEquity": 10745.92,
+    "activeEquityUsd": 107.46,
     "winRate": 90.4,
     "maxDrawdown": 4.8,
     "status": "COMPLETED (200% WD SECURED)",
     "badge": "VAULT 1 (REALISED +200% & WITHDRAWN)",
     "copiersCount": 42,
     "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-    "lastSync": "07:27:24",
+    "lastSync": "07:32:13",
     "openPositions": [
       {
         "ticket": 511068842,
@@ -5669,7 +5681,7 @@
         "openPrice": 1.1166800000000001,
         "sl": 1.11588,
         "tp": 1.11868,
-        "profit": 1.8
+        "profit": 2.2
       },
       {
         "ticket": 511068843,
@@ -5678,7 +5690,7 @@
         "openPrice": 1.1166800000000001,
         "sl": 1.11588,
         "tp": 1.12068,
-        "profit": 1.8
+        "profit": 2.2
       },
       {
         "ticket": 511068848,
@@ -5687,7 +5699,7 @@
         "openPrice": 1.1166800000000001,
         "sl": 1.11588,
         "tp": 1.12318,
-        "profit": 1.8
+        "profit": 2.2
       },
       {
         "ticket": 511069834,
@@ -5696,7 +5708,7 @@
         "openPrice": 0.82489,
         "sl": 0.82569,
         "tp": 0.82288,
-        "profit": -4.36
+        "profit": -3.64
       },
       {
         "ticket": 511069842,
@@ -5705,7 +5717,7 @@
         "openPrice": 0.82489,
         "sl": 0.82569,
         "tp": 0.82089,
-        "profit": -4.36
+        "profit": -3.64
       }
     ]
   },
@@ -5783,16 +5795,16 @@
       "netProfitUsc": 34268.6,
       "netProfitUsd": 342.69,
       "currentBalance": 10746.6,
-      "currentEquity": 10743.28,
-      "activeEquity": 10743.28,
-      "activeEquityUsd": 107.43,
+      "currentEquity": 10745.92,
+      "activeEquity": 10745.92,
+      "activeEquityUsd": 107.46,
       "winRate": 90.4,
       "maxDrawdown": 4.8,
       "status": "COMPLETED (200% WD SECURED)",
       "badge": "VAULT 1 (REALISED +200% & WITHDRAWN)",
       "copiersCount": 42,
       "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-      "lastSync": "07:27:24",
+      "lastSync": "07:32:13",
       "openPositions": [
         {
           "ticket": 511068842,
@@ -5801,7 +5813,7 @@
           "openPrice": 1.1166800000000001,
           "sl": 1.11588,
           "tp": 1.11868,
-          "profit": 1.8
+          "profit": 2.2
         },
         {
           "ticket": 511068843,
@@ -5810,7 +5822,7 @@
           "openPrice": 1.1166800000000001,
           "sl": 1.11588,
           "tp": 1.12068,
-          "profit": 1.8
+          "profit": 2.2
         },
         {
           "ticket": 511068848,
@@ -5819,7 +5831,7 @@
           "openPrice": 1.1166800000000001,
           "sl": 1.11588,
           "tp": 1.12318,
-          "profit": 1.8
+          "profit": 2.2
         },
         {
           "ticket": 511069834,
@@ -5828,7 +5840,7 @@
           "openPrice": 0.82489,
           "sl": 0.82569,
           "tp": 0.82288,
-          "profit": -4.36
+          "profit": -3.64
         },
         {
           "ticket": 511069842,
@@ -5837,7 +5849,7 @@
           "openPrice": 0.82489,
           "sl": 0.82569,
           "tp": 0.82089,
-          "profit": -4.36
+          "profit": -3.64
         }
       ]
     },
@@ -5906,23 +5918,23 @@
       "accountType": "Standard USD",
       "currency": "USD",
       "initialDeposit": 1000,
-      "totalWithdrawn": 0,
-      "totalWithdrawnUsd": 0,
-      "allTimeProfitUsd": 44.98,
-      "allTimeGrowthPct": 4.5,
-      "growthPct": 4.5,
-      "netProfitUsd": 44.98,
+      "totalWithdrawn": 4100,
+      "totalWithdrawnUsd": 4100,
+      "allTimeProfitUsd": 5145.46,
+      "allTimeGrowthPct": 514.55,
+      "growthPct": 514.55,
+      "netProfitUsd": 5145.46,
       "currentBalance": 1046.12,
-      "currentEquity": 1044.98,
-      "activeEquity": 1044.98,
-      "activeEquityUsd": 1044.98,
+      "currentEquity": 1045.46,
+      "activeEquity": 1045.46,
+      "activeEquityUsd": 1045.46,
       "winRate": 100,
       "maxDrawdown": 0,
       "status": "LIVE & ACTIVE (STANDARD VIP)",
       "badge": "MASTER 3 (STANDARD ,000 USD)",
       "copiersCount": 12,
       "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-      "lastSync": "07:27:25",
+      "lastSync": "07:32:14",
       "openPositions": [
         {
           "ticket": 511068846,
@@ -5931,7 +5943,7 @@
           "openPrice": 1.1166800000000001,
           "sl": 1.11588,
           "tp": 1.11868,
-          "profit": 0.27
+          "profit": 0.33
         },
         {
           "ticket": 511068850,
@@ -5940,7 +5952,7 @@
           "openPrice": 1.1166800000000001,
           "sl": 1.11588,
           "tp": 1.12068,
-          "profit": 0.27
+          "profit": 0.33
         },
         {
           "ticket": 511068853,
@@ -5949,7 +5961,7 @@
           "openPrice": 1.1166800000000001,
           "sl": 1.11588,
           "tp": 1.12318,
-          "profit": 0.27
+          "profit": 0.33
         },
         {
           "ticket": 511069833,
@@ -5958,7 +5970,7 @@
           "openPrice": 0.82489,
           "sl": 0.82569,
           "tp": 0.82288,
-          "profit": -0.65
+          "profit": -0.55
         },
         {
           "ticket": 511069837,
@@ -5967,7 +5979,7 @@
           "openPrice": 0.82489,
           "sl": 0.82569,
           "tp": 0.82089,
-          "profit": -0.65
+          "profit": -0.55
         },
         {
           "ticket": 511069844,
@@ -5976,7 +5988,7 @@
           "openPrice": 0.82489,
           "sl": 0.82569,
           "tp": 0.81839,
-          "profit": -0.65
+          "profit": -0.55
         }
       ]
     }
@@ -6022,23 +6034,23 @@
     "accountType": "Standard USD",
     "currency": "USD",
     "initialDeposit": 1000,
-    "totalWithdrawn": 0,
-    "totalWithdrawnUsd": 0,
-    "allTimeProfitUsd": 44.98,
-    "allTimeGrowthPct": 4.5,
-    "growthPct": 4.5,
-    "netProfitUsd": 44.98,
+    "totalWithdrawn": 4100,
+    "totalWithdrawnUsd": 4100,
+    "allTimeProfitUsd": 5145.46,
+    "allTimeGrowthPct": 514.55,
+    "growthPct": 514.55,
+    "netProfitUsd": 5145.46,
     "currentBalance": 1046.12,
-    "currentEquity": 1044.98,
-    "activeEquity": 1044.98,
-    "activeEquityUsd": 1044.98,
+    "currentEquity": 1045.46,
+    "activeEquity": 1045.46,
+    "activeEquityUsd": 1045.46,
     "winRate": 100,
     "maxDrawdown": 0,
     "status": "LIVE & ACTIVE (STANDARD VIP)",
     "badge": "MASTER 3 (STANDARD ,000 USD)",
     "copiersCount": 12,
     "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-    "lastSync": "07:27:25",
+    "lastSync": "07:32:14",
     "openPositions": [
       {
         "ticket": 511068846,
@@ -6047,7 +6059,7 @@
         "openPrice": 1.1166800000000001,
         "sl": 1.11588,
         "tp": 1.11868,
-        "profit": 0.27
+        "profit": 0.33
       },
       {
         "ticket": 511068850,
@@ -6056,7 +6068,7 @@
         "openPrice": 1.1166800000000001,
         "sl": 1.11588,
         "tp": 1.12068,
-        "profit": 0.27
+        "profit": 0.33
       },
       {
         "ticket": 511068853,
@@ -6065,7 +6077,7 @@
         "openPrice": 1.1166800000000001,
         "sl": 1.11588,
         "tp": 1.12318,
-        "profit": 0.27
+        "profit": 0.33
       },
       {
         "ticket": 511069833,
@@ -6074,7 +6086,7 @@
         "openPrice": 0.82489,
         "sl": 0.82569,
         "tp": 0.82288,
-        "profit": -0.65
+        "profit": -0.55
       },
       {
         "ticket": 511069837,
@@ -6083,7 +6095,7 @@
         "openPrice": 0.82489,
         "sl": 0.82569,
         "tp": 0.82089,
-        "profit": -0.65
+        "profit": -0.55
       },
       {
         "ticket": 511069844,
@@ -6092,27 +6104,27 @@
         "openPrice": 0.82489,
         "sl": 0.82569,
         "tp": 0.81839,
-        "profit": -0.65
+        "profit": -0.55
       }
     ]
   },
   "marketBrain": {
     "XAUUSD": {
       "symbol": "XAUUSD",
-      "curPrice": 4035.88,
+      "curPrice": 4034.58,
       "macro": "BUYER",
       "m15Structure": "NEUTRAL",
-      "m1Structure": "BULLISH_FAN",
-      "buyerDominancePct": 70.2,
-      "volRatio": 0.59,
-      "supportFloor": 4033.38,
-      "resistanceCeiling": 4043.88,
+      "m1Structure": "NEUTRAL",
+      "buyerDominancePct": 50,
+      "volRatio": 0.13,
+      "supportFloor": 4032.08,
+      "resistanceCeiling": 4042.58,
       "verdict": "2-WAY SMC WAVE (BUY LANTAI, SELL BUMBUNG)",
       "biasClass": "neutral",
-      "advisory": "Pasaran bergerak berombak dua hala. Logik: Masuk BUY di lantai sokongan (4033.38) dan masuk SELL di bumbung rintangan (4043.88). Dilarang kejar lilin di tengah ombak.",
+      "advisory": "Pasaran bergerak berombak dua hala. Logik: Masuk BUY di lantai sokongan (4032.08) dan masuk SELL di bumbung rintangan (4042.58). Dilarang kejar lilin di tengah ombak.",
       "opposingWarning": null,
       "openPositionsCount": 0,
-      "lastUpdated": "07:27:25"
+      "lastUpdated": "07:32:14"
     },
     "EURUSD": {
       "symbol": "EURUSD",
@@ -6121,7 +6133,7 @@
       "m15Structure": "NEUTRAL",
       "m1Structure": "BULLISH_FAN",
       "buyerDominancePct": 50,
-      "volRatio": 0.57,
+      "volRatio": 0.19,
       "supportFloor": 1.1149,
       "resistanceCeiling": 1.1189,
       "verdict": "BUY ON DIP (M15 BULLISH)",
@@ -6129,24 +6141,24 @@
       "advisory": "Struktur lilin & MA di atas zon sokongan pembeli. Data logik untuk BUY celupan ke arah sasaran 1.1189.",
       "opposingWarning": null,
       "openPositionsCount": 3,
-      "lastUpdated": "07:27:25"
+      "lastUpdated": "07:32:14"
     },
     "USDCHF": {
       "symbol": "USDCHF",
       "curPrice": 0.825,
       "macro": "SELLER",
       "m15Structure": "NEUTRAL",
-      "m1Structure": "NEUTRAL",
-      "buyerDominancePct": 45.5,
-      "volRatio": 0.6,
+      "m1Structure": "BEARISH",
+      "buyerDominancePct": 30,
+      "volRatio": 0.11,
       "supportFloor": 0.823,
       "resistanceCeiling": 0.827,
-      "verdict": "2-WAY RANGE (BUY SUPPORT, SELL RESISTANCE)",
-      "biasClass": "neutral",
-      "advisory": "Pasaran berombak dua hala. Masuk BUY di zon sokongan 0.823 atau SELL di zon rintangan 0.827.",
+      "verdict": "SELL ON RALLY (M15 BEARISH)",
+      "biasClass": "bearish",
+      "advisory": "Struktur lilin & MA di bawah tekanan penjual. Data logik untuk SELL rally ke arah lantai 0.823.",
       "opposingWarning": null,
       "openPositionsCount": 2,
-      "lastUpdated": "07:27:25"
+      "lastUpdated": "07:32:14"
     }
   }
 }
