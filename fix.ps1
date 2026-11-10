@@ -30,7 +30,15 @@ foreach ($dir in @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3'))
 }
 Write-Host "   [OK] Semua bridge_config.json telah dipautkan ke pelayan live!" -ForegroundColor Green
 
-Write-Host "4. Melancarkan semula 3 terminal bridge secara automatik..." -ForegroundColor Cyan
+Write-Host "4. Mencipta shortcut START_ALL_BRIDGES pada Desktop VPS..." -ForegroundColor Cyan
+$desktop = [System.IO.Path]::Combine($env:USERPROFILE, "Desktop")
+if (Test-Path $desktop) {
+    $batContent = "@echo off`ntitle START ALL AMATERASU BRIDGES`necho Memulakan semua bridge Amaterasu X...`nstart cmd /k C:\AmaterasuX\acc1.bat`nstart cmd /k C:\AmaterasuX_Acc2\acc2.bat`nstart cmd /k C:\AmaterasuX_Acc3\acc3.bat`nexit"
+    Set-Content -Path (Join-Path $desktop "START_ALL_BRIDGES.bat") -Value $batContent
+    Write-Host "   [OK] Shortcut START_ALL_BRIDGES.bat telah tersedia di Desktop!" -ForegroundColor Green
+}
+
+Write-Host "5. Melancarkan semula 3 terminal bridge secara automatik..." -ForegroundColor Cyan
 if (Test-Path 'C:\AmaterasuX\acc1.bat') {
     Start-Process cmd.exe -ArgumentList '/k C:\AmaterasuX\acc1.bat' -WorkingDirectory 'C:\AmaterasuX'
 }
