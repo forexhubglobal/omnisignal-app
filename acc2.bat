@@ -36,11 +36,11 @@ if not exist "%B2_DIR%" mkdir "%B2_DIR%"
 
 :: 3. Download Latest Bridge
 echo [2/4] Memuat turun Amaterasu MT5 Bridge terkini...
-curl -s -L "https://amaterasux.onrender.com/amaterasu_mt5_bridge.py" -o "%B2_DIR%\amaterasu_mt5_bridge.py"
+curl -s -L "https://equal-shield-amber-wilderness.trycloudflare.com/amaterasu_mt5_bridge.py" -o "%B2_DIR%\amaterasu_mt5_bridge.py"
 
 :: 4. Write Configuration for Account 2 (10,000 USC Cent Account)
 echo [3/4] Menyediakan bridge_config.json untuk Master 2 (#5100207348)...
-python -c "import json, os; cfg={'server_url':'https://amaterasux.onrender.com','lot_size':0.20,'execution_mode':'SPLIT_TP','auto_breakeven':True,'gold_min_be_pips':50.0,'max_concurrent_pairs':3,'max_slippage_pips':5,'magic_number':888998,'mt5_login':5100207348,'mt5_password':'mfd2e!3V','mt5_server':'VersusTrade-Live1','mt5_terminal_path':r'%T2_EXE%','allowed_pairs':['XAUUSD','USDCHF','EURUSD'],'custom_lot_map':{'XAUUSD':0.20,'USDCHF':0.20,'EURUSD':0.20}}; open(r'%B2_DIR%\bridge_config.json','w').write(json.dumps(cfg,indent=2))"
+python -c "import json, os; cfg={'server_url':'https://equal-shield-amber-wilderness.trycloudflare.com','lot_size':0.20,'execution_mode':'SPLIT_TP','auto_breakeven':True,'gold_min_be_pips':50.0,'max_concurrent_pairs':3,'max_slippage_pips':5,'magic_number':888998,'mt5_login':5100207348,'mt5_password':'mfd2e!3V','mt5_server':'VersusTrade-Live1','mt5_terminal_path':r'%T2_EXE%','allowed_pairs':['XAUUSD','USDCHF','EURUSD'],'custom_lot_map':{'XAUUSD':0.20,'USDCHF':0.20,'EURUSD':0.20}}; open(r'%B2_DIR%\bridge_config.json','w').write(json.dumps(cfg,indent=2))"
 
 :: 5. Launch Terminal 2
 echo [4/4] Memulakan Terminal 2 & Bridge Master 2...
