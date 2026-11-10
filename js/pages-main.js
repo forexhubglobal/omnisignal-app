@@ -657,12 +657,12 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         </button>
       </div>
 
-      <!-- Card Header -->
+      <!-- Card Header (Klik Mana-mana untuk Buka Kad Story) -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-        <div style="display:flex; align-items:center; gap:10px;">
+        <div onclick="window.openCopytradeStoryModal(${vNum})" style="display:flex; align-items:center; gap:10px; cursor:pointer;" title="Klik untuk lihat Kad Story PnL ${cp.name}">
           <img src="${cp.avatar}" alt="${cp.name}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid ${themeColor}; box-shadow:0 0 14px ${themeShadow};" />
           <div>
-            <b style="font-size:13.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">${cp.name}</b>
+            <b style="font-size:13.5px; color:#fff; letter-spacing:0.5px; text-transform:uppercase; font-family:'Space Grotesk',sans-serif;">${cp.name} ↗</b>
             <span style="font-size:10px; color:#94a3b8; display:block;">MASTER LIVE #${cp.masterAccount} · VERSUS TRADE LTD</span>
           </div>
         </div>
@@ -749,16 +749,16 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
 
       <!-- Action Buttons -->
       <div style="display:flex; gap:8px; margin-bottom:12px;">
-        <button type="button" class="btn" onclick="openCopytradeStoryModal(${vaultId})" style="flex:1; background:linear-gradient(135deg, rgba(245,196,81,0.18) 0%, rgba(255,255,255,0.04) 100%); border:1px solid rgba(245,196,81,0.5); color:#f5c451; font-weight:800; font-size:11px; padding:9px 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all 0.2s;">
+        <button type="button" class="btn" onclick="openCopytradeStoryModal(${vNum})" style="flex:1; background:linear-gradient(135deg, rgba(245,196,81,0.18) 0%, rgba(255,255,255,0.04) 100%); border:1px solid rgba(245,196,81,0.5); color:#f5c451; font-weight:800; font-size:11px; padding:9px 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all 0.2s;">
           <span>📸</span> KONGSI KAD STORY
         </button>
-        <button type="button" class="btn btn-toggle-calc" id="btnToggleCalc_${vaultId}" onclick="window.toggleCopytradeCalculator(${vaultId}, event)" style="flex:1; background:linear-gradient(135deg, rgba(0,230,118,0.18) 0%, rgba(255,255,255,0.04) 100%); border:1px solid rgba(0,230,118,0.5); color:#00e676; font-weight:800; font-size:11px; padding:9px 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all 0.2s;">
+        <button type="button" class="btn btn-toggle-calc" id="btnToggleCalc_${vNum}" onclick="window.toggleCopytradeCalculator(${vNum}, event)" style="flex:1; background:linear-gradient(135deg, rgba(0,230,118,0.18) 0%, rgba(255,255,255,0.04) 100%); border:1px solid rgba(0,230,118,0.5); color:#00e676; font-weight:800; font-size:11px; padding:9px 6px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all 0.2s;">
           <span>${isCalcOpen ? '🔼' : '🧮'}</span> ${isCalcOpen ? 'TUTUP KALKULATOR' : 'KALKULATOR UNJURAN'}
         </button>
       </div>
 
       <!-- Interactive Calculator -->
-      <div class="copytrade-calc-box" id="copytradeCalcContainer_${vaultId}" style="display:${isCalcOpen ? 'block' : 'none'}; background:rgba(0,0,0,0.5); border:1px solid rgba(0,230,118,0.3); border-radius:10px; padding:12px; margin-bottom:12px;">
+      <div class="copytrade-calc-box" id="copytradeCalcContainer_${vNum}" style="display:${isCalcOpen ? 'block' : 'none'}; background:rgba(0,0,0,0.5); border:1px solid rgba(0,230,118,0.3); border-radius:10px; padding:12px; margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <b style="font-size:11px; color:#00e676; text-transform:uppercase;">🧮 KALKULATOR UNJURAN KEUNTUNGAN (90.4% WINRATE)</b>
           <span style="font-size:9px; color:#94a3b8;">Kompaun Automatik</span>
@@ -767,30 +767,30 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         <div style="margin-bottom:10px;">
           <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
             <span style="color:#cbd5e1;">Pilih Jumlah Modal:</span>
-            <b class="calc-dep-display" id="calcDepDisplay_${vaultId}" style="color:#f5c451;">$${currentDep} USD</b>
+            <b class="calc-dep-display" id="calcDepDisplay_${vNum}" style="color:#f5c451;">$${currentDep} USD</b>
           </div>
-          <input type="range" class="copytrade-calc-slider" min="50" max="5000" step="50" value="${currentDep}" oninput="window.updateProjectionCalc(${vaultId}, this.value)" style="width:100%; cursor:pointer; accent-color:#00e676;" />
+          <input type="range" class="copytrade-calc-slider" min="50" max="5000" step="50" value="${currentDep}" oninput="window.updateProjectionCalc(${vNum}, this.value)" style="width:100%; cursor:pointer; accent-color:#00e676;" />
         </div>
 
         <!-- Projected Compound Horizons -->
         <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-bottom:10px; text-align:center;">
           <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:6px; padding:6px 2px;">
             <span style="font-size:8.5px; color:#8e9aa8; display:block;">1 BULAN (+35%)</span>
-            <b class="calc-month1-profit" id="calcMonth1Profit_${vaultId}" style="font-size:10.5px; color:#00e676;">+$${m1Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m1Total})</small></b>
+            <b class="calc-month1-profit" id="calcMonth1Profit_${vNum}" style="font-size:10.5px; color:#00e676;">+$${m1Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m1Total})</small></b>
           </div>
           <div style="background:rgba(0,230,118,0.08); border:1px solid rgba(0,230,118,0.3); border-radius:6px; padding:6px 2px;">
             <span style="font-size:8.5px; color:#00e676; font-weight:700; display:block;">3 BULAN (+146%)</span>
-            <b class="calc-month3-profit" id="calcMonth3Profit_${vaultId}" style="font-size:10.5px; color:#00e676;">+$${m3Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m3Total})</small></b>
+            <b class="calc-month3-profit" id="calcMonth3Profit_${vNum}" style="font-size:10.5px; color:#00e676;">+$${m3Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m3Total})</small></b>
           </div>
           <div style="background:rgba(245,196,81,0.08); border:1px solid rgba(245,196,81,0.3); border-radius:6px; padding:6px 2px;">
             <span style="font-size:8.5px; color:#f5c451; font-weight:700; display:block;">6 BULAN (+505%)</span>
-            <b class="calc-month6-profit" id="calcMonth6Profit_${vaultId}" style="font-size:10.5px; color:#f5c451;">+$${m6Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m6Total})</small></b>
+            <b class="calc-month6-profit" id="calcMonth6Profit_${vNum}" style="font-size:10.5px; color:#f5c451;">+$${m6Profit} <small style="font-size:8.5px; color:#94a3b8;">($${m6Total})</small></b>
           </div>
         </div>
       </div>
 
       <!-- Main Action Join Button -->
-      <button type="button" class="btn gold" id="btnJoinCopytradeModal" onclick="showCopytradeModal(${vaultId})" style="width:100%; padding:11px; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 18px rgba(245,196,81,0.3); text-transform:uppercase; letter-spacing:0.5px; cursor:pointer;">
+      <button type="button" class="btn gold" id="btnJoinCopytradeModal" onclick="showCopytradeModal(${vNum})" style="width:100%; padding:11px; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:8px; box-shadow:0 4px 18px rgba(245,196,81,0.3); text-transform:uppercase; letter-spacing:0.5px; cursor:pointer;">
         <span>🚀 SERTAI COPYTRADE RASMI / BUKA AKAUN</span> ➔
       </button>
     </div>
@@ -894,9 +894,8 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
     playChime('chaching');
   }
 
-  // Close existing modal if switching tabs
-  const existingModal = document.querySelector('.modal-backdrop');
-  if (existingModal) existingModal.remove();
+  // Close ALL existing modals completely before rendering new story card
+  document.querySelectorAll('.modal-bg').forEach(el => el.remove());
 
   const m = modal(`
     <div style="text-align:center;">
@@ -939,7 +938,7 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
     </div>
   `);
 
-  const canvas = document.getElementById('cpStoryCanvas');
+  const canvas = m.el.querySelector('#cpStoryCanvas');
   if (canvas) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width;
@@ -1138,7 +1137,7 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
   }
 
   // Download Handler
-  const dlBtn = document.getElementById('btnDownloadStoryPng');
+  const dlBtn = m.el.querySelector('#btnDownloadStoryPng');
   if (dlBtn && canvas) {
     dlBtn.onclick = () => {
       const link = document.createElement('a');
@@ -1150,7 +1149,7 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
   }
 
   // Copy VIP Text Handler
-  const copyBtn = document.getElementById('btnCopyStoryText');
+  const copyBtn = m.el.querySelector('#btnCopyStoryText');
   if (copyBtn) {
     copyBtn.onclick = () => {
       const text = `👁️ AMATERASU X · OFFICIAL COPYTRADE REPORT\n━━━━━━━━━━━━━━━━━━━━━\n🏆 Master: ${name} (#${account})\n📈 Growth: ${growth}\n💰 Gross Profit: ${isV3 ? grossProfitUsd : grossProfitUsc + ' (' + grossProfitUsd + ')'}\n${statusBadge}\n🛡️ Strategy: Institutional SMC Scalp\n━━━━━━━━━━━━━━━━━━━━━\n🚀 Sertai sekarang: https://amaterasux.onrender.com\n🔥 Precision Signals. Smarter Decisions. Your Trading Edge.`;
@@ -1162,7 +1161,7 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
   }
 
   // Sound Test Button
-  const sndBtn = document.getElementById('btnTestChaChingSnd');
+  const sndBtn = m.el.querySelector('#btnTestChaChingSnd');
   if (sndBtn) {
     sndBtn.onclick = () => {
       if (typeof playChime === 'function') playChime('chaching');
@@ -1223,30 +1222,30 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
     <div style="text-align:left;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px;">
         <div style="display:flex; align-items:center; gap:10px;">
-          <img src="img/themightyduck.png" alt="The Mighty Duck" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid #00e676; box-shadow:0 0 10px rgba(0,230,118,0.4);" />
+          <img src="${targetAvatar}" alt="${targetName}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid ${targetTheme}; box-shadow:0 0 10px ${targetTheme}66;" />
           <div>
-            <b style="font-family:'Space Grotesk',sans-serif; font-size:14px; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">THE MIGHTY DUCK</b>
-            <span style="display:block; font-size:10.5px; color:#00e676; font-weight:700;">● MASTER VERIFIED (LIVE +${cp.growthPct || 122.55}%)</span>
+            <b style="font-family:'Space Grotesk',sans-serif; font-size:14px; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">${targetName}</b>
+            <span style="display:block; font-size:10.5px; color:${targetTheme}; font-weight:700;">● ${targetType} · LIVE</span>
           </div>
         </div>
         <button data-close style="background:transparent; border:none; color:#8e9aa8; font-size:18px; cursor:pointer;">✕</button>
       </div>
 
       <!-- Quick Master Proof Banner -->
-      <div style="background:linear-gradient(135deg, rgba(0,230,118,0.14) 0%, rgba(11,17,24,0.95) 100%); border:1px solid rgba(0,230,118,0.35); border-radius:10px; padding:12px 14px; margin-bottom:12px;">
+      <div style="background:linear-gradient(135deg, ${targetTheme}22 0%, rgba(11,17,24,0.95) 100%); border:1px solid ${targetTheme}55; border-radius:10px; padding:12px 14px; margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div style="display:flex; align-items:center; gap:10px;">
-            <img src="img/themightyduck.png" alt="The Mighty Duck" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #f5c451;" />
+            <img src="${targetAvatar}" alt="${targetName}" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid ${targetTheme};" />
             <div>
               <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase;">REKOD AKAUN MASTER</span>
-              <b style="font-size:13px; color:#fff; display:block;">THE MIGHTY DUCK (#${cp.masterAccount || '5100154135'})</b>
-              <span style="font-size:10px; color:#f5c451; font-weight:700;">💰 Telah Withdraw: 10,000 USC ($100 USD)</span>
+              <b style="font-size:13px; color:#fff; display:block;">${targetName} (#${targetAcc})</b>
+              <span style="font-size:10px; color:${targetTheme}; font-weight:700;">${isV3 ? '👑 Standard $1,000 USD Active Pool' : isV2 ? '🔥 Fresh 10,000 USC Pool (Zero Risk)' : '💰 Telah Withdraw: 10,000 USC ($100 USD)'}</span>
             </div>
           </div>
           <div style="text-align:right;">
             <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase;">TOTAL GROW</span>
-            <b style="font-size:18px; color:#00e676; font-weight:900;">+${cp.growthPct || 122.55}% 📈</b>
-            <span style="font-size:10px; color:#94a3b8; display:block;">+${num(cp.allTimeProfitUsc || cp.netProfitUsc || 12254.62)} USC</span>
+            <b style="font-size:18px; color:${targetTheme}; font-weight:900;">+${(typeof cp.growthPct === 'number' ? cp.growthPct : (isV1 ? 122.55 : 0.0)).toFixed(2)}% 📈</b>
+            <span style="font-size:10px; color:#94a3b8; display:block;">${isV3 ? '$' + Number(cp.currentBalance || 1000).toFixed(2) + ' USD' : '+' + num(cp.allTimeProfitUsc || cp.netProfitUsc || (isV1 ? 12254.62 : 10000)) + ' USC'}</span>
           </div>
         </div>
       </div>
@@ -1276,7 +1275,7 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
           <b style="color:#fff; font-size:12.5px;">Deposit Modal Dagangan</b>
         </div>
         <p style="font-size:11px; color:#94a3b8; margin:0; line-height:1.4;">
-          Deposit minima serendah <b>$50 - $100 USD</b> (Akaun Standard atau Akaun Cent). Modal kekal 100% milik anda dan boleh dikeluarkan pada bila-bila masa.
+          Deposit minima serendah <b>${isV3 ? '$1,000 USD (Akaun Standard)' : '$50 - $100 USD (Akaun Cent)'}</b>. Modal kekal 100% milik anda dan boleh dikeluarkan pada bila-bila masa.
         </p>
       </div>
 
@@ -1290,9 +1289,10 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
         <form id="formCopytradeJoin" style="display:flex; flex-direction:column; gap:8px;">
           <div>
             <label style="font-size:10.5px; color:#8e9aa8; display:block; margin-bottom:4px; font-weight:700;">PILIH MASTER COPYTRADE PILIHAN ANDA:</label>
-            <select id="cpTargetMaster" style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid rgba(0,230,118,0.4); border-radius:6px; color:#fff; font-size:12px; font-weight:700;">
-              <option value="5100154135" ${Number(initialVault) === 1 ? 'selected' : ''}>🦆 The Mighty Duck - Master 1 (#5100154135 · +122.55% All-Time)</option>
-              <option value="5100207348" ${Number(initialVault) === 2 ? 'selected' : ''}>🔥 Amaterasu X - Master 2 (#5100207348 · Fresh 10,000 USC Pool)</option>
+            <select id="cpTargetMaster" onchange="showCopytradeModal(this.value === '5100209626' ? 3 : this.value === '5100207348' ? 2 : 1)" style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid ${targetTheme}; border-radius:6px; color:#fff; font-size:12px; font-weight:700;">
+              <option value="5100154135" ${vNum === 1 ? 'selected' : ''}>🦆 The Mighty Duck - Master 1 (#5100154135 · +122.55% All-Time)</option>
+              <option value="5100207348" ${vNum === 2 ? 'selected' : ''}>🔥 Amaterasu X - Master 2 (#5100207348 · Fresh 10,000 USC Pool)</option>
+              <option value="5100209626" ${vNum === 3 ? 'selected' : ''}>👑 Amaterasu X 2.0 - Master 3 (#5100209626 · Standard $1,000 USD Pool)</option>
             </select>
           </div>
           <input type="text" id="cpClientName" placeholder="Nama Penuh Anda" required style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:12px;" />
