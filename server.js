@@ -3,6 +3,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 
 // Protect server process from termination on broken client sockets or transient errors
 process.on('uncaughtException', (err) => {
@@ -547,19 +548,152 @@ const MIME = {
   '.py': 'text/plain; charset=utf-8',
 };
 
-// Helper to read JSON request body
-function parseJsonBody(req) {
+// Helper to read JSON request body (with Max 1MB Payload Guard & Prototype Pollution Defense)
+function parseJsonBody(req, maxBytes = 1048576) {
   return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', chunk => { body += chunk; });
+    let bytes = 0;
+    req.on('data', chunk => {
+      bytes += chunk.length;
+      if (bytes > maxBytes) {
+        req.destroy();
+        return reject(new Error('Payload Too Large: Had maksimum 1MB dilanggar'));
+      }
+      body += chunk;
+    });
     req.on('end', () => {
       try {
-        resolve(body ? JSON.parse(body) : {});
+        const parsed = body ? JSON.parse(body) : {};
+        // Anti-Prototype Pollution Protection
+        if (parsed && typeof parsed === 'object') {
+          delete parsed.__proto__;
+          delete parsed.constructor;
+          delete parsed.prototype;
+        }
+        resolve(parsed);
       } catch (err) {
         reject(err);
       }
     });
   });
+}
+
+// ===== AMATERASU X ENTERPRISE SECURITY FORTRESS =====
+const SecurityShield = {
+  secretKey: process.env.ADMIN_SECRET || 'amaterasu_sovereign_fortress_key_9942',
+  masterPasscode: process.env.ADMIN_PASSWORD || 'AMATERASU-2026',
+
+  // In-Memory Rate Limiter & IP Shield
+  ipBuckets: new Map(),
+
+  getClientIp(req) {
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) {
+      return forwarded.split(',')[0].trim();
+    }
+    return req.headers['x-real-ip'] || (req.socket && req.socket.remoteAddress) || '127.0.0.1';
+  },
+
+  // Global DDoS / Rate Limit Guard (Max 250 req/min per IP)
+  checkRateLimit(ip, limit = 250, windowMs = 60000) {
+    const now = Date.now();
+    let b = this.ipBuckets.get(ip);
+    if (!b || now > b.resetTime) {
+      b = { count: 0, resetTime: now + windowMs, failedAuth: b?.failedAuth || 0, lockedUntil: b?.lockedUntil || 0 };
+      this.ipBuckets.set(ip, b);
+    }
+    b.count++;
+    return b.count <= limit;
+  },
+
+  isIpLocked(ip) {
+    const b = this.ipBuckets.get(ip);
+    if (!b) return false;
+    if (b.lockedUntil && Date.now() < b.lockedUntil) {
+      return true;
+    }
+    if (b.lockedUntil && Date.now() >= b.lockedUntil) {
+      b.lockedUntil = 0;
+      b.failedAuth = 0;
+    }
+    return false;
+  },
+
+  recordFailedAuth(ip) {
+    let b = this.ipBuckets.get(ip);
+    if (!b) {
+      b = { count: 0, resetTime: Date.now() + 60000, failedAuth: 0, lockedUntil: 0 };
+      this.ipBuckets.set(ip, b);
+    }
+    b.failedAuth = (b.failedAuth || 0) + 1;
+    if (b.failedAuth >= 5) {
+      // 5 failed attempts -> Lock IP for 15 minutes!
+      b.lockedUntil = Date.now() + 15 * 60 * 1000;
+    }
+  },
+
+  resetFailedAuth(ip) {
+    const b = this.ipBuckets.get(ip);
+    if (b) {
+      b.failedAuth = 0;
+      b.lockedUntil = 0;
+    }
+  },
+
+  // Timing-safe comparison to prevent side-channel timing attacks
+  safeCompare(a, b) {
+    try {
+      const hashA = crypto.createHash('sha256').update(String(a || '')).digest();
+      const hashB = crypto.createHash('sha256').update(String(b || '')).digest();
+      return crypto.timingSafeEqual(hashA, hashB);
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // Generate cryptographically signed token: operator:expiry:signature
+  generateAdminToken(operator = 'Tengku Khairi') {
+    const expiry = Date.now() + (24 * 60 * 60 * 1000); // 24 hours validity
+    const payload = `${operator}:${expiry}`;
+    const sig = crypto.createHmac('sha256', this.secretKey).update(payload).digest('hex');
+    return `${payload}:${sig}`;
+  },
+
+  // Verify token signature and expiration
+  verifyAdminToken(token) {
+    if (!token || typeof token !== 'string') return false;
+    const parts = token.split(':');
+    if (parts.length !== 3) return false;
+    const [operator, expiryStr, signature] = parts;
+    const expiry = parseInt(expiryStr, 10);
+    if (isNaN(expiry) || Date.now() > expiry) return false;
+
+    const payload = `${operator}:${expiryStr}`;
+    const expectedSig = crypto.createHmac('sha256', this.secretKey).update(payload).digest('hex');
+    if (!this.safeCompare(signature, expectedSig)) return false;
+
+    return { operator, expiry };
+  },
+
+  // Check request authorization
+  isRequestAuthorized(req) {
+    const authHeader = req.headers['authorization'] || '';
+    const adminToken = req.headers['x-admin-token'] || (authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '');
+    return this.verifyAdminToken(adminToken);
+  }
+};
+
+function requireAdminAuth(req, res) {
+  const auth = SecurityShield.isRequestAuthorized(req);
+  if (!auth) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      error: 'Akses Disekat: Sesi Master Admin tidak sah atau telah tamat. Sila log masuk ke Command Center semula.',
+      unauthorized: true
+    }));
+    return false;
+  }
+  return auth;
 }
 
 // ===== Telegram VIP Channel & Group Auto-Broadcast =====
@@ -700,14 +834,25 @@ const server = http.createServer(async (req, res) => {
   const urlParts = req.url.split('?');
   const pathname = urlParts[0];
 
-  // CORS headers
+  // CORS & Enterprise Security Headers (OWASP Hardening)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Token');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
     return res.end();
+  }
+
+  // Global DDoS / Rate Limit Guard (Max 250 req/min per IP)
+  const clientIp = SecurityShield.getClientIp(req);
+  if (!SecurityShield.checkRateLimit(clientIp, 250, 60000)) {
+    res.writeHead(429, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ error: 'Too Many Requests (Had Kadar Akses Dilanggar)' }));
   }
 
   // Fast health check for Render & uptime monitors
@@ -754,6 +899,62 @@ const server = http.createServer(async (req, res) => {
       sseClients.delete(res);
     });
     return;
+  }
+
+  // ===== MASTER AUTHENTICATION FORTRESS ENDPOINTS =====
+
+  // POST /api/auth/master-login
+  if (pathname === '/api/auth/master-login' && req.method === 'POST') {
+    const clientIp = SecurityShield.getClientIp(req);
+    if (SecurityShield.isIpLocked(clientIp)) {
+      const remainingSec = Math.ceil(((SecurityShield.ipBuckets.get(clientIp)?.lockedUntil || 0) - Date.now()) / 1000);
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        success: false,
+        error: `[SEKATAN KESELAMATAN] Terlalu banyak percubaan gagal. IP anda disekat selama ${remainingSec} saat.`
+      }));
+    }
+
+    try {
+      const payload = await parseJsonBody(req);
+      const inputPasscode = (payload.passcode || payload.password || '').trim();
+      const operator = (payload.operator || 'Tengku Khairi').trim();
+
+      if (!inputPasscode || !SecurityShield.safeCompare(inputPasscode, SecurityShield.masterPasscode)) {
+        SecurityShield.recordFailedAuth(clientIp);
+        const attemptsLeft = Math.max(0, 5 - (SecurityShield.ipBuckets.get(clientIp)?.failedAuth || 0));
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({
+          success: false,
+          error: `Kunci Keselamatan Master tidak sah! (${attemptsLeft} percubaan berbaki sebelum sekatan IP).`
+        }));
+      }
+
+      // Success
+      SecurityShield.resetFailedAuth(clientIp);
+      const token = SecurityShield.generateAdminToken(operator);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        success: true,
+        token: token,
+        operator: operator,
+        message: 'Akses Master Admin Disahkan!'
+      }));
+    } catch (e) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: e.message }));
+    }
+  }
+
+  // GET /api/auth/verify-master
+  if (pathname === '/api/auth/verify-master' && req.method === 'GET') {
+    const auth = SecurityShield.isRequestAuthorized(req);
+    if (!auth) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ valid: false, error: 'Token tidak sah atau tamat tempoh' }));
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ valid: true, operator: auth.operator, expiry: auth.expiry }));
   }
 
   // ===== REST API Endpoints =====
@@ -1138,6 +1339,7 @@ const server = http.createServer(async (req, res) => {
 
   // 0.1c2 POST /api/copytrade/update-settings (Update initialDeposit, totalWithdrawn, etc.)
   if (pathname === '/api/copytrade/update-settings' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const body = await parseJsonBody(req);
       const db = getDB();
@@ -1288,8 +1490,11 @@ const server = http.createServer(async (req, res) => {
   // 1. GET /api/data (Full state for App)
   if (pathname === '/api/data' && req.method === 'GET') {
     const db = getDB();
+    const sanitized = { ...db };
+    delete sanitized.telegramConfig;
+    delete sanitized.invitationCodes;
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(db));
+    return res.end(JSON.stringify(sanitized));
   }
 
   // 1a. GET /api/news (24/7 Live Real-Time News Stream & Calendar Metadata)
@@ -1313,6 +1518,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/ai/toggle' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     AiEngine.enabled = !AiEngine.enabled;
     broadcastEvent('ai_engine_status', AiEngine.getStatus());
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1320,6 +1526,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/ai/scan-now' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     const db = getDB();
     let payload = {};
     try { payload = await parseJsonBody(req); } catch (e) {}
@@ -1378,6 +1585,7 @@ const server = http.createServer(async (req, res) => {
 
   // 1d. POST /api/ainews/synergy (Configure News Synergy Mode)
   if (pathname === '/api/ainews/synergy' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -1398,6 +1606,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/ai/config' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       if (payload.frequencyMode) {
@@ -1422,6 +1631,7 @@ const server = http.createServer(async (req, res) => {
 
   // 2. POST /api/signal/fire (Manual test override / injection)
   if (pathname === '/api/signal/fire' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const targetSymbol = (payload.symbol || 'XAUUSD').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase();
@@ -1477,6 +1687,7 @@ const server = http.createServer(async (req, res) => {
 
   // 3. POST /api/signal/update-status (Admin CRM updates active signal: TP1/TP2/SL/CLOSE)
   if (pathname === '/api/signal/update-status' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req); // { status: 'TP1' | 'TP2' | 'SL' | 'CLOSED', pips: 44 }
       const db = getDB();
@@ -1570,6 +1781,7 @@ const server = http.createServer(async (req, res) => {
 
   // 3b. POST /api/stats/reset (Reset performance stats & signal history to zero)
   if (pathname === '/api/stats/reset' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const db = getDB();
       db.stats = {
@@ -1630,6 +1842,7 @@ const server = http.createServer(async (req, res) => {
 
   // 3c. POST /api/ainews/record (Record an executed high-impact AI news signal)
   if (pathname === '/api/ainews/record' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -1674,24 +1887,35 @@ const server = http.createServer(async (req, res) => {
 
   // 3d. Telegram VIP Broadcast Configuration & Test
   if (pathname === '/api/telegram/config' && req.method === 'GET') {
+    if (!requireAdminAuth(req, res)) return;
     const db = getDB();
+    const cfg = { ...(db.telegramConfig || { enabled: false, botToken: '', chatId: '' }) };
+    // Mask botToken to protect credentials from exfiltration
+    if (cfg.botToken && cfg.botToken.length > 8) {
+      cfg.botToken = cfg.botToken.slice(0, 4) + '••••••••' + cfg.botToken.slice(-4);
+    }
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(db.telegramConfig || { enabled: false, botToken: '', chatId: '' }));
+    return res.end(JSON.stringify(cfg));
   }
 
   if (pathname === '/api/telegram/config' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
+      const existing = db.telegramConfig || {};
+      const newBotToken = (payload.botToken || '').trim();
+      // Only overwrite botToken if client provided a non-masked value
+      const botTokenToSave = (newBotToken && !newBotToken.includes('••••')) ? newBotToken : (existing.botToken || '');
       db.telegramConfig = {
         enabled: Boolean(payload.enabled),
-        botToken: (payload.botToken || '').trim(),
-        chatId: (payload.chatId || '').trim(),
+        botToken: botTokenToSave,
+        chatId: (payload.chatId || existing.chatId || '').trim(),
         updatedAt: new Date().toISOString()
       };
       saveDB(db);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, config: db.telegramConfig }));
+      return res.end(JSON.stringify({ success: true, message: 'Tetapan Telegram disimpan!' }));
     } catch (e) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ error: e.message }));
@@ -1699,10 +1923,11 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/telegram/test' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
-      const cfg = payload.botToken ? payload : (db.telegramConfig || {});
+      const cfg = payload.botToken && !payload.botToken.includes('••••') ? payload : (db.telegramConfig || {});
       if (!cfg.botToken || !cfg.chatId) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: false, error: 'Bot Token dan Chat ID diperlukan!' }));
@@ -1729,6 +1954,7 @@ const server = http.createServer(async (req, res) => {
   
   // Broadcast Copytrade Performance to Telegram VIP
   if (pathname === '/api/telegram/broadcast-copytrade' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -1745,6 +1971,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/analysis/update' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -1761,6 +1988,7 @@ const server = http.createServer(async (req, res) => {
 
   // 5. POST /api/screener/update (Admin CRM updates screener pair)
   if (pathname === '/api/screener/update' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -1806,6 +2034,7 @@ const server = http.createServer(async (req, res) => {
 
   // 7. POST /api/feedback/reply (Admin CRM replies)
   if (pathname === '/api/feedback/reply' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req); // { id, reply }
       const db = getDB();
@@ -1826,6 +2055,7 @@ const server = http.createServer(async (req, res) => {
 
   // 8. POST /api/classes/create (Admin CRM adds a class)
   if (pathname === '/api/classes/create' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -1871,6 +2101,7 @@ const server = http.createServer(async (req, res) => {
 
   // 10. POST /api/contest/toggle (Admin starts/stops competition)
   if (pathname === '/api/contest/toggle' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -1935,6 +2166,7 @@ const server = http.createServer(async (req, res) => {
 
   // 13. POST /api/users/reset-devices (Reset connected devices for operator)
   if (pathname === '/api/users/reset-devices' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -1984,6 +2216,7 @@ const server = http.createServer(async (req, res) => {
 
   // 14.2 POST /api/ib/create (Master Admin creates new IB)
   if (pathname === '/api/ib/create' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       if (!payload.name || !payload.code) {
@@ -2023,6 +2256,7 @@ const server = http.createServer(async (req, res) => {
 
   // 14.3 DELETE /api/ib/delete
   if (pathname === '/api/ib/delete' && req.method === 'DELETE') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -2051,6 +2285,7 @@ const server = http.createServer(async (req, res) => {
 
   // 14.5 POST /api/traders/onboard (Register a new client trader with 14-day pass)
   if (pathname === '/api/traders/onboard' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       if (!payload.name || !payload.mt5Account) {
@@ -2106,6 +2341,7 @@ const server = http.createServer(async (req, res) => {
 
   // 14.6 POST /api/traders/extend (Extend +14 Days upon capital/lot verification)
   if (pathname === '/api/traders/extend' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -2139,6 +2375,7 @@ const server = http.createServer(async (req, res) => {
 
   // 14.7 POST /api/traders/toggle-status (Lock / Unlock access)
   if (pathname === '/api/traders/toggle-status' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -2159,6 +2396,7 @@ const server = http.createServer(async (req, res) => {
 
   // 14.8 POST /api/traders/update-lot
   if (pathname === '/api/traders/update-lot' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -2181,6 +2419,7 @@ const server = http.createServer(async (req, res) => {
 
   // 14.9 DELETE /api/traders/delete
   if (pathname === '/api/traders/delete' && req.method === 'DELETE') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -2196,6 +2435,7 @@ const server = http.createServer(async (req, res) => {
 
   // 14.11 POST /api/traders/reset-device (Reset device binding for trader)
   if (pathname === '/api/traders/reset-device' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();
@@ -2218,6 +2458,18 @@ const server = http.createServer(async (req, res) => {
 
   // 14.10 GET /api/trader/verify-pass (Used by client app to check 14-day validity & 1-device lock)
   if (pathname === '/api/trader/verify-pass' && req.method === 'GET') {
+    const clientIp = SecurityShield.getClientIp(req);
+    if (SecurityShield.isIpLocked(clientIp)) {
+      const remainingSec = Math.ceil(((SecurityShield.ipBuckets.get(clientIp)?.lockedUntil || 0) - Date.now()) / 1000);
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        success: false,
+        deviceBlocked: true,
+        accessDenied: true,
+        message: `[SEKATAN KESELAMATAN] Terlalu banyak percubaan tidak sah dikesan dari IP anda. Sila tunggu ${remainingSec} saat sebelum mencuba lagi.`
+      }));
+    }
+
     const db = getDB();
     const query = new URLSearchParams(urlParts[1] || '');
     const id = query.get('id') || '';
@@ -2226,8 +2478,9 @@ const server = http.createServer(async (req, res) => {
     const deviceId = query.get('deviceId') || '';
     const deviceModel = query.get('deviceModel') || 'Mobile/Desktop';
 
-    const isMasterOperator = ['tengku khairi', 'kj35', 'kj35 (master trader)', 'admin', 'sensei hiro'].includes(callSign.toLowerCase().trim());
-    if (isMasterOperator) {
+    // 🛡️ Cryptographic Master Token Check (Anti-Spoofing: Name string alone CANNOT grant master access!)
+    const auth = SecurityShield.isRequestAuthorized(req);
+    if (auth) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({
         success: true,
@@ -2235,7 +2488,7 @@ const server = http.createServer(async (req, res) => {
         valid: true,
         daysRemaining: 999,
         passTitle: 'Master VIP Infinite Pass',
-        message: 'Akses Penuh Master Admin'
+        message: 'Akses Penuh Master Admin (' + auth.operator + ')'
       }));
     }
 
@@ -2300,6 +2553,7 @@ const server = http.createServer(async (req, res) => {
 
     if (isValidInvite) {
       // Valid Invitation Code provided! Auto-register trader to db.traders
+      SecurityShield.resetFailedAuth(clientIp);
       const newTrader = {
         id: 'trd-' + Date.now(),
         name: callSign || ('Trader #' + (mt5 || 'VIP')),
@@ -2341,7 +2595,8 @@ const server = http.createServer(async (req, res) => {
       }));
     }
 
-    // Access Denied: Outsiders cannot enter without a valid Invitation Code!
+    // Access Denied: Record failed auth attempt against client IP
+    SecurityShield.recordFailedAuth(clientIp);
     const adminPhone = (db.securitySettings && db.securitySettings.adminPhone) || '+601123236085';
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({
@@ -2359,16 +2614,18 @@ const server = http.createServer(async (req, res) => {
   // 14.12 GET /api/invitations (Get list of active VIP invitation codes)
   if (pathname === '/api/invitations' && req.method === 'GET') {
     const db = getDB();
+    const isAdmin = SecurityShield.isRequestAuthorized(req);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({
       success: true,
-      codes: db.invitationCodes || [],
+      codes: isAdmin ? (db.invitationCodes || []) : [],
       securitySettings: db.securitySettings || { requireInvitation: true, adminPhone: '+601123236085' }
     }));
   }
 
   // 14.13 POST /api/invitations/add (Create new VIP invitation code)
   if (pathname === '/api/invitations/add' && req.method === 'POST') {
+    if (!requireAdminAuth(req, res)) return;
     try {
       const payload = await parseJsonBody(req);
       const db = getDB();

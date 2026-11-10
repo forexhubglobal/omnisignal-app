@@ -1,5 +1,139 @@
 // ===== Amaterasu AI Command Center (CRM) Engine =====
 
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// ===== Master Fortress Gatekeeper & Fetch Interceptor =====
+const originalFetch = window.fetch;
+window.fetch = async function(url, options = {}) {
+  options = options || {};
+  options.headers = options.headers || {};
+  const token = localStorage.getItem('ama_admin_token') || sessionStorage.getItem('ama_admin_token');
+  if (token) {
+    if (options.headers instanceof Headers) {
+      options.headers.set('X-Admin-Token', token);
+    } else {
+      options.headers['X-Admin-Token'] = token;
+    }
+  }
+  const res = await originalFetch(url, options);
+  if (res.status === 401 && typeof url === 'string' && url.includes('/api/')) {
+    localStorage.removeItem('ama_admin_token');
+    sessionStorage.removeItem('ama_admin_token');
+    showCrmLockOverlay('Sesi Master tamat tempoh atau tidak sah. Sila sahkan semula.');
+  }
+  return res;
+};
+
+function showCrmLockOverlay(errMsg = '') {
+  const overlay = $('#crmLockOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  const errBox = $('#crmLockError');
+  if (errBox) {
+    if (errMsg) {
+      errBox.textContent = errMsg;
+      errBox.style.display = 'block';
+    } else {
+      errBox.style.display = 'none';
+    }
+  }
+  const badge = $('#masterProfileBadge');
+  if (badge) badge.style.display = 'none';
+}
+
+function hideCrmLockOverlay(operator = 'Tengku Khairi') {
+  const overlay = $('#crmLockOverlay');
+  if (overlay) overlay.style.display = 'none';
+  const badge = $('#masterProfileBadge');
+  if (badge) badge.style.display = 'block';
+  const opEl = $('#masterOperatorName');
+  if (opEl) opEl.textContent = operator;
+}
+
+async function verifyMasterSession() {
+  const token = localStorage.getItem('ama_admin_token') || sessionStorage.getItem('ama_admin_token');
+  if (!token) {
+    showCrmLockOverlay();
+    return false;
+  }
+  try {
+    const res = await originalFetch('/api/auth/verify-master', {
+      headers: { 'X-Admin-Token': token }
+    });
+    const data = await res.json();
+    if (res.ok && data.valid) {
+      hideCrmLockOverlay(data.operator);
+      return true;
+    }
+  } catch(e) {}
+
+  localStorage.removeItem('ama_admin_token');
+  sessionStorage.removeItem('ama_admin_token');
+  showCrmLockOverlay('Sesi Master tidak sah atau telah tamat.');
+  return false;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const lockForm = $('#crmLockForm');
+  if (lockForm) {
+    lockForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const op = ($('#crmLockOperator')?.value || 'Tengku Khairi').trim();
+      const pass = ($('#crmLockPasscode')?.value || '').trim();
+      const submitBtn = $('#crmLockSubmitBtn');
+      const errBox = $('#crmLockError');
+      if (errBox) errBox.style.display = 'none';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Mengesahkan Kriptografi...'; }
+
+      try {
+        const res = await originalFetch('/api/auth/master-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: pass, operator: op })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          if (errBox) {
+            errBox.textContent = data.error || 'Kunci Keselamatan Master tidak sah!';
+            errBox.style.display = 'block';
+          }
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔓 Buka Kunci Command Center'; }
+          return;
+        }
+
+        localStorage.setItem('ama_admin_token', data.token);
+        sessionStorage.setItem('ama_admin_token', data.token);
+        hideCrmLockOverlay(data.operator || op);
+        toast('Command Center Berjaya Dibuka: ' + (data.operator || op));
+        loadData();
+        loadTelegramConfig();
+        loadNewsSynergy();
+        loadInvitationCodes();
+        initSSE();
+      } catch (err) {
+        if (errBox) {
+          errBox.textContent = 'Ralat sambungan: ' + err.message;
+          errBox.style.display = 'block';
+        }
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🔓 Buka Kunci Command Center'; }
+      }
+    };
+  }
+
+  const logoutBtn = $('#btnMasterLogout');
+  if (logoutBtn) {
+    logoutBtn.onclick = () => {
+      localStorage.removeItem('ama_admin_token');
+      sessionStorage.removeItem('ama_admin_token');
+      showCrmLockOverlay('Command Center telah dikunci.');
+      toast('Command Center Dikunci.');
+    };
+  }
+});
+
 let state = {
   stats: {},
   activeSignal: {},
@@ -13,10 +147,6 @@ let state = {
   ibs: [],
   traders: []
 };
-
-const $ = s => document.querySelector(s);
-const $$ = s => [...document.querySelectorAll(s)];
-const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function toast(msg) {
   const el = $('#crmToast');
@@ -1441,11 +1571,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Boot
 startClock();
-loadData();
-loadTelegramConfig();
-loadNewsSynergy();
-initSSE();
-
+verifyMasterSession().then(isAuth => {
+  if (isAuth) {
+    loadData();
+    loadTelegramConfig();
+    loadNewsSynergy();
+    initSSE();
+    loadInvitationCodes();
+  }
+});
 
 // ===== VIP INVITATION GATEWAY MANAGER =====
 async function loadInvitationCodes() {
@@ -1489,8 +1623,6 @@ if ($('#btnAddInviteCode')) {
     }
   };
 }
-
-loadInvitationCodes();
 
 // Auto-sync AI config on CRM load
 (function initAiConfigFromStatus() {

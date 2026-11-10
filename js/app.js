@@ -611,16 +611,35 @@ function init() {
     // Master Form Submit
     const form = $('#amaterasuLoginForm', overlay);
     if (form) {
-      form.onsubmit = (e) => {
+      form.onsubmit = async (e) => {
         e.preventDefault();
         const opName = ($('#loginCallSign', overlay).value || 'Tengku Khairi').trim();
         const pass = ($('#loginPasscode', overlay).value || '').trim();
-        if (pass !== 'AMATERASU-2026') {
-          toast('Kunci Keselamatan Master tidak sah!');
-          return;
+        const submitBtn = form.querySelector('button[type=submit]');
+        const origBtnText = submitBtn ? submitBtn.textContent : '';
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Mengesahkan...'; }
+
+        try {
+          const res = await fetch('/api/auth/master-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passcode: pass, operator: opName })
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            toast(data.error || 'Kunci Keselamatan Master tidak sah!');
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
+            return;
+          }
+          localStorage.setItem('ama_admin_token', data.token);
+          sessionStorage.setItem('ama_admin_token', data.token);
+          localStorage.setItem('ama_master_unlocked', '1');
+          toast('Akses Master Disahkan: ' + (data.operator || opName));
+          doLogin(opName);
+        } catch (err) {
+          toast('Ralat sambungan: ' + err.message);
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
         }
-        localStorage.setItem('ama_master_unlocked', '1');
-        doLogin(opName);
       };
     }
 
@@ -639,6 +658,9 @@ function init() {
     `);
     $('[data-a=out]', m.el).onclick = () => {
       m.close();
+      localStorage.removeItem('ama_admin_token');
+      sessionStorage.removeItem('ama_admin_token');
+      localStorage.removeItem('ama_master_unlocked');
       store.set('ama_logged_in', false);
       toast('Sesi operator diputuskan');
       showLoginScreen();
