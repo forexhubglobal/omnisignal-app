@@ -51,7 +51,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(BASE_DIR, "bridge_config.json")
 
 DEFAULT_CONFIG = {
-    "server_url": "https://amaterasux.onrender.com",
+    "server_url": "https://equal-shield-amber-wilderness.trycloudflare.com",
     "lot_size": 0.20,
     "execution_mode": "SPLIT_TP", # "SPLIT_TP" (TP1, TP2, TP3), "SINGLE_TP1", "SINGLE_TP2", "SINGLE_TP3"
     "auto_breakeven": True,
@@ -78,11 +78,12 @@ DEFAULT_CONFIG = {
 def load_config():
     if os.path.exists(CONFIG_FILE):
         try:
-            with open(CONFIG_FILE, 'r') as f:
+            with open(CONFIG_FILE, 'r', encoding='utf-8-sig') as f:
                 cfg = json.load(f)
                 merged = {**DEFAULT_CONFIG, **cfg}
-                if "amaterasu-x.vercel.app" in merged.get("server_url", ""):
-                    merged["server_url"] = "https://amaterasux.onrender.com"
+                current_url = merged.get("server_url", "")
+                if "onrender.com" in current_url or "vercel.app" in current_url or not current_url:
+                    merged["server_url"] = "https://equal-shield-amber-wilderness.trycloudflare.com"
                 return merged
         except Exception as e:
             print(f"[CONFIG] Gagal baca {CONFIG_FILE}, guna tetapan default: {e}")
