@@ -1280,12 +1280,21 @@ class AmaterasuBridge:
                 acc = mt5.account_info()
                 acc_info = None
                 if acc:
+                    total_wd = 0.0
+                    try:
+                        from datetime import datetime, timedelta
+                        deals = mt5.history_deals_get(datetime.now() - timedelta(days=500), datetime.now())
+                        if deals:
+                            total_wd = sum(abs(d.profit) for d in deals if d.type == 2 and d.profit < 0)
+                    except Exception:
+                        pass
                     acc_info = {
                         "balance": float(acc.balance),
                         "equity": float(acc.equity),
                         "profit": float(acc.profit),
                         "margin": float(acc.margin),
-                        "login": int(acc.login)
+                        "login": int(acc.login),
+                        "totalWithdrawn": float(total_wd)
                     }
 
                 # INSTITUTIONAL VOLUME FLOW RADAR TELEMETRY

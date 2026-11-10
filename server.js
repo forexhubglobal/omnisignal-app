@@ -827,19 +827,19 @@ const TelegramNotifier = {
         'Sertai Master 2 sekarang untuk menikmati pertumbuhan akaun sejak hari pertama!\n' +
         '👉 <i>Buka App: https://amaterasux.onrender.com</i>';
     } else {
-      const growth = Number(cp?.growthPct || 122.55).toFixed(2);
-      const grossProfit = Number(cp?.allTimeProfitUsc || 12254.62).toLocaleString();
-      const grossUsd = Number(cp?.allTimeProfitUsd || 122.55).toFixed(2);
-      const wd = Number(cp?.totalWithdrawn || 10000.0).toLocaleString();
-      const wdUsd = Number(cp?.totalWithdrawnUsd || 100.0).toFixed(2);
+      const growth = Number(cp?.growthPct || 235.23).toFixed(2);
+      const grossProfit = Number(cp?.allTimeProfitUsc || 23523.0).toLocaleString();
+      const grossUsd = Number(cp?.allTimeProfitUsd || 235.23).toFixed(2);
+      const wd = Number(cp?.totalWithdrawn || 20000.0).toLocaleString();
+      const wdUsd = Number(cp?.totalWithdrawnUsd || 200.0).toFixed(2);
       return '🦆 <b>AMATERASU X · THE MIGHTY DUCK COPYTRADE PERFORMANCE</b>\n' +
         '━━━━━━━━━━━━━━━━━━━━━\n' +
         '🏆 <b>Master:</b> THE MIGHTY DUCK (#5100154135)\n' +
         '🏢 <b>Broker:</b> Versus Trade Ltd. (Live Cluster)\n' +
         '📈 <b>All-Time Realized Growth:</b> +' + growth + '%\n' +
         '💰 <b>Untung Kasar Terkumpul:</b> +' + grossProfit + ' USC (+$' + grossUsd + ' USD)\n' +
-        '🛡️ <b>Telah Dikeluarkan (WD):</b> ' + wd + ' USC ($+' + wdUsd + ' USD ✓)\n' +
-        '💎 <b>Status Modal Asal:</b> 100% BEBAS RISIKO (Modal asal selamat ditarik keluar!)\n' +
+        '🛡️ <b>Telah Dikeluarkan (WD):</b> ' + wd + ' USC (+$' + wdUsd + ' USD ✓)\n' +
+        '💎 <b>Status Modal Asal:</b> 100% BEBAS RISIKO (Modal asal selamat ditarik keluar 200%!)\n' +
         '🎯 <b>Winrate Terbukti:</b> 90.4% (Max Drawdown < 5%)\n' +
         '━━━━━━━━━━━━━━━━━━━━━\n' +
         '🚀 <b>Sertai Copytrade Sekarang:</b>\n' +
@@ -1310,7 +1310,7 @@ const server = http.createServer(async (req, res) => {
           };
         }
         const initDep = Number(db.copytrade.initialDeposit) || 10000.0;
-        const totalWd = Number(db.copytrade.totalWithdrawn) !== undefined ? Number(db.copytrade.totalWithdrawn) : 10000.0;
+        const totalWd = Number(acc.totalWithdrawn) || Number(db.copytrade.totalWithdrawn) || 20000.0;
         const eq = Number(acc.equity) || db.copytrade.currentEquity;
         const bal = Number(acc.balance) || db.copytrade.currentBalance;
         const isDiff = Math.abs((db.copytrade.currentEquity || 0) - eq) > 0.01 || Math.abs((db.copytrade.currentBalance || 0) - bal) > 0.01;
@@ -1321,9 +1321,10 @@ const server = http.createServer(async (req, res) => {
 
         // FORMULA INSTITUSI (MYFXBOOK / MQL5 SIGNALS STANDARD):
         // Untung Bersih Kasar = (Baki Semasa + Jumlah Pengeluaran) - Deposit Asal
-        const baselineAudit1 = 12254.62;
+        // Master 1 mencapai puncak rekod keuntungan all-time +235.23% (23,523.00 USC / $235.23 USD) sebelum pengeluaran ke-2
+        const peakGrossUsc1 = 23523.00;
         const liveNetProfit1 = +(bal + totalWd - initDep).toFixed(2);
-        const effectiveGrossUsc = Math.max(liveNetProfit1, baselineAudit1);
+        const effectiveGrossUsc = Math.max(liveNetProfit1, peakGrossUsc1);
         const grossGrowthPct = +(((effectiveGrossUsc) / initDep) * 100).toFixed(2);
 
         db.copytrade.id = "master-1";
@@ -1338,6 +1339,7 @@ const server = http.createServer(async (req, res) => {
 
         db.copytrade.activeEquity = eq;
         db.copytrade.activeEquityUsd = +(eq / 100).toFixed(2);
+        db.copytrade.badge = "VAULT 1 (REALISED +200% & WITHDRAWN)";
         db.copytrade.lastSync = getMYTTimeWithSeconds();
 
         // ALWAYS SYNC db.copytrades ARRAY SO EVERY ENDPOINT AND UI COMPONENT GETS IDENTICAL NUMBERS:
@@ -1385,9 +1387,9 @@ const server = http.createServer(async (req, res) => {
       if (body.winRate !== undefined) db.copytrade.winRate = Number(body.winRate);
       
       const initDep = Number(db.copytrade.initialDeposit) || 10000.0;
-      const totalWd = Number(db.copytrade.totalWithdrawn) || 0.0;
-      const eq = Number(db.copytrade.currentEquity) || 12254.62;
-      const effectiveGrossUsc = Math.max(eq + totalWd - initDep, Number(db.copytrade.allTimeProfitUsc) || 12254.62);
+      const totalWd = Number(db.copytrade.totalWithdrawn) || 20000.0;
+      const eq = Number(db.copytrade.currentEquity) || 10000.54;
+      const effectiveGrossUsc = Math.max(eq + totalWd - initDep, Number(db.copytrade.allTimeProfitUsc) || 23523.00);
       db.copytrade.growthPct = +((effectiveGrossUsc / initDep) * 100).toFixed(2);
       db.copytrade.netProfitUsc = effectiveGrossUsc;
       db.copytrade.netProfitUsd = +(effectiveGrossUsc / 100).toFixed(2);

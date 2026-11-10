@@ -504,12 +504,12 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     masterAccount: "5100154135",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
-    totalWithdrawn: 10000.0,
-    totalWithdrawnUsd: 100.0,
-    allTimeProfitUsc: 12254.62,
-    allTimeProfitUsd: 122.55,
-    growthPct: 122.55,
-    currentEquity: 12254.62,
+    totalWithdrawn: 20000.0,
+    totalWithdrawnUsd: 200.0,
+    allTimeProfitUsc: 23523.00,
+    allTimeProfitUsd: 235.23,
+    growthPct: 235.23,
+    currentEquity: 10024.26,
     winRate: 90.4
   };
 
@@ -607,10 +607,10 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     themeBorder = 'rgba(0, 230, 118, 0.45)';
     themeShadow = 'rgba(0, 230, 118, 0.15)';
     themeBadge = 'MASTER 1 (VERIFIED LIVE)';
-    const growth1 = (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 122.55;
-    const netProf1 = Number(cp1 && cp1.allTimeProfitUsc !== undefined ? cp1.allTimeProfitUsc : 12254.62);
-    const bal1 = Number(cp1 && cp1.currentBalance !== undefined ? cp1.currentBalance : 10000);
-    const eq1 = Number(cp1 && cp1.currentEquity !== undefined ? cp1.currentEquity : 12254.62);
+    const growth1 = (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 235.23;
+    const netProf1 = Number(cp1 && cp1.allTimeProfitUsc !== undefined ? cp1.allTimeProfitUsc : 23523.00);
+    const bal1 = Number(cp1 && cp1.currentBalance !== undefined ? cp1.currentBalance : 10000.54);
+    const eq1 = Number(cp1 && cp1.currentEquity !== undefined ? cp1.currentEquity : 10024.26);
     cp = {
       id: 1,
       name: "THE MIGHTY DUCK",
@@ -624,7 +624,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
       currentEquityDisplay: num(eq1) + ' USC',
       currentBalanceDisplay: num(bal1) + ' USC',
       equitySubtitle: 'Baki Tunai: ' + num(bal1) + ' USC',
-      totalWithdrawnDisplay: num(cp1.totalWithdrawn || 10000) + ' USC ($+100.00 USD ✓)',
+      totalWithdrawnDisplay: num(cp1.totalWithdrawn || 20000) + ' USC ($+200.00 USD ✓)',
       lastSync: (cp1 && cp1.lastSync) || 'Live',
       isUsd: false,
       winRate: (cp1 && cp1.winRate) || 90.4
@@ -826,18 +826,18 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
   let name = 'THE MIGHTY DUCK';
   let account = '5100154135';
   let avatarSrc = 'img/themightyduck.png';
-  let growth = '+' + Number(cp1.growthPct || 122.55).toFixed(2) + '%';
-  let grossProfitUsc = '+' + (Number(cp1.allTimeProfitUsc || 12254.62)).toLocaleString() + ' USC';
-  let grossProfitUsd = '+$' + Number(cp1.allTimeProfitUsd || 122.55).toFixed(2) + ' USD';
-  let statusBadge = '🛡️ 100% MODAL ASAL SELAMAT DI-WD';
+  let growth = '+' + Number(cp1.growthPct || 235.23).toFixed(2) + '%';
+  let grossProfitUsc = '+' + (Number(cp1.allTimeProfitUsc || 23523.00)).toLocaleString() + ' USC';
+  let grossProfitUsd = '+$' + Number(cp1.allTimeProfitUsd || 235.23).toFixed(2) + ' USD';
+  let statusBadge = '🛡️ MODAL ASAL SELAMAT DI-WD 200%';
   let themeColor = '#00E676';
   let themeGlow = 'rgba(0, 230, 118, 0.35)';
   let themeBorder = 'rgba(0, 230, 118, 0.5)';
   let themeShadow = 'rgba(0, 230, 118, 0.25)';
   let verifiedBadge = '● MASTER 1 LIVE VERIFIED · CENT';
   let growthSubtitle = 'ALL-TIME REALIZED GROWTH';
-  let modalWithdrawn = '$100.00 USD (100% WD ✓)';
-  let activeEquityStr = num(cp1.currentEquity || 12254.62) + ' USC ($' + Number((cp1.currentEquity || 12254.62) / 100).toFixed(2) + ' USD)';
+  let modalWithdrawn = '$200.00 USD (200% WD ✓)';
+  let activeEquityStr = num(cp1.currentEquity || 10000.54) + ' USC ($' + Number((cp1.currentEquity || 10000.54) / 100).toFixed(2) + ' USD)';
   let winrateStr = (cp1.winRate || 90.4) + '% (Max DD < 5%)';
   let riskBadge = 'Zero Risk (Post WD)';
   let minJoin = '$50 - $100 USD';
@@ -1200,16 +1200,16 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
   const defaultCp = {
     masterAccount: "5100154135",
     broker: "Versus Trade Ltd. (Live1)",
-    growthPct: 122.55,
-    allTimeGrowthPct: 122.55,
-    allTimeProfitUsc: 12254.62,
-    allTimeProfitUsd: 122.55,
-    totalWithdrawn: 10000.0,
-    totalWithdrawnUsd: 100.0,
+    growthPct: 235.23,
+    allTimeGrowthPct: 235.23,
+    allTimeProfitUsc: 23523.00,
+    allTimeProfitUsd: 235.23,
+    totalWithdrawn: 20000.0,
+    totalWithdrawnUsd: 200.0,
     initialDeposit: 10000.0,
-    currentBalance: 12254.62,
-    currentEquity: 12254.62,
-    activeEquity: 12254.62,
+    currentBalance: 10000.54,
+    currentEquity: 10024.26,
+    activeEquity: 10024.26,
     winRate: 90.4,
     maxDrawdown: 4.8,
     status: "LIVE & ACTIVE",
@@ -1239,13 +1239,13 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
             <div>
               <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase;">REKOD AKAUN MASTER</span>
               <b style="font-size:13px; color:#fff; display:block;">${targetName} (#${targetAcc})</b>
-              <span style="font-size:10px; color:${targetTheme}; font-weight:700;">${isV3 ? '👑 Standard $1,000 USD Active Pool' : isV2 ? '🔥 Fresh 10,000 USC Pool (Zero Risk)' : '💰 Telah Withdraw: 10,000 USC ($100 USD)'}</span>
+              <span style="font-size:10px; color:${targetTheme}; font-weight:700;">${isV3 ? '👑 Standard $1,000 USD Active Pool' : isV2 ? '🔥 Fresh 10,000 USC Pool (Zero Risk)' : '💰 Telah Withdraw: 20,000 USC ($200 USD)'}</span>
             </div>
           </div>
           <div style="text-align:right;">
             <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase;">TOTAL GROW</span>
-            <b style="font-size:18px; color:${targetTheme}; font-weight:900;">+${(typeof cp.growthPct === 'number' ? cp.growthPct : (isV1 ? 122.55 : 0.0)).toFixed(2)}% 📈</b>
-            <span style="font-size:10px; color:#94a3b8; display:block;">${isV3 ? '$' + Number(cp.currentBalance || 1000).toFixed(2) + ' USD' : '+' + num(cp.allTimeProfitUsc || cp.netProfitUsc || (isV1 ? 12254.62 : 10000)) + ' USC'}</span>
+            <b style="font-size:18px; color:${targetTheme}; font-weight:900;">+${(typeof cp.growthPct === 'number' ? cp.growthPct : (isV1 ? 235.23 : 0.0)).toFixed(2)}% 📈</b>
+            <span style="font-size:10px; color:#94a3b8; display:block;">${isV3 ? '$' + Number(cp.currentBalance || 1000).toFixed(2) + ' USD' : '+' + num(cp.allTimeProfitUsc || cp.netProfitUsc || (isV1 ? 23523.00 : 10000)) + ' USC'}</span>
           </div>
         </div>
       </div>
@@ -1290,7 +1290,7 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
           <div>
             <label style="font-size:10.5px; color:#8e9aa8; display:block; margin-bottom:4px; font-weight:700;">PILIH MASTER COPYTRADE PILIHAN ANDA:</label>
             <select id="cpTargetMaster" onchange="showCopytradeModal(this.value === '5100209626' ? 3 : this.value === '5100207348' ? 2 : 1)" style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid ${targetTheme}; border-radius:6px; color:#fff; font-size:12px; font-weight:700;">
-              <option value="5100154135" ${vNum === 1 ? 'selected' : ''}>🦆 The Mighty Duck - Master 1 (#5100154135 · +122.55% All-Time)</option>
+              <option value="5100154135" ${vNum === 1 ? 'selected' : ''}>🦆 The Mighty Duck - Master 1 (#5100154135 · +235.23% All-Time · $200 WD)</option>
               <option value="5100207348" ${vNum === 2 ? 'selected' : ''}>🔥 Amaterasu X - Master 2 (#5100207348 · Fresh 10,000 USC Pool)</option>
               <option value="5100209626" ${vNum === 3 ? 'selected' : ''}>👑 Amaterasu X 2.0 - Master 3 (#5100209626 · Standard $1,000 USD Pool)</option>
             </select>
@@ -1472,18 +1472,18 @@ function getSignalPageState(inst) {
     masterAccount: "5100154135",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
-    totalWithdrawn: 10000.0,
-    totalWithdrawnUsd: 100.00,
-    allTimeProfitUsc: 12254.62,
-    allTimeProfitUsd: 122.55,
-    allTimeGrowthPct: 122.55,
-    growthPct: 122.55,
-    netProfitUsc: 12254.62,
-    netProfitUsd: 122.55,
-    currentBalance: 12254.62,
-    currentEquity: 12254.62,
-    activeEquity: 12254.62,
-    activeEquityUsd: 122.55,
+    totalWithdrawn: 20000.0,
+    totalWithdrawnUsd: 200.00,
+    allTimeProfitUsc: 23523.00,
+    allTimeProfitUsd: 235.23,
+    allTimeGrowthPct: 235.23,
+    growthPct: 235.23,
+    netProfitUsc: 23523.00,
+    netProfitUsd: 235.23,
+    currentBalance: 10000.54,
+    currentEquity: 10024.26,
+    activeEquity: 10024.26,
+    activeEquityUsd: 100.24,
     winRate: 90.4,
     maxDrawdown: 4.8,
     status: "LIVE & ACTIVE",
@@ -3025,18 +3025,18 @@ function StatPage(main) {
     masterAccount: "5100154135",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
-    totalWithdrawn: 10000.0,
-    totalWithdrawnUsd: 100.00,
-    allTimeProfitUsc: 12254.62,
-    allTimeProfitUsd: 122.55,
-    allTimeGrowthPct: 122.55,
-    growthPct: 122.55,
-    netProfitUsc: 12254.62,
-    netProfitUsd: 122.55,
-    currentBalance: 12254.62,
-    currentEquity: 12254.62,
-    activeEquity: 12254.62,
-    activeEquityUsd: 122.55,
+    totalWithdrawn: 20000.0,
+    totalWithdrawnUsd: 200.00,
+    allTimeProfitUsc: 23523.00,
+    allTimeProfitUsd: 235.23,
+    allTimeGrowthPct: 235.23,
+    growthPct: 235.23,
+    netProfitUsc: 23523.00,
+    netProfitUsd: 235.23,
+    currentBalance: 10000.54,
+    currentEquity: 10024.26,
+    activeEquity: 10024.26,
+    activeEquityUsd: 100.24,
     winRate: 90.4,
     maxDrawdown: 4.8,
     status: "LIVE & ACTIVE",
