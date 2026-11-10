@@ -3536,14 +3536,14 @@ const AiEngine = {
       }
     }
 
-    // Dynamic ATR Session Volatility Adaptation
+    // Dynamic ATR Session Volatility Adaptation (Waktu Malaysia MYT)
     let volMult = 1.0;
-    if (nowH >= 8 && nowH < 14) {
-      volMult = 0.85; // Sesi Pagi Asia: Volatiliti kemas & jimat SL
+    if (nowH >= 6 && nowH < 14) {
+      volMult = 0.85; // Sesi Asia (06:00 - 14:00): Volatiliti terkawal, SL kemas & jimat (XAUUSD 45p, FX 18p)
     } else if (nowH >= 14 && nowH < 20) {
-      volMult = 1.0;  // Sesi London: Standard SMC
-    } else if (nowH >= 20 && nowH < 23) {
-      volMult = 1.15; // Sesi New York: Volatiliti lonjakan maksima
+      volMult = 1.0;  // Sesi London (14:00 - 20:00): Standard Institutional SMC (XAUUSD 48p, FX 20p)
+    } else if (nowH >= 20 || nowH < 2) {
+      volMult = 1.10; // Sesi New York (20:00 - 02:00): Volatiliti lonjakan tinggi (XAUUSD 50p, FX 20-22p)
     }
 
     const dynTp1Pips = Math.round(asset.tp1Pips * volMult);
@@ -3551,12 +3551,12 @@ const AiEngine = {
     const dynTp3Pips = Math.round((asset.tp3Pips || Math.round(asset.tp2Pips * 1.5)) * volMult);
     let dynSlPips = Math.round(asset.slPips * volMult);
 
-    // STOP LOSS PROTECTION (ANTI-RUGI TERUK):
-    // Elakkan sama sekali SL lebar yang membebankan akaun!
+    // STOP LOSS CALIBRATION (BERDASARKAN BEDAH SIASAT PASARAN):
+    // Melindungi akaun daripada spread hunt & false breakouts mengikut sesi pasaran
     if (asset.symbol === 'XAUUSD') {
-      dynSlPips = Math.min(Math.max(dynSlPips, 45), 52); // Ketat 45 - 52 pips ($4.50 - $5.20)
+      dynSlPips = (nowH >= 6 && nowH < 14) ? 45 : 48; // Sesi Asia: 45 pips ($4.50) | London & NY: 48 pips ($4.80)
     } else {
-      dynSlPips = Math.min(Math.max(dynSlPips, 18), 22); // Ketat 18 - 22 pips
+      dynSlPips = (nowH >= 6 && nowH < 14) ? 18 : 20; // Sesi Asia: 18 pips | London & NY: 20 pips
     }
 
     const sign = type === 'BUY' ? 1 : -1;
