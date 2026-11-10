@@ -1095,9 +1095,9 @@ class AmaterasuBridge:
         sig_id = item.get("id")
         outcome = item.get("status")
         symbol = item.get("symbol")
-        pips = item.get("pips")
-
-        print(f"\n{Colors.CYAN}🏁 [TRADE RESOLVED] #{symbol} status: {outcome} ({pips:+} pips){Colors.RESET}")
+        pips_raw = item.get("pips", 0)
+        pips_str = f"{pips_raw:+d}" if isinstance(pips_raw, int) else (f"{pips_raw:+.1f}" if isinstance(pips_raw, float) else str(pips_raw or 0))
+        print(f"\n{Colors.CYAN}🏁 [TRADE RESOLVED] #{symbol} status: {outcome} ({pips_str} pips){Colors.RESET}")
 
         # Jika TP1 dicapai atau signal umumkan BE, segera kunci BE untuk layer seterusnya!
         if outcome in ["TP1", "BE"] or (item.get("tags") and "TP1" in item["tags"]):

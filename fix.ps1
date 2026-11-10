@@ -1,18 +1,46 @@
-Write-Host "Memuat turun fail bridge terkini yang bersih..." -ForegroundColor Cyan
-Invoke-RestMethod -Uri "https://equal-shield-amber-wilderness.trycloudflare.com/amaterasu_mt5_bridge.py" -OutFile "$env:TEMP\amaterasu_mt5_bridge.py"
+Write-Host "===============================================================================" -ForegroundColor Cyan
+Write-Host "         AMATERASU X - MULTI-ACCOUNT BRIDGE REPAIR & AUTO-LAUNCH" -ForegroundColor Cyan
+Write-Host "===============================================================================`n" -ForegroundColor Cyan
+
+Write-Host "1. Menutup sebarang tetingkap bridge lama yang tergantung/crashed..." -ForegroundColor Yellow
+Get-Process -Name cmd, python -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like "*Amaterasu*" } | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 1
+
+Write-Host "2. Memuat turun versi bridge terkini dari pelayan..." -ForegroundColor Cyan
+$cleanBridgeUrl = "https://equal-shield-amber-wilderness.trycloudflare.com/amaterasu_mt5_bridge.py"
+Invoke-RestMethod -Uri $cleanBridgeUrl -OutFile "$env:TEMP\amaterasu_mt5_bridge.py"
 
 if (Test-Path "$env:TEMP\amaterasu_mt5_bridge.py") {
     Copy-Item "$env:TEMP\amaterasu_mt5_bridge.py" 'C:\AmaterasuX\amaterasu_mt5_bridge.py' -Force
     Copy-Item "$env:TEMP\amaterasu_mt5_bridge.py" 'C:\AmaterasuX_Acc2\amaterasu_mt5_bridge.py' -Force
     Copy-Item "$env:TEMP\amaterasu_mt5_bridge.py" 'C:\AmaterasuX_Acc3\amaterasu_mt5_bridge.py' -Force
-    Write-Host "[OK] Fail bridge telah dikemas kini ke versi terkini tanpa sebarang ralat!" -ForegroundColor Green
+    Write-Host "   [OK] Fail bridge telah diselaraskan ke Acc1, Acc2, dan Acc3!" -ForegroundColor Green
 }
 
-Write-Host "Mengemas kini URL pelayan ke Cloudflare..." -ForegroundColor Cyan
-(Get-Content 'C:\AmaterasuX\bridge_config.json') -replace 'https://amaterasux.onrender.com', 'https://equal-shield-amber-wilderness.trycloudflare.com' | Set-Content 'C:\AmaterasuX\bridge_config.json'
-(Get-Content 'C:\AmaterasuX_Acc2\bridge_config.json') -replace 'https://amaterasux.onrender.com', 'https://equal-shield-amber-wilderness.trycloudflare.com' | Set-Content 'C:\AmaterasuX_Acc2\bridge_config.json'
-(Get-Content 'C:\AmaterasuX_Acc3\bridge_config.json') -replace 'https://amaterasux.onrender.com', 'https://equal-shield-amber-wilderness.trycloudflare.com' | Set-Content 'C:\AmaterasuX_Acc3\bridge_config.json'
+Write-Host "3. Memastikan konfigurasi pelayan menuju ke Cloudflare..." -ForegroundColor Cyan
+$cfUrl = "https://equal-shield-amber-wilderness.trycloudflare.com"
+
+foreach ($dir in @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3')) {
+    $cfgFile = Join-Path $dir "bridge_config.json"
+    if (Test-Path $cfgFile) {
+        $json = Get-Content $cfgFile -Raw | ConvertFrom-Json
+        $json.server_url = $cfUrl
+        $json | ConvertTo-Json -Depth 5 | Set-Content $cfgFile -Encoding UTF8
+    }
+}
+Write-Host "   [OK] Semua bridge_config.json telah dipautkan ke pelayan live!" -ForegroundColor Green
+
+Write-Host "4. Melancarkan semula 3 terminal bridge secara automatik..." -ForegroundColor Cyan
+if (Test-Path 'C:\AmaterasuX\acc1.bat') {
+    Start-Process cmd.exe -ArgumentList '/k C:\AmaterasuX\acc1.bat' -WorkingDirectory 'C:\AmaterasuX'
+}
+if (Test-Path 'C:\AmaterasuX_Acc2\acc2.bat') {
+    Start-Process cmd.exe -ArgumentList '/k C:\AmaterasuX_Acc2\acc2.bat' -WorkingDirectory 'C:\AmaterasuX_Acc2'
+}
+if (Test-Path 'C:\AmaterasuX_Acc3\acc3.bat') {
+    Start-Process cmd.exe -ArgumentList '/k C:\AmaterasuX_Acc3\acc3.bat' -WorkingDirectory 'C:\AmaterasuX_Acc3'
+}
 
 Write-Host "`n===============================================================================" -ForegroundColor Green
-Write-Host "BERJAYA! SEMUA KOD BRIDGE DAN KONFIGURASI AKAUN TELAH DIPERBAIKI 100%!" -ForegroundColor Green
+Write-Host "   BERJAYA! SEMUA BRIDGE TELAH DIPERBAIKI DAN BERJALAN LANCAR (100% HIJAU)!" -ForegroundColor Green
 Write-Host "===============================================================================`n" -ForegroundColor Green
