@@ -1,6 +1,9 @@
 import MetaTrader5 as mt5
 from datetime import datetime, timedelta
 import sys
+import os
+import json
+import urllib.request
 
 try:
     if hasattr(sys.stdout, 'reconfigure'):
@@ -18,9 +21,10 @@ print("=========================================================================
 print("                   AMATERASU X - AUDIT MT5 RASMI DARI VPS")
 print("===============================================================================\n")
 
+all_reports = []
+
 for label, p1, p2 in terminals:
     path = p1
-    import os
     if not os.path.exists(path) and p2 and os.path.exists(p2):
         path = p2
         
@@ -60,15 +64,17 @@ for label, p1, p2 in terminals:
     
     if deals:
         for d in deals:
-            if d.entry == 2 or "deposit" in d.comment.lower() or "withdraw" in d.comment.lower():
+            # d.type == 2 is mt5.DEAL_TYPE_BALANCE
+            is_balance = getattr(d, 'type', 0) == 2 or d.entry == 2 or "deposit" in str(d.comment).lower() or "withdraw" in str(d.comment).lower()
+            if is_balance:
                 if d.profit > 0:
                     deposits += d.profit
                 else:
                     withdrawals += abs(d.profit)
-            elif d.entry == 1:
+            else:
                 closed_trade_profit += d.profit
-                swap += d.swap
-                commission += d.commission
+                swap += getattr(d, 'swap', 0.0)
+                commission += getattr(d, 'commission', 0.0)
                 
     net_realised = closed_trade_profit + swap + commission
     growth = ((net_realised / deposits) * 100) if deposits > 0 else 0.0
@@ -78,6 +84,34 @@ for label, p1, p2 in terminals:
     print(f"Keuntungan Bersih(Net): {net_realised:,.2f}")
     print(f"Peratusan Untung Sebenar: {growth:,.2f} %\n")
     
+    report_item = {
+        "label": label,
+        "login": acc.login,
+        "server": acc.server,
+        "currency": acc.currency,
+        "balance": round(float(acc.balance), 2),
+        "equity": round(float(acc.equity), 2),
+        "profit": round(float(acc.profit), 2),
+        "deposits": round(float(deposits), 2),
+        "withdrawals": round(float(withdrawals), 2),
+        "netRealised": round(float(net_realised), 2),
+        "growthPct": round(float(growth), 2)
+    }
+    all_reports.append(report_item)
+    
     mt5.shutdown()
 
 print("===============================================================================")
+print("Menghantar laporan data MT5 terus ke Server Amaterasu X...")
+
+try:
+    url = "https://equal-shield-amber-wilderness.trycloudflare.com/api/market/audit-report"
+    req_data = json.dumps({"reports": all_reports}).encode('utf-8')
+    req = urllib.request.Request(url, data=req_data, headers={'Content-Type': 'application/json'})
+    with urllib.request.urlopen(req, timeout=10) as response:
+        res_body = response.read().decode('utf-8')
+        print("✅ [BERJAYA] Data MT5 telah dihantar & diselaraskan 100% dengan Amaterasu X!")
+except Exception as e:
+    print(f"Nota penghantaran: {e}")
+
+print("===============================================================================\n")

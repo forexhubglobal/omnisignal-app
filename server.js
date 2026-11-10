@@ -1005,6 +1005,108 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify(liveMarketQuotes));
   }
 
+  // 0.05 POST /api/market/audit-report (Receives full audit report from VPS MT5)
+  if (pathname === '/api/market/audit-report' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      const db = getDB();
+      console.log('=== [MT5 AUDIT REPORT DITERIMA DARI VPS] ===\n', JSON.stringify(payload, null, 2));
+
+      if (payload && Array.isArray(payload.reports)) {
+        for (const rep of payload.reports) {
+          const loginStr = String(rep.login);
+          // Master 1 (#5100154135 Cent)
+          if (loginStr === '5100154135' || rep.label === 'Master 1') {
+            if (db.copytrade) {
+              db.copytrade.currentBalance = rep.balance;
+              db.copytrade.currentEquity = rep.equity;
+              if (rep.deposits) db.copytrade.initialDeposit = rep.deposits;
+              if (rep.withdrawals !== undefined) {
+                db.copytrade.totalWithdrawn = rep.withdrawals;
+                db.copytrade.totalWithdrawnUsd = +(rep.withdrawals / 100).toFixed(2);
+              }
+              if (rep.netRealised !== undefined) {
+                db.copytrade.allTimeProfitUsc = rep.netRealised;
+                db.copytrade.allTimeProfitUsd = +(rep.netRealised / 100).toFixed(2);
+                db.copytrade.netProfitUsc = rep.netRealised;
+                db.copytrade.netProfitUsd = +(rep.netRealised / 100).toFixed(2);
+              }
+              if (rep.growthPct !== undefined) {
+                db.copytrade.growthPct = rep.growthPct;
+                db.copytrade.allTimeGrowthPct = rep.growthPct;
+              }
+              db.copytrade.activeEquity = rep.equity;
+              db.copytrade.activeEquityUsd = +(rep.equity / 100).toFixed(2);
+              db.copytrade.lastSync = getMYTTimeWithSeconds();
+            }
+          }
+          // Master 2 (#5100207348 Cent)
+          if (loginStr === '5100207348' || rep.label === 'Master 2') {
+            if (db.copytrade2) {
+              db.copytrade2.currentBalance = rep.balance;
+              db.copytrade2.currentEquity = rep.equity;
+              if (rep.deposits) db.copytrade2.initialDeposit = rep.deposits;
+              if (rep.withdrawals !== undefined) {
+                db.copytrade2.totalWithdrawn = rep.withdrawals;
+                db.copytrade2.totalWithdrawnUsd = +(rep.withdrawals / 100).toFixed(2);
+              }
+              if (rep.netRealised !== undefined) {
+                db.copytrade2.allTimeProfitUsc = rep.netRealised;
+                db.copytrade2.allTimeProfitUsd = +(rep.netRealised / 100).toFixed(2);
+                db.copytrade2.netProfitUsc = rep.netRealised;
+                db.copytrade2.netProfitUsd = +(rep.netRealised / 100).toFixed(2);
+              }
+              if (rep.growthPct !== undefined) {
+                db.copytrade2.growthPct = rep.growthPct;
+                db.copytrade2.allTimeGrowthPct = rep.growthPct;
+              }
+              db.copytrade2.activeEquity = rep.equity;
+              db.copytrade2.activeEquityUsd = +(rep.equity / 100).toFixed(2);
+              db.copytrade2.lastSync = getMYTTimeWithSeconds();
+            }
+          }
+          // Master 3 (#5100209626 Standard USD)
+          if (loginStr === '5100209626' || rep.label === 'Master 3') {
+            if (db.copytrade3) {
+              db.copytrade3.currentBalance = rep.balance;
+              db.copytrade3.currentEquity = rep.equity;
+              if (rep.deposits) db.copytrade3.initialDeposit = rep.deposits;
+              if (rep.withdrawals !== undefined) {
+                db.copytrade3.totalWithdrawn = rep.withdrawals;
+                db.copytrade3.totalWithdrawnUsd = rep.withdrawals;
+              }
+              if (rep.netRealised !== undefined) {
+                db.copytrade3.allTimeProfitUsd = rep.netRealised;
+                db.copytrade3.netProfitUsd = rep.netRealised;
+              }
+              if (rep.growthPct !== undefined) {
+                db.copytrade3.growthPct = rep.growthPct;
+                db.copytrade3.allTimeGrowthPct = rep.growthPct;
+              }
+              db.copytrade3.activeEquity = rep.equity;
+              db.copytrade3.activeEquityUsd = rep.equity;
+              db.copytrade3.lastSync = getMYTTimeWithSeconds();
+            }
+          }
+        }
+        if (Array.isArray(db.copytrades)) {
+          if (db.copytrade) db.copytrades[0] = db.copytrade;
+          if (db.copytrade2) db.copytrades[1] = db.copytrade2;
+          if (db.copytrade3) db.copytrades[2] = db.copytrade3;
+        }
+        saveDB(db);
+        broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrades: db.copytrades });
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: true, message: 'Audit report processed successfully', payload }));
+    } catch (err) {
+      console.error('[AUDIT REPORT ERROR]', err);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+  }
+
   // 0.1 POST /api/market/sync-mt5 (Live Bridge Quotes Direct From Local MT5)
   if (pathname === '/api/market/sync-mt5' && req.method === 'POST') {
     try {
