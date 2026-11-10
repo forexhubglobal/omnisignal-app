@@ -813,31 +813,112 @@ window.refreshCopytradeUI = function() {
 
 // ===== FEATURE 1: AUTO-GENERATE STORY CARD (BINANCE / EXNESS PNL POSTER GENERATOR) =====
 window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault || 1)) {
-  const isV2 = Number(vaultId) === 2;
+  const curV = Number(vaultId) || (window.activeCopytradeVault || 1);
+  window.activeCopytradeVault = curV;
+  const isV2 = curV === 2;
+  const isV3 = curV === 3;
+  const isV1 = !isV2 && !isV3;
+
   const cp1 = (AppState && AppState.copytrade) || {};
   const cp2 = (AppState && AppState.copytrade2) || {};
+  const cp3 = (AppState && AppState.copytrade3) || {};
 
-  const name = isV2 ? 'AMATERASU X' : 'THE MIGHTY DUCK';
-  const account = isV2 ? '5100207348' : '5100154135';
-  const avatarSrc = isV2 ? 'img/amaterasux.png' : 'img/themightyduck.png';
-  const growth = isV2 ? '+0.00%' : ('+' + Number(cp1.growthPct || 122.55).toFixed(2) + '%');
-  const grossProfitUsc = isV2 ? '0.00 USC' : '+' + (Number(cp1.allTimeProfitUsc || 12254.62)).toLocaleString() + ' USC';
-  const grossProfitUsd = isV2 ? '$0.00 USD' : '+$' + Number(cp1.allTimeProfitUsd || 122.55).toFixed(2) + ' USD';
-  const statusBadge = isV2 ? '💎 FRESH STANDBY (10,000 USC POOL)' : '🛡️ 100% MODAL ASAL SELAMAT DI-WD';
+  let name = 'THE MIGHTY DUCK';
+  let account = '5100154135';
+  let avatarSrc = 'img/themightyduck.png';
+  let growth = '+' + Number(cp1.growthPct || 122.55).toFixed(2) + '%';
+  let grossProfitUsc = '+' + (Number(cp1.allTimeProfitUsc || 12254.62)).toLocaleString() + ' USC';
+  let grossProfitUsd = '+$' + Number(cp1.allTimeProfitUsd || 122.55).toFixed(2) + ' USD';
+  let statusBadge = '🛡️ 100% MODAL ASAL SELAMAT DI-WD';
+  let themeColor = '#00E676';
+  let themeGlow = 'rgba(0, 230, 118, 0.35)';
+  let themeBorder = 'rgba(0, 230, 118, 0.5)';
+  let themeShadow = 'rgba(0, 230, 118, 0.25)';
+  let verifiedBadge = '● MASTER 1 LIVE VERIFIED · CENT';
+  let growthSubtitle = 'ALL-TIME REALIZED GROWTH';
+  let modalWithdrawn = '$100.00 USD (100% WD ✓)';
+  let activeEquityStr = num(cp1.currentEquity || 12254.62) + ' USC ($' + Number((cp1.currentEquity || 12254.62) / 100).toFixed(2) + ' USD)';
+  let winrateStr = (cp1.winRate || 90.4) + '% (Max DD < 5%)';
+  let riskBadge = 'Zero Risk (Post WD)';
+  let minJoin = '$50 - $100 USD';
+  let vpsStatus = 'Dual MT5 Online';
+
+  if (isV2) {
+    name = 'AMATERASU X';
+    account = '5100207348';
+    avatarSrc = 'img/amaterasux.png';
+    const g2 = Number(cp2.growthPct !== undefined ? cp2.growthPct : 0.0);
+    growth = (g2 >= 0 ? '+' : '') + g2.toFixed(2) + '%';
+    const net2 = Number(cp2.allTimeProfitUsc !== undefined ? cp2.allTimeProfitUsc : (cp2.netProfitUsc || 0));
+    grossProfitUsc = (net2 >= 0 ? '+' : '') + num(net2) + ' USC';
+    grossProfitUsd = (net2 >= 0 ? '+$' : '-$') + Number(Math.abs(net2 / 100)).toFixed(2) + ' USD';
+    statusBadge = '💎 FRESH STANDBY (10,000 USC POOL)';
+    themeColor = '#FF3D00';
+    themeGlow = 'rgba(255, 61, 0, 0.35)';
+    themeBorder = 'rgba(255, 61, 0, 0.5)';
+    themeShadow = 'rgba(255, 61, 0, 0.3)';
+    verifiedBadge = '● MASTER 2 FRESH START · CENT';
+    growthSubtitle = 'PRESTASI PERTUMBUHAN (BARU MULA)';
+    modalWithdrawn = '$0.00 USD (Fresh Start)';
+    const eq2 = Number(cp2.currentEquity !== undefined ? cp2.currentEquity : 10000);
+    activeEquityStr = num(eq2) + ' USC ($' + Number(eq2 / 100).toFixed(2) + ' USD)';
+    winrateStr = (cp2.winRate || 100) + '% (Fresh Account)';
+    riskBadge = 'Low Risk · Cent Pool';
+    minJoin = '$50 - $100 USD';
+  } else if (isV3) {
+    name = 'AMATERASU X 2.0';
+    account = '5100209626';
+    avatarSrc = 'img/amaterasux_2.jpg';
+    const g3 = Number(cp3.growthPct !== undefined ? cp3.growthPct : 0.0);
+    growth = (g3 >= 0 ? '+' : '') + g3.toFixed(2) + '%';
+    const net3 = Number(cp3.allTimeProfitUsd !== undefined ? cp3.allTimeProfitUsd : (cp3.netProfitUsd || 0));
+    grossProfitUsc = '$' + Number(cp3.currentBalance || 1000).toFixed(2) + ' USD';
+    grossProfitUsd = (net3 >= 0 ? '+$' : '-$') + Number(Math.abs(net3)).toFixed(2) + ' USD';
+    statusBadge = '👑 $1,000 USD STANDARD POOL';
+    themeColor = '#F5C451';
+    themeGlow = 'rgba(245, 196, 81, 0.4)';
+    themeBorder = 'rgba(245, 196, 81, 0.5)';
+    themeShadow = 'rgba(245, 196, 81, 0.3)';
+    verifiedBadge = '● MASTER 3 STANDARD HIGH-VALUE POOL';
+    growthSubtitle = 'STANDARD USD LIVE PERFORMANCE';
+    modalWithdrawn = '$0.00 USD (Zero Drawdown)';
+    const eq3 = Number(cp3.currentEquity !== undefined ? cp3.currentEquity : 1000);
+    activeEquityStr = '$' + Number(eq3).toFixed(2) + ' USD (Live Equity)';
+    winrateStr = (cp3.winRate || 100) + '% (Standard USD)';
+    riskBadge = 'Standard · Low DD < 4%';
+    minJoin = '$1,000 USD (VIP)';
+  }
 
   // Play sound effect on opening
   if (typeof playChime === 'function') {
     playChime('chaching');
   }
 
+  // Close existing modal if switching tabs
+  const existingModal = document.querySelector('.modal-backdrop');
+  if (existingModal) existingModal.remove();
+
   const m = modal(`
     <div style="text-align:center;">
       <h3 style="display:flex; align-items:center; justify-content:center; gap:8px; font-size:16px; margin-bottom:4px; color:#fff;">
         <span>📸</span> Kad Story PnL Rasmi (9:16 HD Poster)
       </h3>
-      <p class="muted" style="font-size:11.5px; margin-bottom:12px;">Sedia dikongsi ke WhatsApp Status, Telegram Channel & Instagram Story!</p>
+      <p class="muted" style="font-size:11.5px; margin-bottom:10px;">Sedia dikongsi ke WhatsApp Status, Telegram Channel & Instagram Story!</p>
 
-      <div style="max-width:300px; margin:0 auto 12px; border-radius:14px; overflow:hidden; box-shadow:0 12px 36px rgba(0,0,0,0.9), 0 0 25px ${isV2 ? 'rgba(255,61,0,0.3)' : 'rgba(0,230,118,0.25)'}; border:1.5px solid ${isV2 ? 'rgba(255,61,0,0.5)' : 'rgba(0,230,118,0.5)'};">
+      <!-- Vault Selector Tabs Inside Modal -->
+      <div style="display:flex; gap:6px; justify-content:center; margin-bottom:12px;">
+        <button type="button" class="btn-story-tab" onclick="window.openCopytradeStoryModal(1)" style="padding:6px 10px; font-size:10.5px; font-weight:800; border-radius:8px; cursor:pointer; background:${isV1 ? 'rgba(0,230,118,0.25)' : 'rgba(255,255,255,0.06)'}; color:${isV1 ? '#00e676' : '#94a3b8'}; border:1px solid ${isV1 ? '#00e676' : 'rgba(255,255,255,0.1)'}; transition:all 0.2s;">
+          🦆 The Mighty Duck
+        </button>
+        <button type="button" class="btn-story-tab" onclick="window.openCopytradeStoryModal(2)" style="padding:6px 10px; font-size:10.5px; font-weight:800; border-radius:8px; cursor:pointer; background:${isV2 ? 'rgba(255,61,0,0.25)' : 'rgba(255,255,255,0.06)'}; color:${isV2 ? '#ff6e40' : '#94a3b8'}; border:1px solid ${isV2 ? '#ff3d00' : 'rgba(255,255,255,0.1)'}; transition:all 0.2s;">
+          🔥 Amaterasu X
+        </button>
+        <button type="button" class="btn-story-tab" onclick="window.openCopytradeStoryModal(3)" style="padding:6px 10px; font-size:10.5px; font-weight:800; border-radius:8px; cursor:pointer; background:${isV3 ? 'rgba(245,196,81,0.25)' : 'rgba(255,255,255,0.06)'}; color:${isV3 ? '#f5c451' : '#94a3b8'}; border:1px solid ${isV3 ? '#f5c451' : 'rgba(255,255,255,0.1)'}; transition:all 0.2s;">
+          👑 Amaterasu X 2.0
+        </button>
+      </div>
+
+      <div style="max-width:300px; margin:0 auto 12px; border-radius:14px; overflow:hidden; box-shadow:0 12px 36px rgba(0,0,0,0.9), 0 0 25px ${themeShadow}; border:1.5px solid ${themeBorder};">
         <canvas id="cpStoryCanvas" width="720" height="1280" style="width:100%; height:auto; display:block;"></canvas>
       </div>
 
@@ -870,8 +951,8 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
 
     // Radial Neon Ambient Glow
     const bgGrad = ctx.createRadialGradient(w / 2, 220, 40, w / 2, 220, 500);
-    bgGrad.addColorStop(0, isV2 ? 'rgba(255, 61, 0, 0.35)' : 'rgba(0, 230, 118, 0.32)');
-    bgGrad.addColorStop(0.6, isV2 ? 'rgba(255, 61, 0, 0.08)' : 'rgba(0, 230, 118, 0.08)');
+    bgGrad.addColorStop(0, themeGlow);
+    bgGrad.addColorStop(0.6, isV3 ? 'rgba(245, 196, 81, 0.1)' : isV2 ? 'rgba(255, 61, 0, 0.08)' : 'rgba(0, 230, 118, 0.08)');
     bgGrad.addColorStop(1, 'rgba(6, 10, 16, 0)');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, w, h);
@@ -892,7 +973,7 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
     ctx.font = '900 36px Montserrat, sans-serif';
     ctx.fillText('AMATERASU X', w / 2, 85);
 
-    ctx.fillStyle = isV2 ? '#FF6E40' : '#00E676';
+    ctx.fillStyle = themeColor;
     ctx.font = '800 15px Montserrat, sans-serif';
     ctx.fillText('OFFICIAL COPYTRADE PERFORMANCE · MT5 CLUSTER', w / 2, 115);
 
@@ -916,8 +997,8 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
 
       ctx.beginPath();
       ctx.arc(avX, avY, avR + 6, 0, Math.PI * 2);
-      ctx.fillStyle = isV2 ? '#FF3D00' : '#00E676';
-      ctx.shadowColor = isV2 ? 'rgba(255,61,0,0.8)' : 'rgba(0,230,118,0.8)';
+      ctx.fillStyle = themeColor;
+      ctx.shadowColor = themeColor;
       ctx.shadowBlur = 24;
       ctx.fill();
       ctx.shadowBlur = 0;
@@ -933,7 +1014,7 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
         ctx.fillRect(avX - avR, avY - avR, avR * 2, avR * 2);
         ctx.fillStyle = '#FFF';
         ctx.font = 'bold 36px sans-serif';
-        ctx.fillText(isV2 ? '🔥' : '🦆', avX, avY + 12);
+        ctx.fillText(isV3 ? '👑' : isV2 ? '🔥' : '🦆', avX, avY + 12);
       }
       ctx.restore();
 
@@ -948,47 +1029,47 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
       ctx.fillText('MASTER LIVE #' + account + ' · VERSUS TRADE LTD', w / 2, 350);
 
       // Verified Badge Pill
-      ctx.fillStyle = isV2 ? 'rgba(255,61,0,0.18)' : 'rgba(0,230,118,0.18)';
-      ctx.strokeStyle = isV2 ? '#FF3D00' : '#00E676';
+      ctx.fillStyle = isV3 ? 'rgba(245,196,81,0.18)' : isV2 ? 'rgba(255,61,0,0.18)' : 'rgba(0,230,118,0.18)';
+      ctx.strokeStyle = themeColor;
       ctx.lineWidth = 2;
       roundRect(ctx, w / 2 - 160, 375, 320, 36, 18, true, true);
-      ctx.fillStyle = isV2 ? '#FF6E40' : '#00E676';
+      ctx.fillStyle = themeColor;
       ctx.font = '800 13px Montserrat, sans-serif';
-      ctx.fillText(isV2 ? '● MASTER 2 FRESH START' : '● MASTER 1 LIVE VERIFIED', w / 2, 398);
+      ctx.fillText(verifiedBadge, w / 2, 398);
 
       // Giant PnL Box
       ctx.fillStyle = '#0B121E';
-      ctx.strokeStyle = isV2 ? 'rgba(255,61,0,0.4)' : 'rgba(0,230,118,0.4)';
+      ctx.strokeStyle = themeBorder;
       ctx.lineWidth = 2;
       roundRect(ctx, 50, 440, w - 100, 380, 20, true, true);
 
       // Growth Percentage Giant
-      ctx.fillStyle = isV2 ? '#F5C451' : '#00E676';
+      ctx.fillStyle = themeColor;
       ctx.font = '900 84px Montserrat, sans-serif';
-      ctx.shadowColor = isV2 ? 'rgba(245,196,81,0.5)' : 'rgba(0,230,118,0.5)';
+      ctx.shadowColor = themeColor;
       ctx.shadowBlur = 20;
       ctx.fillText(growth, w / 2, 545);
       ctx.shadowBlur = 0;
 
       ctx.fillStyle = '#94A3B8';
       ctx.font = '700 14px Montserrat, sans-serif';
-      ctx.fillText(isV2 ? 'PRESTASI PERTUMBUHAN (BARU MULA)' : 'ALL-TIME REALIZED GROWTH', w / 2, 580);
+      ctx.fillText(growthSubtitle, w / 2, 580);
 
       // Status Pill
-      ctx.fillStyle = isV2 ? 'rgba(255,61,0,0.2)' : 'rgba(245,196,81,0.2)';
-      ctx.strokeStyle = isV2 ? '#FF3D00' : '#F5C451';
+      ctx.fillStyle = isV3 ? 'rgba(245,196,81,0.2)' : isV2 ? 'rgba(255,61,0,0.2)' : 'rgba(245,196,81,0.2)';
+      ctx.strokeStyle = isV3 ? '#F5C451' : isV2 ? '#FF3D00' : '#F5C451';
       ctx.lineWidth = 1.5;
       roundRect(ctx, 80, 610, w - 160, 52, 12, true, true);
-      ctx.fillStyle = isV2 ? '#FF6E40' : '#F5C451';
+      ctx.fillStyle = isV3 ? '#F5C451' : isV2 ? '#FF6E40' : '#F5C451';
       ctx.font = '800 15px Montserrat, sans-serif';
       ctx.fillText(statusBadge, w / 2, 642);
 
       // Profit Breakdown Rows
       const stats = [
-        { label: 'UNTUNG KASAR TERKUMPUL:', val: grossProfitUsc + ' (' + grossProfitUsd + ')' },
-        { label: 'MODAL ASAL DIKELUARKAN:', val: isV2 ? '$0.00 USD' : '$100.00 USD (100% WD ✓)' },
-        { label: 'BAKI EKUITI TERKINI:', val: isV2 ? (num(cp2.currentEquity || 10000) + ' USC ($' + Number((cp2.currentEquity || 10000) / 100).toFixed(2) + ' USD)') : (num(cp1.currentEquity || 12254.62) + ' USC ($' + Number((cp1.currentEquity || 12254.62) / 100).toFixed(2) + ' USD)') },
-        { label: 'KADAR KEMENANGAN (WINRATE):', val: isV2 ? '100% (Fresh)' : '90.4% (Max DD < 5%)' },
+        { label: 'UNTUNG KASAR TERKUMPUL:', val: isV3 ? grossProfitUsd : grossProfitUsc + ' (' + grossProfitUsd + ')' },
+        { label: 'MODAL ASAL DIKELUARKAN:', val: modalWithdrawn },
+        { label: 'BAKI EKUITI TERKINI:', val: activeEquityStr },
+        { label: 'KADAR KEMENANGAN (WINRATE):', val: winrateStr },
       ];
 
       stats.forEach((st, idx) => {
@@ -1007,9 +1088,9 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
       // 4-Box Grid Below Main Card
       const boxes = [
         { label: 'STRATEGI', val: 'SMC + Malaysian SNR' },
-        { label: 'RISIKO', val: isV2 ? 'Low Risk · Cent' : 'Zero Risk (Post WD)' },
-        { label: 'VPS STATUS', val: 'Dual MT5 Online' },
-        { label: 'SERTAI MIN', val: '$50 - $100 USD' }
+        { label: 'RISIKO', val: riskBadge },
+        { label: 'VPS STATUS', val: vpsStatus },
+        { label: 'SERTAI MIN', val: minJoin }
       ];
 
       boxes.forEach((b, idx) => {
@@ -1030,7 +1111,7 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
         ctx.font = '600 11px Montserrat, sans-serif';
         ctx.fillText(b.label, bx + bw / 2, by + 26);
 
-        ctx.fillStyle = '#00E676';
+        ctx.fillStyle = themeColor;
         ctx.font = '800 14px Montserrat, sans-serif';
         ctx.fillText(b.val, bx + bw / 2, by + 52);
       });
@@ -1050,7 +1131,7 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
       ctx.fillText('"Precision Signals. Smarter Decisions. Your Trading Edge."', w / 2, 1135);
 
       // Border outline around entire poster
-      ctx.strokeStyle = isV2 ? 'rgba(255,61,0,0.6)' : 'rgba(0,230,118,0.6)';
+      ctx.strokeStyle = themeBorder;
       ctx.lineWidth = 5;
       ctx.strokeRect(3, 3, w - 6, h - 6);
     }
@@ -1072,7 +1153,7 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
   const copyBtn = document.getElementById('btnCopyStoryText');
   if (copyBtn) {
     copyBtn.onclick = () => {
-      const text = `👁️ AMATERASU X · OFFICIAL COPYTRADE REPORT\n━━━━━━━━━━━━━━━━━━━━━\n🏆 Master: ${name} (#${account})\n📈 Growth: ${growth}\n💰 Gross Profit: ${grossProfitUsc} (${grossProfitUsd})\n${statusBadge}\n🛡️ Strategy: Institutional SMC Scalp\n━━━━━━━━━━━━━━━━━━━━━\n🚀 Sertai sekarang: https://amaterasux.onrender.com\n🔥 Precision Signals. Smarter Decisions. Your Trading Edge.`;
+      const text = `👁️ AMATERASU X · OFFICIAL COPYTRADE REPORT\n━━━━━━━━━━━━━━━━━━━━━\n🏆 Master: ${name} (#${account})\n📈 Growth: ${growth}\n💰 Gross Profit: ${isV3 ? grossProfitUsd : grossProfitUsc + ' (' + grossProfitUsd + ')'}\n${statusBadge}\n🛡️ Strategy: Institutional SMC Scalp\n━━━━━━━━━━━━━━━━━━━━━\n🚀 Sertai sekarang: https://amaterasux.onrender.com\n🔥 Precision Signals. Smarter Decisions. Your Trading Edge.`;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(text);
         toast('📋 Teks ringkasan VIP disalin ke clipboard!');

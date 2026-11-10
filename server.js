@@ -744,6 +744,9 @@ const server = http.createServer(async (req, res) => {
       ibs: db.ibs || [],
       traders: (db.traders || []).map(formatTraderData),
       copytrade: db.copytrade || null,
+      copytrade2: db.copytrade2 || null,
+      copytrade3: db.copytrade3 || null,
+      copytrades: db.copytrades || [db.copytrade, db.copytrade2, db.copytrade3].filter(Boolean),
       marketBrain: db.marketBrain || AiEngine.updateMarketBrain()
     })}\n\n`);
 
