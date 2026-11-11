@@ -73,7 +73,8 @@ DEFAULT_CONFIG = {
     "custom_symbol_map": {
         "WTI": "USOIL",
         "BTCUSD": "BTCUSD"
-    }
+    },
+    "enable_smc_sweep_reentry": True
 }
 
 def load_config():
@@ -1252,6 +1253,196 @@ class AmaterasuBridge:
                         if sym:
                             self.apply_breakeven_for_symbol(sym, s)
 
+    def check_and_execute_liquidity_sweep_reentry(self, all_pos):
+        """
+        MODUL TAMBAHAN: SMC LIQUIDITY SWEEP & RECOVERY SNIPER
+        Mengesan fakeout / liquidity sweep di mana pasaran membuat lonjakan sementara 
+        (meragut kecairan / liquidity grab) sebelum berundur kembali.
+        Bila dikesan dengan pengesahan penolakan jarum (M5 Rejection Wick >= 35%),
+        bot membuka 1 sniper layer tambahan pada pucuk jarum untuk memaksimumkan keuntungan dan membalikkan kerugian.
+        """
+        if not self.config.get("enable_smc_sweep_reentry", True):
+            return
+
+        if not hasattr(self, "last_sweep_reentry_time"):
+            self.last_sweep_reentry_time = {}
+
+        now_t = time.time()
+        
+        # Kumpulkan posisi aktif mengikut simbol
+        by_symbol = {}
+        for p in all_pos:
+            if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")):
+                sym = p.symbol
+                if sym not in by_symbol:
+                    by_symbol[sym] = []
+                by_symbol[sym].append(p)
+
+        for sym, pos_list in by_symbol.items():
+            # SYARAT 1: Had Keras Maksimum 1 Sweep Layer sahaja per setup (Elak Martingale)
+            has_sweep_layer = any("Sweep" in str(p.comment or "") for p in pos_list)
+            if has_sweep_layer:
+                continue
+
+            # Maksimum jumlah posisi bagi simbol ini tidak melebihi 4
+            if len(pos_list) >= 4:
+                continue
+
+            # Semak cooldown bagi simbol ini (sekurang-kurangnya 10 minit antara sweep layer)
+            if (now_t - self.last_sweep_reentry_time.get(sym, 0)) < 600:
+                continue
+
+            # Tentukan arah konsensus posisi sedia ada
+            is_buy = any(p.type == mt5.POSITION_TYPE_BUY for p in pos_list)
+            is_sell = any(p.type == mt5.POSITION_TYPE_SELL for p in pos_list)
+            if is_buy and is_sell:
+                continue # Mengelak konflik jika ada hedging
+
+            sym_upper = sym.upper()
+            is_gold = ("XAU" in sym_upper or "GOLD" in sym_upper)
+            clean_raw_sym = sym.split('.')[0].upper()
+
+            # Semak harga semasa broker
+            tick = mt5.symbol_info_tick(sym)
+            if not tick:
+                continue
+
+            # Kira purata harga kemasukan (average entry)
+            avg_entry = sum(p.price_open for p in pos_list) / len(pos_list)
+            
+            # Kira jarak pergerakan melawan arah (adverse pips)
+            pip_size = 0.10 if is_gold else (0.01 if "JPY" in sym_upper else 0.0001)
+            
+            if is_sell:
+                # Untuk SELL, pasaran melonjak naik (fakeout ke atas)
+                adverse_dist = tick.bid - avg_entry
+                adverse_pips = adverse_dist / pip_size
+                min_sweep_pips = 28.0 if is_gold else 15.0
+                max_sweep_pips = 55.0 if is_gold else 24.0
+            else:
+                # Untuk BUY, pasaran merudum turun (fakeout ke bawah)
+                adverse_dist = avg_entry - tick.ask
+                adverse_pips = adverse_dist / pip_size
+                min_sweep_pips = 28.0 if is_gold else 15.0
+                max_sweep_pips = 55.0 if is_gold else 24.0
+
+            # Pastikan harga berada dalam Zon Sweep (sebelum terkena SL)
+            if adverse_pips < min_sweep_pips or adverse_pips > max_sweep_pips:
+                continue
+
+            # SYARAT 2: PENGESAHAN JARUM LILIN (M5 REJECTION WICK CONFIRMATION)
+            mt5.symbol_select(sym, True)
+            rates_m5 = mt5.copy_rates_from_pos(sym, mt5.TIMEFRAME_M5, 0, 2)
+            if rates_m5 is None or len(rates_m5) < 2:
+                continue
+
+            latest_m5 = rates_m5[-1]
+            h = float(latest_m5['high'])
+            l = float(latest_m5['low'])
+            o = float(latest_m5['open'])
+            c = float(latest_m5['close'])
+            tot_range = max(h - l, pip_size)
+
+            wick_confirmed = False
+            sweep_peak = 0.0
+
+            if is_sell:
+                # Pasaran terbang ke atas tetapi meninggalkan jarum atas panjang (Upper Wick Rejection)
+                upper_wick = h - max(o, c)
+                wick_ratio = upper_wick / tot_range
+                # Jarum atas sekurang-kurangnya 35% daripada julat lilin dan harga semasa sudah mula turun dari puncak
+                if wick_ratio >= 0.35 and tick.bid <= (h - 0.10 * tot_range):
+                    wick_confirmed = True
+                    sweep_peak = h
+            else:
+                # Pasaran terjun ke bawah tetapi meninggalkan jarum bawah panjang (Lower Wick Absorption)
+                lower_wick = min(o, c) - l
+                wick_ratio = lower_wick / tot_range
+                # Jarum bawah sekurang-kurangnya 35% daripada julat lilin dan harga semasa sudah mula lantun dari dasar
+                if wick_ratio >= 0.35 and tick.ask >= (l + 0.10 * tot_range):
+                    wick_confirmed = True
+                    sweep_peak = l
+
+            if not wick_confirmed:
+                continue
+
+            # SYARAT 3: PERLINDUNGAN RISIKO & SAIS LOT
+            exec_lot = self.lot_size
+            custom_lots = self.config.get("custom_lot_map", {})
+            for c_sym, c_lot in custom_lots.items():
+                if c_sym.upper() in sym.upper():
+                    exec_lot = float(c_lot)
+                    break
+
+            sym_info = mt5.symbol_info(sym)
+            if not sym_info:
+                continue
+            digits = sym_info.digits
+
+            # Tentukan SL dan TP bagi Sniper Layer:
+            # SL diletakkan 18 pips melepasi puncak jarum sweep (structural safety)
+            # TP disasarkan kembali ke paras TP1 atau entry asal (Risk-Reward gergasi 1:2 hingga 1:3!)
+            sl_buffer = 1.8 if is_gold else (0.0018 if "JPY" not in sym_upper else 0.18)
+            tp_target_price = pos_list[0].tp if pos_list[0].tp > 0 else avg_entry
+
+            if is_sell:
+                sniper_order_type = mt5.ORDER_TYPE_SELL
+                sniper_price = tick.bid
+                sniper_sl = round(sweep_peak + sl_buffer, digits)
+                sniper_tp = round(tp_target_price, digits)
+            else:
+                sniper_order_type = mt5.ORDER_TYPE_BUY
+                sniper_price = tick.ask
+                sniper_sl = round(sweep_peak - sl_buffer, digits)
+                sniper_tp = round(tp_target_price, digits)
+
+            filling = self.get_fill_type(sym, sniper_order_type, sniper_price)
+            sniper_request = {
+                "action": mt5.TRADE_ACTION_DEAL,
+                "symbol": sym,
+                "volume": exec_lot,
+                "type": sniper_order_type,
+                "price": round(sniper_price, digits),
+                "sl": sniper_sl,
+                "tp": sniper_tp,
+                "deviation": int(self.max_slippage_pips * 10),
+                "magic": self.magic_number,
+                "comment": "AmaterasuX-SweepReentry",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": filling,
+            }
+
+            res = None
+            for candidate_fill in [filling, mt5.ORDER_FILLING_FOK, mt5.ORDER_FILLING_RETURN, mt5.ORDER_FILLING_IOC]:
+                sniper_request["type_filling"] = candidate_fill
+                res = mt5.order_send(sniper_request)
+                if res and res.retcode == mt5.TRADE_RETCODE_DONE:
+                    break
+                if not res or res.retcode != 10030:
+                    break
+
+            if res and res.retcode == mt5.TRADE_RETCODE_DONE:
+                self.last_sweep_reentry_time[sym] = now_t
+                action_str = "SELL" if is_sell else "BUY"
+                print(f"\n{Colors.GREEN}{Colors.BOLD}🎯 [SMC LIQUIDITY SWEEP SNIPER ACTIVATED!] #{clean_raw_sym} {action_str} {exec_lot} lot @ {res.price:.{digits}f}!{Colors.RESET}")
+                print(f"   Fakeout dikesan (+{adverse_pips:.1f}p) | M5 Rejection Wick: {wick_ratio*100:.1f}% | SL: {sniper_sl:.{digits}f} | TP: {sniper_tp:.{digits}f}")
+                print(f"   {Colors.CYAN}Posisi Sniper berjaya dibuka pada harga diskaun/pucuk terbaik bagi membalikkan floating merah ke pesta profit!{Colors.RESET}\n")
+
+                # SELARASKAN SL SEMUA LAYER SEDIA ADA KE PARAS SL STRUKTURAL SWEEP (UNIFIED SL)
+                for ep in pos_list:
+                    if ep.ticket != res.order:
+                        mod_req = {
+                            "action": mt5.TRADE_ACTION_SLTP,
+                            "position": ep.ticket,
+                            "symbol": ep.symbol,
+                            "sl": sniper_sl,
+                            "tp": round(ep.tp, digits),
+                        }
+                        mt5.order_send(mod_req)
+            else:
+                err = res.retcode if res else mt5.last_error()
+                print(f"{Colors.YELLOW}[SWEEP REENTRY NOTA] Gagal buka sniper layer #{sym}: {err}{Colors.RESET}")
+
     def breakeven_guardian_loop(self):
         """Guardian berterusan setiap 2.5 saat memeriksa tiket MT5 untuk kunci BE serta-merta apabila TP1 dicapai"""
         urls = [self.server_url]
@@ -1293,6 +1484,9 @@ class AmaterasuBridge:
                                 now_myt = datetime.now(timezone(timedelta(hours=8)))
                                 if now_myt.hour == 20 and 15 <= now_myt.minute <= 29:
                                     self.close_position_market(p, "Pre-News 20:15 Cutoff")
+
+                    # MODUL TAMBAHAN: SMC LIQUIDITY SWEEP & RECOVERY SNIPER
+                    self.check_and_execute_liquidity_sweep_reentry(all_pos)
 
             except Exception:
                 pass
