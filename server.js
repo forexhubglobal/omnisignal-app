@@ -3364,8 +3364,7 @@ const AiEngine = {
         !activePendingSymbols.has(a.symbol) &&
         (!this.assetCooldowns[a.symbol] || nowMs > this.assetCooldowns[a.symbol])
       );
-      if (availableAssets.length > 0) {
-        const targetAsset = availableAssets[Math.floor(Math.random() * availableAssets.length)];
+      for (const targetAsset of availableAssets) {
         this.fireAutonomousSignal(db, targetAsset);
       }
     }

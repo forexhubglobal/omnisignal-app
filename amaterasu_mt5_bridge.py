@@ -576,24 +576,14 @@ class AmaterasuBridge:
         digits = sym_info.digits
         point = sym_info.point
 
-        # 3. SMC PULLBACK & ANTI-CHASING GUARD (NO BUYING AT PUCUK / NO SELLING AT LANTAI)
-        # Menghalang kemasukan BUY di zon puncak atau SELL di zon dasar. Wajib tunggu pullback!
+        # 3. Telemetry & Structure Observation (Brain Server handles institutional SMC filtration)
         rates_m15 = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M15, 0, 16)
         if rates_m15 is not None and len(rates_m15) >= 8:
             recent_high = max(float(r['high']) for r in rates_m15)
             recent_low = min(float(r['low']) for r in rates_m15)
-            rng = recent_high - recent_low
-            min_rng = 4.0 if clean_raw_sym == "XAUUSD" else 0.0020
-            if rng >= min_rng:
-                pos_ratio = (price - recent_low) / rng
-                # BUY: Dilarang sama sekali jika harga berada melebihi 45% julat M15 (Zon Pucuk/Tengah)
-                if is_buy and pos_ratio > 0.45:
-                    print(f"{Colors.RED}🛑 [SMC PULLBACK GUARD DITOLAK] Order BUY #{clean_raw_sym} disekat! Harga di zon PUCUK / RINTANGAN ({price:.2f}, {pos_ratio*100:.1f}% julat M15). Wajib tunggu pullback ke zon diskaun/lantai (<= 45%) sebelum masuk BUY!{Colors.RESET}")
-                    return None
-                # SELL: Dilarang sama sekali jika harga berada di bawah 55% julat M15 (Zon Lantai/Tengah)
-                elif not is_buy and pos_ratio < 0.55:
-                    print(f"{Colors.RED}🛑 [SMC PULLBACK GUARD DITOLAK] Order SELL #{clean_raw_sym} disekat! Harga di zon LANTAI / SOKONGAN ({price:.2f}, {pos_ratio*100:.1f}% julat M15). Wajib tunggu pullback ke zon premium/bumbung (>= 55%) sebelum masuk SELL!{Colors.RESET}")
-                    return None
+            rng = max(recent_high - recent_low, 0.001)
+            pos_ratio = (price - recent_low) / rng
+            print(f"{Colors.CYAN}🎯 [SMC POSITION RATIO] #{clean_raw_sym} Range: {rng:.2f} | Pos Ratio: {pos_ratio*100:.1f}% | Mode: Brain-Dispatched Execution{Colors.RESET}")
 
 
 
@@ -665,8 +655,8 @@ class AmaterasuBridge:
             sl = round(price + sl_dist, digits)
 
         # STRICT ANTI-CHASING PUCUK/LANTAI GUARD:
-        # Penampan fleksibel: Emas ($4,040+) diberi ruang 15 pip ($1.50) waktu lonjakan news/volatiliti
-        allowed_slip_pips = 15.0 if clean_raw_sym == "XAUUSD" else max(self.max_slippage_pips, 8.0)
+        # Penampan fleksibel: Emas ($4,040+) diberi ruang 45 pip ($4.50) waktu lonjakan pasaran & internet latency
+        allowed_slip_pips = 45.0 if clean_raw_sym == "XAUUSD" else max(float(self.max_slippage_pips), 15.0)
         max_slip_dist = (allowed_slip_pips * 10 * point)
         if is_buy and price > (signal_entry + max_slip_dist):
             slip_pips = (price - signal_entry) / (10 * point)
