@@ -9,7 +9,7 @@ taskkill /F /FI "WINDOWTITLE eq *Bridge*" /T 2>$null
 Start-Sleep -Seconds 1
 
 Write-Host "2. Memuat turun versi bridge terkini..." -ForegroundColor Cyan
-$cleanBridgeUrl = "https://matt-snowboard-iron-sorts.trycloudflare.com/amaterasu_mt5_bridge.py"
+$cleanBridgeUrl = "https://amaterasux.com/amaterasu_mt5_bridge.py"
 $githubRawUrl = "https://raw.githubusercontent.com/forexhubglobal/omnisignal-app/main/amaterasu_mt5_bridge.py"
 $tempPy = "$env:TEMP\amaterasu_mt5_bridge.py"
 
@@ -34,7 +34,7 @@ if ($LASTEXITCODE -eq 0 -and (Test-Path $tempPy) -and ((Get-Item $tempPy).Length
 Write-Host "3. Memastikan konfigurasi pelayan menuju ke Cloudflare..." -ForegroundColor Cyan
 python -c "
 import json, os
-url = 'https://matt-snowboard-iron-sorts.trycloudflare.com'
+url = 'https://amaterasux.com'
 for p in ['C:/AmaterasuX/bridge_config.json', 'C:/AmaterasuX_Acc2/bridge_config.json', 'C:/AmaterasuX_Acc3/bridge_config.json']:
     if os.path.exists(p):
         with open(p, 'r', encoding='utf-8') as f:
