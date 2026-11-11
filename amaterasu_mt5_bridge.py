@@ -627,16 +627,25 @@ class AmaterasuBridge:
         raw_tp = float(signal.get("tp3" if tp_target == 3 else ("tp2" if tp_target == 2 else "tp1"), 0.0))
         raw_sl = float(signal.get("sl", 0.0))
 
-        # DYNAMIC FLOATING ATR ENGINE:
-        # Menyelaras TP dan SL mengikut volatiliti sebenar purata 14 lilin M15 pasaran secara automatik
-        use_dyn_atr = self.config.get("dynamic_floating_atr", True)
-        live_atr = self.get_m15_atr(symbol, 14) if use_dyn_atr else None
-
-        if live_atr and live_atr > 0:
+        # SPREAD-AWARE CALIBRATED TP & SL:
+        # Gunakan sasaran tepat signal pelayan dengan penampan spread (Cent & Standard)
+        if raw_tp > 0 and raw_sl > 0:
+            tp_dist = abs(raw_tp - signal_entry)
+            sl_dist = abs(raw_sl - signal_entry)
+            # Penampan keselamatan mengelak 'Invalid Stops' atau disapu spread broker (XAU 4.4p, EUR 2.8p, CHF 1.8p)
+            if clean_raw_sym == "XAUUSD":
+                sl_dist = min(max(sl_dist, 3.5), 5.2) # Minimum 35 pips ($3.50) untuk elak spread 4.4p
+                tp_dist = max(tp_dist, 2.5) # Minimum TP1 25 pips ($2.50)
+            else:
+                is_jpy = "JPY" in clean_raw_sym
+                min_fx_sl = 0.0014 if not is_jpy else 0.14
+                min_fx_tp = 0.0015 if not is_jpy else 0.15
+                sl_dist = min(max(sl_dist, min_fx_sl), 0.0025 if not is_jpy else 0.25)
+                tp_dist = max(tp_dist, min_fx_tp)
+        elif live_atr and live_atr > 0:
             if clean_raw_sym == "XAUUSD":
                 # Gold Tight & Protected Risk Model (Gaya Bulan Lepas - The Mighty Duck):
-                # Hadkan SL Gold ketat antara 4.8 hingga 5.2 mata (48 - 52 pips sahaja)
-                sl_dist = min(max(1.0 * live_atr, 4.8), 5.2)
+                sl_dist = min(max(1.0 * live_atr, 3.5), 5.2)
                 if tp_target == 3:
                     tp_dist = max(2.5 * live_atr, 18.0)
                 elif tp_target == 2:
@@ -646,10 +655,10 @@ class AmaterasuBridge:
                 print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr:.2f} mata | SL: {sl_dist:.2f} | TP{tp_target}: {tp_dist:.2f} mata (Autonomi Pasaran){Colors.RESET}")
             else:
                 # Forex (USDCAD, USDJPY, USDCHF, EURUSD) - Gaya Bulan Lepas:
-                min_forex_sl = 0.0018 if "JPY" not in clean_raw_sym else 0.18
-                min_forex_tp1 = 0.0020 if "JPY" not in clean_raw_sym else 0.20
-                min_forex_tp2 = 0.0040 if "JPY" not in clean_raw_sym else 0.40
-                min_forex_tp3 = 0.0065 if "JPY" not in clean_raw_sym else 0.65
+                min_forex_sl = 0.0015 if "JPY" not in clean_raw_sym else 0.15
+                min_forex_tp1 = 0.0016 if "JPY" not in clean_raw_sym else 0.16
+                min_forex_tp2 = 0.0032 if "JPY" not in clean_raw_sym else 0.32
+                min_forex_tp3 = 0.0052 if "JPY" not in clean_raw_sym else 0.52
                 
                 sl_dist = min(max(2.0 * live_atr, min_forex_sl), 0.0022 if "JPY" not in clean_raw_sym else 0.22)
                 if tp_target == 3:
@@ -665,11 +674,11 @@ class AmaterasuBridge:
             # Fallback jika ATR tidak aktif / gagal dibaca (Gaya Bulan Lepas)
             if clean_raw_sym == "XAUUSD":
                 tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (18.0 if tp_target == 3 else (10.0 if tp_target == 2 else 5.0))
-                sl_dist = min(max(abs(raw_sl - signal_entry), 4.8), 5.2) if raw_sl > 0 else 5.0
+                sl_dist = min(max(abs(raw_sl - signal_entry), 3.5), 5.2) if raw_sl > 0 else 3.8
             else:
                 is_jpy = "JPY" in clean_raw_sym
-                tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else ((0.0065 if not is_jpy else 0.65) if tp_target == 3 else ((0.0040 if not is_jpy else 0.40) if tp_target == 2 else (0.0020 if not is_jpy else 0.20)))
-                sl_dist = min(max(abs(raw_sl - signal_entry), 0.0018 if not is_jpy else 0.18), 0.0022 if not is_jpy else 0.22) if raw_sl > 0 else (0.0020 if not is_jpy else 0.20)
+                tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else ((0.0052 if not is_jpy else 0.52) if tp_target == 3 else ((0.0032 if not is_jpy else 0.32) if tp_target == 2 else (0.0016 if not is_jpy else 0.16)))
+                sl_dist = min(max(abs(raw_sl - signal_entry), 0.0015 if not is_jpy else 0.15), 0.0022 if not is_jpy else 0.22) if raw_sl > 0 else (0.0016 if not is_jpy else 0.16)
 
         # Gunakan jarak relatif dari harga kemasukan sebenar (Market Price)
         # Ini mengelakkan ralat 'Invalid Stops' jika harga sudah bergerak
