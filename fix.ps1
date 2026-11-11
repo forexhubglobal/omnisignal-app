@@ -39,6 +39,8 @@ foreach ($dir in @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3'))
             $rawJson = [System.IO.File]::ReadAllText($cfgFile, [System.Text.Encoding]::UTF8)
             $json = $rawJson | ConvertFrom-Json
             $json.server_url = $cfUrl
+            $json.max_concurrent_pairs = 4
+            $json.max_account_lots = 3.0
             $outJson = $json | ConvertTo-Json -Depth 5
             [System.IO.File]::WriteAllText($cfgFile, $outJson, (New-Object System.Text.UTF8Encoding($false)))
         } catch {
