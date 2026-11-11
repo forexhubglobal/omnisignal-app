@@ -627,25 +627,25 @@ class AmaterasuBridge:
         raw_tp = float(signal.get("tp3" if tp_target == 3 else ("tp2" if tp_target == 2 else "tp1"), 0.0))
         raw_sl = float(signal.get("sl", 0.0))
 
-        # SPREAD-AWARE CALIBRATED TP & SL:
+        # SPREAD-AWARE CALIBRATED TP & SL (INSTITUTIONAL PROTECTED MODEL):
         # Gunakan sasaran tepat signal pelayan dengan penampan spread (Cent & Standard)
         if raw_tp > 0 and raw_sl > 0:
             tp_dist = abs(raw_tp - signal_entry)
             sl_dist = abs(raw_sl - signal_entry)
-            # Penampan keselamatan mengelak 'Invalid Stops' atau disapu spread broker (XAU 4.4p, EUR 2.8p, CHF 1.8p)
+            # Penampan keselamatan diperluas mengelak disapu wick atau spread broker (XAU 68-78p, EUR 28-32p, CHF 28-32p)
             if clean_raw_sym == "XAUUSD":
-                sl_dist = min(max(sl_dist, 4.8), 5.5) # Minimum 48 pips ($4.80) untuk menampung pasaran Gold $4,040+
-                tp_dist = max(tp_dist, 3.2) # Minimum TP1 32 pips ($3.20)
+                sl_dist = min(max(sl_dist, 6.8), 7.8) # 68 hingga 78 pips ($6.80 - $7.80)
+                tp_dist = max(tp_dist, 3.5) # Minimum TP1 35 pips ($3.50)
             else:
                 is_jpy = "JPY" in clean_raw_sym
-                min_fx_sl = 0.0018 if not is_jpy else 0.18
-                min_fx_tp = 0.0018 if not is_jpy else 0.18
-                sl_dist = min(max(sl_dist, min_fx_sl), 0.0025 if not is_jpy else 0.25)
+                min_fx_sl = 0.0028 if not is_jpy else 0.28
+                min_fx_tp = 0.0020 if not is_jpy else 0.20
+                sl_dist = min(max(sl_dist, min_fx_sl), 0.0032 if not is_jpy else 0.32)
                 tp_dist = max(tp_dist, min_fx_tp)
         elif live_atr and live_atr > 0:
             if clean_raw_sym == "XAUUSD":
-                # Gold Tight & Protected Risk Model (Gaya Bulan Lepas - The Mighty Duck):
-                sl_dist = min(max(1.0 * live_atr, 3.5), 5.2)
+                # Gold Protected Risk Model (3x M15 ATR Cushion):
+                sl_dist = min(max(1.2 * live_atr, 6.8), 7.8)
                 if tp_target == 3:
                     tp_dist = max(2.5 * live_atr, 18.0)
                 elif tp_target == 2:
@@ -654,13 +654,13 @@ class AmaterasuBridge:
                     tp_dist = max(0.8 * live_atr, 5.0)
                 print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr:.2f} mata | SL: {sl_dist:.2f} | TP{tp_target}: {tp_dist:.2f} mata (Autonomi Pasaran){Colors.RESET}")
             else:
-                # Forex (USDCAD, USDJPY, USDCHF, EURUSD) - Gaya Bulan Lepas:
-                min_forex_sl = 0.0015 if "JPY" not in clean_raw_sym else 0.15
-                min_forex_tp1 = 0.0016 if "JPY" not in clean_raw_sym else 0.16
-                min_forex_tp2 = 0.0032 if "JPY" not in clean_raw_sym else 0.32
-                min_forex_tp3 = 0.0052 if "JPY" not in clean_raw_sym else 0.52
+                # Forex (EURUSD, USDCHF, USDCAD, USDJPY) - Penampan Luas 28 - 32 Pips:
+                min_forex_sl = 0.0028 if "JPY" not in clean_raw_sym else 0.28
+                min_forex_tp1 = 0.0020 if "JPY" not in clean_raw_sym else 0.20
+                min_forex_tp2 = 0.0042 if "JPY" not in clean_raw_sym else 0.42
+                min_forex_tp3 = 0.0070 if "JPY" not in clean_raw_sym else 0.70
                 
-                sl_dist = min(max(2.0 * live_atr, min_forex_sl), 0.0022 if "JPY" not in clean_raw_sym else 0.22)
+                sl_dist = min(max(2.5 * live_atr, min_forex_sl), 0.0032 if "JPY" not in clean_raw_sym else 0.32)
                 if tp_target == 3:
                     tp_dist = max(7.0 * live_atr, min_forex_tp3)
                 elif tp_target == 2:
@@ -671,14 +671,14 @@ class AmaterasuBridge:
                 pip_mult = 100 if "JPY" in clean_raw_sym else 10000
                 print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr * pip_mult:.1f} pips | SL: {sl_dist * pip_mult:.1f}p | TP{tp_target}: {tp_dist * pip_mult:.1f}p (Autonomi Pasaran){Colors.RESET}")
         else:
-            # Fallback jika ATR tidak aktif / gagal dibaca (Gaya Bulan Lepas)
+            # Fallback jika ATR tidak aktif / gagal dibaca
             if clean_raw_sym == "XAUUSD":
                 tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (18.0 if tp_target == 3 else (10.0 if tp_target == 2 else 5.0))
-                sl_dist = min(max(abs(raw_sl - signal_entry), 3.5), 5.2) if raw_sl > 0 else 3.8
+                sl_dist = min(max(abs(raw_sl - signal_entry), 6.8), 7.8) if raw_sl > 0 else 7.0
             else:
                 is_jpy = "JPY" in clean_raw_sym
-                tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else ((0.0052 if not is_jpy else 0.52) if tp_target == 3 else ((0.0032 if not is_jpy else 0.32) if tp_target == 2 else (0.0016 if not is_jpy else 0.16)))
-                sl_dist = min(max(abs(raw_sl - signal_entry), 0.0015 if not is_jpy else 0.15), 0.0022 if not is_jpy else 0.22) if raw_sl > 0 else (0.0016 if not is_jpy else 0.16)
+                tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else ((0.0070 if not is_jpy else 0.70) if tp_target == 3 else ((0.0042 if not is_jpy else 0.42) if tp_target == 2 else (0.0020 if not is_jpy else 0.20)))
+                sl_dist = min(max(abs(raw_sl - signal_entry), 0.0028 if not is_jpy else 0.28), 0.0032 if not is_jpy else 0.32) if raw_sl > 0 else (0.0028 if not is_jpy else 0.28)
 
         # Gunakan jarak relatif dari harga kemasukan sebenar (Market Price)
         # Ini mengelakkan ralat 'Invalid Stops' jika harga sudah bergerak
@@ -1061,6 +1061,67 @@ class AmaterasuBridge:
             if err != 10016:
                 print(f"{Colors.YELLOW}[BE NOTA] Ticket #{p.ticket} ({p.symbol}) modifikasi SL: {err}{Colors.RESET}")
 
+    def check_and_widen_tight_sl(self, p):
+        """Penyelarasan automatik bagi Stop Loss yang terlalu rapat (elak terkena noise / spread broker)"""
+        try:
+            sym_info = mt5.symbol_info(p.symbol)
+            if not sym_info:
+                return
+            digits = sym_info.digits
+            point = sym_info.point
+            is_buy = (p.type == mt5.POSITION_TYPE_BUY)
+            open_price = p.price_open
+            sym_upper = p.symbol.upper()
+            is_gold = ("XAU" in sym_upper or "GOLD" in sym_upper)
+
+            if is_gold:
+                req_sl_dist = 7.0  # 70 pips ($7.00)
+                min_threshold = 6.0
+            elif "JPY" in sym_upper:
+                req_sl_dist = 0.30 # 30 pips
+                min_threshold = 0.25
+            else:
+                req_sl_dist = 0.0030 # 30 pips
+                min_threshold = 0.0025
+
+            # Hanya selaraskan jika SL masih dalam zon perlindungan asal (bukan trailing untung / BE)
+            needs_update = False
+            new_sl = 0.0
+
+            if is_buy:
+                # Untuk BUY, SL asal berada di bawah harga open (p.sl < open_price)
+                if p.sl > 0 and p.sl < open_price:
+                    curr_dist = open_price - p.sl
+                    if curr_dist < min_threshold:
+                        new_sl = round(open_price - req_sl_dist, digits)
+                        needs_update = True
+            else:
+                # Untuk SELL, SL asal berada di atas harga open (p.sl > open_price)
+                if p.sl > 0 and p.sl > open_price:
+                    curr_dist = p.sl - open_price
+                    if curr_dist < min_threshold:
+                        new_sl = round(open_price + req_sl_dist, digits)
+                        needs_update = True
+
+            if needs_update and new_sl > 0:
+                mod_request = {
+                    "action": mt5.TRADE_ACTION_SLTP,
+                    "position": p.ticket,
+                    "symbol": p.symbol,
+                    "sl": new_sl,
+                    "tp": round(p.tp, digits),
+                }
+                res = mt5.order_send(mod_request)
+                if res and res.retcode == mt5.TRADE_RETCODE_DONE:
+                    print(f"{Colors.GREEN}🛡️ [UPGRADE SL MT5] Ticket #{p.ticket} ({p.symbol}) SL berjaya dilebarkan ke {new_sl:.{digits}f} (Ruang nafas pasaran baru: +30p FX / +70p Gold)!{Colors.RESET}")
+                else:
+                    err = res.retcode if res else mt5.last_error()
+                    if err != 10016:
+                        print(f"{Colors.YELLOW}[UPGRADE SL NOTA] Ticket #{p.ticket} ({p.symbol}) modifikasi SL: {err}{Colors.RESET}")
+        except Exception:
+            pass
+
+
     def close_position_market(self, p, reason=""):
         """Tutup satu posisi pasaran serta-merta (cth: Pre-News Safety Cutoff)"""
         sym_info = mt5.symbol_info(p.symbol)
@@ -1240,10 +1301,12 @@ class AmaterasuBridge:
                     except Exception:
                         continue
 
-                # Semak setiap posisi MT5 aktif secara langsung untuk perlindungan BE
+                # Semak setiap posisi MT5 aktif secara langsung untuk perlindungan BE & Penyelarasan SL Baru
                 all_pos = mt5.positions_get()
                 if all_pos:
                     for p in all_pos:
+                        # Auto-lebarkan SL jika tiket sedia ada terlalu ketat (<25p FX / <60p Gold)
+                        self.check_and_widen_tight_sl(p)
                         if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")):
                             matched_sig = next((s for s in active_signals if s.get("symbol") == p.symbol.split('.')[0].upper()), None)
                             self.check_and_apply_position_be(p, matched_sig)
@@ -1428,6 +1491,16 @@ class AmaterasuBridge:
             print(f"\n{Colors.RED}Sila buka MT5 anda dan jalankan skrip ini semula.{Colors.RESET}")
             input("\nTekan Enter untuk keluar...")
             return
+
+        # Penyelarasan serta-merta bagi posisi sedia ada yang mempunyai SL ketat
+        try:
+            open_pos = mt5.positions_get()
+            if open_pos:
+                print(f"{Colors.CYAN}🔍 [AUDIT SL MT5] Memeriksa {len(open_pos)} posisi aktif untuk penyesuaian Stop Loss baru (+30p FX / +70p Gold)...{Colors.RESET}")
+                for p in open_pos:
+                    self.check_and_widen_tight_sl(p)
+        except Exception:
+            pass
 
         # Start MT5 Real-Time Quote Sync thread
         sync_thread = threading.Thread(target=self.sync_quotes_loop, daemon=True)

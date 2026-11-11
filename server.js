@@ -3032,9 +3032,9 @@ const AiEngine = {
   },
 
     assets: [
-    { symbol: 'XAUUSD', name: 'Gold', base: 4070.00, pipVal: 0.1, pipDec: 2, tp1Pips: 50, tp2Pips: 100, tp3Pips: 180, slPips: 48, bias: 'NEUTRAL' },
-    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 18, bias: 'NEUTRAL' },
-    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 18, bias: 'NEUTRAL' }
+    { symbol: 'XAUUSD', name: 'Gold', base: 4070.00, pipVal: 0.1, pipDec: 2, tp1Pips: 50, tp2Pips: 100, tp3Pips: 180, slPips: 70, bias: 'NEUTRAL' },
+    { symbol: 'USDCHF', name: 'Swissie', base: 0.8283, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 28, bias: 'NEUTRAL' },
+    { symbol: 'EURUSD', name: 'Euro', base: 1.1152, pipVal: 0.0001, pipDec: 4, tp1Pips: 20, tp2Pips: 40, tp3Pips: 65, slPips: 28, bias: 'NEUTRAL' }
   ],
 
   // High-Impact Economic News Schedule tracked by Amaterasu AI
@@ -3564,27 +3564,27 @@ const AiEngine = {
       // MOD INSTITUTIONAL SCALP PRO (PROTECTED ATR BUFFER):
       // Mengelakkan false stop-out / 'bagi duit kat broker' pada pasaran emas $4,040+
       if (asset.symbol === 'XAUUSD') {
-        dynTp1Pips = 32; // Quick Scalp TP1 (+32 pips / $3.20) -> Sebaik hit, SL auto ke BE +1p
-        dynTp2Pips = 65; // Scalp TP2 (+65 pips / $6.50)
-        dynTp3Pips = 110; // Scalp Runner TP3 (+110 pips / $11.00)
-        dynSlPips = (nowH >= 6 && nowH < 14) ? 48 : 52; // Penampan perlindungan 48 - 52 pips ($4.80 - $5.20)
+        dynTp1Pips = 35; // Quick Scalp TP1 (+35 pips / $3.50) -> Sebaik hit, SL auto ke BE +1p
+        dynTp2Pips = 70; // Scalp TP2 (+70 pips / $7.00)
+        dynTp3Pips = 120; // Scalp Runner TP3 (+120 pips / $12.00)
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 68 : 75; // Penampan perlindungan luas 68 - 75 pips ($6.80 - $7.50)
       } else if (asset.symbol === 'EURUSD') {
-        dynTp1Pips = 18; // Quick Scalp TP1 (+18 pips | Net +15.2p)
-        dynTp2Pips = 36; // Scalp TP2 (+36 pips)
-        dynTp3Pips = 60; // Scalp Runner TP3 (+60 pips)
-        dynSlPips = (nowH >= 6 && nowH < 14) ? 18 : 20;  // SL 18 - 20 pips (Penampan 2x M15 ATR)
+        dynTp1Pips = 20; // Quick Scalp TP1 (+20 pips | Net +18p)
+        dynTp2Pips = 42; // Scalp TP2 (+42 pips)
+        dynTp3Pips = 70; // Scalp Runner TP3 (+70 pips)
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 28 : 30;  // SL 28 - 30 pips (Penampan 3x M15 ATR)
       } else {
-        dynTp1Pips = 18; // Quick Scalp TP1 (+18 pips | Net +16.2p)
-        dynTp2Pips = 35; // Scalp TP2 (+35 pips)
-        dynTp3Pips = 55; // Scalp Runner TP3 (+55 pips)
-        dynSlPips = (nowH >= 6 && nowH < 14) ? 18 : 20;  // SL 18 - 20 pips (Selamat dari lantunan USDCHF)
+        dynTp1Pips = 20; // Quick Scalp TP1 (+20 pips | Net +18p)
+        dynTp2Pips = 40; // Scalp TP2 (+40 pips)
+        dynTp3Pips = 65; // Scalp Runner TP3 (+65 pips)
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 28 : 30;  // SL 28 - 30 pips (Selamat dari lantunan USDCHF)
       }
     } else {
       // INTRADAY SWING CALIBRATION:
       if (asset.symbol === 'XAUUSD') {
-        dynSlPips = (nowH >= 6 && nowH < 14) ? 48 : 55;
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 68 : 80;
       } else {
-        dynSlPips = (nowH >= 6 && nowH < 14) ? 18 : 22;
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 28 : 32;
       }
     }
 
