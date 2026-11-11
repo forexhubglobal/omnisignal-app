@@ -553,44 +553,18 @@ class AmaterasuBridge:
                     print(f"{Colors.YELLOW}[ANTI-HEDGE] Menolak order {order_type_str} #{symbol} kerana sudah ada posisi bertentangan yang sedang aktif di MT5 (Ticket #{ep.ticket}, Type: {'BUY' if ep.type == mt5.POSITION_TYPE_BUY else 'SELL'}). Menunggu selesai dahulu.{Colors.RESET}")
                     return None
 
-        # INSTITUTIONAL VOLUME FLOW RADAR:
-        # Menolak order yang melawan lonjakan volume institusi semasa
+        # INSTITUTIONAL VOLUME FLOW RADAR TELEMETRY:
         v_flow = self.get_m15_volume_flow(symbol)
-        if order_type_str == "SELL" and v_flow.get("flow") == "BUYER_SURGE":
-            print(f"{Colors.RED}🛑 [VOLUME RADAR DITOLAK] Order SELL #{clean_raw_sym} disekat! Pengesanan BUYER_SURGE aktif (Volume {v_flow['vol_ratio']}x purata, Dominasi Buyer {v_flow['buyer_score']}%). Elak melawan arus institusi!{Colors.RESET}")
-            return None
-        elif order_type_str == "BUY" and v_flow.get("flow") == "SELLER_SURGE":
-            print(f"{Colors.RED}🛑 [VOLUME RADAR DITOLAK] Order BUY #{clean_raw_sym} disekat! Pengesanan SELLER_SURGE aktif (Volume {v_flow['vol_ratio']}x purata, Dominasi Seller {100 - v_flow['buyer_score']:.1f}%). Elak menyambut pisau jatuh!{Colors.RESET}")
-            return None
-        else:
-            print(f"{Colors.CYAN}📊 [VOLUME RADAR] #{clean_raw_sym} Flow: {v_flow.get('flow', 'NEUTRAL')} | Vol Ratio: {v_flow.get('vol_ratio', 1.0)}x | Buyer Score: {v_flow.get('buyer_score', 50)}%{Colors.RESET}")
+        print(f"{Colors.CYAN}📊 [VOLUME RADAR] #{clean_raw_sym} Flow: {v_flow.get('flow', 'NEUTRAL')} | Vol Ratio: {v_flow.get('vol_ratio', 1.0)}x | Buyer Score: {v_flow.get('buyer_score', 50)}%{Colors.RESET}")
 
-        # MULTI-TIMEFRAME TRIPLE MA (20, 100, 200) + D1/H4 MACRO FILTER:
+        # MULTI-TIMEFRAME TRIPLE MA (20, 100, 200) + D1/H4 MACRO TELEMETRY:
         mtf_ma = self.get_mtf_triple_ma(symbol)
         macro_bias = mtf_ma.get("macro", "NEUTRAL")
         m15_bias = mtf_ma.get("m15", "NEUTRAL")
         m5_bias = mtf_ma.get("m5", "NEUTRAL")
         m1_bias = mtf_ma.get("m1", "NEUTRAL")
         alignment = mtf_ma.get("alignment", "NEUTRAL")
-
-        # 1. Macro Tide Guard: DILARANG SELL jika D1/H4 buyer gergasi mendominasi
-        if order_type_str == "SELL" and macro_bias == "STRONG_BUYER" and "BULLISH" in m15_bias:
-            print(f"{Colors.RED}🛑 [TRIPLE MA GUARD DITOLAK] Order SELL #{clean_raw_sym} disekat! D1/H4 didominasi pembeli gergasi (STRONG_BUYER) & M15 Bullish di atas MA 20/100/200. Penurunan di M1 hanyalah retracement!{Colors.RESET}")
-            return None
-        # DILARANG BUY jika D1/H4 seller gergasi mendominasi
-        elif order_type_str == "BUY" and macro_bias == "STRONG_SELLER" and "BEARISH" in m15_bias:
-            print(f"{Colors.RED}🛑 [TRIPLE MA GUARD DITOLAK] Order BUY #{clean_raw_sym} disekat! D1/H4 didominasi penjual gergasi (STRONG_SELLER) & M15 Bearish di bawah MA 20/100/200. Kenaikan di M1 hanyalah retracement!{Colors.RESET}")
-            return None
-
-        # 2. Triple MA Alignment Guard: Sekat order yang bertentangan dengan susunan 3 MA menegak (M1 + M5 + M15)
-        if order_type_str == "SELL" and alignment == "FULL_BULLISH":
-            print(f"{Colors.RED}🛑 [TRIPLE MA GUARD DITOLAK] Order SELL #{clean_raw_sym} disekat! M1, M5, dan M15 kesemuanya berada dalam jajaran BULLISH di atas MA 20, 100, 200.{Colors.RESET}")
-            return None
-        elif order_type_str == "BUY" and alignment == "FULL_BEARISH":
-            print(f"{Colors.RED}🛑 [TRIPLE MA GUARD DITOLAK] Order BUY #{clean_raw_sym} disekat! M1, M5, dan M15 kesemuanya berada dalam jajaran BEARISH di bawah MA 20, 100, 200.{Colors.RESET}")
-            return None
-        else:
-            print(f"{Colors.CYAN}📈 [TRIPLE MA RADAR] #{clean_raw_sym} Macro D1/H4: {macro_bias} | M15: {m15_bias} | M5: {m5_bias} | M1: {m1_bias} | Alignment: {alignment}{Colors.RESET}")
+        print(f"{Colors.CYAN}📈 [TRIPLE MA RADAR] #{clean_raw_sym} Macro D1/H4: {macro_bias} | M15: {m15_bias} | M5: {m5_bias} | M1: {m1_bias} | Alignment: {alignment}{Colors.RESET}")
 
         tick = mt5.symbol_info_tick(symbol)
         if not tick:

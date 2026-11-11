@@ -1379,8 +1379,12 @@ const server = http.createServer(async (req, res) => {
           if (allowedWhitelist.includes(sym)) {
             if (!mt5BySymbol[sym]) {
               sig._missingFromMt5Count = (sig._missingFromMt5Count || 0) + 1;
-              if (((sig.ticks || 0) > 5 || sig.mt5Verified) && sig._missingFromMt5Count >= 5) {
-                console.log(`🧹 [AUTO-PURGE CLOSED TRADE] #${sym} sudah tiada dalam MT5 selama 5 kitaran berturut-turut (${sig._missingFromMt5Count}). Memadamkan dari On Pips!`);
+              // Hanya purge jika posisi ini SEBELUM INI PERNAH DIKESAN DI MT5 (sig.mt5Verified === true) dan hilang selama 8 kitaran (~20s),
+              // ATAU jika sudah lebih 120 saat di On Pips dan masih gagal dibuka di MT5 (elak terpadam dalam 10 saat sebelum MT5 sempat eksekusi)!
+              const isAbandoned = !sig.mt5Verified && (sig.ticks || 0) > 120 && sig._missingFromMt5Count >= 25;
+              const isClosedFromMt5 = sig.mt5Verified && sig._missingFromMt5Count >= 8;
+              if (isAbandoned || isClosedFromMt5) {
+                console.log(`🧹 [AUTO-PURGE CLOSED TRADE] #${sym} sudah tiada dalam MT5 (Verified: ${sig.mt5Verified}, MissingCount: ${sig._missingFromMt5Count}, Ticks: ${sig.ticks}). Memadamkan dari On Pips!`);
                 const asset = AiEngine.assets.find(a => a.symbol === sym) || AiEngine.assets[0];
                 const curP = liveMarketQuotes[sym] ? liveMarketQuotes[sym].price : sig.entry;
                 const isBuy = sig.type === 'BUY';
@@ -1571,7 +1575,11 @@ const server = http.createServer(async (req, res) => {
       const db = getDB();
       const rawSymbol = (symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase();
       
-      const sig = (db.activeSignals || []).find(s => s.symbol === rawSymbol);
+      const sig = (db.activeSignals || []).find(s => {
+        if (s.symbol !== rawSymbol) return false;
+        if (ticket && s.mt5Ticket && Number(s.mt5Ticket) !== Number(ticket)) return false;
+        return true;
+      });
       if (sig) {
         const asset = AiEngine.assets.find(a => a.symbol === rawSymbol) || AiEngine.assets[0];
         let outcome = 'CLOSED';
