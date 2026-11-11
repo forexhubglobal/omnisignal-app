@@ -3407,26 +3407,72 @@ const AiEngine = {
       const mtfM15Init = liveMtfInit ? (liveMtfInit.m15 || 'NEUTRAL') : 'NEUTRAL';
 
       if (asset.symbol === 'XAUUSD') {
-        const asianH = this.goldAsianSession.high || (liveP + 8.0);
-        const asianL = this.goldAsianSession.low || (liveP - 8.0);
-        const waveRange = Math.max(asianH - asianL, 10.0);
-        const waveProgress = (liveP - asianL) / waveRange;
+        const mb = (this.marketBrain && this.marketBrain['XAUUSD']) || {};
+        const floorRef = mb.supportFloor > 0 ? mb.supportFloor : (this.goldAsianSession.low || (liveP - 8.0));
+        const roofRef = mb.resistanceCeiling > 0 ? mb.resistanceCeiling : (this.goldAsianSession.high || (liveP + 8.0));
+        const range = Math.max(roofRef - floorRef, 8.0);
+        const isStrongSeller = mtfMacroInit === 'STRONG_SELLER' || mtfM15Init.includes('BEARISH');
+        const isStrongBuyer = mtfMacroInit === 'STRONG_BUYER' || mtfM15Init.includes('BULLISH');
 
-        if (waveProgress >= 0.65 || liveP >= (asianH - 2.5)) {
-          // 1. PUNCAK OMBAK (WAVE CREST / OVERBOUGHT / SUPPLY): SELL RETRACEMENT
-          type = 'SELL';
-          this._lastGoldWave = 'SELL';
-          notes = `[SMC Wave Crest Rejection] Puncak ombak dicapai (${liveP.toFixed(2)}). Pengesahan M15 Liquidity Sweep + Rejection Wick. Entry SELL menunggang gelombang pembetulan (Downwave Retracement). SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
-        } else if (waveProgress <= 0.35 || liveP <= (asianL + 2.5)) {
-          // 2. LEMBAH OMBAK (WAVE TROUGH / OVERSOLD / DEMAND): BUY REBOUND
-          type = 'BUY';
-          this._lastGoldWave = 'BUY';
-          notes = `[SMC Wave Trough Rebound] Lembah ombak selesai di zon lantai (${liveP.toFixed(2)}). Pengesahan M15 Demand Order Block + Bullish Pinbar. Entry BUY menunggang gelombang lantunan (Upwave Impulse). SL ketat (+48p). Sasaran TP1 (+50p). SOP: Kunci BE sebaik TP1 dicapai.`;
+        if (isStrongSeller) {
+          // TREND MAKRO BEARISH:
+          // 1. DILARANG SAMA SEKALI SELL DI LANTAI DASAR (ANTI-FLOOR CHASING)
+          if (liveP <= (floorRef + 2.0) && liveP >= (floorRef - 0.8)) {
+            this.log(`🛡️ [FLOOR ABSORPTION GUARD] Menangguhkan SELL XAUUSD pada ${liveP.toFixed(2)}. Harga terlalu dekat dengan lantai sokongan (${floorRef.toFixed(2)}). Menunggu Pullback ke zon rintangan (${roofRef.toFixed(2)}) atau pengesahan Breakdown BOS (< ${(floorRef - 0.8).toFixed(2)})!`);
+            return;
+          }
+          // 2. BREAKDOWN BOS CONTINUATION (PECAH BAWAH LANTAI DENGAN MOMENTUM)
+          if (liveP < (floorRef - 0.8)) {
+            type = 'SELL';
+            this._lastGoldWave = 'SELL';
+            notes = `[⚡ SMC BREAKDOWN BOS] Lantai sokongan ${floorRef.toFixed(2)} berjaya dipecahkan ke bawah! Tekanan Makro Penjual mencetuskan aliran junaman kesinambungan (Breakdown Continuation). SL penampan 68-75p. Sasaran TP1 (+35p). Kunci BE automatik.`;
+          }
+          // 3. PULLBACK RETRACEMENT ENTRY (MELANTUN KE ZON PREMIUM / RINTANGAN / FVG)
+          else if (liveP >= (floorRef + 0.45 * range)) {
+            type = 'SELL';
+            this._lastGoldWave = 'SELL';
+            notes = `[⚡ SMC PULLBACK RETRACEMENT] Penolakan rintangan pada lantunan ${liveP.toFixed(2)} (Zon Premium / FVG). Entry SELL di puncak pembetulan seiring arus Makro Bearish! SL penampan 68-75p. Sasaran TP1 (+35p). Kunci BE automatik.`;
+          } else {
+            this.log(`🛡️ [PULLBACK AWAIT GUARD] Menolak isyarat SELL XAUUSD pada ${liveP.toFixed(2)}. Sedang menunggu harga melantun lebih tinggi ke zon Premium (>= ${(floorRef + 0.45 * range).toFixed(2)}) untuk entry SELL terbaik.`);
+            return;
+          }
+        } else if (isStrongBuyer) {
+          // TREND MAKRO BULLISH:
+          // 1. DILARANG SAMA SEKALI BUY DI BUMBUNG (ANTI-ROOF CHASING)
+          if (liveP >= (roofRef - 2.0) && liveP <= (roofRef + 0.8)) {
+            this.log(`🛡️ [CEILING ABSORPTION GUARD] Menangguhkan BUY XAUUSD pada ${liveP.toFixed(2)}. Harga terlalu dekat dengan bumbung rintangan (${roofRef.toFixed(2)}). Menunggu Pullback ke lantai atau pengesahan Breakout BOS (> ${(roofRef + 0.8).toFixed(2)})!`);
+            return;
+          }
+          // 2. BREAKOUT BOS CONTINUATION (PECAH ATAS BUMBUNG DENGAN MOMENTUM)
+          if (liveP > (roofRef + 0.8)) {
+            type = 'BUY';
+            this._lastGoldWave = 'BUY';
+            notes = `[⚡ SMC BREAKOUT BOS] Bumbung rintangan ${roofRef.toFixed(2)} berjaya ditembusi ke atas! Tekanan Makro Pembeli mencetuskan lonjakan kesinambungan baharu (Breakout Continuation). SL penampan 68-75p. Sasaran TP1 (+35p). Kunci BE automatik.`;
+          }
+          // 3. DIP REBOUND ENTRY (CELUPAN KE ZON DISKAUN / SOKONGAN)
+          else if (liveP <= (roofRef - 0.45 * range)) {
+            type = 'BUY';
+            this._lastGoldWave = 'BUY';
+            notes = `[⚡ SMC DISCOUNT DIP BUY] Lantunan sokongan dikesan pada ${liveP.toFixed(2)} (Zon Diskaun Demand). Entry BUY di lembah pembetulan seiring arus Makro Bullish! SL penampan 68-75p. Sasaran TP1 (+35p). Kunci BE automatik.`;
+          } else {
+            this.log(`🛡️ [DIP AWAIT GUARD] Menolak isyarat BUY XAUUSD pada ${liveP.toFixed(2)}. Sedang menunggu celupan ke zon lantai (<= ${(roofRef - 0.45 * range).toFixed(2)}) untuk entry BUY terbaik.`);
+            return;
+          }
         } else {
-          // 3. TENGAH OMBAK: EQUILIBRIUM / NO-MAN'S LAND (DILARANG KEJAR LILIN DI TENGAH/PUCUK!)
-          // Wajib tunggu harga buat Pullback ke zon Diskaun (Lantai) untuk BUY, atau zon Premium (Bumbung) untuk SELL!
-          this.log(`🛡️ [SMC PULLBACK GUARD] Menolak isyarat XAUUSD pada ${liveP.toFixed(2)}. Harga berada di zon pertengahan ombak (Progress: ${(waveProgress * 100).toFixed(1)}%). Wajib tunggu Pullback ke lantai diskaun (<= ${(asianL + 2.5).toFixed(2)}) untuk BUY, atau bumbung rintangan (>= ${(asianH - 2.5).toFixed(2)}) untuk SELL!`);
-          return;
+          // 2-WAY RANGE (MARKET NEUTRAL):
+          const waveProgress = (liveP - floorRef) / range;
+          if (waveProgress >= 0.70 || liveP >= (roofRef - 2.5)) {
+            type = 'SELL';
+            this._lastGoldWave = 'SELL';
+            notes = `[SMC Wave Crest Rejection] Puncak julat dicapai (${liveP.toFixed(2)}). Pengesahan M15 Liquidity Sweep + Rejection Wick. Entry SELL menunggang gelombang pembetulan. SL ketat. Sasaran TP1. Kunci BE automatik.`;
+          } else if (waveProgress <= 0.30 || liveP <= (floorRef + 2.5)) {
+            type = 'BUY';
+            this._lastGoldWave = 'BUY';
+            notes = `[SMC Wave Trough Rebound] Lembah julat dicapai di zon lantai (${liveP.toFixed(2)}). Pengesahan M15 Demand Order Block + Bullish Pinbar. Entry BUY menunggang lantunan. SL ketat. Sasaran TP1. Kunci BE automatik.`;
+          } else {
+            this.log(`🛡️ [SMC PULLBACK GUARD] Menolak isyarat XAUUSD pada ${liveP.toFixed(2)}. Harga berada di zon pertengahan (Progress: ${(waveProgress * 100).toFixed(1)}%). Wajib tunggu Pullback ke lantai untuk BUY atau bumbung untuk SELL!`);
+            return;
+          }
         }
       } else if (asset.symbol === 'EURUSD') {
         type = (mtfMacroInit === 'STRONG_SELLER' || mtfM15Init.includes('BEARISH')) ? 'SELL' : 'BUY';
