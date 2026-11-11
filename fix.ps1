@@ -7,7 +7,7 @@ Get-Process -Name cmd, python -ErrorAction SilentlyContinue | Where-Object { $_.
 Start-Sleep -Seconds 1
 
 Write-Host "2. Memuat turun versi bridge terkini..." -ForegroundColor Cyan
-$cleanBridgeUrl = "https://equal-shield-amber-wilderness.trycloudflare.com/amaterasu_mt5_bridge.py"
+$cleanBridgeUrl = "https://civilization-tribe-enterprises-hoping.trycloudflare.com/amaterasu_mt5_bridge.py"
 $githubRawUrl = "https://raw.githubusercontent.com/forexhubglobal/omnisignal-app/main/amaterasu_mt5_bridge.py"
 $tempPy = "$env:TEMP\amaterasu_mt5_bridge.py"
 
@@ -30,7 +30,7 @@ if ($LASTEXITCODE -eq 0 -and (Test-Path $tempPy) -and ((Get-Item $tempPy).Length
 }
 
 Write-Host "3. Memastikan konfigurasi pelayan menuju ke Cloudflare..." -ForegroundColor Cyan
-$cfUrl = "https://equal-shield-amber-wilderness.trycloudflare.com"
+$cfUrl = "https://civilization-tribe-enterprises-hoping.trycloudflare.com"
 
 foreach ($dir in @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3')) {
     $cfgFile = Join-Path $dir "bridge_config.json"
@@ -41,6 +41,13 @@ foreach ($dir in @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3'))
             $json.server_url = $cfUrl
             $json.max_concurrent_pairs = 4
             $json.max_account_lots = 3.0
+            if ($dir -like '*Acc3*') {
+                $json.news_gold_lot_size = 0.04
+                $json.news_fx_lot_size = 0.05
+            } else {
+                $json.news_gold_lot_size = 0.40
+                $json.news_fx_lot_size = 0.40
+            }
             $outJson = $json | ConvertTo-Json -Depth 5
             [System.IO.File]::WriteAllText($cfgFile, $outJson, (New-Object System.Text.UTF8Encoding($false)))
         } catch {
