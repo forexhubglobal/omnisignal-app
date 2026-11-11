@@ -560,6 +560,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     const netProf3 = Number(cp3 && cp3.netProfitUsd !== undefined ? cp3.netProfitUsd : 0);
     const bal3 = Number(cp3 && cp3.currentBalance !== undefined ? cp3.currentBalance : 1000);
     const eq3 = Number(cp3 && cp3.currentEquity !== undefined ? cp3.currentEquity : 1000);
+    const wd3Usd = Number(cp3 && cp3.totalWithdrawnUsd !== undefined ? cp3.totalWithdrawnUsd : 4100.0);
     cp = {
       id: 3,
       name: "AMATERASU X 2.0",
@@ -572,19 +573,22 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
       currentEquityDisplay: '$' + eq3.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD',
       currentBalanceDisplay: '$' + bal3.toFixed(2) + ' USD',
       equitySubtitle: 'Baki Tunai: $' + bal3.toFixed(2) + ' USD',
+      totalWithdrawnDisplay: '$+' + wd3Usd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD ✓',
       lastSync: (cp3 && cp3.lastSync) || 'Live',
       isUsd: true,
-      winRate: (cp3 && cp3.winRate) || 91.5
+      winRate: (cp3 && cp3.winRate) || 94.0
     };
   } else if (isV2) {
     themeColor = '#ff6e40';
     themeBorder = 'rgba(255, 61, 0, 0.5)';
     themeShadow = 'rgba(255, 61, 0, 0.2)';
     themeBadge = 'MASTER 2 (VERIFIED LIVE)';
-    const growth2 = (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 0.00;
-    const netProf2 = Number(cp2 && cp2.netProfitUsc !== undefined ? cp2.netProfitUsc : 0);
-    const bal2 = Number(cp2 && cp2.currentBalance !== undefined ? cp2.currentBalance : 10000);
-    const eq2 = Number(cp2 && cp2.currentEquity !== undefined ? cp2.currentEquity : 10000);
+    const growth2 = (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 61133.01;
+    const netProf2 = Number(cp2 && cp2.netProfitUsc !== undefined ? cp2.netProfitUsc : 611330.1);
+    const bal2 = Number(cp2 && cp2.currentBalance !== undefined ? cp2.currentBalance : 12404.22);
+    const eq2 = Number(cp2 && cp2.currentEquity !== undefined ? cp2.currentEquity : 12347.0);
+    const wd2Usd = Number(cp2 && cp2.totalWithdrawnUsd !== undefined ? cp2.totalWithdrawnUsd : 6000.0);
+    const wd2Usc = Number(cp2 && cp2.totalWithdrawn !== undefined ? cp2.totalWithdrawn : 600000.0);
     cp = {
       id: 2,
       name: "AMATERASU X",
@@ -593,14 +597,15 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
       growthPct: growth2,
       netProfitDisplay: (netProf2 >= 0 ? '+' : '-') + num(Math.abs(netProf2)) + ' USC',
       allTimeProfitDisplay: (netProf2 >= 0 ? '+' : '-') + num(Math.abs(netProf2)) + ' USC',
-      usdProfitSubtitle: '(' + (netProf2 >= 0 ? '+$' : '-$') + Math.abs(netProf2 / 100).toFixed(2) + ' USD)',
-      initialDepositDisplay: num(cp2.initialDeposit || 10000) + ' USC ($100.00 USD)',
+      usdProfitSubtitle: '(' + (netProf2 >= 0 ? '+$' : '-$') + Number(Math.abs(netProf2 / 100)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD)',
+      initialDepositDisplay: num(cp2.initialDeposit || 1000) + ' USC ($10.00 USD)',
       currentEquityDisplay: num(eq2) + ' USC',
       currentBalanceDisplay: num(bal2) + ' USC',
-      equitySubtitle: 'Baki Tunai: ' + num(bal2) + ' USC',
+      equitySubtitle: 'Baki Tunai: ' + num(bal2) + ' USC ($' + Number(bal2 / 100).toFixed(2) + ' USD)',
+      totalWithdrawnDisplay: num(wd2Usc) + ' USC ($+' + wd2Usd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD ✓)',
       lastSync: (cp2 && cp2.lastSync) || 'Live',
       isUsd: false,
-      winRate: (cp2 && cp2.winRate) || 90.0
+      winRate: (cp2 && cp2.winRate) || 100.0
     };
   } else {
     themeColor = '#00e676';
@@ -702,31 +707,31 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
         </div>
         <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">PROFIT TAKEN</span>
       </div>` : isV2 ? `
-      <div style="background:linear-gradient(90deg, rgba(255,61,0,0.15) 0%, rgba(245,196,81,0.1) 100%); border:1px solid rgba(255,61,0,0.4); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <div style="background:linear-gradient(90deg, rgba(255,61,0,0.15) 0%, rgba(0,230,118,0.1) 100%); border:1px solid rgba(255,61,0,0.4); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:17px;">🔥</span>
+          <span style="font-size:17px;">💰</span>
           <div>
             <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:10px; color:#ff6e40; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">AKAUN KEDUA (LIVE MT5 CENT POOL):</span>
-              <b style="font-size:11px; color:#00e676; font-weight:800;">Baki: ${cp.currentBalanceDisplay} · Ekuiti: ${cp.currentEquityDisplay}</b>
+              <span style="font-size:10px; color:#ff6e40; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">TELAH DIKELUARKAN (WITHDRAWAL):</span>
+              <b style="font-size:11px; color:#00e676; font-weight:800;">${cp.totalWithdrawnDisplay}</b>
             </div>
-            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Multi-Terminal VPS Active · Denyutan Live: ${cp.lastSync}</span>
+            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Modal $10 USD asal ditarik balik · Baki Live: ${cp.currentBalanceDisplay} (Denyutan: ${cp.lastSync})</span>
           </div>
         </div>
-        <span style="background:rgba(255,61,0,0.2); border:1px solid #ff3d00; color:#ff6e40; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">LIVE MT5</span>
+        <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">PROFIT SECURED</span>
       </div>` : `
       <div style="background:linear-gradient(90deg, rgba(245,196,81,0.18) 0%, rgba(0,230,118,0.1) 100%); border:1px solid rgba(245,196,81,0.5); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:17px;">👑</span>
+          <span style="font-size:17px;">💰</span>
           <div>
             <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:10px; color:#f5c451; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">AKAUN KETIGA (LIVE MT5 $1K STANDARD):</span>
-              <b style="font-size:11px; color:#00e676; font-weight:800;">Baki: ${cp.currentBalanceDisplay} · Ekuiti: ${cp.currentEquityDisplay}</b>
+              <span style="font-size:10px; color:#f5c451; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">TELAH DIKELUARKAN (WITHDRAWAL):</span>
+              <b style="font-size:11px; color:#00e676; font-weight:800;">${cp.totalWithdrawnDisplay}</b>
             </div>
-            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Multi-Terminal VPS Active · Denyutan Live: ${cp.lastSync}</span>
+            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Modal $1,000 USD asal ditarik balik · Baki Live: ${cp.currentBalanceDisplay} (Denyutan: ${cp.lastSync})</span>
           </div>
         </div>
-        <span style="background:rgba(245,196,81,0.2); border:1px solid #f5c451; color:#f5c451; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">LIVE MT5</span>
+        <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">PROFIT SECURED</span>
       </div>`}
 
       <!-- 3-Box Breakdown: Modal Asal, Baki Aktif Semasa, Winrate -->
@@ -847,45 +852,45 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
     name = 'AMATERASU X';
     account = '5100207348';
     avatarSrc = 'img/amaterasux.png';
-    const g2 = Number(cp2.growthPct !== undefined ? cp2.growthPct : 0.0);
-    growth = (g2 >= 0 ? '+' : '') + g2.toFixed(2) + '%';
-    const net2 = Number(cp2.allTimeProfitUsc !== undefined ? cp2.allTimeProfitUsc : (cp2.netProfitUsc || 0));
-    grossProfitUsc = (net2 >= 0 ? '+' : '') + num(net2) + ' USC';
-    grossProfitUsd = (net2 >= 0 ? '+$' : '-$') + Number(Math.abs(net2 / 100)).toFixed(2) + ' USD';
-    statusBadge = '💎 FRESH STANDBY (10,000 USC POOL)';
+    const g2 = Number(cp2.growthPct !== undefined ? cp2.growthPct : 61133.01);
+    growth = '+' + g2.toFixed(2) + '%';
+    const net2 = Number(cp2.allTimeProfitUsc !== undefined ? cp2.allTimeProfitUsc : (cp2.netProfitUsc || 611330.1));
+    grossProfitUsc = '+' + num(net2) + ' USC';
+    grossProfitUsd = '+$' + Number(Math.abs(net2 / 100)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD';
+    statusBadge = '🛡️ MODAL ASAL SELAMAT DI-WD $6,000 USD';
     themeColor = '#FF3D00';
     themeGlow = 'rgba(255, 61, 0, 0.35)';
     themeBorder = 'rgba(255, 61, 0, 0.5)';
     themeShadow = 'rgba(255, 61, 0, 0.3)';
-    verifiedBadge = '● MASTER 2 FRESH START · CENT';
-    growthSubtitle = 'PRESTASI PERTUMBUHAN (BARU MULA)';
-    modalWithdrawn = '$0.00 USD (Fresh Start)';
-    const eq2 = Number(cp2.currentEquity !== undefined ? cp2.currentEquity : 10000);
+    verifiedBadge = '● MASTER 2 LIVE VERIFIED · CENT POOL';
+    growthSubtitle = 'ALL-TIME REALIZED GROWTH';
+    modalWithdrawn = '$6,000.00 USD (Realised & Withdrawn ✓)';
+    const eq2 = Number(cp2.currentEquity !== undefined ? cp2.currentEquity : 12347);
     activeEquityStr = num(eq2) + ' USC ($' + Number(eq2 / 100).toFixed(2) + ' USD)';
-    winrateStr = (cp2.winRate || 100) + '% (Fresh Account)';
-    riskBadge = 'Low Risk · Cent Pool';
+    winrateStr = (cp2.winRate || 100) + '% (Zero Risk Post WD)';
+    riskBadge = 'Zero Risk (Post WD)';
     minJoin = '$50 - $100 USD';
   } else if (isV3) {
     name = 'AMATERASU X 2.0';
     account = '5100209626';
     avatarSrc = 'img/amaterasux_2.jpg';
-    const g3 = Number(cp3.growthPct !== undefined ? cp3.growthPct : 0.0);
-    growth = (g3 >= 0 ? '+' : '') + g3.toFixed(2) + '%';
-    const net3 = Number(cp3.allTimeProfitUsd !== undefined ? cp3.allTimeProfitUsd : (cp3.netProfitUsd || 0));
-    grossProfitUsc = '$' + Number(cp3.currentBalance || 1000).toFixed(2) + ' USD';
-    grossProfitUsd = (net3 >= 0 ? '+$' : '-$') + Number(Math.abs(net3)).toFixed(2) + ' USD';
-    statusBadge = '👑 $1,000 USD STANDARD POOL';
+    const g3 = Number(cp3.growthPct !== undefined ? cp3.growthPct : 514.59);
+    growth = '+' + g3.toFixed(2) + '%';
+    const net3 = Number(cp3.allTimeProfitUsd !== undefined ? cp3.allTimeProfitUsd : (cp3.netProfitUsd || 5145.85));
+    grossProfitUsc = '$' + Number(cp3.currentBalance || 1046.12).toFixed(2) + ' USD';
+    grossProfitUsd = '+$' + Number(Math.abs(net3)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD';
+    statusBadge = '🛡️ MODAL ASAL SELAMAT DI-WD $4,100 USD';
     themeColor = '#F5C451';
     themeGlow = 'rgba(245, 196, 81, 0.4)';
     themeBorder = 'rgba(245, 196, 81, 0.5)';
     themeShadow = 'rgba(245, 196, 81, 0.3)';
     verifiedBadge = '● MASTER 3 STANDARD HIGH-VALUE POOL';
     growthSubtitle = 'STANDARD USD LIVE PERFORMANCE';
-    modalWithdrawn = '$0.00 USD (Zero Drawdown)';
-    const eq3 = Number(cp3.currentEquity !== undefined ? cp3.currentEquity : 1000);
+    modalWithdrawn = '$4,100.00 USD (Realised & Withdrawn ✓)';
+    const eq3 = Number(cp3.currentEquity !== undefined ? cp3.currentEquity : 1045.85);
     activeEquityStr = '$' + Number(eq3).toFixed(2) + ' USD (Live Equity)';
-    winrateStr = (cp3.winRate || 100) + '% (Standard USD)';
-    riskBadge = 'Standard · Low DD < 4%';
+    winrateStr = (cp3.winRate || 94.0) + '% (Zero Risk Post WD)';
+    riskBadge = 'Zero Risk (Post WD)';
     minJoin = '$1,000 USD (VIP)';
   }
 
@@ -1290,9 +1295,9 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
           <div>
             <label style="font-size:10.5px; color:#8e9aa8; display:block; margin-bottom:4px; font-weight:700;">PILIH MASTER COPYTRADE PILIHAN ANDA:</label>
             <select id="cpTargetMaster" onchange="showCopytradeModal(this.value === '5100209626' ? 3 : this.value === '5100207348' ? 2 : 1)" style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid ${targetTheme}; border-radius:6px; color:#fff; font-size:12px; font-weight:700;">
-              <option value="5100154135" ${vNum === 1 ? 'selected' : ''}>🦆 The Mighty Duck - Master 1 (#5100154135 · +235.23% All-Time · $200 WD)</option>
-              <option value="5100207348" ${vNum === 2 ? 'selected' : ''}>🔥 Amaterasu X - Master 2 (#5100207348 · Fresh 10,000 USC Pool)</option>
-              <option value="5100209626" ${vNum === 3 ? 'selected' : ''}>👑 Amaterasu X 2.0 - Master 3 (#5100209626 · Standard $1,000 USD Pool)</option>
+              <option value="5100154135" ${vNum === 1 ? 'selected' : ''}>🦆 The Mighty Duck - Master 1 (#5100154135 · +235.23% · $200 WD ✓)</option>
+              <option value="5100207348" ${vNum === 2 ? 'selected' : ''}>🔥 Amaterasu X - Master 2 (#5100207348 · +61,133% · $6,000 WD ✓)</option>
+              <option value="5100209626" ${vNum === 3 ? 'selected' : ''}>👑 Amaterasu X 2.0 - Master 3 (#5100209626 · +514.59% · $4,100 WD ✓)</option>
             </select>
           </div>
           <input type="text" id="cpClientName" placeholder="Nama Penuh Anda" required style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:12px;" />
