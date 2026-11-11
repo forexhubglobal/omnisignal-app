@@ -3564,11 +3564,16 @@ const AiEngine = {
         dynTp2Pips = 45; // Scalp TP2 (+45 pips / $4.50)
         dynTp3Pips = 75; // Scalp Runner TP3 (+75 pips / $7.50)
         dynSlPips = (nowH >= 6 && nowH < 14) ? 35 : 38; // Scalp SL ketat 35 - 38 pips
+      } else if (asset.symbol === 'EURUSD') {
+        dynTp1Pips = 16; // Quick Scalp TP1 (+16 pips | Net +13.2p selepas spread 2.8p)
+        dynTp2Pips = 32; // Scalp TP2 (+32 pips)
+        dynTp3Pips = 52; // Scalp Runner TP3 (+52 pips)
+        dynSlPips = 16;  // SL 16 pips (Spread 2.8p + 13.2p buffer zon M5/M15)
       } else {
-        dynTp1Pips = 15;
-        dynTp2Pips = 30;
-        dynTp3Pips = 50;
-        dynSlPips = 15;
+        dynTp1Pips = 16; // Quick Scalp TP1 (+16 pips | Net +14.2p selepas spread 1.8p)
+        dynTp2Pips = 30; // Scalp TP2 (+30 pips)
+        dynTp3Pips = 50; // Scalp Runner TP3 (+50 pips)
+        dynSlPips = 15;  // SL 15 pips (Spread 1.8p + 13.2p buffer)
       }
     } else {
       // STOP LOSS CALIBRATION (BERDASARKAN BEDAH SIASAT PASARAN INTRADAY):
