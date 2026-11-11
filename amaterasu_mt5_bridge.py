@@ -634,12 +634,12 @@ class AmaterasuBridge:
             sl_dist = abs(raw_sl - signal_entry)
             # Penampan keselamatan mengelak 'Invalid Stops' atau disapu spread broker (XAU 4.4p, EUR 2.8p, CHF 1.8p)
             if clean_raw_sym == "XAUUSD":
-                sl_dist = min(max(sl_dist, 3.5), 5.2) # Minimum 35 pips ($3.50) untuk elak spread 4.4p
-                tp_dist = max(tp_dist, 2.5) # Minimum TP1 25 pips ($2.50)
+                sl_dist = min(max(sl_dist, 4.8), 5.5) # Minimum 48 pips ($4.80) untuk menampung pasaran Gold $4,040+
+                tp_dist = max(tp_dist, 3.2) # Minimum TP1 32 pips ($3.20)
             else:
                 is_jpy = "JPY" in clean_raw_sym
-                min_fx_sl = 0.0014 if not is_jpy else 0.14
-                min_fx_tp = 0.0015 if not is_jpy else 0.15
+                min_fx_sl = 0.0018 if not is_jpy else 0.18
+                min_fx_tp = 0.0018 if not is_jpy else 0.18
                 sl_dist = min(max(sl_dist, min_fx_sl), 0.0025 if not is_jpy else 0.25)
                 tp_dist = max(tp_dist, min_fx_tp)
         elif live_atr and live_atr > 0:

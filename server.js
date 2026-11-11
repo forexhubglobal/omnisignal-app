@@ -3561,29 +3561,30 @@ const AiEngine = {
     let dynSlPips = Math.round(asset.slPips * volMult);
 
     if (this.frequencyMode === 'SCALP_PRO') {
-      // MOD ULTRA-SCALP: Sasaran TP pantas (+25p) dan SL kemas untuk ~20 setup sehari
+      // MOD INSTITUTIONAL SCALP PRO (PROTECTED ATR BUFFER):
+      // Mengelakkan false stop-out / 'bagi duit kat broker' pada pasaran emas $4,040+
       if (asset.symbol === 'XAUUSD') {
-        dynTp1Pips = 25; // Quick Scalp TP1 (+25 pips / $2.50)
-        dynTp2Pips = 45; // Scalp TP2 (+45 pips / $4.50)
-        dynTp3Pips = 75; // Scalp Runner TP3 (+75 pips / $7.50)
-        dynSlPips = (nowH >= 6 && nowH < 14) ? 35 : 38; // Scalp SL ketat 35 - 38 pips
+        dynTp1Pips = 32; // Quick Scalp TP1 (+32 pips / $3.20) -> Sebaik hit, SL auto ke BE +1p
+        dynTp2Pips = 65; // Scalp TP2 (+65 pips / $6.50)
+        dynTp3Pips = 110; // Scalp Runner TP3 (+110 pips / $11.00)
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 48 : 52; // Penampan perlindungan 48 - 52 pips ($4.80 - $5.20)
       } else if (asset.symbol === 'EURUSD') {
-        dynTp1Pips = 16; // Quick Scalp TP1 (+16 pips | Net +13.2p selepas spread 2.8p)
-        dynTp2Pips = 32; // Scalp TP2 (+32 pips)
-        dynTp3Pips = 52; // Scalp Runner TP3 (+52 pips)
-        dynSlPips = 16;  // SL 16 pips (Spread 2.8p + 13.2p buffer zon M5/M15)
+        dynTp1Pips = 18; // Quick Scalp TP1 (+18 pips | Net +15.2p)
+        dynTp2Pips = 36; // Scalp TP2 (+36 pips)
+        dynTp3Pips = 60; // Scalp Runner TP3 (+60 pips)
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 18 : 20;  // SL 18 - 20 pips (Penampan 2x M15 ATR)
       } else {
-        dynTp1Pips = 16; // Quick Scalp TP1 (+16 pips | Net +14.2p selepas spread 1.8p)
-        dynTp2Pips = 30; // Scalp TP2 (+30 pips)
-        dynTp3Pips = 50; // Scalp Runner TP3 (+50 pips)
-        dynSlPips = 15;  // SL 15 pips (Spread 1.8p + 13.2p buffer)
+        dynTp1Pips = 18; // Quick Scalp TP1 (+18 pips | Net +16.2p)
+        dynTp2Pips = 35; // Scalp TP2 (+35 pips)
+        dynTp3Pips = 55; // Scalp Runner TP3 (+55 pips)
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 18 : 20;  // SL 18 - 20 pips (Selamat dari lantunan USDCHF)
       }
     } else {
-      // STOP LOSS CALIBRATION (BERDASARKAN BEDAH SIASAT PASARAN INTRADAY):
+      // INTRADAY SWING CALIBRATION:
       if (asset.symbol === 'XAUUSD') {
-        dynSlPips = (nowH >= 6 && nowH < 14) ? 45 : 48; // Sesi Asia: 45 pips ($4.50) | London & NY: 48 pips ($4.80)
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 48 : 55;
       } else {
-        dynSlPips = (nowH >= 6 && nowH < 14) ? 18 : 20; // Sesi Asia: 18 pips | London & NY: 20 pips
+        dynSlPips = (nowH >= 6 && nowH < 14) ? 18 : 22;
       }
     }
 
