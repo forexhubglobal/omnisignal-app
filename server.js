@@ -1153,6 +1153,7 @@ const server = http.createServer(async (req, res) => {
 
           // SYNC MASTER COPYTRADE 2 (#5100207348):
           if (String(acc.login) === '5100207348') {
+            console.log(`[MT5 ACC2 SYNC] Bal: ${acc.balance}, Eq: ${acc.equity}, TotalWD: ${acc.totalWithdrawn}, Profit: ${acc.profit}`);
             if (!db.copytrade2) {
               db.copytrade2 = {
                 id: "master-2",
@@ -1160,7 +1161,7 @@ const server = http.createServer(async (req, res) => {
                 avatar: "img/amaterasux.png",
                 masterAccount: "5100207348",
                 broker: "Versus Trade Ltd. (Live1)",
-                initialDeposit: 10000.0,
+                initialDeposit: 1000.0,
                 totalWithdrawn: 0.0,
                 totalWithdrawnUsd: 0.0,
                 allTimeProfitUsc: 0.0,
@@ -1169,9 +1170,9 @@ const server = http.createServer(async (req, res) => {
                 growthPct: 0.0,
                 netProfitUsc: 0.0,
                 netProfitUsd: 0.0,
-                currentBalance: 10000.0,
-                currentEquity: 10000.0,
-                activeEquity: 10000.0,
+                currentBalance: 1000.0,
+                currentEquity: 1000.0,
+                activeEquity: 1000.0,
                 activeEquityUsd: 100.0,
                 winRate: 100.0,
                 maxDrawdown: 0.0,
@@ -1180,10 +1181,12 @@ const server = http.createServer(async (req, res) => {
                 affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255"
               };
             }
-            const initDep2 = Number(db.copytrade2.initialDeposit) || 10000.0;
+            const initDep2 = Number(db.copytrade2.initialDeposit) || 1000.0;
             const eq2 = Number(acc.equity) || db.copytrade2.currentEquity;
             const bal2 = Number(acc.balance) || db.copytrade2.currentBalance;
-            const totalWd2 = Number(db.copytrade2.totalWithdrawn) || 0.0;
+            const totalWd2 = Number(acc.totalWithdrawn && acc.totalWithdrawn > 0 ? acc.totalWithdrawn : (db.copytrade2.totalWithdrawn || 0.0));
+            db.copytrade2.totalWithdrawn = totalWd2;
+            db.copytrade2.totalWithdrawnUsd = +(totalWd2 / 100).toFixed(2);
             db.copytrade2.currentEquity = eq2;
             db.copytrade2.currentBalance = bal2;
             db.copytrade2.activeEquity = eq2;
@@ -1193,6 +1196,7 @@ const server = http.createServer(async (req, res) => {
             db.copytrade2.netProfitUsd = +(netProfit2 / 100).toFixed(2);
             db.copytrade2.growthPct = +((netProfit2 / initDep2) * 100).toFixed(2);
             db.copytrade2.allTimeProfitUsc = Math.max(netProfit2, 0);
+            db.copytrade2.allTimeProfitUsd = +(db.copytrade2.allTimeProfitUsc / 100).toFixed(2);
             db.copytrade2.allTimeGrowthPct = Math.max(db.copytrade2.growthPct, 0);
             db.copytrade2.lastSync = getMYTTimeWithSeconds();
             db.copytrade2.openPositions = payload.openPositions || [];
