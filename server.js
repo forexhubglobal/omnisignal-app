@@ -3281,6 +3281,56 @@ const AiEngine = {
       return;
     }
 
+    // CONTINUOUS AUTO-RECOVERY WATCHDOG: Ensure all active Master positions are reflected in db.activeSignals
+    if (Math.floor(this.secondsInState) % 5 === 0) {
+      const allMasters = [
+        ...(Array.isArray(db.copytrade?.openPositions) ? db.copytrade.openPositions : []),
+        ...(Array.isArray(db.copytrade2?.openPositions) ? db.copytrade2.openPositions : []),
+        ...(Array.isArray(db.copytrade3?.openPositions) ? db.copytrade3.openPositions : [])
+      ];
+      let dbUpdated = false;
+      for (const p of allMasters) {
+        const sym = (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase();
+        if (['XAUUSD', 'USDCHF', 'EURUSD'].includes(sym)) {
+          const exists = (db.activeSignals || []).some(s => s.symbol === sym);
+          if (!exists) {
+            const pipMult = sym === 'XAUUSD' ? 1.0 : (sym.includes('JPY') ? 0.01 : 0.0001);
+            const slDistance = sym === 'XAUUSD' ? 12 : 25 * pipMult;
+            const tp1Distance = sym === 'XAUUSD' ? 6.5 : 20 * pipMult;
+            const tp2Distance = sym === 'XAUUSD' ? 13 : 35 * pipMult;
+            const tp3Distance = sym === 'XAUUSD' ? 20 : 55 * pipMult;
+            const newSig = {
+              id: 'mt5-' + (p.ticket || Date.now()),
+              status: 'ACTIVE',
+              symbol: sym,
+              asset: sym,
+              type: p.type || 'BUY',
+              timeframe: 'M15',
+              entry: p.openPrice || 0,
+              sl: p.sl || (p.type === 'BUY' ? Number((p.openPrice - slDistance).toFixed(sym === 'XAUUSD' ? 2 : 4)) : Number((p.openPrice + slDistance).toFixed(sym === 'XAUUSD' ? 2 : 4))),
+              tp1: p.tp || (p.type === 'BUY' ? Number((p.openPrice + tp1Distance).toFixed(sym === 'XAUUSD' ? 2 : 4)) : Number((p.openPrice - tp1Distance).toFixed(sym === 'XAUUSD' ? 2 : 4))),
+              tp2: p.type === 'BUY' ? Number((p.openPrice + tp2Distance).toFixed(sym === 'XAUUSD' ? 2 : 4)) : Number((p.openPrice - tp2Distance).toFixed(sym === 'XAUUSD' ? 2 : 4)),
+              tp3: p.type === 'BUY' ? Number((p.openPrice + tp3Distance).toFixed(sym === 'XAUUSD' ? 2 : 4)) : Number((p.openPrice - tp3Distance).toFixed(sym === 'XAUUSD' ? 2 : 4)),
+              firedAt: getMYTTime(),
+              currentPrice: p.openPrice || 0,
+              floatingPips: 0,
+              beLocked: false,
+              mt5Verified: true,
+              mt5Ticket: p.ticket,
+              notes: `[Watchdog Verified] Selaras dengan posisi terbuka MT5 (Tiket #${p.ticket})`
+            };
+            if (!Array.isArray(db.activeSignals)) db.activeSignals = [];
+            db.activeSignals.unshift(newSig);
+            dbUpdated = true;
+          }
+        }
+      }
+      if (dbUpdated) {
+        saveDB(db);
+        broadcastEvent('on_pips_update', db.activeSignals);
+      }
+    }
+
     // Pulse scan log every 15s
     if (Math.floor(this.secondsInState) % 15 === 0) {
       const randAsset = this.assets[Math.floor(Math.random() * this.assets.length)];
