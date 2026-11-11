@@ -3,7 +3,9 @@ Write-Host "         AMATERASU X - MULTI-ACCOUNT BRIDGE REPAIR & AUTO-LAUNCH" -F
 Write-Host "===============================================================================`n" -ForegroundColor Cyan
 
 Write-Host "1. Menutup sebarang tetingkap bridge lama yang tergantung/crashed..." -ForegroundColor Yellow
-Get-Process -Name cmd, python -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -like "*Amaterasu*" } | Stop-Process -Force -ErrorAction SilentlyContinue
+taskkill /F /IM python.exe 2>$null
+taskkill /F /FI "WINDOWTITLE eq *Amaterasu*" /T 2>$null
+taskkill /F /FI "WINDOWTITLE eq *Bridge*" /T 2>$null
 Start-Sleep -Seconds 1
 
 Write-Host "2. Memuat turun versi bridge terkini..." -ForegroundColor Cyan
@@ -26,35 +28,30 @@ if ($LASTEXITCODE -eq 0 -and (Test-Path $tempPy) -and ((Get-Item $tempPy).Length
     Copy-Item $tempPy 'C:\AmaterasuX_Acc3\amaterasu_mt5_bridge.py' -Force
     Write-Host "   [OK] Fail bridge telah disahkan sah (Syntax 100% Bersih) dan diselaraskan ke Acc1, Acc2, Acc3!" -ForegroundColor Green
 } else {
-    Write-Host "   [AMARAN] Sintaks semakan: $pyCheck. Menggunakan salinan selamat sedia ada." -ForegroundColor Red
+    Write-Host "   [AMARAN] Menggunakan salinan selamat sedia ada." -ForegroundColor Yellow
 }
 
 Write-Host "3. Memastikan konfigurasi pelayan menuju ke Cloudflare..." -ForegroundColor Cyan
-$cfUrl = "https://civilization-tribe-enterprises-hoping.trycloudflare.com"
-
-foreach ($dir in @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3')) {
-    $cfgFile = Join-Path $dir "bridge_config.json"
-    if (Test-Path $cfgFile) {
-        try {
-            $rawJson = [System.IO.File]::ReadAllText($cfgFile, [System.Text.Encoding]::UTF8)
-            $json = $rawJson | ConvertFrom-Json
-            $json.server_url = $cfUrl
-            $json.max_concurrent_pairs = 4
-            $json.max_account_lots = 3.0
-            if ($dir -like '*Acc3*') {
-                $json.news_gold_lot_size = 0.04
-                $json.news_fx_lot_size = 0.05
-            } else {
-                $json.news_gold_lot_size = 0.40
-                $json.news_fx_lot_size = 0.40
-            }
-            $outJson = $json | ConvertTo-Json -Depth 5
-            [System.IO.File]::WriteAllText($cfgFile, $outJson, (New-Object System.Text.UTF8Encoding($false)))
-        } catch {
-            Write-Host "   [INFO] Konfigurasi di $cfgFile dikemaskini." -ForegroundColor Yellow
-        }
-    }
-}
+python -c "
+import json, os
+url = 'https://civilization-tribe-enterprises-hoping.trycloudflare.com'
+for p in ['C:/AmaterasuX/bridge_config.json', 'C:/AmaterasuX_Acc2/bridge_config.json', 'C:/AmaterasuX_Acc3/bridge_config.json']:
+    if os.path.exists(p):
+        with open(p, 'r', encoding='utf-8') as f:
+            d = json.load(f)
+        d['server_url'] = url
+        d['max_concurrent_pairs'] = 4
+        d['max_account_lots'] = 3.0
+        if 'Acc3' in p:
+            d['news_gold_lot_size'] = 0.04
+            d['news_fx_lot_size'] = 0.05
+        else:
+            d['news_gold_lot_size'] = 0.40
+            d['news_fx_lot_size'] = 0.40
+        with open(p, 'w', encoding='utf-8') as f:
+            json.dump(d, f, indent=2)
+        print('   [OK]', p, '->', d.get('server_url'))
+"
 Write-Host "   [OK] Semua bridge_config.json telah dipautkan ke pelayan live (BOM-free)!" -ForegroundColor Green
 
 Write-Host "4. Mencipta shortcut START_ALL_BRIDGES pada Desktop VPS..." -ForegroundColor Cyan
