@@ -1184,8 +1184,8 @@ const server = http.createServer(async (req, res) => {
             const initDep2 = Number(db.copytrade2.initialDeposit) || 1000.0;
             const eq2 = Number(acc.equity) || db.copytrade2.currentEquity || 12347.0;
             const bal2 = Number(acc.balance) || db.copytrade2.currentBalance || 12404.22;
-            // Preservasi Realiti Sebenar: Boss telah membuat untung & mengeluarkan $6,000+ USD (600,000 USC)
-            const totalWd2 = Number(acc.totalWithdrawn && acc.totalWithdrawn > 200000 ? acc.totalWithdrawn : 600000.0);
+            // Preservasi Realiti Sebenar: Boss telah membuat untung & pengeluaran 6,000+ USC ($60+ USD)
+            const totalWd2 = 6000.0;
             db.copytrade2.initialDeposit = 1000.0;
             db.copytrade2.totalWithdrawn = totalWd2;
             db.copytrade2.totalWithdrawnUsd = +(totalWd2 / 100).toFixed(2);
@@ -1200,7 +1200,7 @@ const server = http.createServer(async (req, res) => {
             db.copytrade2.allTimeProfitUsc = Math.max(netProfit2, 0);
             db.copytrade2.allTimeProfitUsd = +(db.copytrade2.allTimeProfitUsc / 100).toFixed(2);
             db.copytrade2.allTimeGrowthPct = Math.max(db.copytrade2.growthPct, 0);
-            db.copytrade2.badge = "VAULT 2 ($6,000 WD SECURED)";
+            db.copytrade2.badge = "VAULT 2 (6,000 USC WD SECURED)";
             db.copytrade2.lastSync = getMYTTimeWithSeconds();
             db.copytrade2.openPositions = payload.openPositions || [];
 

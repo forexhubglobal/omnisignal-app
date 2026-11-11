@@ -583,12 +583,12 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
     themeBorder = 'rgba(255, 61, 0, 0.5)';
     themeShadow = 'rgba(255, 61, 0, 0.2)';
     themeBadge = 'MASTER 2 (VERIFIED LIVE)';
-    const growth2 = (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 61133.01;
-    const netProf2 = Number(cp2 && cp2.netProfitUsc !== undefined ? cp2.netProfitUsc : 611330.1);
+    const growth2 = (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 1734.70;
+    const netProf2 = Number(cp2 && cp2.netProfitUsc !== undefined ? cp2.netProfitUsc : 17347.0);
     const bal2 = Number(cp2 && cp2.currentBalance !== undefined ? cp2.currentBalance : 12404.22);
     const eq2 = Number(cp2 && cp2.currentEquity !== undefined ? cp2.currentEquity : 12347.0);
-    const wd2Usd = Number(cp2 && cp2.totalWithdrawnUsd !== undefined ? cp2.totalWithdrawnUsd : 6000.0);
-    const wd2Usc = Number(cp2 && cp2.totalWithdrawn !== undefined ? cp2.totalWithdrawn : 600000.0);
+    const wd2Usd = Number(cp2 && cp2.totalWithdrawnUsd !== undefined ? cp2.totalWithdrawnUsd : 60.0);
+    const wd2Usc = Number(cp2 && cp2.totalWithdrawn !== undefined ? cp2.totalWithdrawn : 6000.0);
     cp = {
       id: 2,
       name: "AMATERASU X",
@@ -852,19 +852,19 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
     name = 'AMATERASU X';
     account = '5100207348';
     avatarSrc = 'img/amaterasux.png';
-    const g2 = Number(cp2.growthPct !== undefined ? cp2.growthPct : 61133.01);
+    const g2 = Number(cp2.growthPct !== undefined ? cp2.growthPct : 1734.70);
     growth = '+' + g2.toFixed(2) + '%';
-    const net2 = Number(cp2.allTimeProfitUsc !== undefined ? cp2.allTimeProfitUsc : (cp2.netProfitUsc || 611330.1));
+    const net2 = Number(cp2.allTimeProfitUsc !== undefined ? cp2.allTimeProfitUsc : (cp2.netProfitUsc || 17347.0));
     grossProfitUsc = '+' + num(net2) + ' USC';
     grossProfitUsd = '+$' + Number(Math.abs(net2 / 100)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD';
-    statusBadge = '🛡️ MODAL ASAL SELAMAT DI-WD $6,000 USD';
+    statusBadge = '🛡️ MODAL ASAL SELAMAT DI-WD 6,000 USC ($60 USD)';
     themeColor = '#FF3D00';
     themeGlow = 'rgba(255, 61, 0, 0.35)';
     themeBorder = 'rgba(255, 61, 0, 0.5)';
     themeShadow = 'rgba(255, 61, 0, 0.3)';
     verifiedBadge = '● MASTER 2 LIVE VERIFIED · CENT POOL';
     growthSubtitle = 'ALL-TIME REALIZED GROWTH';
-    modalWithdrawn = '$6,000.00 USD (Realised & Withdrawn ✓)';
+    modalWithdrawn = '6,000 USC ($+60.00 USD ✓)';
     const eq2 = Number(cp2.currentEquity !== undefined ? cp2.currentEquity : 12347);
     activeEquityStr = num(eq2) + ' USC ($' + Number(eq2 / 100).toFixed(2) + ' USD)';
     winrateStr = (cp2.winRate || 100) + '% (Zero Risk Post WD)';
@@ -1296,7 +1296,7 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
             <label style="font-size:10.5px; color:#8e9aa8; display:block; margin-bottom:4px; font-weight:700;">PILIH MASTER COPYTRADE PILIHAN ANDA:</label>
             <select id="cpTargetMaster" onchange="showCopytradeModal(this.value === '5100209626' ? 3 : this.value === '5100207348' ? 2 : 1)" style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid ${targetTheme}; border-radius:6px; color:#fff; font-size:12px; font-weight:700;">
               <option value="5100154135" ${vNum === 1 ? 'selected' : ''}>🦆 The Mighty Duck - Master 1 (#5100154135 · +235.23% · $200 WD ✓)</option>
-              <option value="5100207348" ${vNum === 2 ? 'selected' : ''}>🔥 Amaterasu X - Master 2 (#5100207348 · +61,133% · $6,000 WD ✓)</option>
+              <option value="5100207348" ${vNum === 2 ? 'selected' : ''}>🔥 Amaterasu X - Master 2 (#5100207348 · +1,734.7% · 6,000 USC WD ✓)</option>
               <option value="5100209626" ${vNum === 3 ? 'selected' : ''}>👑 Amaterasu X 2.0 - Master 3 (#5100209626 · +514.59% · $4,100 WD ✓)</option>
             </select>
           </div>
