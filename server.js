@@ -3073,10 +3073,10 @@ const AiEngine = {
         const [evH, evM] = ev.time.split(':').map(Number);
         const evTotalMin = evH * 60 + evM;
         const diff = evTotalMin - nowTotalMin;
-        // Active News Window: 60 min sebelum hingga 45 min selepas pengumuman (105 minit Zon Sinergi Penuh)
-        if (diff >= -45 && diff <= 60) {
+        // Optimal News Window: 12 minit sebelum (T-10m Golden Window) hingga 30 minit selepas pelepasan
+        if (diff >= -30 && diff <= 12) {
           const biasDirection = (ev.bias || '').toUpperCase().includes('BULL') ? 'BUY' : 'SELL';
-          return this.mapCurrencyBiasToSymbol(ev.currency || 'USD', biasDirection, symbol, ev.name);
+          return this.mapCurrencyBiasToSymbol(ev.currency || 'USD', biasDirection, symbol, ev.name, diff);
         }
       }
     } catch (e) {
@@ -3618,6 +3618,9 @@ const AiEngine = {
       floatingPips: 0,
       beLocked: false,
       ticks: 0,
+      isNews: !!newsSynergy,
+      newsName: newsSynergy ? newsSynergy.newsName : null,
+      newsBias: newsSynergy ? newsSynergy.bias : null,
       notes: notes
     };
 

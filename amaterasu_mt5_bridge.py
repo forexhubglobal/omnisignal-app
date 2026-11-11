@@ -714,22 +714,31 @@ class AmaterasuBridge:
                 exec_lot = float(c_lot)
                 break
 
-        # Module 3: Time-Price Theory (Sesi Emas New York: 7:30 PM - 11:30 PM MYT)
-        # HANYA UNTUK XAUUSD: Gandakan saiz posisi sempena 98.3% Winrate Window
-        is_ny_gold_boost = False
-        if clean_raw_sym == "XAUUSD":
-            from datetime import timezone, timedelta
-            now_myt = datetime.now(timezone(timedelta(hours=8)))
-            is_ny_golden_window = (
-                (now_myt.hour == 19 and now_myt.minute >= 30) or
-                (20 <= now_myt.hour <= 22) or
-                (now_myt.hour == 23 and now_myt.minute <= 30)
-            )
-            if is_ny_golden_window and self.config.get("ny_gold_multiplier_active", True):
-                default_ny_lot = round(exec_lot * 1.5, 2)
-                exec_lot = float(self.config.get("ny_gold_lot_size", default_ny_lot))
-                is_ny_gold_boost = True
-                print(f"{Colors.GREEN}{Colors.BOLD}🔥 [TIME-PRICE THEORY: SESI EMAS NEW YORK] Menggandakan saiz posisi XAUUSD kepada {exec_lot} lot! (Waktu Emas 19:30 - 23:30 MYT | Rekod 98.3% Winrate){Colors.RESET}")
+        # Module: News AI Boost (Entry T-10m Golden Window dengan saiz lot dipertingkat)
+        is_news_trade = bool(signal.get("isNews") or signal.get("is_news") or "NEWS AI" in str(signal.get("notes", "")))
+        if is_news_trade:
+            if clean_raw_sym == "XAUUSD":
+                exec_lot = float(self.config.get("news_gold_lot_size", self.config.get("ny_gold_lot_size", exec_lot)))
+            else:
+                exec_lot = float(self.config.get("news_fx_lot_size", exec_lot))
+            print(f"{Colors.GREEN}{Colors.BOLD}⚡ [NEWS AI BOOST] Isyarat News AI dikesan! Saiz lot #{clean_raw_sym} dilaraskan ke {exec_lot} lot (T-10m Golden Entry | Safe Risk SOP).{Colors.RESET}")
+        else:
+            # Module 3: Time-Price Theory (Sesi Emas New York: 7:30 PM - 11:30 PM MYT)
+            # HANYA UNTUK XAUUSD: Gandakan saiz posisi sempena 98.3% Winrate Window
+            is_ny_gold_boost = False
+            if clean_raw_sym == "XAUUSD":
+                from datetime import timezone, timedelta
+                now_myt = datetime.now(timezone(timedelta(hours=8)))
+                is_ny_golden_window = (
+                    (now_myt.hour == 19 and now_myt.minute >= 30) or
+                    (20 <= now_myt.hour <= 22) or
+                    (now_myt.hour == 23 and now_myt.minute <= 30)
+                )
+                if is_ny_golden_window and self.config.get("ny_gold_multiplier_active", True):
+                    default_ny_lot = round(exec_lot * 1.5, 2)
+                    exec_lot = float(self.config.get("ny_gold_lot_size", default_ny_lot))
+                    is_ny_gold_boost = True
+                    print(f"{Colors.GREEN}{Colors.BOLD}🔥 [TIME-PRICE THEORY: SESI EMAS NEW YORK] Menggandakan saiz posisi XAUUSD kepada {exec_lot} lot! (Waktu Emas 19:30 - 23:30 MYT | Rekod 98.3% Winrate){Colors.RESET}")
 
         # Human Execution Jitter (Anti-Bot Timing Fingerprint Guard):
         if self.config.get("execution_jitter", True):
