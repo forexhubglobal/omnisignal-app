@@ -1270,23 +1270,31 @@ const server = http.createServer(async (req, res) => {
           }
           saveDB(db);
         }
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: true, followerSynced: true, login: payload?.accountInfo?.login, copytrade2: db.copytrade2 }));
       }
 
       if (payload && Array.isArray(payload.openPositions)) {
         AiEngine.liveMT5Positions = payload.openPositions;
-        if (db.copytrade) db.copytrade.openPositions = payload.openPositions;
+        if (db.copytrade && (!payload.accountInfo || String(payload.accountInfo.login) === '5100154135')) {
+          db.copytrade.openPositions = payload.openPositions;
+        }
 
         // =========================================================================
-        // CONTINUOUS MT5 POSITION AUTO-RECONCILIATION ENGINE
-        // MT5 is the single absolute truth. The Web App MUST reflect MT5 reality!
+        // CONTINUOUS CONSOLIDATED MULTI-MASTER AUTO-RECONCILIATION ENGINE
+        // Aggregates positions from ALL 3 Masters (Cent 1, Cent 2, Standard 3)
+        // so no master's active trades are ever lost, purged, or orphaned!
         // =========================================================================
         const allowedWhitelist = ['XAUUSD', 'USDCHF', 'EURUSD'];
 
+        const allMastersPositions = [
+          ...(Array.isArray(payload.openPositions) ? payload.openPositions : []),
+          ...(Array.isArray(db.copytrade?.openPositions) ? db.copytrade.openPositions : []),
+          ...(Array.isArray(db.copytrade2?.openPositions) ? db.copytrade2.openPositions : []),
+          ...(Array.isArray(db.copytrade3?.openPositions) ? db.copytrade3.openPositions : [])
+        ];
+
         // Map MT5 positions by clean symbol (e.g. 'XAUUSD', 'USDCHF', 'EURUSD')
         const mt5BySymbol = {};
-        for (const p of payload.openPositions) {
+        for (const p of allMastersPositions) {
           const sym = (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase();
           if (allowedWhitelist.includes(sym) && !mt5BySymbol[sym]) {
             mt5BySymbol[sym] = p;
