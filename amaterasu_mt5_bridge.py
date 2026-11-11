@@ -690,7 +690,9 @@ class AmaterasuBridge:
             sl = round(price + sl_dist, digits)
 
         # STRICT ANTI-CHASING PUCUK/LANTAI GUARD:
-        max_slip_dist = (self.max_slippage_pips * 10 * point)
+        # Penampan fleksibel: Emas ($4,040+) diberi ruang 15 pip ($1.50) waktu lonjakan news/volatiliti
+        allowed_slip_pips = 15.0 if clean_raw_sym == "XAUUSD" else max(self.max_slippage_pips, 8.0)
+        max_slip_dist = (allowed_slip_pips * 10 * point)
         if is_buy and price > (signal_entry + max_slip_dist):
             slip_pips = (price - signal_entry) / (10 * point)
             print(f"{Colors.RED}🛑 [ANTI-PUCUK DITOLAK] Order BUY #{clean_raw_sym} disekat! Harga semasa ({price:.{digits}f}) telah melambung +{slip_pips:.1f} pips melepasi Entry Signal ({signal_entry:.{digits}f}). Dilarang beli di pucuk!{Colors.RESET}")
@@ -734,8 +736,8 @@ class AmaterasuBridge:
             jitter = round(random.uniform(0.35, 1.20), 2)
             time.sleep(jitter)
 
-        # Deviation in points
-        deviation = int(self.max_slippage_pips * 10)
+        # Deviation in points (Toleransi requote waktu lonjakan news/volatiliti pantas)
+        deviation = int((15 if clean_raw_sym == "XAUUSD" else max(self.max_slippage_pips, 8)) * 10)
         filling = self.get_fill_type(symbol, order_type, price)
 
         # Stealth Mode Comment Protection (Sembunyikan cap jari bot daripada Broker B-Book):
