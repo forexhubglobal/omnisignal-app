@@ -2621,17 +2621,23 @@ const server = http.createServer(async (req, res) => {
     const deviceId = query.get('deviceId') || '';
     const deviceModel = query.get('deviceModel') || 'Mobile/Desktop';
 
-    // 🛡️ Cryptographic Master Token Check (Anti-Spoofing: Name string alone CANNOT grant master access!)
+    // 🛡️ Cryptographic Master Token Check / Owner Bypass
     const auth = SecurityShield.isRequestAuthorized(req);
-    if (auth) {
+    const isOwnerOrMaster = (
+      auth ||
+      callSign.toLowerCase() === 'tengku khairi' ||
+      callSign.toLowerCase() === 'owner' ||
+      ['5100154135', '5100207348', '5100209626'].includes(String(mt5).trim())
+    );
+    if (isOwnerOrMaster) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({
         success: true,
         isMaster: true,
         valid: true,
-        daysRemaining: 999,
-        passTitle: 'Master VIP Infinite Pass',
-        message: 'Akses Penuh Master Admin (' + auth.operator + ')'
+        daysRemaining: 9999,
+        passTitle: 'Owner / Master VIP Infinite Pass',
+        message: 'Akses Penuh Pengasas & Pemilik Amaterasu X (' + (auth ? auth.operator : 'Tengku Khairi') + ')'
       }));
     }
 

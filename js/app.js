@@ -738,6 +738,25 @@ function init() {
     route();
   }
 
+  // 👑 OWNER / FOUNDER 1-CLICK DIRECT ACCESS BYPASS
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isOwnerQuery = urlParams.has('owner') || urlParams.has('boss') || urlParams.has('master') || urlParams.has('admin');
+    if (isOwnerQuery) {
+      store.set('ama_logged_in', true);
+      store.set('ama_operator', 'Tengku Khairi');
+      store.set('ama_role', 'OWNER');
+      localStorage.setItem('ama_mt5', '5100154135');
+      localStorage.setItem('ama_master_unlocked', '1');
+      BRAND.user = 'Tengku Khairi';
+      // Clean up URL parameter gracefully without reload
+      if (window.history && window.history.replaceState) {
+        const cleanUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
+  } catch(e) {}
+
   // Check Login Session & Profile
   const isLoggedIn = store.get('ama_logged_in', false);
   const currentOp = store.get('ama_operator') || BRAND.user;
@@ -749,6 +768,8 @@ function init() {
     showLoginScreen(() => {
       route();
     });
+  } else {
+    checkTraderPass();
   }
 }
 
