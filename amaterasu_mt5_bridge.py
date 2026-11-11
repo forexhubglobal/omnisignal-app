@@ -59,6 +59,7 @@ DEFAULT_CONFIG = {
     "execution_jitter": True, # Kelewatan rawak manusia 0.35s - 1.20s sebelum order_send
     "gold_min_be_pips": 50.0,
     "max_concurrent_pairs": 4,
+    "max_account_lots": 3.0,
     "max_slippage_pips": 5,
     "magic_number": 888999,
     "mt5_terminal_path": "",
@@ -527,9 +528,9 @@ class AmaterasuBridge:
         # HARD CEILING: Maximum Total Account Open Lots & Positions (Anti-Overtrading & Anti-Liquidation)
         all_pos_raw = mt5.positions_get() or []
         tot_vol = sum(p.volume for p in all_pos_raw)
-        max_tot_vol = float(self.config.get("max_account_lots", 1.0))
-        if tot_vol >= max_tot_vol or len(all_pos_raw) >= 6:
-            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= 6) telah mencapai had maksimum keselamatan! Menolak order baharu.{Colors.RESET}")
+        max_tot_vol = float(self.config.get("max_account_lots", 3.0))
+        if tot_vol >= max_tot_vol or len(all_pos_raw) >= 10:
+            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= 10) telah mencapai had maksimum keselamatan (9 posisi)! Menolak order baharu.{Colors.RESET}")
             return None
 
         # STRICT 1-SETUP PER SYMBOL (MAX 3 SPLIT LAYERS - BULAN LEPAS LOCKED SOP):
