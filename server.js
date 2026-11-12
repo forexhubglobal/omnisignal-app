@@ -1310,6 +1310,10 @@ const server = http.createServer(async (req, res) => {
           if (sig.isTest) continue;
           const mt5Pos = mt5BySymbol[sym];
           if (mt5Pos) {
+            if (sig.status !== 'ACTIVE' && sig.status !== 'TP1_HIT' && sig.status !== 'TP2_HIT') {
+              sig.status = 'ACTIVE';
+              dbChanged = true;
+            }
             // Direction or major entry divergence: forcefully align to MT5 reality!
             const priceDiff = Math.abs(sig.entry - mt5Pos.openPrice);
             const maxTol = sym === 'XAUUSD' ? 2.0 : 0.0020;
@@ -1613,14 +1617,10 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: true, symbol: rawSymbol, outcome, resolvedPips, activeSignalsCount: db.activeSignals.length }));
       } else {
-        // Deal MT5 yang bukan isyarat aktif Amaterasu X (cth: order manual / scalping / layer)
-        // TIDAK disuntik ke dalam journal isyarat AI untuk memelihara integriti ketepatan isyarat AI (92% win rate)
-        if (db.activeSignal && db.activeSignal.symbol === rawSymbol && db.activeSignal.status === 'ACTIVE') {
-          db.activeSignal.status = 'WAITING';
-          saveDB(db);
-        }
+        // Deal MT5 yang bukan isyarat aktif Amaterasu X (cth: order manual / scalping / layer lama)
+        // Tidak mengganggu status isyarat aktif yang sedang berjalan
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: true, message: 'Deal MT5 disahkan tanpa mencemarkan rekod isyarat rasmi AI' }));
+        return res.end(JSON.stringify({ success: true, message: 'Deal MT5 disahkan tanpa mengubah isyarat aktif sedia ada' }));
       }
     } catch (err) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -3345,7 +3345,7 @@ const AiEngine = {
       // STRICT 1-SETUP PER PAIR (BULAN LEPAS STYLE):
       // Dilarang keras stacking berkali-kali! Satu pair hanya boleh ada 1 setup aktif sahaja.
       const activePendingSymbols = new Set(
-        (db.activeSignals || []).map(s => s.symbol)
+        (db.activeSignals || []).filter(s => s.status === 'ACTIVE' || s.status === 'TP1_HIT').map(s => s.symbol)
       );
       const allMasterCheck = [
         ...(Array.isArray(this.liveMT5Positions) ? this.liveMT5Positions : []),
@@ -3391,7 +3391,7 @@ const AiEngine = {
 
     // 0. STRICT 1-SETUP GUARD (BULAN LEPAS LOCKED SOP):
     // Sekiranya simbol ini sudah ada trade yang sedang aktif di web (ACTIVE, TP1_HIT, TP2_HIT) atau MT5, jangan buka trade baru!
-    const existingActive = (db.activeSignals || []).find(s => s.symbol === asset.symbol);
+    const existingActive = (db.activeSignals || []).find(s => s.symbol === asset.symbol && (s.status === 'ACTIVE' || s.status === 'TP1_HIT'));
     if (existingActive) {
       return;
     }
@@ -3726,11 +3726,12 @@ const AiEngine = {
     };
 
     if (!Array.isArray(db.activeSignals)) db.activeSignals = [];
-    const existingIdx = db.activeSignals.findIndex(s => s.symbol === asset.symbol);
+    const existingIdx = db.activeSignals.findIndex(s => s.symbol === asset.symbol && (s.status === 'ACTIVE' || s.status === 'TP1_HIT'));
     if (existingIdx !== -1) {
       this.log(`🛡️ [1-SETUP GUARD] Menolak isyarat ${type} ${asset.symbol} kerana setup sedia ada (#${db.activeSignals[existingIdx].id}) masih berjalan.`);
       return;
     }
+    db.activeSignals = db.activeSignals.filter(s => s.symbol !== asset.symbol);
     db.activeSignals.unshift(newSig);
 
     db.activeSignal = db.activeSignals[0];
