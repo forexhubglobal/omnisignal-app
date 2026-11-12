@@ -1232,12 +1232,17 @@ class AmaterasuBridge:
             if isinstance(payload, list):
                 for s in payload:
                     sig_id = str(s.get("id", ""))
-                    # Jangan re-execute signal yang diselaraskan semula dari tiket MT5 (elak duplicate / feedback loop)
-                    if sig_id.startswith("mt5-"):
-                        self.executed_signal_ids.add(sig_id)
-                        continue
-                    if s.get("status") == "ACTIVE" and sig_id not in self.executed_signal_ids:
-                        self.process_new_signal(s)
+                    clean_sym = s.get("symbol", "").split(".")[0].upper()
+                    if s.get("status") == "ACTIVE":
+                        # Semak sama ada terminal MT5 semasa sudah memegang posisi untuk simbol ini
+                        my_sym_pos = [
+                            p for p in (mt5.positions_get() or [])
+                            if p.symbol.split(".")[0].upper() == clean_sym and
+                               (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
+                        ]
+                        if len(my_sym_pos) == 0 and sig_id not in self.executed_signal_ids:
+                            print(f"{Colors.GREEN}{Colors.BOLD}⚡ [CROSS-ACCOUNT SYNC] Mengesan isyarat aktif #{clean_sym} ({s.get('type')}) dari Otak tanpa posisi di akaun ini. Melaksanakan entry segera...{Colors.RESET}")
+                            self.process_new_signal(s)
                     elif s.get("status") == "TP1_HIT" or s.get("beLocked") or s.get("tp1Triggered"):
                         sym = s.get("symbol")
                         if sym:
