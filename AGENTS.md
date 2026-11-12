@@ -36,3 +36,27 @@
   - Gold (XAUUSD): SL 100 - 135 pips ($10.00 - $13.50); TP1: 80 pips, TP2: 160 pips, TP3: 300 pips runner.
   - Forex (EURUSD, USDCHF): SL 35 - 48 pips; TP1: 35 pips, TP2: 70 pips, TP3: 110 pips runner.
 - **Gold Macro Trend Following**: While Gold trades above macro support (4,025.00+), strictly execute BUY on Dip and forbid counter-trend SELL setups into the prevailing bull run.
+
+## 4. Multi-Account Execution Parity & Cross-Account Invariants
+- **Independent Terminal Verification**: Each running bridge instance (Acc1, Acc2, Acc3) must independently inspect its local terminal positions (`len(my_sym_pos) == 0`).
+- **Zero MT5-ID Skipping for Followers**: Follower bridges must NEVER skip signals whose ID starts with `mt5-`. If the local terminal holds 0 positions for that symbol, it MUST execute immediately.
+- **Lot Sizing Parity**:
+  - Acc1 & Acc2 (Cent): 0.20 - 0.40 USC.
+  - Acc3 (Standard USD $1,000): 0.02 - 0.05 USD.
+
+## 5. Telemetry Isolation & Database Vault Mutex
+- **Strict Account Routing**:
+  - Login `5100154135` strictly routes to `db.copytrade` (Vault 1).
+  - Login `5100207348` strictly routes to `db.copytrade2` (Vault 2).
+  - Login `5100209626` strictly routes to `db.copytrade3` (Vault 3).
+- **Zero Cross-Overwrite**: Telemetry from one account must never mutate the balance, equity, or status of another vault. The server endpoint handler MUST enforce `payload.accountInfo.login` matching before modifying any copytrade vault.
+
+## 6. Institutional Dual SMC Strategy Engine
+- **Symmetric Trend Scalp Execution**:
+  - Downtrend: Trigger `SMC BREAKDOWN BOS` (below floor) or `SCALP PRO: SELL ON RALLY` (pullback). Hold fire only on exact support wick (`floorRef ± 0.5`).
+  - Uptrend: Trigger `SMC BREAKOUT BOS` (above ceiling) or `SCALP PRO: BUY ON DIP` (pullback). Hold fire only on exact resistance wick (`ceilRef ± 0.5`).
+- **Elimination of Dead Zones**: Prevent mathematical deadlocks where price is trapped in perpetual await state.
+
+## 7. Windows Command Safety Invariant
+- **No-Pipe Rule**: NEVER use or propose PowerShell pipeline `|` syntax in user-facing snippets or shell commands. Use native cmdlets or direct Python subprocesses to ensure 100% execution reliability on Windows without parser termination.
+
