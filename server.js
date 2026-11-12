@@ -1413,8 +1413,8 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
-      // 5. LIVE COPYTRADE MASTER PERFORMANCE SYNC:
-      if (payload && payload.accountInfo) {
+      // 5. LIVE COPYTRADE MASTER 1 (#5100154135) PERFORMANCE SYNC:
+      if (payload && payload.accountInfo && (String(payload.accountInfo.login) === '5100154135' || !payload.accountInfo.login)) {
         const acc = payload.accountInfo;
         if (!db.copytrade) {
           db.copytrade = {

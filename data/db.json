@@ -1,14 +1,14 @@
 {
   "stats": {
-    "totalSignals": 359,
-    "totalSignalsClosed": 418,
-    "totalProfitAllTime": 10254.1,
-    "winRate": 89,
-    "tp1Hit": 304,
+    "totalSignals": 373,
+    "totalSignalsClosed": 438,
+    "totalProfitAllTime": 10062.2,
+    "winRate": 87,
+    "tp1Hit": 312,
     "tp2Hit": 14,
     "tp3Hit": 0,
-    "slHit": 41,
-    "totalProfitToday": 6.9,
+    "slHit": 47,
+    "totalProfitToday": -185.00000000000003,
     "last7Days": [
       {
         "day": "Fri",
@@ -43,35 +43,297 @@
       {
         "day": "Today",
         "date": "Nov 12",
-        "pips": 6.9
+        "pips": -185.00000000000003
       }
     ],
-    "lastUpdated": "2026-11-11T19:16:19.000Z"
+    "lastUpdated": "2026-11-12T01:17:22.000Z"
   },
   "activeSignal": {
-    "id": "mt5-514039711",
+    "id": "mt5-514322604",
     "status": "ACTIVE",
-    "symbol": "USDCHF",
-    "asset": "USDCHF",
+    "symbol": "XAUUSD",
+    "asset": "XAUUSD",
     "type": "BUY",
     "timeframe": "M15",
-    "entry": 0.83358,
-    "sl": 0.83278,
-    "tp1": 0.83538,
-    "tp2": 0.8371,
-    "tp3": 0.8391,
-    "firedAt": "03:14",
-    "currentPrice": 0.8333,
-    "floatingPips": -2.8,
+    "entry": 3995.16,
+    "sl": 3983.16,
+    "tp1": 4001.66,
+    "tp2": 4008.16,
+    "tp3": 4015.16,
+    "firedAt": "09:00",
+    "currentPrice": 3997.75,
+    "floatingPips": 25.9,
     "beLocked": false,
     "mt5Verified": true,
-    "mt5Ticket": 514039711,
-    "notes": "[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #514039711)",
+    "mt5Ticket": 514323942,
+    "notes": "[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #514322604)",
     "_missingFromMt5Count": 0,
-    "ticks": 45,
-    "peakPips": 0
+    "ticks": 400,
+    "peakPips": 46.3,
+    "mt5OpenPrice": 3995.75
   },
   "signals": [
+    {
+      "id": "mt5-514289398",
+      "time": "08:56",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3985.77,
+      "status": "SL",
+      "pips": -70,
+      "tags": [],
+      "peak": 2
+    },
+    {
+      "id": "mt5-514245200",
+      "time": "08:56",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3985.72,
+      "status": "SL",
+      "pips": -70,
+      "tags": [],
+      "peak": 2
+    },
+    {
+      "id": "mt5-514245199",
+      "time": "08:40",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3982.94,
+      "status": "SL",
+      "pips": -70,
+      "tags": [],
+      "peak": 5
+    },
+    {
+      "id": "sig-1794442681451",
+      "time": "08:39",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3983.03,
+      "status": "BE",
+      "pips": 35,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 40
+    },
+    {
+      "id": "mt5-514152496",
+      "time": "08:03",
+      "date": "Nov 12",
+      "symbol": "EURUSD",
+      "type": "BUY",
+      "entry": 1.10994,
+      "status": "SL",
+      "pips": -28,
+      "tags": [],
+      "peak": 2
+    },
+    {
+      "id": "sig-1794438452751",
+      "time": "07:17",
+      "date": "Nov 12",
+      "symbol": "USDCHF",
+      "type": "SELL",
+      "entry": 0.8323,
+      "status": "BE",
+      "pips": 12,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1794438452752",
+      "time": "07:17",
+      "date": "Nov 12",
+      "symbol": "EURUSD",
+      "type": "BUY",
+      "entry": 1.1098,
+      "status": "BE",
+      "pips": 12,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "mt5-514035407",
+      "time": "07:01",
+      "date": "Nov 12",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.10878,
+      "status": "CLOSED",
+      "pips": -7.2,
+      "tags": [],
+      "peak": 2
+    },
+    {
+      "id": "mt5-514039711",
+      "time": "07:01",
+      "date": "Nov 12",
+      "symbol": "USDCHF",
+      "type": "BUY",
+      "entry": 0.83358,
+      "status": "CLOSED",
+      "pips": -10.8,
+      "tags": [],
+      "peak": 2
+    },
+    {
+      "id": "mt5-514136742",
+      "time": "07:01",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 3985.06,
+      "status": "CLOSED",
+      "pips": 79.1,
+      "tags": [],
+      "peak": 95
+    },
+    {
+      "id": "mt5-514035408",
+      "time": "07:01",
+      "date": "Nov 12",
+      "symbol": "EURUSD",
+      "type": "SELL",
+      "entry": 1.10878,
+      "status": "SL",
+      "pips": -28,
+      "tags": [],
+      "peak": 5
+    },
+    {
+      "id": "mt5-514039711",
+      "time": "06:00",
+      "date": "Nov 12",
+      "symbol": "USDCHF",
+      "type": "BUY",
+      "entry": 0.83358,
+      "status": "SL",
+      "pips": -28,
+      "tags": [],
+      "peak": 2
+    },
+    {
+      "id": "sig-1794428786098",
+      "time": "04:33",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3987.64,
+      "status": "TP1",
+      "pips": 23.1,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 27
+    },
+    {
+      "id": "sig-1794428063898",
+      "time": "04:19",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3986.44,
+      "status": "TP1",
+      "pips": 23,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 26
+    },
+    {
+      "id": "sig-1794427450902",
+      "time": "04:09",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3984.21,
+      "status": "TP1",
+      "pips": -14.3,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 15
+    },
+    {
+      "id": "sig-1794426728739",
+      "time": "03:57",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3987.51,
+      "status": "TP1",
+      "pips": 5,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 9
+    },
+    {
+      "id": "sig-1794426006630",
+      "time": "03:45",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3988.17,
+      "status": "TP1",
+      "pips": 10.6,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 15
+    },
+    {
+      "id": "sig-1794425569551",
+      "time": "03:37",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3989.63,
+      "status": "TP1",
+      "pips": -1.3,
+      "tags": [
+        "TP1"
+      ],
+      "peak": 9
+    },
+    {
+      "id": "sig-1794425076812",
+      "time": "03:24",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3983.32,
+      "status": "CLOSED",
+      "pips": -6,
+      "tags": [],
+      "peak": 3
+    },
+    {
+      "id": "sig-1794424715727",
+      "time": "03:18",
+      "date": "Nov 12",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3984.39,
+      "status": "CLOSED",
+      "pips": 0.9,
+      "tags": [],
+      "peak": 1
+    },
     {
       "id": "sig-1794423864594",
       "time": "03:14",
@@ -6324,19 +6586,16 @@
     }
   ],
   "lastResolvedSignal": {
-    "id": "sig-1794423864594",
-    "time": "03:14",
+    "id": "mt5-514289398",
+    "time": "08:56",
     "date": "Nov 12",
-    "symbol": "USDCHF",
-    "type": "BUY",
-    "entry": 0.8335,
-    "status": "BE",
-    "pips": 12,
-    "tags": [
-      "TP1",
-      "BE"
-    ],
-    "peak": 25
+    "symbol": "XAUUSD",
+    "type": "SELL",
+    "entry": 3985.77,
+    "status": "SL",
+    "pips": -70,
+    "tags": [],
+    "peak": 2
   },
   "aiNewsStats": {
     "totalNewsSignals": 11,
@@ -6487,50 +6746,76 @@
   },
   "activeSignals": [
     {
-      "id": "mt5-514039711",
+      "id": "mt5-514322604",
       "status": "ACTIVE",
-      "symbol": "USDCHF",
-      "asset": "USDCHF",
+      "symbol": "XAUUSD",
+      "asset": "XAUUSD",
       "type": "BUY",
       "timeframe": "M15",
-      "entry": 0.83358,
-      "sl": 0.83278,
-      "tp1": 0.83538,
-      "tp2": 0.8371,
-      "tp3": 0.8391,
-      "firedAt": "03:14",
-      "currentPrice": 0.8333,
-      "floatingPips": -2.8,
+      "entry": 3995.16,
+      "sl": 3983.16,
+      "tp1": 4001.66,
+      "tp2": 4008.16,
+      "tp3": 4015.16,
+      "firedAt": "09:00",
+      "currentPrice": 3997.75,
+      "floatingPips": 25.9,
       "beLocked": false,
       "mt5Verified": true,
-      "mt5Ticket": 514039711,
-      "notes": "[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #514039711)",
+      "mt5Ticket": 514323942,
+      "notes": "[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #514322604)",
       "_missingFromMt5Count": 0,
-      "ticks": 45,
-      "peakPips": 0
+      "ticks": 400,
+      "peakPips": 46.3,
+      "mt5OpenPrice": 3995.75
     },
     {
-      "id": "mt5-514035408",
+      "id": "mt5-514152472",
       "status": "ACTIVE",
       "symbol": "EURUSD",
       "asset": "EURUSD",
-      "type": "SELL",
+      "type": "BUY",
       "timeframe": "M15",
-      "entry": 1.10878,
-      "sl": 1.10958,
-      "tp1": 1.10699,
-      "tp2": 1.1053,
-      "tp3": 1.1033,
-      "firedAt": "03:10",
-      "currentPrice": 1.109,
-      "floatingPips": -2.2,
+      "entry": 1.10994,
+      "sl": 1.10694,
+      "tp1": 1.11194,
+      "tp2": 1.1134,
+      "tp3": 1.1154,
+      "firedAt": "08:03",
+      "currentPrice": 1.1097,
+      "floatingPips": -2.4,
       "beLocked": false,
       "mt5Verified": true,
-      "mt5Ticket": 514035408,
-      "notes": "[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #514035408)",
+      "mt5Ticket": 514152497,
+      "notes": "[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #514152472)",
       "_missingFromMt5Count": 0,
-      "ticks": 140,
+      "mt5OpenPrice": 1.10994,
+      "ticks": 1734,
       "peakPips": 0
+    },
+    {
+      "id": "mt5-514152393",
+      "status": "ACTIVE",
+      "symbol": "USDCHF",
+      "asset": "USDCHF",
+      "type": "SELL",
+      "timeframe": "M15",
+      "entry": 0.83221,
+      "sl": 0.83301,
+      "tp1": 0.83021,
+      "tp2": 0.8287,
+      "tp3": 0.8267,
+      "firedAt": "07:17",
+      "currentPrice": 0.832,
+      "floatingPips": 2.1,
+      "beLocked": false,
+      "mt5Verified": true,
+      "mt5Ticket": 514152408,
+      "notes": "[MT5 Real-Time Verified] Isyarat aktif diselaraskan dari terminal broker (Tiket #514152393)",
+      "_missingFromMt5Count": 0,
+      "mt5OpenPrice": 0.83221,
+      "ticks": 2827,
+      "peakPips": 5.1
     }
   ],
   "newsSynergyMode": "AUTO",
@@ -6580,9 +6865,9 @@
       "notes": "Akaun Kedua Rasmi Boss (10,000 USC) - Multi-Terminal VPS Active",
       "boundDeviceId": null,
       "boundDeviceModel": null,
-      "currentBalance": 12507.6,
-      "currentEquity": 12463.44,
-      "lastSync": "03:16:16"
+      "currentBalance": 13841.16,
+      "currentEquity": 16123.72,
+      "lastSync": "09:17:19"
     },
     {
       "id": "trd-1",
@@ -6678,77 +6963,608 @@
     "initialDeposit": 10000,
     "totalWithdrawn": 33522,
     "totalWithdrawnUsd": 335.22,
-    "allTimeProfitUsc": 34819.94,
-    "allTimeProfitUsd": 348.2,
-    "allTimeGrowthPct": 348.2,
-    "growthPct": 348.2,
-    "netProfitUsc": 34819.94,
-    "netProfitUsd": 348.2,
-    "currentBalance": 11297.94,
-    "currentEquity": 11253.06,
-    "activeEquity": 11253.06,
-    "activeEquityUsd": 112.53,
+    "allTimeProfitUsc": 36430.95,
+    "allTimeProfitUsd": 364.31,
+    "allTimeGrowthPct": 364.31,
+    "growthPct": 364.31,
+    "netProfitUsc": 36430.95,
+    "netProfitUsd": 364.31,
+    "currentBalance": 12908.95,
+    "currentEquity": 14152.99,
+    "activeEquity": 14152.99,
+    "activeEquityUsd": 141.53,
     "winRate": 90.4,
     "maxDrawdown": 4.8,
     "status": "COMPLETED (200% WD SECURED)",
     "badge": "VAULT 1 (REALISED +200% & WITHDRAWN)",
     "copiersCount": 42,
     "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-    "lastSync": "03:16:18",
+    "lastSync": "09:17:21",
     "openPositions": [
       {
-        "ticket": 514035408,
-        "symbol": "EURUSD",
-        "type": "SELL",
-        "openPrice": 1.10878,
-        "sl": 1.10958,
-        "tp": 1.10699,
-        "profit": -6.8
-      },
-      {
-        "ticket": 514035476,
-        "symbol": "EURUSD",
-        "type": "SELL",
-        "openPrice": 1.10878,
-        "sl": 1.10958,
-        "tp": 1.10519,
-        "profit": -6.8
-      },
-      {
-        "ticket": 514035489,
-        "symbol": "EURUSD",
-        "type": "SELL",
-        "openPrice": 1.10878,
-        "sl": 1.10958,
-        "tp": 1.10279,
-        "profit": -6.8
-      },
-      {
-        "ticket": 514039711,
+        "ticket": 514152408,
         "symbol": "USDCHF",
-        "type": "BUY",
-        "openPrice": 0.83358,
-        "sl": 0.83278,
-        "tp": 0.83538,
-        "profit": -8.16
+        "type": "SELL",
+        "openPrice": 0.83221,
+        "sl": 0.83521,
+        "tp": 0.83021,
+        "profit": 1.92
       },
       {
-        "ticket": 514039729,
+        "ticket": 514152427,
         "symbol": "USDCHF",
-        "type": "BUY",
-        "openPrice": 0.83358,
-        "sl": 0.83278,
-        "tp": 0.83708,
-        "profit": -8.16
+        "type": "SELL",
+        "openPrice": 0.83222,
+        "sl": 0.83522,
+        "tp": 0.82821,
+        "profit": 2.16
       },
       {
-        "ticket": 514039738,
+        "ticket": 514152457,
         "symbol": "USDCHF",
+        "type": "SELL",
+        "openPrice": 0.83222,
+        "sl": 0.83522,
+        "tp": 0.82572,
+        "profit": 2.16
+      },
+      {
+        "ticket": 514152497,
+        "symbol": "EURUSD",
         "type": "BUY",
-        "openPrice": 0.83358,
-        "sl": 0.83278,
-        "tp": 0.83908,
-        "profit": -8.16
+        "openPrice": 1.10994,
+        "sl": 1.10694,
+        "tp": 1.11194,
+        "profit": -7.4
+      },
+      {
+        "ticket": 514152518,
+        "symbol": "EURUSD",
+        "type": "BUY",
+        "openPrice": 1.10994,
+        "sl": 1.10694,
+        "tp": 1.11414,
+        "profit": -7.4
+      },
+      {
+        "ticket": 514152524,
+        "symbol": "EURUSD",
+        "type": "BUY",
+        "openPrice": 1.10993,
+        "sl": 1.10693,
+        "tp": 1.11694,
+        "profit": -7.2
+      },
+      {
+        "ticket": 514323942,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.75,
+        "sl": 0,
+        "tp": 0,
+        "profit": 35
+      },
+      {
+        "ticket": 514323967,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.8,
+        "sl": 0,
+        "tp": 0,
+        "profit": 34
+      },
+      {
+        "ticket": 514323986,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.8,
+        "sl": 0,
+        "tp": 0,
+        "profit": 34
+      },
+      {
+        "ticket": 514323997,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.76,
+        "sl": 0,
+        "tp": 0,
+        "profit": 34.8
+      },
+      {
+        "ticket": 514324013,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.76,
+        "sl": 0,
+        "tp": 0,
+        "profit": 34.8
+      },
+      {
+        "ticket": 514324068,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.28,
+        "sl": 0,
+        "tp": 0,
+        "profit": 24.4
+      },
+      {
+        "ticket": 514324150,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.27,
+        "sl": 0,
+        "tp": 0,
+        "profit": 24.6
+      },
+      {
+        "ticket": 514324195,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.27,
+        "sl": 0,
+        "tp": 0,
+        "profit": 24.6
+      },
+      {
+        "ticket": 514324244,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.2,
+        "sl": 0,
+        "tp": 0,
+        "profit": 26
+      },
+      {
+        "ticket": 514324270,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.15,
+        "sl": 0,
+        "tp": 0,
+        "profit": 27
+      },
+      {
+        "ticket": 514324291,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.08,
+        "sl": 0,
+        "tp": 0,
+        "profit": 28.4
+      },
+      {
+        "ticket": 514324805,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.64,
+        "sl": 0,
+        "tp": 0,
+        "profit": 37.2
+      },
+      {
+        "ticket": 514324836,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.61,
+        "sl": 0,
+        "tp": 0,
+        "profit": 37.8
+      },
+      {
+        "ticket": 514324837,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.61,
+        "sl": 0,
+        "tp": 0,
+        "profit": 37.8
+      },
+      {
+        "ticket": 514324847,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.63,
+        "sl": 0,
+        "tp": 0,
+        "profit": 37.4
+      },
+      {
+        "ticket": 514324864,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.58,
+        "sl": 0,
+        "tp": 0,
+        "profit": 38.4
+      },
+      {
+        "ticket": 514324892,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.58,
+        "sl": 0,
+        "tp": 0,
+        "profit": 38.4
+      },
+      {
+        "ticket": 514324931,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3995.6,
+        "sl": 0,
+        "tp": 0,
+        "profit": 38
+      },
+      {
+        "ticket": 514352997,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.6,
+        "sl": 0,
+        "tp": 0,
+        "profit": 18
+      },
+      {
+        "ticket": 514353022,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.56,
+        "sl": 0,
+        "tp": 0,
+        "profit": 18.8
+      },
+      {
+        "ticket": 514353028,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.58,
+        "sl": 0,
+        "tp": 0,
+        "profit": 18.4
+      },
+      {
+        "ticket": 514353030,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.71,
+        "sl": 0,
+        "tp": 0,
+        "profit": 15.8
+      },
+      {
+        "ticket": 514353039,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.78,
+        "sl": 0,
+        "tp": 0,
+        "profit": 14.4
+      },
+      {
+        "ticket": 514353043,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.77,
+        "sl": 0,
+        "tp": 0,
+        "profit": 14.6
+      },
+      {
+        "ticket": 514353053,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.72,
+        "sl": 0,
+        "tp": 0,
+        "profit": 15.6
+      },
+      {
+        "ticket": 514353061,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.61,
+        "sl": 0,
+        "tp": 0,
+        "profit": 17.8
+      },
+      {
+        "ticket": 514353071,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.61,
+        "sl": 0,
+        "tp": 0,
+        "profit": 17.8
+      },
+      {
+        "ticket": 514353080,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.58,
+        "sl": 0,
+        "tp": 0,
+        "profit": 18.4
+      },
+      {
+        "ticket": 514353088,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.54,
+        "sl": 0,
+        "tp": 0,
+        "profit": 19.2
+      },
+      {
+        "ticket": 514353093,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.54,
+        "sl": 0,
+        "tp": 0,
+        "profit": 19.2
+      },
+      {
+        "ticket": 514353096,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.54,
+        "sl": 0,
+        "tp": 0,
+        "profit": 19.2
+      },
+      {
+        "ticket": 514353152,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.22,
+        "sl": 0,
+        "tp": 0,
+        "profit": 25.6
+      },
+      {
+        "ticket": 514353155,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.17,
+        "sl": 0,
+        "tp": 0,
+        "profit": 26.6
+      },
+      {
+        "ticket": 514353160,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.22,
+        "sl": 0,
+        "tp": 0,
+        "profit": 25.6
+      },
+      {
+        "ticket": 514353167,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.22,
+        "sl": 0,
+        "tp": 0,
+        "profit": 25.6
+      },
+      {
+        "ticket": 514353169,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.22,
+        "sl": 0,
+        "tp": 0,
+        "profit": 25.6
+      },
+      {
+        "ticket": 514353173,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3996.19,
+        "sl": 0,
+        "tp": 0,
+        "profit": 26.2
+      },
+      {
+        "ticket": 514357668,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3993.97,
+        "sl": 0,
+        "tp": 0,
+        "profit": 70.6
+      },
+      {
+        "ticket": 514357688,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.03,
+        "sl": 0,
+        "tp": 0,
+        "profit": 69.4
+      },
+      {
+        "ticket": 514357705,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.13,
+        "sl": 0,
+        "tp": 0,
+        "profit": 67.4
+      },
+      {
+        "ticket": 514357709,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.12,
+        "sl": 0,
+        "tp": 0,
+        "profit": 67.6
+      },
+      {
+        "ticket": 514357713,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.09,
+        "sl": 0,
+        "tp": 0,
+        "profit": 68.2
+      },
+      {
+        "ticket": 514365298,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.51,
+        "sl": 0,
+        "tp": 0,
+        "profit": -0.2
+      },
+      {
+        "ticket": 514365300,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.51,
+        "sl": 0,
+        "tp": 0,
+        "profit": -0.2
+      },
+      {
+        "ticket": 514365301,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.51,
+        "sl": 0,
+        "tp": 0,
+        "profit": -0.2
+      },
+      {
+        "ticket": 514365303,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.51,
+        "sl": 0,
+        "tp": 0,
+        "profit": -0.2
+      },
+      {
+        "ticket": 514365306,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.56,
+        "sl": 0,
+        "tp": 0,
+        "profit": -1.2
+      },
+      {
+        "ticket": 514365307,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.57,
+        "sl": 0,
+        "tp": 0,
+        "profit": -1.4
+      },
+      {
+        "ticket": 514365309,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.57,
+        "sl": 0,
+        "tp": 0,
+        "profit": -1.4
+      },
+      {
+        "ticket": 514365311,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.71,
+        "sl": 0,
+        "tp": 0,
+        "profit": -4.2
+      },
+      {
+        "ticket": 514365313,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.78,
+        "sl": 0,
+        "tp": 0,
+        "profit": -5.6
+      },
+      {
+        "ticket": 514365314,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.78,
+        "sl": 0,
+        "tp": 0,
+        "profit": -5.6
+      },
+      {
+        "ticket": 514365315,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.78,
+        "sl": 0,
+        "tp": 0,
+        "profit": -5.6
+      },
+      {
+        "ticket": 514365316,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.73,
+        "sl": 0,
+        "tp": 0,
+        "profit": -4.6
+      },
+      {
+        "ticket": 514365320,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.78,
+        "sl": 0,
+        "tp": 0,
+        "profit": -5.6
+      },
+      {
+        "ticket": 514365321,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.78,
+        "sl": 0,
+        "tp": 0,
+        "profit": -5.6
+      },
+      {
+        "ticket": 514365322,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.78,
+        "sl": 0,
+        "tp": 0,
+        "profit": -5.6
+      },
+      {
+        "ticket": 514365324,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.78,
+        "sl": 0,
+        "tp": 0,
+        "profit": -5.6
+      },
+      {
+        "ticket": 514365326,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3997.78,
+        "sl": 0,
+        "tp": 0,
+        "profit": -5.6
       }
     ]
   },
@@ -6762,77 +7578,320 @@
     "initialDeposit": 1000,
     "totalWithdrawn": 6000,
     "totalWithdrawnUsd": 60,
-    "allTimeProfitUsc": 17463.44,
-    "allTimeProfitUsd": 174.63,
-    "allTimeGrowthPct": 1746.34,
-    "growthPct": 1746.34,
-    "netProfitUsc": 17463.44,
-    "netProfitUsd": 174.63,
-    "currentBalance": 12507.6,
-    "currentEquity": 12463.44,
-    "activeEquity": 12463.44,
-    "activeEquityUsd": 124.63,
+    "allTimeProfitUsc": 21123.72,
+    "allTimeProfitUsd": 211.24,
+    "allTimeGrowthPct": 2112.37,
+    "growthPct": 2112.37,
+    "netProfitUsc": 21123.72,
+    "netProfitUsd": 211.24,
+    "currentBalance": 13841.16,
+    "currentEquity": 16123.72,
+    "activeEquity": 16123.72,
+    "activeEquityUsd": 161.24,
     "winRate": 100,
     "maxDrawdown": 0,
     "status": "LIVE & ACTIVE (PRIMARY CENT)",
     "badge": "VAULT 2 (6,000 USC WD SECURED)",
     "copiersCount": 18,
     "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-    "lastSync": "03:16:16",
+    "lastSync": "09:17:19",
     "openPositions": [
       {
-        "ticket": 514035407,
-        "symbol": "EURUSD",
+        "ticket": 514152398,
+        "symbol": "USDCHF",
         "type": "SELL",
-        "openPrice": 1.10878,
-        "sl": 1.10958,
-        "tp": 1.10699,
+        "openPrice": 0.83221,
+        "sl": 0.83521,
+        "tp": 0.83021,
+        "profit": 2.16
+      },
+      {
+        "ticket": 514152429,
+        "symbol": "USDCHF",
+        "type": "SELL",
+        "openPrice": 0.83222,
+        "sl": 0.83522,
+        "tp": 0.82821,
+        "profit": 2.4
+      },
+      {
+        "ticket": 514152456,
+        "symbol": "USDCHF",
+        "type": "SELL",
+        "openPrice": 0.83222,
+        "sl": 0.83522,
+        "tp": 0.82572,
+        "profit": 2.4
+      },
+      {
+        "ticket": 514152472,
+        "symbol": "EURUSD",
+        "type": "BUY",
+        "openPrice": 1.10994,
+        "sl": 1.10694,
+        "tp": 1.11194,
         "profit": -6.8
       },
       {
-        "ticket": 514035465,
+        "ticket": 514152507,
         "symbol": "EURUSD",
-        "type": "SELL",
-        "openPrice": 1.10878,
-        "sl": 1.10958,
-        "tp": 1.10519,
+        "type": "BUY",
+        "openPrice": 1.10994,
+        "sl": 1.10694,
+        "tp": 1.11414,
         "profit": -6.8
       },
       {
-        "ticket": 514035479,
+        "ticket": 514152520,
         "symbol": "EURUSD",
-        "type": "SELL",
-        "openPrice": 1.10878,
-        "sl": 1.10958,
-        "tp": 1.10279,
+        "type": "BUY",
+        "openPrice": 1.10994,
+        "sl": 1.10694,
+        "tp": 1.11694,
         "profit": -6.8
       },
       {
-        "ticket": 514039707,
-        "symbol": "USDCHF",
+        "ticket": 514322604,
+        "symbol": "XAUUSD",
         "type": "BUY",
-        "openPrice": 0.83358,
-        "sl": 0.83278,
-        "tp": 0.83538,
-        "profit": -7.92
+        "openPrice": 3995.16,
+        "sl": 0,
+        "tp": 0,
+        "profit": 52
       },
       {
-        "ticket": 514039721,
-        "symbol": "USDCHF",
+        "ticket": 514322610,
+        "symbol": "XAUUSD",
         "type": "BUY",
-        "openPrice": 0.83358,
-        "sl": 0.83278,
-        "tp": 0.83708,
-        "profit": -7.92
+        "openPrice": 3995.11,
+        "sl": 0,
+        "tp": 0,
+        "profit": 53
       },
       {
-        "ticket": 514039733,
-        "symbol": "USDCHF",
+        "ticket": 514322619,
+        "symbol": "XAUUSD",
         "type": "BUY",
-        "openPrice": 0.83358,
-        "sl": 0.83278,
-        "tp": 0.83908,
-        "profit": -7.92
+        "openPrice": 3995.06,
+        "sl": 0,
+        "tp": 0,
+        "profit": 54
+      },
+      {
+        "ticket": 514322647,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.69,
+        "sl": 0,
+        "tp": 0,
+        "profit": 61.4
+      },
+      {
+        "ticket": 514322658,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.86,
+        "sl": 0,
+        "tp": 0,
+        "profit": 58
+      },
+      {
+        "ticket": 514322659,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.86,
+        "sl": 0,
+        "tp": 0,
+        "profit": 58
+      },
+      {
+        "ticket": 514322733,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.67,
+        "sl": 0,
+        "tp": 0,
+        "profit": 61.8
+      },
+      {
+        "ticket": 514322740,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.63,
+        "sl": 0,
+        "tp": 0,
+        "profit": 62.6
+      },
+      {
+        "ticket": 514322752,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.46,
+        "sl": 0,
+        "tp": 0,
+        "profit": 66
+      },
+      {
+        "ticket": 514322768,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.43,
+        "sl": 0,
+        "tp": 0,
+        "profit": 66.6
+      },
+      {
+        "ticket": 514322769,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.43,
+        "sl": 0,
+        "tp": 0,
+        "profit": 66.6
+      },
+      {
+        "ticket": 514328597,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.87,
+        "sl": 0,
+        "tp": 0,
+        "profit": 97.8
+      },
+      {
+        "ticket": 514328606,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.87,
+        "sl": 0,
+        "tp": 0,
+        "profit": 97.8
+      },
+      {
+        "ticket": 514328630,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.97,
+        "sl": 0,
+        "tp": 0,
+        "profit": 95.8
+      },
+      {
+        "ticket": 514328638,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.97,
+        "sl": 0,
+        "tp": 0,
+        "profit": 95.8
+      },
+      {
+        "ticket": 514328641,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.97,
+        "sl": 0,
+        "tp": 0,
+        "profit": 95.8
+      },
+      {
+        "ticket": 514328653,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.96,
+        "sl": 0,
+        "tp": 0,
+        "profit": 96
+      },
+      {
+        "ticket": 514328666,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.96,
+        "sl": 0,
+        "tp": 0,
+        "profit": 96
+      },
+      {
+        "ticket": 514328993,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.42,
+        "sl": 0,
+        "tp": 0,
+        "profit": 106.8
+      },
+      {
+        "ticket": 514328994,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.42,
+        "sl": 0,
+        "tp": 0,
+        "profit": 106.8
+      },
+      {
+        "ticket": 514328995,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.42,
+        "sl": 0,
+        "tp": 0,
+        "profit": 106.8
+      },
+      {
+        "ticket": 514329004,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.42,
+        "sl": 0,
+        "tp": 0,
+        "profit": 106.8
+      },
+      {
+        "ticket": 514329008,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.51,
+        "sl": 0,
+        "tp": 0,
+        "profit": 105
+      },
+      {
+        "ticket": 514329010,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.51,
+        "sl": 0,
+        "tp": 0,
+        "profit": 105
+      },
+      {
+        "ticket": 514329118,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.09,
+        "sl": 0,
+        "tp": 0,
+        "profit": 113.4
+      },
+      {
+        "ticket": 514329145,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.09,
+        "sl": 0,
+        "tp": 0,
+        "profit": 113.4
+      },
+      {
+        "ticket": 514329669,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3992.91,
+        "sl": 0,
+        "tp": 0,
+        "profit": 97
       }
     ]
   },
@@ -6846,77 +7905,608 @@
       "initialDeposit": 10000,
       "totalWithdrawn": 33522,
       "totalWithdrawnUsd": 335.22,
-      "allTimeProfitUsc": 34819.94,
-      "allTimeProfitUsd": 348.2,
-      "allTimeGrowthPct": 348.2,
-      "growthPct": 348.2,
-      "netProfitUsc": 34819.94,
-      "netProfitUsd": 348.2,
-      "currentBalance": 11297.94,
-      "currentEquity": 11253.06,
-      "activeEquity": 11253.06,
-      "activeEquityUsd": 112.53,
+      "allTimeProfitUsc": 36430.95,
+      "allTimeProfitUsd": 364.31,
+      "allTimeGrowthPct": 364.31,
+      "growthPct": 364.31,
+      "netProfitUsc": 36430.95,
+      "netProfitUsd": 364.31,
+      "currentBalance": 12908.95,
+      "currentEquity": 14152.99,
+      "activeEquity": 14152.99,
+      "activeEquityUsd": 141.53,
       "winRate": 90.4,
       "maxDrawdown": 4.8,
       "status": "COMPLETED (200% WD SECURED)",
       "badge": "VAULT 1 (REALISED +200% & WITHDRAWN)",
       "copiersCount": 42,
       "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-      "lastSync": "03:16:18",
+      "lastSync": "09:17:21",
       "openPositions": [
         {
-          "ticket": 514035408,
-          "symbol": "EURUSD",
-          "type": "SELL",
-          "openPrice": 1.10878,
-          "sl": 1.10958,
-          "tp": 1.10699,
-          "profit": -6.8
-        },
-        {
-          "ticket": 514035476,
-          "symbol": "EURUSD",
-          "type": "SELL",
-          "openPrice": 1.10878,
-          "sl": 1.10958,
-          "tp": 1.10519,
-          "profit": -6.8
-        },
-        {
-          "ticket": 514035489,
-          "symbol": "EURUSD",
-          "type": "SELL",
-          "openPrice": 1.10878,
-          "sl": 1.10958,
-          "tp": 1.10279,
-          "profit": -6.8
-        },
-        {
-          "ticket": 514039711,
+          "ticket": 514152408,
           "symbol": "USDCHF",
-          "type": "BUY",
-          "openPrice": 0.83358,
-          "sl": 0.83278,
-          "tp": 0.83538,
-          "profit": -8.16
+          "type": "SELL",
+          "openPrice": 0.83221,
+          "sl": 0.83521,
+          "tp": 0.83021,
+          "profit": 1.92
         },
         {
-          "ticket": 514039729,
+          "ticket": 514152427,
           "symbol": "USDCHF",
-          "type": "BUY",
-          "openPrice": 0.83358,
-          "sl": 0.83278,
-          "tp": 0.83708,
-          "profit": -8.16
+          "type": "SELL",
+          "openPrice": 0.83222,
+          "sl": 0.83522,
+          "tp": 0.82821,
+          "profit": 2.16
         },
         {
-          "ticket": 514039738,
+          "ticket": 514152457,
           "symbol": "USDCHF",
+          "type": "SELL",
+          "openPrice": 0.83222,
+          "sl": 0.83522,
+          "tp": 0.82572,
+          "profit": 2.16
+        },
+        {
+          "ticket": 514152497,
+          "symbol": "EURUSD",
           "type": "BUY",
-          "openPrice": 0.83358,
-          "sl": 0.83278,
-          "tp": 0.83908,
-          "profit": -8.16
+          "openPrice": 1.10994,
+          "sl": 1.10694,
+          "tp": 1.11194,
+          "profit": -7.4
+        },
+        {
+          "ticket": 514152518,
+          "symbol": "EURUSD",
+          "type": "BUY",
+          "openPrice": 1.10994,
+          "sl": 1.10694,
+          "tp": 1.11414,
+          "profit": -7.4
+        },
+        {
+          "ticket": 514152524,
+          "symbol": "EURUSD",
+          "type": "BUY",
+          "openPrice": 1.10993,
+          "sl": 1.10693,
+          "tp": 1.11694,
+          "profit": -7.2
+        },
+        {
+          "ticket": 514323942,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.75,
+          "sl": 0,
+          "tp": 0,
+          "profit": 35
+        },
+        {
+          "ticket": 514323967,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.8,
+          "sl": 0,
+          "tp": 0,
+          "profit": 34
+        },
+        {
+          "ticket": 514323986,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.8,
+          "sl": 0,
+          "tp": 0,
+          "profit": 34
+        },
+        {
+          "ticket": 514323997,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.76,
+          "sl": 0,
+          "tp": 0,
+          "profit": 34.8
+        },
+        {
+          "ticket": 514324013,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.76,
+          "sl": 0,
+          "tp": 0,
+          "profit": 34.8
+        },
+        {
+          "ticket": 514324068,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.28,
+          "sl": 0,
+          "tp": 0,
+          "profit": 24.4
+        },
+        {
+          "ticket": 514324150,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.27,
+          "sl": 0,
+          "tp": 0,
+          "profit": 24.6
+        },
+        {
+          "ticket": 514324195,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.27,
+          "sl": 0,
+          "tp": 0,
+          "profit": 24.6
+        },
+        {
+          "ticket": 514324244,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.2,
+          "sl": 0,
+          "tp": 0,
+          "profit": 26
+        },
+        {
+          "ticket": 514324270,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.15,
+          "sl": 0,
+          "tp": 0,
+          "profit": 27
+        },
+        {
+          "ticket": 514324291,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.08,
+          "sl": 0,
+          "tp": 0,
+          "profit": 28.4
+        },
+        {
+          "ticket": 514324805,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.64,
+          "sl": 0,
+          "tp": 0,
+          "profit": 37.2
+        },
+        {
+          "ticket": 514324836,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.61,
+          "sl": 0,
+          "tp": 0,
+          "profit": 37.8
+        },
+        {
+          "ticket": 514324837,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.61,
+          "sl": 0,
+          "tp": 0,
+          "profit": 37.8
+        },
+        {
+          "ticket": 514324847,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.63,
+          "sl": 0,
+          "tp": 0,
+          "profit": 37.4
+        },
+        {
+          "ticket": 514324864,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.58,
+          "sl": 0,
+          "tp": 0,
+          "profit": 38.4
+        },
+        {
+          "ticket": 514324892,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.58,
+          "sl": 0,
+          "tp": 0,
+          "profit": 38.4
+        },
+        {
+          "ticket": 514324931,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3995.6,
+          "sl": 0,
+          "tp": 0,
+          "profit": 38
+        },
+        {
+          "ticket": 514352997,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.6,
+          "sl": 0,
+          "tp": 0,
+          "profit": 18
+        },
+        {
+          "ticket": 514353022,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.56,
+          "sl": 0,
+          "tp": 0,
+          "profit": 18.8
+        },
+        {
+          "ticket": 514353028,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.58,
+          "sl": 0,
+          "tp": 0,
+          "profit": 18.4
+        },
+        {
+          "ticket": 514353030,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.71,
+          "sl": 0,
+          "tp": 0,
+          "profit": 15.8
+        },
+        {
+          "ticket": 514353039,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.78,
+          "sl": 0,
+          "tp": 0,
+          "profit": 14.4
+        },
+        {
+          "ticket": 514353043,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.77,
+          "sl": 0,
+          "tp": 0,
+          "profit": 14.6
+        },
+        {
+          "ticket": 514353053,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.72,
+          "sl": 0,
+          "tp": 0,
+          "profit": 15.6
+        },
+        {
+          "ticket": 514353061,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.61,
+          "sl": 0,
+          "tp": 0,
+          "profit": 17.8
+        },
+        {
+          "ticket": 514353071,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.61,
+          "sl": 0,
+          "tp": 0,
+          "profit": 17.8
+        },
+        {
+          "ticket": 514353080,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.58,
+          "sl": 0,
+          "tp": 0,
+          "profit": 18.4
+        },
+        {
+          "ticket": 514353088,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.54,
+          "sl": 0,
+          "tp": 0,
+          "profit": 19.2
+        },
+        {
+          "ticket": 514353093,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.54,
+          "sl": 0,
+          "tp": 0,
+          "profit": 19.2
+        },
+        {
+          "ticket": 514353096,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.54,
+          "sl": 0,
+          "tp": 0,
+          "profit": 19.2
+        },
+        {
+          "ticket": 514353152,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.22,
+          "sl": 0,
+          "tp": 0,
+          "profit": 25.6
+        },
+        {
+          "ticket": 514353155,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.17,
+          "sl": 0,
+          "tp": 0,
+          "profit": 26.6
+        },
+        {
+          "ticket": 514353160,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.22,
+          "sl": 0,
+          "tp": 0,
+          "profit": 25.6
+        },
+        {
+          "ticket": 514353167,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.22,
+          "sl": 0,
+          "tp": 0,
+          "profit": 25.6
+        },
+        {
+          "ticket": 514353169,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.22,
+          "sl": 0,
+          "tp": 0,
+          "profit": 25.6
+        },
+        {
+          "ticket": 514353173,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3996.19,
+          "sl": 0,
+          "tp": 0,
+          "profit": 26.2
+        },
+        {
+          "ticket": 514357668,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3993.97,
+          "sl": 0,
+          "tp": 0,
+          "profit": 70.6
+        },
+        {
+          "ticket": 514357688,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.03,
+          "sl": 0,
+          "tp": 0,
+          "profit": 69.4
+        },
+        {
+          "ticket": 514357705,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.13,
+          "sl": 0,
+          "tp": 0,
+          "profit": 67.4
+        },
+        {
+          "ticket": 514357709,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.12,
+          "sl": 0,
+          "tp": 0,
+          "profit": 67.6
+        },
+        {
+          "ticket": 514357713,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.09,
+          "sl": 0,
+          "tp": 0,
+          "profit": 68.2
+        },
+        {
+          "ticket": 514365298,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.51,
+          "sl": 0,
+          "tp": 0,
+          "profit": -0.2
+        },
+        {
+          "ticket": 514365300,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.51,
+          "sl": 0,
+          "tp": 0,
+          "profit": -0.2
+        },
+        {
+          "ticket": 514365301,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.51,
+          "sl": 0,
+          "tp": 0,
+          "profit": -0.2
+        },
+        {
+          "ticket": 514365303,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.51,
+          "sl": 0,
+          "tp": 0,
+          "profit": -0.2
+        },
+        {
+          "ticket": 514365306,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.56,
+          "sl": 0,
+          "tp": 0,
+          "profit": -1.2
+        },
+        {
+          "ticket": 514365307,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.57,
+          "sl": 0,
+          "tp": 0,
+          "profit": -1.4
+        },
+        {
+          "ticket": 514365309,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.57,
+          "sl": 0,
+          "tp": 0,
+          "profit": -1.4
+        },
+        {
+          "ticket": 514365311,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.71,
+          "sl": 0,
+          "tp": 0,
+          "profit": -4.2
+        },
+        {
+          "ticket": 514365313,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.78,
+          "sl": 0,
+          "tp": 0,
+          "profit": -5.6
+        },
+        {
+          "ticket": 514365314,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.78,
+          "sl": 0,
+          "tp": 0,
+          "profit": -5.6
+        },
+        {
+          "ticket": 514365315,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.78,
+          "sl": 0,
+          "tp": 0,
+          "profit": -5.6
+        },
+        {
+          "ticket": 514365316,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.73,
+          "sl": 0,
+          "tp": 0,
+          "profit": -4.6
+        },
+        {
+          "ticket": 514365320,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.78,
+          "sl": 0,
+          "tp": 0,
+          "profit": -5.6
+        },
+        {
+          "ticket": 514365321,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.78,
+          "sl": 0,
+          "tp": 0,
+          "profit": -5.6
+        },
+        {
+          "ticket": 514365322,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.78,
+          "sl": 0,
+          "tp": 0,
+          "profit": -5.6
+        },
+        {
+          "ticket": 514365324,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.78,
+          "sl": 0,
+          "tp": 0,
+          "profit": -5.6
+        },
+        {
+          "ticket": 514365326,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3997.78,
+          "sl": 0,
+          "tp": 0,
+          "profit": -5.6
         }
       ]
     },
@@ -6929,77 +8519,320 @@
       "initialDeposit": 1000,
       "totalWithdrawn": 6000,
       "totalWithdrawnUsd": 60,
-      "allTimeProfitUsc": 17463.44,
-      "allTimeProfitUsd": 174.63,
-      "allTimeGrowthPct": 1746.34,
-      "growthPct": 1746.34,
-      "netProfitUsc": 17463.44,
-      "netProfitUsd": 174.63,
-      "currentBalance": 12507.6,
-      "currentEquity": 12463.44,
-      "activeEquity": 12463.44,
-      "activeEquityUsd": 124.63,
+      "allTimeProfitUsc": 21123.72,
+      "allTimeProfitUsd": 211.24,
+      "allTimeGrowthPct": 2112.37,
+      "growthPct": 2112.37,
+      "netProfitUsc": 21123.72,
+      "netProfitUsd": 211.24,
+      "currentBalance": 13841.16,
+      "currentEquity": 16123.72,
+      "activeEquity": 16123.72,
+      "activeEquityUsd": 161.24,
       "winRate": 100,
       "maxDrawdown": 0,
       "status": "LIVE & ACTIVE (PRIMARY CENT)",
       "badge": "VAULT 2 (6,000 USC WD SECURED)",
       "copiersCount": 18,
       "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-      "lastSync": "03:16:16",
+      "lastSync": "09:17:19",
       "openPositions": [
         {
-          "ticket": 514035407,
-          "symbol": "EURUSD",
+          "ticket": 514152398,
+          "symbol": "USDCHF",
           "type": "SELL",
-          "openPrice": 1.10878,
-          "sl": 1.10958,
-          "tp": 1.10699,
+          "openPrice": 0.83221,
+          "sl": 0.83521,
+          "tp": 0.83021,
+          "profit": 2.16
+        },
+        {
+          "ticket": 514152429,
+          "symbol": "USDCHF",
+          "type": "SELL",
+          "openPrice": 0.83222,
+          "sl": 0.83522,
+          "tp": 0.82821,
+          "profit": 2.4
+        },
+        {
+          "ticket": 514152456,
+          "symbol": "USDCHF",
+          "type": "SELL",
+          "openPrice": 0.83222,
+          "sl": 0.83522,
+          "tp": 0.82572,
+          "profit": 2.4
+        },
+        {
+          "ticket": 514152472,
+          "symbol": "EURUSD",
+          "type": "BUY",
+          "openPrice": 1.10994,
+          "sl": 1.10694,
+          "tp": 1.11194,
           "profit": -6.8
         },
         {
-          "ticket": 514035465,
+          "ticket": 514152507,
           "symbol": "EURUSD",
-          "type": "SELL",
-          "openPrice": 1.10878,
-          "sl": 1.10958,
-          "tp": 1.10519,
+          "type": "BUY",
+          "openPrice": 1.10994,
+          "sl": 1.10694,
+          "tp": 1.11414,
           "profit": -6.8
         },
         {
-          "ticket": 514035479,
+          "ticket": 514152520,
           "symbol": "EURUSD",
-          "type": "SELL",
-          "openPrice": 1.10878,
-          "sl": 1.10958,
-          "tp": 1.10279,
+          "type": "BUY",
+          "openPrice": 1.10994,
+          "sl": 1.10694,
+          "tp": 1.11694,
           "profit": -6.8
         },
         {
-          "ticket": 514039707,
-          "symbol": "USDCHF",
+          "ticket": 514322604,
+          "symbol": "XAUUSD",
           "type": "BUY",
-          "openPrice": 0.83358,
-          "sl": 0.83278,
-          "tp": 0.83538,
-          "profit": -7.92
+          "openPrice": 3995.16,
+          "sl": 0,
+          "tp": 0,
+          "profit": 52
         },
         {
-          "ticket": 514039721,
-          "symbol": "USDCHF",
+          "ticket": 514322610,
+          "symbol": "XAUUSD",
           "type": "BUY",
-          "openPrice": 0.83358,
-          "sl": 0.83278,
-          "tp": 0.83708,
-          "profit": -7.92
+          "openPrice": 3995.11,
+          "sl": 0,
+          "tp": 0,
+          "profit": 53
         },
         {
-          "ticket": 514039733,
-          "symbol": "USDCHF",
+          "ticket": 514322619,
+          "symbol": "XAUUSD",
           "type": "BUY",
-          "openPrice": 0.83358,
-          "sl": 0.83278,
-          "tp": 0.83908,
-          "profit": -7.92
+          "openPrice": 3995.06,
+          "sl": 0,
+          "tp": 0,
+          "profit": 54
+        },
+        {
+          "ticket": 514322647,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.69,
+          "sl": 0,
+          "tp": 0,
+          "profit": 61.4
+        },
+        {
+          "ticket": 514322658,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.86,
+          "sl": 0,
+          "tp": 0,
+          "profit": 58
+        },
+        {
+          "ticket": 514322659,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.86,
+          "sl": 0,
+          "tp": 0,
+          "profit": 58
+        },
+        {
+          "ticket": 514322733,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.67,
+          "sl": 0,
+          "tp": 0,
+          "profit": 61.8
+        },
+        {
+          "ticket": 514322740,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.63,
+          "sl": 0,
+          "tp": 0,
+          "profit": 62.6
+        },
+        {
+          "ticket": 514322752,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.46,
+          "sl": 0,
+          "tp": 0,
+          "profit": 66
+        },
+        {
+          "ticket": 514322768,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.43,
+          "sl": 0,
+          "tp": 0,
+          "profit": 66.6
+        },
+        {
+          "ticket": 514322769,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.43,
+          "sl": 0,
+          "tp": 0,
+          "profit": 66.6
+        },
+        {
+          "ticket": 514328597,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.87,
+          "sl": 0,
+          "tp": 0,
+          "profit": 97.8
+        },
+        {
+          "ticket": 514328606,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.87,
+          "sl": 0,
+          "tp": 0,
+          "profit": 97.8
+        },
+        {
+          "ticket": 514328630,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.97,
+          "sl": 0,
+          "tp": 0,
+          "profit": 95.8
+        },
+        {
+          "ticket": 514328638,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.97,
+          "sl": 0,
+          "tp": 0,
+          "profit": 95.8
+        },
+        {
+          "ticket": 514328641,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.97,
+          "sl": 0,
+          "tp": 0,
+          "profit": 95.8
+        },
+        {
+          "ticket": 514328653,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.96,
+          "sl": 0,
+          "tp": 0,
+          "profit": 96
+        },
+        {
+          "ticket": 514328666,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.96,
+          "sl": 0,
+          "tp": 0,
+          "profit": 96
+        },
+        {
+          "ticket": 514328993,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.42,
+          "sl": 0,
+          "tp": 0,
+          "profit": 106.8
+        },
+        {
+          "ticket": 514328994,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.42,
+          "sl": 0,
+          "tp": 0,
+          "profit": 106.8
+        },
+        {
+          "ticket": 514328995,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.42,
+          "sl": 0,
+          "tp": 0,
+          "profit": 106.8
+        },
+        {
+          "ticket": 514329004,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.42,
+          "sl": 0,
+          "tp": 0,
+          "profit": 106.8
+        },
+        {
+          "ticket": 514329008,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.51,
+          "sl": 0,
+          "tp": 0,
+          "profit": 105
+        },
+        {
+          "ticket": 514329010,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.51,
+          "sl": 0,
+          "tp": 0,
+          "profit": 105
+        },
+        {
+          "ticket": 514329118,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.09,
+          "sl": 0,
+          "tp": 0,
+          "profit": 113.4
+        },
+        {
+          "ticket": 514329145,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.09,
+          "sl": 0,
+          "tp": 0,
+          "profit": 113.4
+        },
+        {
+          "ticket": 514329669,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3992.91,
+          "sl": 0,
+          "tp": 0,
+          "profit": 97
         }
       ]
     },
@@ -7014,22 +8847,158 @@
       "initialDeposit": 1000,
       "totalWithdrawn": 5100,
       "totalWithdrawnUsd": 5100,
-      "allTimeProfitUsd": 6100,
-      "allTimeGrowthPct": 610,
-      "growthPct": 610,
-      "netProfitUsd": 6100,
-      "currentBalance": 1000,
-      "currentEquity": 1000,
-      "activeEquity": 1000,
-      "activeEquityUsd": 1000,
+      "allTimeProfitUsd": 6327.05,
+      "allTimeGrowthPct": 632.7,
+      "growthPct": 632.7,
+      "netProfitUsd": 6327.05,
+      "currentBalance": 1192.72,
+      "currentEquity": 1227.05,
+      "activeEquity": 1227.05,
+      "activeEquityUsd": 1227.05,
       "winRate": 100,
       "maxDrawdown": 0,
       "status": "LIVE & ACTIVE (STANDARD VIP)",
       "badge": "MASTER 3 (STANDARD ,000 USD)",
       "copiersCount": 12,
       "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-      "lastSync": "03:16:16",
-      "openPositions": []
+      "lastSync": "09:17:21",
+      "openPositions": [
+        {
+          "ticket": 514152393,
+          "symbol": "USDCHF",
+          "type": "SELL",
+          "openPrice": 0.83221,
+          "sl": 0.83521,
+          "tp": 0.83021,
+          "profit": 0.25
+        },
+        {
+          "ticket": 514152428,
+          "symbol": "USDCHF",
+          "type": "SELL",
+          "openPrice": 0.83222,
+          "sl": 0.83522,
+          "tp": 0.82821,
+          "profit": 0.29
+        },
+        {
+          "ticket": 514152469,
+          "symbol": "USDCHF",
+          "type": "SELL",
+          "openPrice": 0.83222,
+          "sl": 0.83522,
+          "tp": 0.82572,
+          "profit": 0.29
+        },
+        {
+          "ticket": 514152496,
+          "symbol": "EURUSD",
+          "type": "BUY",
+          "openPrice": 1.10994,
+          "sl": 1.10694,
+          "tp": 1.11194,
+          "profit": -1.11
+        },
+        {
+          "ticket": 514152517,
+          "symbol": "EURUSD",
+          "type": "BUY",
+          "openPrice": 1.10994,
+          "sl": 1.10694,
+          "tp": 1.11414,
+          "profit": -1.11
+        },
+        {
+          "ticket": 514152554,
+          "symbol": "EURUSD",
+          "type": "BUY",
+          "openPrice": 1.10993,
+          "sl": 1.10693,
+          "tp": 1.11694,
+          "profit": -1.08
+        },
+        {
+          "ticket": 514323073,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.46,
+          "sl": 0,
+          "tp": 0,
+          "profit": 30.8
+        },
+        {
+          "ticket": 514323089,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.57,
+          "sl": 0,
+          "tp": 0,
+          "profit": 29.7
+        },
+        {
+          "ticket": 514323098,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3994.69,
+          "sl": 0,
+          "tp": 0,
+          "profit": 28.5
+        },
+        {
+          "ticket": 514365585,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3998.18,
+          "sl": 0,
+          "tp": 0,
+          "profit": -6.4
+        },
+        {
+          "ticket": 514365613,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3998.46,
+          "sl": 0,
+          "tp": 0,
+          "profit": -9.2
+        },
+        {
+          "ticket": 514365674,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3998.46,
+          "sl": 0,
+          "tp": 0,
+          "profit": -9.2
+        },
+        {
+          "ticket": 514365751,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3998.48,
+          "sl": 0,
+          "tp": 0,
+          "profit": -9.4
+        },
+        {
+          "ticket": 514365775,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3998.43,
+          "sl": 0,
+          "tp": 0,
+          "profit": -8.9
+        },
+        {
+          "ticket": 514365806,
+          "symbol": "XAUUSD",
+          "type": "BUY",
+          "openPrice": 3998.45,
+          "sl": 0,
+          "tp": 0,
+          "profit": -9.1
+        }
+      ]
     }
   ],
   "invitationCodes": [
@@ -7075,74 +9044,210 @@
     "initialDeposit": 1000,
     "totalWithdrawn": 5100,
     "totalWithdrawnUsd": 5100,
-    "allTimeProfitUsd": 6100,
-    "allTimeGrowthPct": 610,
-    "growthPct": 610,
-    "netProfitUsd": 6100,
-    "currentBalance": 1000,
-    "currentEquity": 1000,
-    "activeEquity": 1000,
-    "activeEquityUsd": 1000,
+    "allTimeProfitUsd": 6327.05,
+    "allTimeGrowthPct": 632.7,
+    "growthPct": 632.7,
+    "netProfitUsd": 6327.05,
+    "currentBalance": 1192.72,
+    "currentEquity": 1227.05,
+    "activeEquity": 1227.05,
+    "activeEquityUsd": 1227.05,
     "winRate": 100,
     "maxDrawdown": 0,
     "status": "LIVE & ACTIVE (STANDARD VIP)",
     "badge": "MASTER 3 (STANDARD ,000 USD)",
     "copiersCount": 12,
     "affiliateLink": "https://one.versustrade.link/links/go/14490?pid=31255",
-    "lastSync": "03:16:16",
-    "openPositions": []
+    "lastSync": "09:17:21",
+    "openPositions": [
+      {
+        "ticket": 514152393,
+        "symbol": "USDCHF",
+        "type": "SELL",
+        "openPrice": 0.83221,
+        "sl": 0.83521,
+        "tp": 0.83021,
+        "profit": 0.25
+      },
+      {
+        "ticket": 514152428,
+        "symbol": "USDCHF",
+        "type": "SELL",
+        "openPrice": 0.83222,
+        "sl": 0.83522,
+        "tp": 0.82821,
+        "profit": 0.29
+      },
+      {
+        "ticket": 514152469,
+        "symbol": "USDCHF",
+        "type": "SELL",
+        "openPrice": 0.83222,
+        "sl": 0.83522,
+        "tp": 0.82572,
+        "profit": 0.29
+      },
+      {
+        "ticket": 514152496,
+        "symbol": "EURUSD",
+        "type": "BUY",
+        "openPrice": 1.10994,
+        "sl": 1.10694,
+        "tp": 1.11194,
+        "profit": -1.11
+      },
+      {
+        "ticket": 514152517,
+        "symbol": "EURUSD",
+        "type": "BUY",
+        "openPrice": 1.10994,
+        "sl": 1.10694,
+        "tp": 1.11414,
+        "profit": -1.11
+      },
+      {
+        "ticket": 514152554,
+        "symbol": "EURUSD",
+        "type": "BUY",
+        "openPrice": 1.10993,
+        "sl": 1.10693,
+        "tp": 1.11694,
+        "profit": -1.08
+      },
+      {
+        "ticket": 514323073,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.46,
+        "sl": 0,
+        "tp": 0,
+        "profit": 30.8
+      },
+      {
+        "ticket": 514323089,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.57,
+        "sl": 0,
+        "tp": 0,
+        "profit": 29.7
+      },
+      {
+        "ticket": 514323098,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3994.69,
+        "sl": 0,
+        "tp": 0,
+        "profit": 28.5
+      },
+      {
+        "ticket": 514365585,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3998.18,
+        "sl": 0,
+        "tp": 0,
+        "profit": -6.4
+      },
+      {
+        "ticket": 514365613,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3998.46,
+        "sl": 0,
+        "tp": 0,
+        "profit": -9.2
+      },
+      {
+        "ticket": 514365674,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3998.46,
+        "sl": 0,
+        "tp": 0,
+        "profit": -9.2
+      },
+      {
+        "ticket": 514365751,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3998.48,
+        "sl": 0,
+        "tp": 0,
+        "profit": -9.4
+      },
+      {
+        "ticket": 514365775,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3998.43,
+        "sl": 0,
+        "tp": 0,
+        "profit": -8.9
+      },
+      {
+        "ticket": 514365806,
+        "symbol": "XAUUSD",
+        "type": "BUY",
+        "openPrice": 3998.45,
+        "sl": 0,
+        "tp": 0,
+        "profit": -9.1
+      }
+    ]
   },
   "marketBrain": {
     "XAUUSD": {
       "symbol": "XAUUSD",
-      "curPrice": 3985.68,
-      "macro": "STRONG_SELLER",
-      "m15Structure": "BEARISH_FAN",
-      "m1Structure": "BEARISH_FAN",
-      "buyerDominancePct": 46.5,
-      "volRatio": 0.06,
-      "supportFloor": 3983.18,
-      "resistanceCeiling": 3993.68,
-      "verdict": "SELL ON RALLY (M15 BEARISH FLOW)",
-      "biasClass": "bearish",
-      "advisory": "Zon rintangan / liquidity sweep (3985.68 vs bumbung 3993.68). Data logik untuk SELL pembetulan ke arah sokongan 3983.18. SL ketat di atas puncak.",
+      "curPrice": 3997.72,
+      "macro": "BUYER",
+      "m15Structure": "NEUTRAL",
+      "m1Structure": "BULLISH",
+      "buyerDominancePct": 51.5,
+      "volRatio": 0.3,
+      "supportFloor": 3995.22,
+      "resistanceCeiling": 4005.72,
+      "verdict": "2-WAY SMC WAVE (BUY LANTAI, SELL BUMBUNG)",
+      "biasClass": "neutral",
+      "advisory": "Pasaran bergerak berombak dua hala. Logik: Masuk BUY di lantai sokongan (3995.22) dan masuk SELL di bumbung rintangan (4005.72). Dilarang kejar lilin di tengah ombak.",
       "opposingWarning": null,
-      "openPositionsCount": 0,
-      "lastUpdated": "03:16:18"
+      "openPositionsCount": 9,
+      "lastUpdated": "09:17:21"
     },
     "EURUSD": {
       "symbol": "EURUSD",
-      "curPrice": 1.109,
-      "macro": "STRONG_SELLER",
-      "m15Structure": "BEARISH",
-      "m1Structure": "BEARISH",
-      "buyerDominancePct": 20,
-      "volRatio": 0.03,
-      "supportFloor": 1.107,
-      "resistanceCeiling": 1.111,
+      "curPrice": 1.1097,
+      "macro": "STRONG_BUYER",
+      "m15Structure": "NEUTRAL",
+      "m1Structure": "BULLISH_FAN",
+      "buyerDominancePct": 23.1,
+      "volRatio": 0.44,
+      "supportFloor": 1.1077,
+      "resistanceCeiling": 1.1117,
       "verdict": "SELL ON RALLY (M15 BEARISH)",
       "biasClass": "bearish",
-      "advisory": "Struktur lilin & MA di bawah tekanan penjual. Data logik untuk SELL rally ke arah lantai 1.107.",
+      "advisory": "Struktur lilin & MA di bawah tekanan penjual. Data logik untuk SELL rally ke arah lantai 1.1077.",
       "opposingWarning": null,
       "openPositionsCount": 3,
-      "lastUpdated": "03:16:18"
+      "lastUpdated": "09:17:21"
     },
     "USDCHF": {
       "symbol": "USDCHF",
-      "curPrice": 0.8333,
-      "macro": "BUYER",
-      "m15Structure": "BULLISH_FAN",
+      "curPrice": 0.832,
+      "macro": "STRONG_SELLER",
+      "m15Structure": "NEUTRAL",
       "m1Structure": "BEARISH",
-      "buyerDominancePct": 20,
-      "volRatio": 0.04,
-      "supportFloor": 0.8313,
-      "resistanceCeiling": 0.8353,
+      "buyerDominancePct": 75,
+      "volRatio": 0.52,
+      "supportFloor": 0.83,
+      "resistanceCeiling": 0.834,
       "verdict": "SELL ON RALLY (M15 BEARISH)",
       "biasClass": "bearish",
-      "advisory": "Struktur lilin & MA di bawah tekanan penjual. Data logik untuk SELL rally ke arah lantai 0.8313.",
+      "advisory": "Struktur lilin & MA di bawah tekanan penjual. Data logik untuk SELL rally ke arah lantai 0.83.",
       "opposingWarning": null,
       "openPositionsCount": 3,
-      "lastUpdated": "03:16:18"
+      "lastUpdated": "09:17:21"
     }
   }
 }
