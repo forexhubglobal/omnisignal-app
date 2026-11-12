@@ -3473,47 +3473,31 @@ const AiEngine = {
 
         if (isStrongSeller) {
           // TREND MAKRO BEARISH:
-          // 1. DILARANG SAMA SEKALI SELL DI LANTAI DASAR (ANTI-FLOOR CHASING)
-          if (liveP <= (floorRef + 2.0) && liveP >= (floorRef - 0.8)) {
-            this.log(`🛡️ [FLOOR ABSORPTION GUARD] Menangguhkan SELL XAUUSD pada ${liveP.toFixed(2)}. Harga terlalu dekat dengan lantai sokongan (${floorRef.toFixed(2)}). Menunggu Pullback ke zon rintangan (${roofRef.toFixed(2)}) atau pengesahan Breakdown BOS (< ${(floorRef - 0.8).toFixed(2)})!`);
+          // 1. DILARANG SAMA SEKALI SELL TEPAT PADA JARUM LANTAI DASAR
+          if (liveP <= (floorRef + 0.5) && liveP >= (floorRef - 0.5)) {
+            this.log(`🛡️ [FLOOR ABSORPTION GUARD] Menangguhkan SELL XAUUSD pada ${liveP.toFixed(2)}. Harga sedang menguji lantai sokongan (${floorRef.toFixed(2)}). Menunggu lantunan atau pengesahan penembusan.`);
             return;
           }
-          // 2. BREAKDOWN BOS CONTINUATION (PECAH BAWAH LANTAI DENGAN MOMENTUM)
-          if (liveP < (floorRef - 0.8)) {
-            type = 'SELL';
-            this._lastGoldWave = 'SELL';
+          type = 'SELL';
+          this._lastGoldWave = 'SELL';
+          if (liveP < (floorRef - 0.5)) {
             notes = `[⚡ SMC BREAKDOWN BOS] Lantai sokongan ${floorRef.toFixed(2)} berjaya dipecahkan ke bawah! Tekanan Makro Penjual mencetuskan aliran junaman kesinambungan (Breakdown Continuation). SL penampan 68-75p. Sasaran TP1 (+35p). Kunci BE automatik.`;
-          }
-          // 3. PULLBACK RETRACEMENT ENTRY (MELANTUN KE ZON PREMIUM / RINTANGAN / FVG)
-          else if (liveP >= (floorRef + 0.45 * range)) {
-            type = 'SELL';
-            this._lastGoldWave = 'SELL';
-            notes = `[⚡ SMC PULLBACK RETRACEMENT] Penolakan rintangan pada lantunan ${liveP.toFixed(2)} (Zon Premium / FVG). Entry SELL di puncak pembetulan seiring arus Makro Bearish! SL penampan 68-75p. Sasaran TP1 (+35p). Kunci BE automatik.`;
           } else {
-            this.log(`🛡️ [PULLBACK AWAIT GUARD] Menolak isyarat SELL XAUUSD pada ${liveP.toFixed(2)}. Sedang menunggu harga melantun lebih tinggi ke zon Premium (>= ${(floorRef + 0.45 * range).toFixed(2)}) untuk entry SELL terbaik.`);
-            return;
+            notes = `[⚡ SCALP PRO: SELL ON RALLY] Dominasi Makro Penjual (Strong Seller / Bearish Flow). Entry SELL pada zon pembetulan ${liveP.toFixed(2)}. SL penampan 68-75p. Sasaran TP1 (+35p). Kunci BE automatik.`;
           }
         } else if (isStrongBuyer) {
           // TREND MAKRO BULLISH:
-          // 1. DILARANG SAMA SEKALI BUY DI BUMBUNG (ANTI-ROOF CHASING)
-          if (liveP >= (roofRef - 2.0) && liveP <= (roofRef + 0.8)) {
-            this.log(`🛡️ [CEILING ABSORPTION GUARD] Menangguhkan BUY XAUUSD pada ${liveP.toFixed(2)}. Harga terlalu dekat dengan bumbung rintangan (${roofRef.toFixed(2)}). Menunggu Pullback ke lantai atau pengesahan Breakout BOS (> ${(roofRef + 0.8).toFixed(2)})!`);
+          // 1. DILARANG SAMA SEKALI BUY TEPAT PADA BUMBUNG PUNCAK
+          if (liveP >= (roofRef - 0.5) && liveP <= (roofRef + 0.5)) {
+            this.log(`🛡️ [CEILING ABSORPTION GUARD] Menangguhkan BUY XAUUSD pada ${liveP.toFixed(2)}. Harga sedang menguji bumbung rintangan (${roofRef.toFixed(2)}). Menunggu celupan atau pengesahan penembusan.`);
             return;
           }
-          // 2. BREAKOUT BOS CONTINUATION (PECAH ATAS BUMBUNG DENGAN MOMENTUM)
-          if (liveP > (roofRef + 0.8)) {
-            type = 'BUY';
-            this._lastGoldWave = 'BUY';
+          type = 'BUY';
+          this._lastGoldWave = 'BUY';
+          if (liveP > (roofRef + 0.5)) {
             notes = `[⚡ SMC BREAKOUT BOS] Bumbung rintangan ${roofRef.toFixed(2)} berjaya ditembusi ke atas! Tekanan Makro Pembeli mencetuskan lonjakan kesinambungan baharu (Breakout Continuation). SL penampan 68-75p. Sasaran TP1 (+35p). Kunci BE automatik.`;
-          }
-          // 3. DIP REBOUND ENTRY (CELUPAN KE ZON DISKAUN / SOKONGAN)
-          else if (liveP <= (roofRef - 0.45 * range)) {
-            type = 'BUY';
-            this._lastGoldWave = 'BUY';
-            notes = `[⚡ SMC DISCOUNT DIP BUY] Lantunan sokongan dikesan pada ${liveP.toFixed(2)} (Zon Diskaun Demand). Entry BUY di lembah pembetulan seiring arus Makro Bullish! SL penampan 68-75p. Sasaran TP1 (+35p). Kunci BE automatik.`;
           } else {
-            this.log(`🛡️ [DIP AWAIT GUARD] Menolak isyarat BUY XAUUSD pada ${liveP.toFixed(2)}. Sedang menunggu celupan ke zon lantai (<= ${(roofRef - 0.45 * range).toFixed(2)}) untuk entry BUY terbaik.`);
-            return;
+            notes = `[⚡ SCALP PRO: BUY ON DIP] Dominasi Makro Pembeli (Strong Buyer / Bullish Flow). Entry BUY pada zon celupan ${liveP.toFixed(2)}. SL penampan 68-75p. Sasaran TP1 (+35p). Kunci BE automatik.`;
           }
         } else {
           // 2-WAY RANGE (MARKET NEUTRAL):
