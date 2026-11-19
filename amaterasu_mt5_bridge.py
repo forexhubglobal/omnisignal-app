@@ -852,14 +852,33 @@ class AmaterasuBridge:
                 tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else ((0.0070 if not is_jpy else 0.70) if tp_target == 3 else ((0.0042 if not is_jpy else 0.42) if tp_target == 2 else (0.0020 if not is_jpy else 0.20)))
                 sl_dist = min(max(abs(raw_sl - signal_entry), 0.0028 if not is_jpy else 0.28), 0.0032 if not is_jpy else 0.32) if raw_sl > 0 else (0.0028 if not is_jpy else 0.28)
 
-        # Gunakan jarak relatif dari harga kemasukan sebenar (Market Price)
-        # Ini mengelakkan ralat 'Invalid Stops' jika harga sudah bergerak
-        if is_buy:
-            tp = round(price + tp_dist, digits)
-            sl = round(price - sl_dist, digits)
+        # PURE MARKET-STRUCTURE SL & TP BASED ON LIQUIDITY SWEEP (ARAHAN KHAS BOS):
+        # SL diletakkan selamat di luar jarum bucu liquidity sweep pasaran sebenar
+        rates_m15 = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M15, 0, 16)
+        if rates_m15 is not None and len(rates_m15) >= 4 and clean_raw_sym == "XAUUSD":
+            recent_high = max(float(r['high']) for r in rates_m15)
+            recent_low = min(float(r['low']) for r in rates_m15)
+            buffer = 2.0  # $2.00 (20 pips) penampan selamat melepasi puncak jarum sweep
+
+            if not is_buy: # SELL
+                # Letak SL tepat di atas jarum bucu liquidity sweep tertinggi
+                sl = round(max(recent_high + buffer, price + 5.5), digits)
+                # TP1 disasarkan ke arah lantai kecairan pembeli
+                tp = round(max(recent_low + 1.0, price - tp_dist), digits)
+            else: # BUY
+                # Letak SL tepat di bawah jarum bucu liquidity sweep terendah
+                sl = round(min(recent_low - buffer, price - 5.5), digits)
+                # TP1 disasarkan ke arah bumbung kecairan penjual
+                tp = round(min(recent_high - 1.0, price + tp_dist), digits)
+
+            print(f"{Colors.GREEN}🏛️ [MARKET STRUCTURE SL/TP] #{clean_raw_sym} {'SELL' if not is_buy else 'BUY'} @ {price:.2f} | SL Berasaskan Struktur: {sl:.2f} (Di luar bucu sweep) | Sasaran TP: {tp:.2f}{Colors.RESET}")
         else:
-            tp = round(price - tp_dist, digits)
-            sl = round(price + sl_dist, digits)
+            if is_buy:
+                tp = round(price + tp_dist, digits)
+                sl = round(price - sl_dist, digits)
+            else:
+                tp = round(price - tp_dist, digits)
+                sl = round(price + sl_dist, digits)
 
         # STRICT ANTI-CHASING PUCUK/LANTAI GUARD:
         # Penampan fleksibel: Emas ($4,040+) diberi ruang 120 pip ($12.00) waktu lonjakan pasaran
