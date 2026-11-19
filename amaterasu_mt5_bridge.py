@@ -134,7 +134,7 @@ class AmaterasuBridge:
         print(f" {Colors.CYAN}* Execution Mode  :{Colors.RESET} {self.execution_mode} (Split TP1/TP2/TP3)")
         print(f" {Colors.CYAN}* Auto Break-Even :{Colors.RESET} {'AKTIF (SOP Wajib)' if self.auto_be else 'TIDAK'}")
         print(f" {Colors.CYAN}* Floating ATR    :{Colors.RESET} AKTIF (M15 Live Volatility True Range)")
-        print(f" {Colors.CYAN}* Gold Trap Zone  :{Colors.RESET} 14:00 - 16:00 MYT (London Trap DIBLOK)")
+        print(f" {Colors.CYAN}* Profit Target   :{Colors.RESET} +2,500 USC ($25.00 USD) - Henti Automatik Per Akaun")
         print(f" {Colors.CYAN}* Max Open Pairs  :{Colors.RESET} {self.config.get('max_concurrent_pairs', 4)}")
         print(f" {Colors.CYAN}* Magic Number    :{Colors.RESET} {self.magic_number}")
         print(f" {Colors.CYAN}* Stealth Shield  :{Colors.RESET} {'AKTIF (Anti-Broker B-Book Cloaking)' if self.config.get('stealth_mode', True) else 'TIDAK'}")
@@ -235,7 +235,91 @@ class AmaterasuBridge:
             self.broker_symbols = {s.name.upper(): s.name for s in symbols}
             print(f" • Simbol Dikesan: {len(self.broker_symbols)} pasaran sedia didagangkan.")
         
+        # INVARIANT: SASARAN PROFIT PER AKAUN (+2,500 USC / +$25.00 USD)
+        self.account_profit_target_usc = 2500.0  # 2,500 USC = $25.00 USD
+        self.account_profit_target_usd = 25.0
+        self.account_target_reached = False
+        self.session_baseline_equity = float(account.equity)
+        self.last_target_log_time = 0
+        target_display = f"2,500 USC ($25.00 USD)" if self.is_cent_account else "$25.00 USD"
+        print(f" • Circuit Breaker: Had Untung Harian {target_display} (Henti Automatik Per Akaun)")
+
         return True
+
+    def get_account_profit_gain(self):
+        """Kira keuntungan bersih akaun ini (sama ada realized closed deals hari ini atau session equity gain)"""
+        try:
+            acc = mt5.account_info()
+            if not acc:
+                return 0.0, 0.0, 0.0
+            
+            if self.session_baseline_equity is None or self.session_baseline_equity <= 0:
+                self.session_baseline_equity = float(acc.equity)
+
+            equity_gain = float(acc.equity) - self.session_baseline_equity
+
+            # Kira closed deals hari ini
+            now_dt = datetime.now()
+            start_today = datetime(now_dt.year, now_dt.month, now_dt.day, 0, 0, 0)
+            deals = mt5.history_deals_get(start_today, now_dt)
+            realized_today = 0.0
+            if deals:
+                for d in deals:
+                    if d.entry == mt5.DEAL_ENTRY_OUT:
+                        realized_today += (d.profit + d.swap + d.commission)
+
+            positions = mt5.positions_get() or []
+            floating = sum(p.profit for p in positions)
+            total_today_gain = realized_today + floating
+
+            effective_gain = max(equity_gain, total_today_gain)
+            return effective_gain, realized_today, floating
+        except Exception:
+            return 0.0, 0.0, 0.0
+
+    def check_account_profit_target(self):
+        """Semak jika akaun ini telah mencapai sasaran +2,500 USC / +$25.00 USD"""
+        # Semak arahan resume daripada Tengku Khairi (resume_trading.flag)
+        flag_candidates = [
+            os.path.join(BASE_DIR, "resume_trading.flag"),
+            r"C:\AmaterasuX\resume_trading.flag",
+            r"C:\AmaterasuX_Acc2\resume_trading.flag",
+            r"C:\AmaterasuX_Acc3\resume_trading.flag"
+        ]
+        for f_path in flag_candidates:
+            if os.path.exists(f_path):
+                try:
+                    os.remove(f_path)
+                except Exception:
+                    pass
+                acc = mt5.account_info()
+                if acc:
+                    self.session_baseline_equity = float(acc.equity)
+                self.account_target_reached = False
+                print(f"\n{Colors.GREEN}{Colors.BOLD}🚀 [ARAHAN RESUME DITERIMA] Arahan Tengku Khairi disahkan! Akaun #{getattr(acc, 'login', '')} memulakan pusingan dagangan baharu.{Colors.RESET}\n")
+                return False
+
+        if self.account_target_reached:
+            return True
+
+        gain, realized, floating = self.get_account_profit_gain()
+        target = self.account_profit_target_usc if getattr(self, "is_cent_account", True) else self.account_profit_target_usd
+
+        if gain >= target:
+            self.account_target_reached = True
+            acc = mt5.account_info()
+            login_str = getattr(acc, "login", "")
+            usd_equiv = (gain / 100.0) if getattr(self, "is_cent_account", True) else gain
+            print(f"\n{Colors.GREEN}{Colors.BOLD}=======================================================================")
+            print(f"🎯 [SASARAN PROFIT TERCAPAI] AKAUN #{login_str} UNTUNG +{gain:,.2f} {self.account_currency} (+${usd_equiv:,.2f} USD)!")
+            print(f"🛑 Mengikut arahan Tengku Khairi: Akaun ini BERHENTI membuka order baharu.")
+            print(f"🔒 Posisi sedia ada tetap dilindungi oleh Break-Even & Trailing Stop secara automatik.")
+            print(f"⏳ Menunggu arahan Tengku Khairi ('start balik') untuk mula berdagang semula.")
+            print(f"ℹ️ Sistem Amaterasu X & akaun-akaun lain kekal beroperasi seperti biasa.")
+            print(f"======================================================================={Colors.RESET}\n")
+            return True
+
+        return False
 
     def resolve_symbol(self, raw_symbol):
         """Padankan simbol Amaterasu (cth: XAUUSD, WTI) kepada simbol spesifik broker (cth: XAUUSD.m, GOLD, USOIL)"""
@@ -538,11 +622,8 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}🛡️ [PAIR DITAPIS] Simbol #{clean_raw_sym} ditolak. Hanya {', '.join(allowed_pairs)} dibenarkan mengikut arahan bos.{Colors.RESET}")
             return None
 
-        # 0.1 REHAT MALAM & WAKTU PEMBUKAAN PAGI (Sambung 08:00 AM MYT):
-        # Arahan Bos: Rehat malam ini, sambung semula esok pagi jam 08:00 AM MYT
-        now_myt = datetime.now(timezone(timedelta(hours=8)))
-        if now_myt.hour >= 21 or now_myt.hour < 8:
-            print(f"{Colors.YELLOW}🌙 [REHAT MALAM] Jam {now_myt.strftime('%H:%M')} MYT: Arahan bos sambung pagi esok jam 08:00 AM. Menolak order baharu #{clean_raw_sym}.{Colors.RESET}")
+        # 0.1 CIRCUIT BREAKER: SASARAN KEUNTUNGAN AKAUN (+2,500 USC / +$25.00 USD)
+        if self.check_account_profit_target():
             return None
 
         # 0.2 LONDON SESSION ACTIVE:
@@ -921,12 +1002,9 @@ class AmaterasuBridge:
         if allowed_pairs and clean_sym not in [p.upper() for p in allowed_pairs]:
             return
 
-        # LONDON TRAP ZONE GUARD (14:00 - 16:00 MYT):
-        if clean_sym == "XAUUSD":
-            now_myt = datetime.now(timezone(timedelta(hours=8)))
-            if 14 <= now_myt.hour < 16:
-                print(f"{Colors.YELLOW}🛡️ [LONDON TRAP ZONE] Signal #{clean_sym} ditolak pada jam {now_myt.strftime('%H:%M')} MYT. Zon 14:00 - 16:00 disekat bagi mengelak manipulasi Judas Swing.{Colors.RESET}")
-                return
+        # CIRCUIT BREAKER: SASARAN KEUNTUNGAN AKAUN (+2,500 USC / +$25.00 USD)
+        if self.check_account_profit_target():
+            return
 
         order_records = []
         if self.execution_mode == "SPLIT_TP":
@@ -1518,6 +1596,7 @@ class AmaterasuBridge:
 
                 # Semak setiap posisi MT5 aktif secara langsung untuk perlindungan BE & Penyelarasan SL Baru
                 all_pos = mt5.positions_get()
+                self.check_account_profit_target()
                 if all_pos:
                     # Lindungi semua posisi manual yang tiada SL atau TP (SL=0 / TP=0) serta-merta
                     self.protect_naked_manual_positions(all_pos)

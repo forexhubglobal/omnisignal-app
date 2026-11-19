@@ -1898,6 +1898,34 @@ const server = http.createServer(async (req, res) => {
     return res.end(JSON.stringify({ success: true, signal: db.activeSignal }));
   }
 
+  // 1b-2. POST /api/account/resume (Arahan Bos: Start Balik Trading untuk akaun)
+  if ((pathname === '/api/account/resume' || pathname === '/api/copytrade/resume') && req.method === 'POST') {
+    const flagPaths = [
+      path.join(__dirname, 'resume_trading.flag'),
+      'C:\\AmaterasuX\\resume_trading.flag',
+      'C:\\AmaterasuX_Acc2\\resume_trading.flag',
+      'C:\\AmaterasuX_Acc3\\resume_trading.flag'
+    ];
+    for (const fp of flagPaths) {
+      try {
+        fs.writeFileSync(fp, 'RESUME');
+      } catch (e) {}
+    }
+    const db = getDB();
+    const accounts = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4].filter(Boolean);
+    for (const acc of accounts) {
+      acc.targetReached = false;
+      if (acc.status && acc.status.includes('TARGET REACHED')) {
+        acc.status = 'LIVE & ACTIVE';
+      }
+    }
+    saveDB(db);
+    AiEngine.log('🚀 [ARAHAN RESUME] Arahan Tengku Khairi disahkan! Semua akaun dibenarkan memulakan pusingan dagangan baharu.');
+    broadcastEvent('account_resumed', { success: true, message: 'Dagangan disambung semula mengikut arahan Bos.' });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ success: true, message: 'Dagangan disambung semula mengikut arahan Tengku Khairi.' }));
+  }
+
   // 1c. GET /api/ainews/synergy (Get current AI News & Signal Directional Synergy status)
   if (pathname === '/api/ainews/synergy' && req.method === 'GET') {
     const db = getDB();
@@ -3061,6 +3089,10 @@ let currentMarketPrice = 3986.50;
 // REAL LIVE MODE: Autonomous real-time market scanner and live trade tracker
 const AiEngine = {
   enabled: true, // AKTIF 24 JAM MEMANTAU PASARAN (SESI ENTRY BUKA 08:00 AM PAGI ESOK)
+  dailyProfitTargetUsc: 2500, // 2,500 USC = $25.00 USD (Henti trade serta-merta bila cecah target)
+  dailyProfitTargetUsd: 25.0,
+  targetReached: false,
+  sessionStartUsc: null,
   frequencyMode: 'SCALP_PRO', // 'SCALP_PRO' (Ultra-Scalp ~20 Setups/Day XAUUSD)
   targetWinrate: 94, // 90%+ Sovereign Institutional Model (94% Target Winrate)
   scanIntervalSec: 45, // 45 seconds agile interval (Ultra-Rapid Opportunity Capture)
@@ -3222,11 +3254,7 @@ const AiEngine = {
       if (day === 6 && hour >= 6) return false; // Tutup Sabtu selepas jam 06:00 AM MYT
       if (day === 0) return false;              // Tutup sepanjang hari Ahad
 
-      // ARAHAN KHAS BOS: Rehat malam ini. Sambung esok pagi jam 8:00 AM MYT.
-      // Sesi ditutup malam ini dari jam 21:00 MYT sehingga jam 08:00 AM MYT esok pagi.
-      if (hour >= 21 || hour < 8) return false;
-
-      return true; // Aktif bermula 08:00 AM sehingga tamat sesi harian
+      return true; // Aktif 24/5 sepenuhnya sepanjang pasaran global beroperasi
     } catch (e) {
       return true;
     }
@@ -3243,6 +3271,10 @@ const AiEngine = {
   getStatus() {
     return {
       enabled: this.enabled,
+      dailyProfitTargetUsc: this.dailyProfitTargetUsc,
+      dailyProfitTargetUsd: this.dailyProfitTargetUsd,
+      targetReached: this.targetReached,
+      sessionStartUsc: this.sessionStartUsc,
       frequencyMode: this.frequencyMode,
       targetWinrate: this.targetWinrate,
       scanIntervalSec: this.scanIntervalSec,
