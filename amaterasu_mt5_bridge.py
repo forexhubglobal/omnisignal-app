@@ -321,6 +321,40 @@ class AmaterasuBridge:
 
         return False
 
+    def is_dangerous_market_hour(self):
+        """
+        ARAHAN TEGAS BOS: HARAMKAN TRADE PADA WAKTU-WAKTU BAHAYA MANIPULASI:
+        1. Waktu Rollover & Midnight Spread Spiking (00:00 - 07:00 MYT)
+        2. Waktu Pembukaan London Judas Swing Trap (14:00 - 15:15 MYT)
+        3. Hujung Minggu / Sesi Awal Isnin Sebelum 07:00 MYT
+        """
+        try:
+            now_myt = datetime.now(timezone(timedelta(hours=8)))
+            hour = now_myt.hour
+            minute = now_myt.minute
+            total_min = hour * 60 + minute
+            weekday = now_myt.weekday() # 0=Isnin, 5=Sabtu, 6=Ahad
+
+            # Zon Hujung Minggu
+            if weekday == 5 and hour >= 6:
+                return True, "Pasaran Forex Hujung Minggu ditutup (Sabtu)."
+            if weekday == 6:
+                return True, "Pasaran Forex Hujung Minggu ditutup (Ahad)."
+            if weekday == 0 and hour < 7:
+                return True, "Sesi Awal Isnin sebelum 07:00 AM MYT (Spread Pembukaan Sangat Lebar)."
+
+            # Zon 1: Rollover & Midnight Spread Spiking (00:00 - 07:00 MYT)
+            if 0 <= hour < 7:
+                return True, f"Zon Bahaya Rollover & Midnight ({now_myt.strftime('%H:%M')} MYT). Spread melebar liar & manipulasi kecairan nipis! Diharamkan trade mengikut arahan Bos."
+
+            # Zon 2: London Open Judas Swing Trap (14:00 - 15:15 MYT)
+            if 840 <= total_min < 915:
+                return True, f"Zon Bahaya Judas Swing London ({now_myt.strftime('%H:%M')} MYT). Perangkap manipulasi jarum pembukaan London! Diharamkan trade mengikut arahan Bos."
+
+            return False, ""
+        except Exception:
+            return False, ""
+
     def resolve_symbol(self, raw_symbol):
         """Padankan simbol Amaterasu (cth: XAUUSD, WTI) kepada simbol spesifik broker (cth: XAUUSD.m, GOLD, USOIL)"""
         s_upper = raw_symbol.upper()
@@ -626,10 +660,11 @@ class AmaterasuBridge:
         if self.check_account_profit_target():
             return None
 
-        # 0.2 LONDON SESSION ACTIVE:
-        # Menyelaras kemasukan mengikut pengesahan struktur pasaran sebenar W1/D1/H4
-        if clean_raw_sym == "XAUUSD":
-            pass
+        # 0.2 ARAHAN TEGAS BOS: HARAMKAN TRADE PADA WAKTU BAHAYA MANIPULASI
+        is_dangerous, danger_reason = self.is_dangerous_market_hour()
+        if is_dangerous:
+            print(f"{Colors.YELLOW}🛑 [WAKTU BAHAYA DIHARAMKAN] Order #{clean_raw_sym} disekat: {danger_reason}{Colors.RESET}")
+            return None
         
         # Pastikan simbol aktif dalam MarketWatch
         mt5.symbol_select(symbol, True)
@@ -1004,6 +1039,15 @@ class AmaterasuBridge:
 
         # CIRCUIT BREAKER: SASARAN KEUNTUNGAN AKAUN (+2,500 USC / +$25.00 USD)
         if self.check_account_profit_target():
+            return
+
+        # ARAHAN TEGAS BOS: HARAMKAN TRADE PADA WAKTU BAHAYA MANIPULASI
+        is_dangerous, danger_reason = self.is_dangerous_market_hour()
+        if is_dangerous:
+            now_t = time.time()
+            if (now_t - getattr(self, "last_danger_log_time", 0)) > 60:
+                self.last_danger_log_time = now_t
+                print(f"{Colors.YELLOW}🛑 [WAKTU BAHAYA DIHARAMKAN] Signal #{clean_sym} ditolak: {danger_reason}{Colors.RESET}")
             return
 
         order_records = []

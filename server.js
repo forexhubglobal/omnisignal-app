@@ -3249,12 +3249,22 @@ const AiEngine = {
       const mytDate = new Date(new Date().toLocaleString('en-US', { timeZone: this.tradingHours.timezone }));
       const day = mytDate.getDay();   // 0 = Ahad, 1 = Isnin, ..., 5 = Jumaat, 6 = Sabtu
       const hour = mytDate.getHours();
+      const minute = mytDate.getMinutes();
+      const totalMin = hour * 60 + minute;
 
-      // Hujung Minggu: Tutup Sabtu selepas jam 06:00 AM MYT sehingga Isnin 08:00 AM MYT
-      if (day === 6 && hour >= 6) return false; // Tutup Sabtu selepas jam 06:00 AM MYT
-      if (day === 0) return false;              // Tutup sepanjang hari Ahad
+      // Hujung Minggu: Tutup Sabtu selepas jam 06:00 AM MYT sehingga Isnin 07:00 AM MYT
+      if (day === 6 && hour >= 6) return false;
+      if (day === 0) return false;
+      if (day === 1 && hour < 7) return false;
 
-      return true; // Aktif 24/5 sepenuhnya sepanjang pasaran global beroperasi
+      // ARAHAN TEGAS BOS: HARAMKAN TRADE PADA WAKTU BAHAYA MANIPULASI:
+      // 1. Rollover & Midnight Spread Spiking (00:00 - 07:00 MYT)
+      if (hour >= 0 && hour < 7) return false;
+
+      // 2. London Open Judas Swing Manipulation Trap (14:00 - 15:15 MYT)
+      if (totalMin >= 840 && totalMin < 915) return false;
+
+      return true; // Aktif pada waktu bersih & Golden Window (London 15:15 - 19:00, US 19:30 - 23:59)
     } catch (e) {
       return true;
     }
