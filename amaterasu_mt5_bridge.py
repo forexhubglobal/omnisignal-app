@@ -624,8 +624,7 @@ class AmaterasuBridge:
         max_allowed_layers = int(self.config.get("max_gold_positions", 9)) if clean_raw_sym == "XAUUSD" else min(int(self.config.get("max_symbol_positions", 3)), 3)
         existing_symbol_orders = [
             p for p in (mt5.positions_get() or [])
-            if (p.symbol.split('.')[0].upper() == clean_raw_sym) and
-               (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
+            if p.symbol.split('.')[0].upper() == clean_raw_sym
         ]
         if len(existing_symbol_orders) >= max_allowed_layers:
             print(f"{Colors.YELLOW}🛡️ [SOP LAYER LIMIT] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} posisi aktif (Maksimum {max_allowed_layers}). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
@@ -984,8 +983,8 @@ class AmaterasuBridge:
         is_gold = ("XAU" in sym_upper or "GOLD" in sym_upper)
         if is_gold:
             pip_size = 0.10
-            # PILIHAN A: Beri ruang nafas Emas (min +50 pips / $5.00) agar tidak tersapu oleh normal pullback
-            min_be_pips = float(self.config.get("gold_min_be_pips", 50.0))
+            # Pantas Kunci Break-Even Emas (min +30 pips / $3.00) agar profit tidak hangus jadi rugi
+            min_be_pips = float(self.config.get("gold_min_be_pips", 30.0))
         elif "GBPJPY" in sym_upper:
             pip_size = 0.01
             # Bedah Siasat GBPJPY: Volatiliti 16p M15 ATR, perlukan ruang nafas +28 pip
@@ -1001,10 +1000,9 @@ class AmaterasuBridge:
         floating_pips = ((cur_price - open_price) / pip_size) if is_buy else ((open_price - cur_price) / pip_size)
 
         # SPREAD & ROLLOVER SAFETY FILTER:
-        # Hitung spread semasa dalam unit pip. Waktu rollover (cth: jam 23:45 - 01:15 server time),
-        # spread boleh melebar sehingga 6-12 pips pada pasangan Forex dan 40-80 pips pada Emas!
+        # Hitung spread semasa dalam unit pip. Normal spread Gold adalah 25-45 pips.
         current_spread_pips = abs(tick.ask - tick.bid) / pip_size
-        max_allowed_spread = 25.0 if is_gold else 5.0
+        max_allowed_spread = 65.0 if is_gold else 12.0
         if current_spread_pips > max_allowed_spread:
             # Spread terlalu liar / melebar (Rollover). Jangan alih SL ke paras rapat kerana Ask price akan terus langgar SL!
             return
@@ -1016,38 +1014,34 @@ class AmaterasuBridge:
             sig_type = str(sig_data.get("type", "")).upper()
             sig_matches_direction = (is_buy and sig_type == "BUY") or (not is_buy and sig_type == "SELL")
             # Syarat Tegas: Walaupun server sebut TP1_HIT, harga semasa MT5 MESTILAH dalam keadaan untung sekurang-kurangnya min_be_pips / 2!
-            # Ini mengelakkan false trigger semasa pasaran baru gerak 1 pip!
-            min_profit_threshold = 20.0 if is_gold else 10.0
+            min_profit_threshold = 15.0 if is_gold else 8.0
             if sig_matches_direction and (sig_data.get("status") == "TP1_HIT" or sig_data.get("beLocked")):
                 if floating_pips >= min_profit_threshold:
                     server_be = True
 
         # MULTI-STAGE DYNAMIC TRAILING PROFIT LOCK (TRUE PROFIT BREAK-EVEN):
-        # Tahap 1: TP1 Hit (+50p Gold / +18p Forex) -> Kunci SL ke TRUE BREAK-EVEN (+2p / +0.50 untung bersih)
-        #          SL diletakkan DI DALAM ZON UNTUNG (bukan di belakang entry atau dalam zon rugi!)
-        #          BUY: open_price + buffer | SELL: open_price - buffer
-        # Tahap 2: Menghampiri TP2 (+80p Gold / +30p Forex) -> Kunci untung kekal +40p Gold / +15p Forex!
-        # Tahap 3: Melepasi TP2 (+120p Gold / +45p Forex) -> Kunci untung kekal +80p Gold / +30p Forex!
-        # Tahap 4: Menghampiri TP3 (+160p Gold / +65p Forex) -> Kunci untung kekal +120p Gold / +45p Forex!
+        # Tahap 1: Min BE (+30p Gold / +15p Forex) -> Kunci SL ke TRUE BREAK-EVEN (+5p Gold / +2p FX)
+        # Tahap 2: Untung mencapai +50p Gold / +25p Forex -> Kunci untung kekal +25p Gold / +12p Forex!
+        # Tahap 3: Untung mencapai +75p Gold / +40p Forex -> Kunci untung kekal +45p Gold / +25p Forex!
+        # Tahap 4: Untung melepasi +110p Gold / +60p Forex -> Kunci untung kekal +80p Gold / +40p Forex!
         stage_name = ""
         cand_sl = 0.0
 
         if is_gold:
-            if floating_pips >= 160.0:
-                lock_pips = 120.0
-                cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
-                stage_name = "Tahap 4 Trailing (Kunci Untung +120p)"
-            elif floating_pips >= 120.0:
+            if floating_pips >= 110.0:
                 lock_pips = 80.0
                 cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
-                stage_name = "Tahap 3 Trailing (Kunci Untung +80p)"
-            elif floating_pips >= 80.0:
-                lock_pips = 40.0
+                stage_name = "Tahap 4 Trailing (Kunci Untung +80p)"
+            elif floating_pips >= 75.0:
+                lock_pips = 45.0
                 cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
-                stage_name = "Tahap 2 Trailing (Kunci Untung +40p)"
+                stage_name = "Tahap 3 Trailing (Kunci Untung +45p)"
+            elif floating_pips >= 50.0:
+                lock_pips = 25.0
+                cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
+                stage_name = "Tahap 2 Trailing (Kunci Untung +25p)"
             elif floating_pips >= min_be_pips or server_be:
-                # TRUE BREAK-EVEN: Kunci SL di atas paras Entry (BUY) atau di bawah paras Entry (SELL)
-                # Kunci +5 pips ($0.50) untung bersih untuk Gold menampung komisen & spread
+                # TRUE BREAK-EVEN: Kunci SL di zon untung (+5 pips / $0.50)
                 be_profit_pips = 5.0
                 cand_sl = (open_price + be_profit_pips * pip_size) if is_buy else (open_price - be_profit_pips * pip_size)
                 stage_name = "Tahap 1 True BE (Kunci Untung Bersih +5p | Sifar Risiko)"

@@ -37,7 +37,7 @@
 
 ## 3. Order Execution & SMC Risk Rules
 - **Strict 1-Setup Per Symbol (Max 3 Split Layers - Bulan Lepas Locked SOP)**: A symbol can only have ONE active trade setup at a time (split into Layer 1 -> TP1, Layer 2 -> TP2, Layer 3 -> TP3). NEVER stack duplicate setups. Maximum total open positions for that symbol is 3. New setups for that symbol are strictly blocked until the current trade resolves.
-- **Mandatory Static SL & TP Invariant (Disiplin Besi SL/TP Statik)**: Once an order is executed, Stop Loss (SL) and Take Profit (TP) levels are 100% FIXED and STATIC. Strictly NO moving SL to Breakeven (BE), NO auto-trailing, NO early market cutoffs before news, and NO modifying SL. Positions must resolve purely and passively at the broker level when market price hits either TP or SL.
+- **Ironclad Profit Locking & Zero-Loss Break-Even Invariant (NO WINNER TURNS TO LOSER)**: Once a trade is in solid profit (>= +30 pips for Gold, >= +15 pips for Forex), the system MUST immediately move Stop Loss to Break-Even (+5 pips for Gold / +2 pips for Forex) to guarantee that a winning trade NEVER reverses into a negative loss. As profit expands (+50p, +75p, +110p), dynamic trailing lock locks in +25p, +45p, and +80p respectively. Posisi yang sudah untung HARAM dibiarkan berbalik menjadi kerugian!
 - **Gold Position Capacity (9 Layers Parity)**: XAUUSD allows up to 9 open positions across all accounts (Dragon, Mantis, Tiger, MEZ EA), executed as 3 rounds of SPLIT_TP (3x TP1, 3x TP2, 3x TP3 runner), matching MEZ account capacity while respecting equity margin.
 - **Institutional Breathing Room**:
   - Gold (XAUUSD): SL 100 - 135 pips ($10.00 - $13.50); TP1: 80 pips, TP2: 160 pips, TP3: 300 pips runner.
@@ -97,14 +97,15 @@
 - **Local Loopback Parity**: All 4 MT5 bridge configurations on the VPS must point to server_url: "http://127.0.0.1:3000" to guarantee 0ms latency and total immunity from external internet or local PC shutdowns.
 - **24/7 Autonomous Operation**: The user's home computer may be powered off, put to sleep, or disconnected at any time without impacting trading operations or website availability.
 
-## 11. Mandatory Static SL & TP Discipline Invariant
-- **Strictly No Modification**: Once an order is executed, Stop Loss and Take Profit levels are 100% FIXED and STATIC.
-- **Forbidden Actions**:
-  - NO moving SL to Break-Even (BE).
-  - NO dynamic trailing profit locks or trailing stop modifications.
-  - NO pre-news manual cutoffs (e.g. 20:15 pre-news early close is completely disabled).
-  - NO widening or narrowing SL.
-- **Passive Broker Resolution**: All trades must resolve purely and passively at the broker level when price reaches either the initial SL or the target TP.
+## 11. Ironclad Profit Locking & Zero-Loss Break-Even Invariant
+- **Strict Prohibition Against Winning Trades Turning into Losses**: Posisi yang sudah membuat keuntungan elok-elok HARAM dibiarkan berbalik arah sehingga terkena Stop Loss penuh dan merugikan akaun!
+- **Mandatory Multi-Tier Profit Guard**:
+  1. **Tier 1 (True Break-Even)**: Bila Gold capai +30 pips (Forex +15 pips), alihkan SL ke Break-Even +5 pips (Gold) / +2 pips (Forex) bagi menampung kos komisen dan spread broker.
+  2. **Tier 2 (Lock Profit)**: Bila Gold untung +50 pips (Forex +25 pips), kunci keuntungan tetap +25 pips (Forex +12 pips).
+  3. **Tier 3 (Lock Profit)**: Bila Gold untung +75 pips (Forex +40 pips), kunci keuntungan tetap +45 pips (Forex +25 pips).
+  4. **Tier 4 (Runner Trailing)**: Bila Gold untung +110 pips (Forex +60 pips), kunci keuntungan tetap +80 pips (Forex +40 pips).
+- **Hard Exposure Ceiling**: Maksimum 9 posisi bagi Gold merentasi simbol, menolak sebarang pertambahan order baharu jika had sudah dicapai.
+- **Dynamic Breathing Room**: Stop Loss awal diletakkan berasaskan struktur selamat (Dynamic ATR + Invalidation Zone), mengelakkan SL terlalu sempit yang mudah disapu liquidity wicks sebelum junaman berlaku.
 
 ## 12. Post-TP 30-Minute Cooldown Buffer Invariant
 - **Mandatory Cooldown**: Immediately after any position resolves with profit (hitting TP1, TP2, or TP3), a strict 30-minute cooldown buffer is enforced for that symbol across all 4 accounts.
