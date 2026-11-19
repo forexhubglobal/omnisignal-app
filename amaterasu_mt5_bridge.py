@@ -983,18 +983,18 @@ class AmaterasuBridge:
         is_gold = ("XAU" in sym_upper or "GOLD" in sym_upper)
         if is_gold:
             pip_size = 0.10
-            # Pantas Kunci Break-Even Emas (min +30 pips / $3.00) agar profit tidak hangus jadi rugi
-            min_be_pips = float(self.config.get("gold_min_be_pips", 30.0))
+            # Ruang Nafas Break-Even Emas (min +55 pips / $5.50) agar normal retest tidak menyentuh BE
+            min_be_pips = float(self.config.get("gold_min_be_pips", 55.0))
         elif "GBPJPY" in sym_upper:
             pip_size = 0.01
             # Bedah Siasat GBPJPY: Volatiliti 16p M15 ATR, perlukan ruang nafas +28 pip
             min_be_pips = float(self.config.get("gbpjpy_min_be_pips", 28.0))
         elif "JPY" in sym_upper or "WTI" in sym_upper or "XAG" in sym_upper or "SILVER" in sym_upper:
             pip_size = 0.01
-            min_be_pips = 18.0
+            min_be_pips = 24.0
         else:
             pip_size = 0.0001
-            min_be_pips = 18.0
+            min_be_pips = 24.0
 
         cur_price = tick.bid if is_buy else tick.ask
         floating_pips = ((cur_price - open_price) / pip_size) if is_buy else ((open_price - cur_price) / pip_size)
@@ -1014,37 +1014,38 @@ class AmaterasuBridge:
             sig_type = str(sig_data.get("type", "")).upper()
             sig_matches_direction = (is_buy and sig_type == "BUY") or (not is_buy and sig_type == "SELL")
             # Syarat Tegas: Walaupun server sebut TP1_HIT, harga semasa MT5 MESTILAH dalam keadaan untung sekurang-kurangnya min_be_pips / 2!
-            min_profit_threshold = 15.0 if is_gold else 8.0
+            min_profit_threshold = 25.0 if is_gold else 12.0
             if sig_matches_direction and (sig_data.get("status") == "TP1_HIT" or sig_data.get("beLocked")):
                 if floating_pips >= min_profit_threshold:
                     server_be = True
 
-        # MULTI-STAGE DYNAMIC TRAILING PROFIT LOCK (TRUE PROFIT BREAK-EVEN):
-        # Tahap 1: Min BE (+30p Gold / +15p Forex) -> Kunci SL ke TRUE BREAK-EVEN (+5p Gold / +2p FX)
-        # Tahap 2: Untung mencapai +50p Gold / +25p Forex -> Kunci untung kekal +25p Gold / +12p Forex!
-        # Tahap 3: Untung mencapai +75p Gold / +40p Forex -> Kunci untung kekal +45p Gold / +25p Forex!
-        # Tahap 4: Untung melepasi +110p Gold / +60p Forex -> Kunci untung kekal +80p Gold / +40p Forex!
+        # MULTI-STAGE DYNAMIC TRAILING PROFIT LOCK (TRUE PROFIT BREAK-EVEN WITH BREATHING ROOM):
+        # Tahap 1: Min BE (+55p Gold / +24p Forex) -> Kunci SL ke TRUE BREAK-EVEN (+5p Gold / +2p FX)
+        #          Beri ruang nafas 50 pips agar retest sebelum junaman tidak menyentuh BE!
+        # Tahap 2: Untung mencapai +80p Gold / +40p Forex -> Kunci untung kekal +40p Gold / +20p Forex! (Ruang nafas 40p)
+        # Tahap 3: Untung mencapai +115p Gold / +60p Forex -> Kunci untung kekal +75p Gold / +35p Forex! (Ruang nafas 40p)
+        # Tahap 4: Untung melepasi +160p Gold / +85p Forex -> Kunci untung kekal +110p Gold / +55p Forex! (Ruang nafas 50p)
         stage_name = ""
         cand_sl = 0.0
 
         if is_gold:
-            if floating_pips >= 110.0:
-                lock_pips = 80.0
+            if floating_pips >= 160.0:
+                lock_pips = 110.0
                 cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
-                stage_name = "Tahap 4 Trailing (Kunci Untung +80p)"
-            elif floating_pips >= 75.0:
-                lock_pips = 45.0
+                stage_name = "Tahap 4 Trailing (Kunci Untung +110p | Ruang Nafas 50p)"
+            elif floating_pips >= 115.0:
+                lock_pips = 75.0
                 cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
-                stage_name = "Tahap 3 Trailing (Kunci Untung +45p)"
-            elif floating_pips >= 50.0:
-                lock_pips = 25.0
+                stage_name = "Tahap 3 Trailing (Kunci Untung +75p | Ruang Nafas 40p)"
+            elif floating_pips >= 80.0:
+                lock_pips = 40.0
                 cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
-                stage_name = "Tahap 2 Trailing (Kunci Untung +25p)"
+                stage_name = "Tahap 2 Trailing (Kunci Untung +40p | Ruang Nafas 40p)"
             elif floating_pips >= min_be_pips or server_be:
-                # TRUE BREAK-EVEN: Kunci SL di zon untung (+5 pips / $0.50)
+                # TRUE BREAK-EVEN BERNAFAS: Kunci SL di zon untung (+5 pips / $0.50) hanya selepas harga jalan +55p
                 be_profit_pips = 5.0
                 cand_sl = (open_price + be_profit_pips * pip_size) if is_buy else (open_price - be_profit_pips * pip_size)
-                stage_name = "Tahap 1 True BE (Kunci Untung Bersih +5p | Sifar Risiko)"
+                stage_name = "Tahap 1 True BE Bernafas (Kunci Untung Bersih +5p | Ruang Retest 50p)"
         else:
             if floating_pips >= 65.0:
                 lock_pips = 45.0
