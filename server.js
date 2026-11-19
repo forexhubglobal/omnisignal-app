@@ -3839,16 +3839,19 @@ const AiEngine = {
         this.log(`📉 [MTF TRIPLE MA] #${asset.symbol} D1/H4 STRONG_SELLER & MA sejajar Bearish. Menyelaraskan isyarat ke SELL.`);
       }
 
-      // Guard: Sekat isyarat yang melawan jajaran MA & Bias Makro KECUALI jika harga berada di zon puncak/bumbung atau dasar/lantai
-      const isAtRoof = liveP >= (roofRef - 3.0);
-      const isAtFloor = liveP <= (floorRef + 3.0);
+      // Dynamic Structural Rebound/Retracement Tolerance (Zon Diskaun/Premium Luas):
+      // Pada Emas (XAUUSD), zon lantunan adalah dalam julat $12.00 - $15.00 (120-150 pips) dari paras lantai/bumbung
+      const isGoldAsset = (asset.symbol === 'XAUUSD');
+      const tolerance = isGoldAsset ? 15.0 : 0.0025;
+      const isAtRoof = liveP >= (roofRef - tolerance);
+      const isAtFloor = liveP <= (floorRef + tolerance);
 
       if (type === 'SELL' && (liveMtf.macro === 'STRONG_BUYER' || liveMtf.alignment === 'FULL_BULLISH')) {
         if (!isAtRoof) {
           this.log(`🛡️ [TRIPLE MA GUARD] Menolak isyarat SELL #${asset.symbol} di tengah aliran Bullish (bukan di zon bumbung rintangan).`);
           return;
         } else {
-          this.log(`🎯 [SMC ROOF REJECTION] Membenarkan isyarat SELL #${asset.symbol} pada zon bumbung rintangan (${liveP.toFixed(2)} vs ${roofRef.toFixed(2)}) untuk menunggang retracement!`);
+          this.log(`🎯 [SMC ROOF REJECTION] Membenarkan isyarat SELL #${asset.symbol} pada zon bumbung rintangan (${liveP.toFixed(2)} vs ${roofRef.toFixed(2)}) untuk menunggang pembetulan harga!`);
         }
       }
       if (type === 'BUY' && (liveMtf.macro === 'STRONG_SELLER' || liveMtf.alignment === 'FULL_BEARISH')) {
@@ -3856,7 +3859,7 @@ const AiEngine = {
           this.log(`🛡️ [TRIPLE MA GUARD] Menolak isyarat BUY #${asset.symbol} di tengah aliran Bearish (bukan di zon lantai sokongan).`);
           return;
         } else {
-          this.log(`🎯 [SMC FLOOR REBOUND] Membenarkan isyarat BUY #${asset.symbol} pada zon lantai sokongan (${liveP.toFixed(2)} vs ${floorRef.toFixed(2)}) untuk menunggang lantunan!`);
+          this.log(`🎯 [SMC FLOOR REBOUND] Membenarkan isyarat BUY #${asset.symbol} pada zon lantai sokongan (${liveP.toFixed(2)} vs ${floorRef.toFixed(2)}) untuk menyambar PULLBACK LANTUNAN NAIK!`);
         }
       }
     }
@@ -3932,7 +3935,7 @@ const AiEngine = {
         if (type === 'SELL') {
           // SELL: SL diletakkan kemas di atas Bumbung Rintangan Sebenar (Swing High / Roof) + 12-15 pips penampan
           const distToRoof = Math.abs(roofRef - entry) + 1.20;
-          dynSlPips = Math.round(Math.min(Math.max(distToRoof / asset.pipVal, 48), 110));
+          dynSlPips = Math.round(Math.min(Math.max(distToRoof / asset.pipVal, 75), 135));
           dynTp1Pips = Math.round(Math.max(35, dynSlPips * 0.75));
           const distToFloor = Math.abs(entry - floorRef);
           dynTp2Pips = Math.round(Math.max(70, distToFloor > 0 ? (distToFloor / asset.pipVal) : dynSlPips * 1.5));
@@ -3940,7 +3943,7 @@ const AiEngine = {
         } else {
           // BUY: SL diletakkan kemas di bawah Lantai Sokongan Sebenar (Swing Low / Floor) - 12-15 pips penampan
           const distToFloor = Math.abs(entry - floorRef) + 1.20;
-          dynSlPips = Math.round(Math.min(Math.max(distToFloor / asset.pipVal, 48), 110));
+          dynSlPips = Math.round(Math.min(Math.max(distToFloor / asset.pipVal, 75), 135));
           dynTp1Pips = Math.round(Math.max(35, dynSlPips * 0.75));
           const distToRoof = Math.abs(roofRef - entry);
           dynTp2Pips = Math.round(Math.max(70, distToRoof > 0 ? (distToRoof / asset.pipVal) : dynSlPips * 1.5));
