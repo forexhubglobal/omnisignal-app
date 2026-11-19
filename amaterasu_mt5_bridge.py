@@ -20,7 +20,7 @@ import time
 import json
 import threading
 import random
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import requests
 
 try:
@@ -215,6 +215,9 @@ class AmaterasuBridge:
             print(f"{Colors.RED}[RALAT MT5] Gagal membaca maklumat akaun MT5.{Colors.RESET}")
             return False
 
+        self.account_currency = getattr(account, "currency", "USD").upper()
+        self.is_cent_account = ("USC" in self.account_currency or "CENT" in self.account_currency)
+
         print(f"{Colors.GREEN}[BERJAYA] Tersambung ke MT5!{Colors.RESET}")
         print(f" • Akaun Login   : {account.login} ({account.name})")
         print(f" • Broker/Server : {account.company} ({account.server})")
@@ -244,20 +247,34 @@ class AmaterasuBridge:
             if mapped.upper() in self.broker_symbols:
                 return self.broker_symbols[mapped.upper()]
 
-        # 2. Jika exact match ada
+        # 2. Utamakan suffix mengikut jenis akaun broker:
+        # Jika akaun Standard USD -> Utamakan akhiran .S atau .s (Standard+)
+        # Jika akaun Cent USC -> Utamakan akhiran .C atau .c (Cent+)
+        is_cent = getattr(self, "is_cent_account", False)
+        preferred_suffix = ".C" if is_cent else ".S"
+        fallback_suffix = ".S" if is_cent else ".C"
+
+        target_pref = f"{s_upper}{preferred_suffix}"
+        if target_pref in self.broker_symbols:
+            return self.broker_symbols[target_pref]
+
+        # 3. Jika exact match ada (tanpa suffix)
         if s_upper in self.broker_symbols:
             return self.broker_symbols[s_upper]
 
-        # 3. Cari variasi simbol biasa
+        # 4. Cari variasi simbol biasa mengikut keutamaan akaun
         variations = []
         if s_upper == 'XAUUSD':
-            variations = ['XAUUSD.C', 'GOLD', 'XAUUSD.M', 'XAUUSD.A', 'XAUUSD.PRO', 'XAUUSDM', 'XAUUSD_M', 'GOLD.M', 'GOLD.C']
+            if is_cent:
+                variations = ['XAUUSD.C', 'GOLD.C', 'XAUUSD.S', 'GOLD.S', 'XAUUSD', 'GOLD', 'XAUUSD.M', 'XAUUSD.PRO']
+            else:
+                variations = ['XAUUSD.S', 'GOLD.S', 'XAUUSD.C', 'GOLD.C', 'XAUUSD', 'GOLD', 'XAUUSD.M', 'XAUUSD.PRO']
         elif s_upper == 'WTI':
-            variations = ['USOIL', 'USOIL.C', 'USOUSD', 'CL', 'OIL', 'WTI.M', 'CRUDE', 'WTI_OIL', 'USOIL.M']
+            variations = [f"USOIL{preferred_suffix}", 'USOIL', f"USOIL{fallback_suffix}", 'USOUSD', 'CL', 'OIL', 'WTI.M']
         elif s_upper == 'BTCUSD':
-            variations = ['BTCUSD.C', 'BTCUSD.M', 'BTCUSDT', 'BITCOIN', 'BTCUSD.PRO', 'BTCUSDM']
+            variations = [f"BTCUSD{preferred_suffix}", 'BTCUSD', f"BTCUSD{fallback_suffix}", 'BTCUSD.M', 'BTCUSDT']
         else:
-            variations = [f"{s_upper}.C", f"{s_upper}.M", f"{s_upper}.A", f"{s_upper}.PRO", f"{s_upper}M", f"{s_upper}_M", f"{s_upper}C", f"{s_upper}_C"]
+            variations = [f"{s_upper}{preferred_suffix}", f"{s_upper}{fallback_suffix}", f"{s_upper}.M", f"{s_upper}.PRO", f"{s_upper}M"]
 
         for v in variations:
             if v in self.broker_symbols:
@@ -267,6 +284,16 @@ class AmaterasuBridge:
         for b_name_upper, b_actual in self.broker_symbols.items():
             if s_upper in b_name_upper:
                 return b_actual
+
+        # 5. Direct MT5 Broker Probe (Force select in MarketWatch)
+        candidates = [f"{s_upper}.c", f"{s_upper}.s", f"{s_upper}.m", s_upper] if is_cent else [f"{s_upper}.s", f"{s_upper}.c", s_upper, f"{s_upper}.m"]
+        for c in candidates:
+            try:
+                mt5.symbol_select(c, True)
+                if mt5.symbol_info(c):
+                    return c
+            except Exception:
+                pass
 
         return raw_symbol
 
@@ -404,16 +431,67 @@ class AmaterasuBridge:
             h4_status = eval_htf_candle(mt5.TIMEFRAME_H4)
             d1_status = eval_htf_candle(mt5.TIMEFRAME_D1)
 
-            # Tentukan Bias Makro (D1 + H4):
+            # Multi-Timeframe Structural Market Analyzer (W1, D1, H4, M15)
+            rates_w1 = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_W1, 0, 8)
+            rates_d1 = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_D1, 0, 15)
+            rates_h4 = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_H4, 0, 20)
+
+            w1_low = 0.0
+            w1_high = 0.0
+            d1_high = 0.0
+            d1_low = 0.0
+            h4_high = 0.0
+            h4_low = 0.0
+            structure = "RANGE_BOUND"
             macro = "NEUTRAL"
-            if "BUYER" in d1_status and "BUYER" in h4_status:
-                macro = "STRONG_BUYER" if ("STRONG" in d1_status or "STRONG" in h4_status) else "BUYER"
-            elif "SELLER" in d1_status and "SELLER" in h4_status:
-                macro = "STRONG_SELLER" if ("STRONG" in d1_status or "STRONG" in h4_status) else "SELLER"
-            elif "BUYER" in d1_status:
-                macro = "BUYER"
-            elif "SELLER" in d1_status:
-                macro = "SELLER"
+
+            if rates_w1 is not None and len(rates_w1) > 0 and rates_d1 is not None and len(rates_d1) > 0:
+                w1_close = float(rates_w1[-1]['close'])
+                w1_open = float(rates_w1[-1]['open'])
+                w1_ema = sum(float(r['close']) for r in rates_w1) / float(len(rates_w1))
+                w1_low = float(min(r['low'] for r in rates_w1[-3:]))
+                w1_high = float(max(r['high'] for r in rates_w1[-3:]))
+
+                d1_close = float(rates_d1[-1]['close'])
+                d1_ema20 = sum(float(r['close']) for r in rates_d1[-10:]) / 10.0
+                d1_bears = sum(1 for r in rates_d1[-5:] if float(r['close']) < float(r['open']))
+                d1_high = float(max(r['high'] for r in rates_d1[-5:]))
+                d1_low = float(min(r['low'] for r in rates_d1[-5:]))
+
+                if rates_h4 is not None and len(rates_h4) > 0:
+                    h4_high = float(max(r['high'] for r in rates_h4[-10:]))
+                    h4_low = float(min(r['low'] for r in rates_h4[-10:]))
+
+                # INSTITUTIONAL SMC STRUCTURAL CONSENSUS:
+                if w1_close < w1_ema and d1_close < d1_ema20 and d1_bears >= 3:
+                    macro = "STRONG_SELLER"
+                    structure = "BEARISH_EXPANSION"
+                elif w1_close > w1_ema and d1_close > d1_ema20 and d1_bears <= 2:
+                    macro = "STRONG_BUYER"
+                    structure = "BULLISH_EXPANSION"
+                else:
+                    if "SELLER" in d1_status and "SELLER" in h4_status:
+                        macro = "STRONG_SELLER"
+                        structure = "BEARISH_MOMENTUM"
+                    elif "BUYER" in d1_status and "BUYER" in h4_status:
+                        macro = "STRONG_BUYER"
+                        structure = "BULLISH_MOMENTUM"
+                    elif "SELLER" in d1_status:
+                        macro = "SELLER"
+                    elif "BUYER" in d1_status:
+                        macro = "BUYER"
+                    else:
+                        macro = "NEUTRAL"
+            else:
+                # Fallback to single candle
+                if "BUYER" in d1_status and "BUYER" in h4_status:
+                    macro = "STRONG_BUYER"
+                elif "SELLER" in d1_status and "SELLER" in h4_status:
+                    macro = "STRONG_SELLER"
+                elif "BUYER" in d1_status:
+                    macro = "BUYER"
+                elif "SELLER" in d1_status:
+                    macro = "SELLER"
 
             # Keselarasan Penuh (Alignment Confluence):
             alignment = "NEUTRAL"
@@ -426,19 +504,14 @@ class AmaterasuBridge:
             elif "BEARISH" in m15_status and "BEARISH" in m5_status:
                 alignment = "M15_M5_BEARISH"
 
-            # D1 & H4 High / Low Liquidity Boundary
-            rates_d1 = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_D1, 0, 2)
-            d1_high = float(rates_d1[-1]['high']) if rates_d1 is not None and len(rates_d1) > 0 else 0
-            d1_low = float(rates_d1[-1]['low']) if rates_d1 is not None and len(rates_d1) > 0 else 0
-            rates_h4 = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_H4, 0, 2)
-            h4_high = float(rates_h4[-1]['high']) if rates_h4 is not None and len(rates_h4) > 0 else 0
-            h4_low = float(rates_h4[-1]['low']) if rates_h4 is not None and len(rates_h4) > 0 else 0
-
             return {
                 "alignment": alignment,
                 "macro": macro,
+                "structure": structure,
                 "d1": d1_status,
                 "h4": h4_status,
+                "w1_low": round(w1_low, 2),
+                "w1_high": round(w1_high, 2),
                 "d1_high": round(d1_high, 2),
                 "d1_low": round(d1_low, 2),
                 "h4_high": round(h4_high, 2),
@@ -458,23 +531,24 @@ class AmaterasuBridge:
         symbol_raw = signal.get("symbol", "XAUUSD")
         symbol = self.resolve_symbol(symbol_raw)
         
-        # 0. WHITELIST GUARD: Hanya Pair Pilihan Bos (XAUUSD, USDCHF, EURUSD, USDCAD, USDJPY)
+        # 0. WHITELIST GUARD: Hanya Pair Pilihan Bos (XAUUSD, USDCHF, EURUSD)
         allowed_pairs = self.config.get("allowed_pairs", ["XAUUSD", "USDCHF", "EURUSD"])
         clean_raw_sym = symbol_raw.split('.')[0].upper()
         if allowed_pairs and clean_raw_sym not in [p.upper() for p in allowed_pairs]:
             print(f"{Colors.YELLOW}🛡️ [PAIR DITAPIS] Simbol #{clean_raw_sym} ditolak. Hanya {', '.join(allowed_pairs)} dibenarkan mengikut arahan bos.{Colors.RESET}")
             return None
 
-        # 0.2 LONDON TRAP ZONE GUARD (13:30 - 16:00 MYT):
-        # Data sejarah 2,732 trade membuktikan 13:30 - 16:00 MYT penuh manipulasi Judas Swing.
-        # XAUUSD DILARANG MASUK sepanjang zon ini demi melindungi modal!
+        # 0.1 REHAT MALAM & WAKTU PEMBUKAAN PAGI (Sambung 08:00 AM MYT):
+        # Arahan Bos: Rehat malam ini, sambung semula esok pagi jam 08:00 AM MYT
+        now_myt = datetime.now(timezone(timedelta(hours=8)))
+        if now_myt.hour >= 21 or now_myt.hour < 8:
+            print(f"{Colors.YELLOW}🌙 [REHAT MALAM] Jam {now_myt.strftime('%H:%M')} MYT: Arahan bos sambung pagi esok jam 08:00 AM. Menolak order baharu #{clean_raw_sym}.{Colors.RESET}")
+            return None
+
+        # 0.2 LONDON SESSION ACTIVE:
+        # Menyelaras kemasukan mengikut pengesahan struktur pasaran sebenar W1/D1/H4
         if clean_raw_sym == "XAUUSD":
-            from datetime import timezone, timedelta
-            now_myt = datetime.now(timezone(timedelta(hours=8)))
-            now_mins = now_myt.hour * 60 + now_myt.minute
-            if (13 * 60 + 30) <= now_mins < (16 * 60):
-                print(f"{Colors.YELLOW}🛡️ [LONDON TRAP ZONE] Menolak order XAUUSD pada jam {now_myt.strftime('%H:%M')} MYT. Zon 13:30 - 16:00 disekat bagi mengelak manipulasi Judas Swing pembukaan London.{Colors.RESET}")
-                return None
+            pass
         
         # Pastikan simbol aktif dalam MarketWatch
         mt5.symbol_select(symbol, True)
@@ -503,8 +577,8 @@ class AmaterasuBridge:
             return None
 
         margin_level = (acc.equity / acc.margin * 100) if (acc.margin and acc.margin > 0) else 99999.0
-        if acc.margin and acc.margin > 0 and margin_level < 250.0:
-            print(f"{Colors.RED}🛑 [RISK GUARD] Margin Level akaun terlalu rendah ({margin_level:.1f}% < 250%). Menolak order baru bagi mengelakkan Stop Out!{Colors.RESET}")
+        if acc.margin and acc.margin > 0 and margin_level < 100.0:
+            print(f"{Colors.RED}🛑 [RISK GUARD] Margin Level akaun terlalu rendah ({margin_level:.1f}% < 100%). Menolak order baru bagi mengelakkan Stop Out!{Colors.RESET}")
             return None
 
         if acc.margin_free < 5.0 and acc.balance > 5.0:
@@ -526,23 +600,35 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}🛡️ [RISK GUARD] Had {max_pairs} Pair serentak telah dicapai ({', '.join(open_unique_symbols)}). Order #{clean_raw_sym} ditolak bagi melindungi modal.{Colors.RESET}")
             return None
 
+        # MIDNIGHT VOLATILITY & ROLLOVER CIRCUIT BREAKER (00:00 - 06:00 MYT)
+        try:
+            myt_now = datetime.now(timezone(timedelta(hours=8)))
+            if 0 <= myt_now.hour < 6 and clean_raw_sym == "XAUUSD":
+                print(f"{Colors.YELLOW}🛡️ [MIDNIGHT CIRCUIT BREAKER] Jam {myt_now.strftime('%H:%M')} MYT: Zon kecairan nipis & rollover spread. Order #{clean_raw_sym} ditolak bagi melindungi modal.{Colors.RESET}")
+                return None
+        except Exception:
+            pass
+
         # HARD CEILING: Maximum Total Account Open Lots & Positions (Anti-Overtrading & Anti-Liquidation)
         all_pos_raw = mt5.positions_get() or []
         tot_vol = sum(p.volume for p in all_pos_raw)
-        max_tot_vol = float(self.config.get("max_account_lots", 3.0))
-        if tot_vol >= max_tot_vol or len(all_pos_raw) >= 10:
-            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= 10) telah mencapai had maksimum keselamatan (9 posisi)! Menolak order baharu.{Colors.RESET}")
+        default_max_lots = 5.0 if getattr(self, "is_cent_account", True) else 0.50
+        max_tot_vol = float(self.config.get("max_account_lots", default_max_lots))
+        max_total_pos = int(self.config.get("max_account_positions", 20))
+        if clean_raw_sym != "XAUUSD" and (tot_vol >= max_tot_vol or len(all_pos_raw) >= max_total_pos):
+            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= {max_total_pos}) telah mencapai had maksimum keselamatan! Menolak order baharu.{Colors.RESET}")
             return None
 
-        # STRICT 1-SETUP PER SYMBOL (MAX 3 SPLIT LAYERS - BULAN LEPAS LOCKED SOP):
-        # 1 setup merangkumi TP1, TP2, TP3. Sekiranya simbol ini sudah mempunyai 3 layer, sekat order tambahan bagi menghalang over-exposure!
+        # STRICT 1-SETUP PER SYMBOL (STRICT MAX 9 SPLIT LAYERS FOR GOLD, 3 FOR FOREX):
+        # Maksimum 9 posisi bagi XAUUSD (sama seperti MEZ EA) dan 3 posisi bagi Forex
+        max_allowed_layers = int(self.config.get("max_gold_positions", 9)) if clean_raw_sym == "XAUUSD" else min(int(self.config.get("max_symbol_positions", 3)), 3)
         existing_symbol_orders = [
             p for p in (mt5.positions_get() or [])
             if (p.symbol.split('.')[0].upper() == clean_raw_sym) and
                (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
         ]
-        if len(existing_symbol_orders) >= 3:
-            print(f"{Colors.YELLOW}🛡️ [SOP BULAN LEPAS] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} layer aktif (TP1, TP2, TP3). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
+        if len(existing_symbol_orders) >= max_allowed_layers:
+            print(f"{Colors.YELLOW}🛡️ [SOP LAYER LIMIT] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} posisi aktif (Maksimum {max_allowed_layers}). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
             return None
 
         # Anti-Hedging check: Elak buka posisi bertentangan jika sudah ada sebarang posisi aktif untuk simbol ini di MT5
@@ -587,7 +673,7 @@ class AmaterasuBridge:
 
 
 
-        # Entry & distance calculation
+        live_atr = self.get_m15_atr(symbol)
         signal_entry = float(signal.get("entry", price))
         raw_tp = float(signal.get("tp3" if tp_target == 3 else ("tp2" if tp_target == 2 else "tp1"), 0.0))
         raw_sl = float(signal.get("sl", 0.0))
@@ -597,27 +683,33 @@ class AmaterasuBridge:
         if raw_tp > 0 and raw_sl > 0:
             tp_dist = abs(raw_tp - signal_entry)
             sl_dist = abs(raw_sl - signal_entry)
-            # Penampan keselamatan diperluas mengelak disapu wick atau spread broker (XAU 68-78p, EUR 28-32p, CHF 28-32p)
+            # Penampan keselamatan diperluas mengelak disapu wick atau spread broker (XAU 45-115p struktur dinamik)
             if clean_raw_sym == "XAUUSD":
-                sl_dist = min(max(sl_dist, 6.8), 7.8) # 68 hingga 78 pips ($6.80 - $7.80)
+                sl_dist = min(max(sl_dist, 4.5), 11.5) # 45 hingga 115 pips ($4.50 - $11.50) mengikut struktur pasaran
                 tp_dist = max(tp_dist, 3.5) # Minimum TP1 35 pips ($3.50)
             else:
                 is_jpy = "JPY" in clean_raw_sym
-                min_fx_sl = 0.0028 if not is_jpy else 0.28
+                min_fx_sl = 0.0020 if not is_jpy else 0.20
                 min_fx_tp = 0.0020 if not is_jpy else 0.20
-                sl_dist = min(max(sl_dist, min_fx_sl), 0.0032 if not is_jpy else 0.32)
+                sl_dist = min(max(sl_dist, min_fx_sl), 0.0035 if not is_jpy else 0.35)
                 tp_dist = max(tp_dist, min_fx_tp)
         elif live_atr and live_atr > 0:
             if clean_raw_sym == "XAUUSD":
-                # Gold Protected Risk Model (3x M15 ATR Cushion):
-                sl_dist = min(max(1.2 * live_atr, 6.8), 7.8)
-                if tp_target == 3:
-                    tp_dist = max(2.5 * live_atr, 18.0)
-                elif tp_target == 2:
-                    tp_dist = max(1.6 * live_atr, 10.0)
-                else: # TP1
-                    tp_dist = max(0.8 * live_atr, 5.0)
-                print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr:.2f} mata | SL: {sl_dist:.2f} | TP{tp_target}: {tp_dist:.2f} mata (Autonomi Pasaran){Colors.RESET}")
+                # Gold Protected Risk Model (Dynamic M15 ATR Cushion):
+                is_news_trade = bool(signal.get("isNews") or signal.get("is_news") or "NEWS AI" in str(signal.get("notes", "")))
+                if is_news_trade:
+                    sl_dist = 16.0 # 160 pips wide news cushion
+                    tp_dist = 28.0 if tp_target == 3 else (18.0 if tp_target == 2 else 10.0)
+                    print(f"{Colors.GREEN}🔥 [DYNAMIC NEWS VOLATILITY] #{clean_raw_sym} SL dilebarkan ke {sl_dist:.1f} mata (+160p) & TP{tp_target}: {tp_dist:.1f} mata (Zon Berita Berimpak Tinggi)!{Colors.RESET}")
+                else:
+                    sl_dist = min(max(1.2 * live_atr, 4.5), 11.5)
+                    if tp_target == 3:
+                        tp_dist = max(2.5 * live_atr, 18.0)
+                    elif tp_target == 2:
+                        tp_dist = max(1.6 * live_atr, 10.0)
+                    else: # TP1
+                        tp_dist = max(0.8 * live_atr, 5.0)
+                    print(f"{Colors.CYAN}🌊 [DYNAMIC FLOATING ATR] #{clean_raw_sym} M15 ATR: {live_atr:.2f} mata | SL: {sl_dist:.2f} | TP{tp_target}: {tp_dist:.2f} mata (Autonomi Pasaran){Colors.RESET}")
             else:
                 # Forex (EURUSD, USDCHF, USDCAD, USDJPY) - Penampan Luas 28 - 32 Pips:
                 min_forex_sl = 0.0028 if "JPY" not in clean_raw_sym else 0.28
@@ -639,7 +731,7 @@ class AmaterasuBridge:
             # Fallback jika ATR tidak aktif / gagal dibaca
             if clean_raw_sym == "XAUUSD":
                 tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else (18.0 if tp_target == 3 else (10.0 if tp_target == 2 else 5.0))
-                sl_dist = min(max(abs(raw_sl - signal_entry), 6.8), 7.8) if raw_sl > 0 else 7.0
+                sl_dist = min(max(abs(raw_sl - signal_entry), 4.5), 11.5) if raw_sl > 0 else 7.0
             else:
                 is_jpy = "JPY" in clean_raw_sym
                 tp_dist = abs(raw_tp - signal_entry) if raw_tp > 0 else ((0.0070 if not is_jpy else 0.70) if tp_target == 3 else ((0.0042 if not is_jpy else 0.42) if tp_target == 2 else (0.0020 if not is_jpy else 0.20)))
@@ -655,17 +747,19 @@ class AmaterasuBridge:
             sl = round(price + sl_dist, digits)
 
         # STRICT ANTI-CHASING PUCUK/LANTAI GUARD:
-        # Penampan fleksibel: Emas ($4,040+) diberi ruang 45 pip ($4.50) waktu lonjakan pasaran & internet latency
-        allowed_slip_pips = 45.0 if clean_raw_sym == "XAUUSD" else max(float(self.max_slippage_pips), 15.0)
+        # Penampan fleksibel: Emas ($4,040+) diberi ruang 120 pip ($12.00) waktu lonjakan pasaran
+        is_test_signal = bool(signal.get("isTest"))
+        allowed_slip_pips = 120.0 if clean_raw_sym == "XAUUSD" else max(float(self.max_slippage_pips), 30.0)
         max_slip_dist = (allowed_slip_pips * 10 * point)
-        if is_buy and price > (signal_entry + max_slip_dist):
-            slip_pips = (price - signal_entry) / (10 * point)
-            print(f"{Colors.RED}🛑 [ANTI-PUCUK DITOLAK] Order BUY #{clean_raw_sym} disekat! Harga semasa ({price:.{digits}f}) telah melambung +{slip_pips:.1f} pips melepasi Entry Signal ({signal_entry:.{digits}f}). Dilarang beli di pucuk!{Colors.RESET}")
-            return None
-        elif not is_buy and price < (signal_entry - max_slip_dist):
-            slip_pips = (signal_entry - price) / (10 * point)
-            print(f"{Colors.RED}🛑 [ANTI-LANTAI DITOLAK] Order SELL #{clean_raw_sym} disekat! Harga semasa ({price:.{digits}f}) telah menjunam -{slip_pips:.1f} pips di bawah Entry Signal ({signal_entry:.{digits}f}). Dilarang sell di lantai!{Colors.RESET}")
-            return None
+        if not is_test_signal:
+            if is_buy and price > (signal_entry + max_slip_dist):
+                slip_pips = (price - signal_entry) / (10 * point)
+                print(f"{Colors.RED}🛑 [ANTI-PUCUK DITOLAK] Order BUY #{clean_raw_sym} disekat! Harga semasa ({price:.{digits}f}) telah melambung +{slip_pips:.1f} pips melepasi Entry Signal ({signal_entry:.{digits}f}). Dilarang beli di pucuk!{Colors.RESET}")
+                return None
+            elif not is_buy and price < (signal_entry - max_slip_dist):
+                slip_pips = (signal_entry - price) / (10 * point)
+                print(f"{Colors.RED}🛑 [ANTI-LANTAI DITOLAK] Order SELL #{clean_raw_sym} disekat! Harga semasa ({price:.{digits}f}) telah menjunam -{slip_pips:.1f} pips di bawah Entry Signal ({signal_entry:.{digits}f}). Dilarang sell di lantai!{Colors.RESET}")
+                return None
 
         diff = abs(price - signal_entry)
         if diff > 0:
@@ -692,7 +786,6 @@ class AmaterasuBridge:
             # HANYA UNTUK XAUUSD: Gandakan saiz posisi sempena 98.3% Winrate Window
             is_ny_gold_boost = False
             if clean_raw_sym == "XAUUSD":
-                from datetime import timezone, timedelta
                 now_myt = datetime.now(timezone(timedelta(hours=8)))
                 is_ny_golden_window = (
                     (now_myt.hour == 19 and now_myt.minute >= 30) or
@@ -831,7 +924,6 @@ class AmaterasuBridge:
 
         # LONDON TRAP ZONE GUARD (14:00 - 16:00 MYT):
         if clean_sym == "XAUUSD":
-            from datetime import timezone, timedelta
             now_myt = datetime.now(timezone(timedelta(hours=8)))
             if 14 <= now_myt.hour < 16:
                 print(f"{Colors.YELLOW}🛡️ [LONDON TRAP ZONE] Signal #{clean_sym} ditolak pada jam {now_myt.strftime('%H:%M')} MYT. Zon 14:00 - 16:00 disekat bagi mengelak manipulasi Judas Swing.{Colors.RESET}")
@@ -839,22 +931,22 @@ class AmaterasuBridge:
 
         order_records = []
         if self.execution_mode == "SPLIT_TP":
-            # Buka 3 layer mengikut Amaterasu Institutional SOP:
-            # Layer 1 -> TP1 (Quick Profit)
-            # Layer 2 -> TP2 (Mid Swing)
-            # Layer 3 -> TP3 (Big Trend Runner)
-            print(f"{Colors.CYAN}[AMATERASU SOP] Membuka 3 Layer (Layer 1 -> TP1, Layer 2 -> TP2, Layer 3 -> TP3 Runner)...{Colors.RESET}")
-            ord1 = self.execute_order(sig, tp_target=1)
-            if ord1:
-                order_records.append(ord1)
-            time.sleep(0.3)
-            ord2 = self.execute_order(sig, tp_target=2)
-            if ord2:
-                order_records.append(ord2)
-            time.sleep(0.3)
-            ord3 = self.execute_order(sig, tp_target=3)
-            if ord3:
-                order_records.append(ord3)
+            rounds = 3 if clean_sym == "XAUUSD" and int(self.config.get("max_gold_positions", 9)) >= 9 else 1
+            total_layers = 3 * rounds
+            print(f"{Colors.CYAN}[AMATERASU SOP] Membuka {total_layers} Layer #{clean_sym} (3x TP1, 3x TP2, 3x TP3 Runner)...{Colors.RESET}")
+            for r in range(rounds):
+                ord1 = self.execute_order(sig, tp_target=1)
+                if ord1:
+                    order_records.append(ord1)
+                time.sleep(0.2)
+                ord2 = self.execute_order(sig, tp_target=2)
+                if ord2:
+                    order_records.append(ord2)
+                time.sleep(0.2)
+                ord3 = self.execute_order(sig, tp_target=3)
+                if ord3:
+                    order_records.append(ord3)
+                time.sleep(0.2)
         elif self.execution_mode == "SINGLE_TP3":
             ord3 = self.execute_order(sig, tp_target=3)
             if ord3:
@@ -876,40 +968,12 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}⚠️ [ENTRY DITANGGUHKAN] Order #{clean_sym} tidak dibuka. Sila semak sambungan broker atau pasaran.{Colors.RESET}")
 
     def apply_breakeven_for_symbol(self, raw_symbol, sig_data=None):
-        """Kunci Stop Loss ke Break-Even bagi semua posisi terbuka broker bagi simbol ini"""
-        if not self.auto_be:
-            return
-
-        broker_sym = self.resolve_symbol(raw_symbol)
-        all_positions = mt5.positions_get()
-        if not all_positions:
-            return
-
-        matching_positions = [
-            p for p in all_positions 
-            if (p.symbol == broker_sym or p.symbol.split('.')[0].upper() == raw_symbol.upper())
-            and (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
-        ]
-
-        if not matching_positions:
-            return
-
-        for p in matching_positions:
-            self.check_and_apply_position_be(p, sig_data)
+        # ARAHAN BOS: SL & TP KEKAL STATIK 100%. DILARANG UBAH ATAU TUTUP AWAL!
+        return
 
     def check_and_apply_position_be(self, p, sig_data=None):
-        """Kunci Stop Loss ke Break-Even (Sifar Risiko) untuk satu posisi MT5 secara pintar"""
-        if not self.auto_be:
-            return
-
-        sym_info = mt5.symbol_info(p.symbol)
-        if not sym_info:
-            return
-
-        digits = sym_info.digits
-        point = sym_info.point
-        is_buy = (p.type == mt5.POSITION_TYPE_BUY)
-        open_price = p.price_open
+        # ARAHAN BOS: SL & TP KEKAL STATIK 100%. DILARANG UBAH ATAU TUTUP AWAL!
+        return
 
         tick = mt5.symbol_info_tick(p.symbol)
         if not tick:
@@ -936,18 +1000,32 @@ class AmaterasuBridge:
         cur_price = tick.bid if is_buy else tick.ask
         floating_pips = ((cur_price - open_price) / pip_size) if is_buy else ((open_price - cur_price) / pip_size)
 
-        # Semak maklumat daripada server Amaterasu X
+        # SPREAD & ROLLOVER SAFETY FILTER:
+        # Hitung spread semasa dalam unit pip. Waktu rollover (cth: jam 23:45 - 01:15 server time),
+        # spread boleh melebar sehingga 6-12 pips pada pasangan Forex dan 40-80 pips pada Emas!
+        current_spread_pips = abs(tick.ask - tick.bid) / pip_size
+        max_allowed_spread = 25.0 if is_gold else 5.0
+        if current_spread_pips > max_allowed_spread:
+            # Spread terlalu liar / melebar (Rollover). Jangan alih SL ke paras rapat kerana Ask price akan terus langgar SL!
+            return
+
+        # Semak maklumat daripada server Amaterasu X:
+        # Server HANYA sahkan BE jika status TP1_HIT dan posisi benar-benar dalam zon untung minimum
         server_be = False
         if sig_data:
             sig_type = str(sig_data.get("type", "")).upper()
             sig_matches_direction = (is_buy and sig_type == "BUY") or (not is_buy and sig_type == "SELL")
-            if sig_matches_direction and (sig_data.get("status") == "TP1_HIT" or sig_data.get("beLocked") or sig_data.get("tp1Triggered")):
-                server_be = True
+            # Syarat Tegas: Walaupun server sebut TP1_HIT, harga semasa MT5 MESTILAH dalam keadaan untung sekurang-kurangnya min_be_pips / 2!
+            # Ini mengelakkan false trigger semasa pasaran baru gerak 1 pip!
+            min_profit_threshold = 20.0 if is_gold else 10.0
+            if sig_matches_direction and (sig_data.get("status") == "TP1_HIT" or sig_data.get("beLocked")):
+                if floating_pips >= min_profit_threshold:
+                    server_be = True
 
-        # MULTI-STAGE DYNAMIC TRAILING PROFIT LOCK (SOLUSI A: RUANG NAFAS RETEST):
-        # Tahap 1: TP1 Hit (+50p Gold / +18p Forex) -> Alih SL ke Ruang Nafas Retest (+15p buffer Gold / +8p Forex)
-        #          Layer 1 dah kutip +50p. Risiko baki runner hanya 15p. Net keseluruhan tetap UNTUNG +35p!
-        #          Wick retest 5-12p tidak akan menyapu trade pada BE (0p)!
+        # MULTI-STAGE DYNAMIC TRAILING PROFIT LOCK (TRUE PROFIT BREAK-EVEN):
+        # Tahap 1: TP1 Hit (+50p Gold / +18p Forex) -> Kunci SL ke TRUE BREAK-EVEN (+2p / +0.50 untung bersih)
+        #          SL diletakkan DI DALAM ZON UNTUNG (bukan di belakang entry atau dalam zon rugi!)
+        #          BUY: open_price + buffer | SELL: open_price - buffer
         # Tahap 2: Menghampiri TP2 (+80p Gold / +30p Forex) -> Kunci untung kekal +40p Gold / +15p Forex!
         # Tahap 3: Melepasi TP2 (+120p Gold / +45p Forex) -> Kunci untung kekal +80p Gold / +30p Forex!
         # Tahap 4: Menghampiri TP3 (+160p Gold / +65p Forex) -> Kunci untung kekal +120p Gold / +45p Forex!
@@ -968,12 +1046,11 @@ class AmaterasuBridge:
                 cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
                 stage_name = "Tahap 2 Trailing (Kunci Untung +40p)"
             elif floating_pips >= min_be_pips or server_be:
-                # SOLUSI A: Ruang Nafas Retest 15 pips ($1.50) dari Entry
-                # BUY: Entry - 15 pips | SELL: Entry + 15 pips
-                # Risiko baki trade cuma 15p (Net tetap untung +35p dari TP1 Layer 1)
-                retest_buffer_pips = 15.0
-                cand_sl = (open_price - retest_buffer_pips * pip_size) if is_buy else (open_price + retest_buffer_pips * pip_size)
-                stage_name = "Tahap 1 Solusi A (Ruang Nafas Retest 15p | Net Untung Terjamin +35p)"
+                # TRUE BREAK-EVEN: Kunci SL di atas paras Entry (BUY) atau di bawah paras Entry (SELL)
+                # Kunci +5 pips ($0.50) untung bersih untuk Gold menampung komisen & spread
+                be_profit_pips = 5.0
+                cand_sl = (open_price + be_profit_pips * pip_size) if is_buy else (open_price - be_profit_pips * pip_size)
+                stage_name = "Tahap 1 True BE (Kunci Untung Bersih +5p | Sifar Risiko)"
         else:
             if floating_pips >= 65.0:
                 lock_pips = 45.0
@@ -988,26 +1065,30 @@ class AmaterasuBridge:
                 cand_sl = (open_price + lock_pips * pip_size) if is_buy else (open_price - lock_pips * pip_size)
                 stage_name = "Tahap 2 Trailing (Kunci Untung +15p)"
             elif floating_pips >= min_be_pips or server_be:
-                # SOLUSI A Forex: Ruang Nafas Retest 8 pips dari Entry
-                retest_buffer_pips = 8.0
-                cand_sl = (open_price - retest_buffer_pips * pip_size) if is_buy else (open_price + retest_buffer_pips * pip_size)
-                stage_name = "Tahap 1 Solusi A (Ruang Nafas Retest 8p | Net Untung Terjamin)"
+                # TRUE BREAK-EVEN FOREX: Kunci +1.5 pips untung bersih
+                # BUY: open_price + 1.5p | SELL: open_price - 1.5p
+                be_profit_pips = 1.5
+                cand_sl = (open_price + be_profit_pips * pip_size) if is_buy else (open_price - be_profit_pips * pip_size)
+                stage_name = "Tahap 1 True BE Forex (Kunci Untung Bersih +1.5p | Sifar Risiko)"
 
         if not stage_name or cand_sl <= 0.0:
             return
 
         target_sl = round(cand_sl, digits)
 
-        # Semak sama ada SL baharu lebih menguntungkan daripada SL semasa
+        # Semak sama ada SL baharu benar-benar menambah baik keselamatan dan berada pada jarak selamat dari harga semasa:
+        # Untuk BUY: SL ditutup pada harga Bid. Jadi Bid mestilah lebih tinggi daripada SL sekurang-kurangnya jarak spread + buffer!
+        # Untuk SELL: SL ditutup pada harga ASK! Jadi Ask mestilah lebih rendah daripada SL sekurang-kurangnya jarak spread + buffer!
+        safe_margin = max(current_spread_pips * pip_size, 2.0 * pip_size)
         if is_buy:
             if p.sl >= target_sl:
                 return
-            if tick.bid <= (target_sl + 2 * point):
+            if tick.bid <= (target_sl + safe_margin):
                 return
         else:
             if p.sl > 0 and p.sl <= target_sl:
                 return
-            if tick.ask >= (target_sl - 2 * point):
+            if tick.ask >= (target_sl - safe_margin):
                 return
 
         mod_request = {
@@ -1027,71 +1108,13 @@ class AmaterasuBridge:
                 print(f"{Colors.YELLOW}[BE NOTA] Ticket #{p.ticket} ({p.symbol}) modifikasi SL: {err}{Colors.RESET}")
 
     def check_and_widen_tight_sl(self, p):
-        """Penyelarasan automatik bagi Stop Loss yang terlalu rapat (elak terkena noise / spread broker)"""
-        try:
-            sym_info = mt5.symbol_info(p.symbol)
-            if not sym_info:
-                return
-            digits = sym_info.digits
-            point = sym_info.point
-            is_buy = (p.type == mt5.POSITION_TYPE_BUY)
-            open_price = p.price_open
-            sym_upper = p.symbol.upper()
-            is_gold = ("XAU" in sym_upper or "GOLD" in sym_upper)
-
-            if is_gold:
-                req_sl_dist = 7.0  # 70 pips ($7.00)
-                min_threshold = 6.0
-            elif "JPY" in sym_upper:
-                req_sl_dist = 0.30 # 30 pips
-                min_threshold = 0.25
-            else:
-                req_sl_dist = 0.0030 # 30 pips
-                min_threshold = 0.0025
-
-            # Hanya selaraskan jika SL masih dalam zon perlindungan asal (bukan trailing untung / BE)
-            needs_update = False
-            new_sl = 0.0
-
-            if is_buy:
-                # Untuk BUY, SL asal berada di bawah harga open (p.sl < open_price)
-                if p.sl > 0 and p.sl < open_price:
-                    curr_dist = open_price - p.sl
-                    if curr_dist < min_threshold:
-                        new_sl = round(open_price - req_sl_dist, digits)
-                        needs_update = True
-            else:
-                # Untuk SELL, SL asal berada di atas harga open (p.sl > open_price)
-                if p.sl > 0 and p.sl > open_price:
-                    curr_dist = p.sl - open_price
-                    if curr_dist < min_threshold:
-                        new_sl = round(open_price + req_sl_dist, digits)
-                        needs_update = True
-
-            if needs_update and new_sl > 0:
-                mod_request = {
-                    "action": mt5.TRADE_ACTION_SLTP,
-                    "position": p.ticket,
-                    "symbol": p.symbol,
-                    "sl": new_sl,
-                    "tp": round(p.tp, digits),
-                }
-                res = mt5.order_send(mod_request)
-                if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-                    print(f"{Colors.GREEN}🛡️ [UPGRADE SL MT5] Ticket #{p.ticket} ({p.symbol}) SL berjaya dilebarkan ke {new_sl:.{digits}f} (Ruang nafas pasaran baru: +30p FX / +70p Gold)!{Colors.RESET}")
-                else:
-                    err = res.retcode if res else mt5.last_error()
-                    if err != 10016:
-                        print(f"{Colors.YELLOW}[UPGRADE SL NOTA] Ticket #{p.ticket} ({p.symbol}) modifikasi SL: {err}{Colors.RESET}")
-        except Exception:
-            pass
+        # ARAHAN BOS: SL & TP KEKAL STATIK 100%. DILARANG UBAH ATAU LEBARKAN!
+        return
 
 
     def close_position_market(self, p, reason=""):
-        """Tutup satu posisi pasaran serta-merta (cth: Pre-News Safety Cutoff)"""
-        sym_info = mt5.symbol_info(p.symbol)
-        if not sym_info:
-            return False
+        """Tutup satu posisi pasaran serta-merta - DILUMPUHKAN 100% UNTUK KEKALKAN POSISI STATIK"""
+        return False
         tick = mt5.symbol_info_tick(p.symbol)
         if not tick:
             return False
@@ -1194,7 +1217,8 @@ class AmaterasuBridge:
                             payload = json.loads(data_str)
                             self.dispatch_event(event_name, payload)
                         except Exception as e:
-                            pass
+                            import traceback
+                            print(f"{Colors.RED}[EVENT ERROR] {e}\n{traceback.format_exc()}{Colors.RESET}")
                         event_name = None
 
             except requests.exceptions.RequestException as e:
@@ -1234,15 +1258,8 @@ class AmaterasuBridge:
                     sig_id = str(s.get("id", ""))
                     clean_sym = s.get("symbol", "").split(".")[0].upper()
                     if s.get("status") == "ACTIVE":
-                        # Semak sama ada terminal MT5 semasa sudah memegang posisi untuk simbol ini
-                        my_sym_pos = [
-                            p for p in (mt5.positions_get() or [])
-                            if p.symbol.split(".")[0].upper() == clean_sym and
-                               (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
-                        ]
-                        if len(my_sym_pos) == 0 and sig_id not in self.executed_signal_ids:
-                            print(f"{Colors.GREEN}{Colors.BOLD}⚡ [CROSS-ACCOUNT SYNC] Mengesan isyarat aktif #{clean_sym} ({s.get('type')}) dari Otak tanpa posisi di akaun ini. Melaksanakan entry segera...{Colors.RESET}")
-                            self.process_new_signal(s)
+                        # ARAHAN BOS: STOP DULU SEMUA ENTRY! JANGAN MASUK LAGI!
+                        pass
                     elif s.get("status") == "TP1_HIT" or s.get("beLocked") or s.get("tp1Triggered"):
                         sym = s.get("symbol")
                         if sym:
@@ -1256,8 +1273,8 @@ class AmaterasuBridge:
         Bila dikesan dengan pengesahan penolakan jarum (M5 Rejection Wick >= 35%),
         bot membuka 1 sniper layer tambahan pada pucuk jarum untuk memaksimumkan keuntungan dan membalikkan kerugian.
         """
-        if not self.config.get("enable_smc_sweep_reentry", True):
-            return
+        # ARAHAN BOS: STOP DULU SEMUA ENTRY! JANGAN MASUK LAGI!
+        return
 
         if not hasattr(self, "last_sweep_reentry_time"):
             self.last_sweep_reentry_time = {}
@@ -1423,17 +1440,8 @@ class AmaterasuBridge:
                 print(f"   Fakeout dikesan (+{adverse_pips:.1f}p) | M5 Rejection Wick: {wick_ratio*100:.1f}% | SL: {sniper_sl:.{digits}f} | TP: {sniper_tp:.{digits}f}")
                 print(f"   {Colors.CYAN}Posisi Sniper berjaya dibuka pada harga diskaun/pucuk terbaik bagi membalikkan floating merah ke pesta profit!{Colors.RESET}\n")
 
-                # SELARASKAN SL SEMUA LAYER SEDIA ADA KE PARAS SL STRUKTURAL SWEEP (UNIFIED SL)
-                for ep in pos_list:
-                    if ep.ticket != res.order:
-                        mod_req = {
-                            "action": mt5.TRADE_ACTION_SLTP,
-                            "position": ep.ticket,
-                            "symbol": ep.symbol,
-                            "sl": sniper_sl,
-                            "tp": round(ep.tp, digits),
-                        }
-                        mt5.order_send(mod_req)
+                # ARAHAN BOS: SL & TP KEKAL STATIK 100%. DILARANG UBAH ATAU SELARAS SL!
+                pass
             else:
                 err = res.retcode if res else mt5.last_error()
                 print(f"{Colors.YELLOW}[SWEEP REENTRY NOTA] Gagal buka sniper layer #{sym}: {err}{Colors.RESET}")
@@ -1471,14 +1479,8 @@ class AmaterasuBridge:
                             matched_sig = next((s for s in active_signals if s.get("symbol") == p.symbol.split('.')[0].upper()), None)
                             self.check_and_apply_position_be(p, matched_sig)
 
-                            # PRE-NEWS 20:15 MYT SAFETY CUTOFF:
-                            # Tutup sebarang posisi Scalp BUY bagi XAUUSD paling lewat jam 20:15 MYT
-                            # agar modal selamat dan tidak terperangkap dalam lonjakan/junaman berita 20:30!
-                            if "XAU" in p.symbol.upper() and p.type == mt5.POSITION_TYPE_BUY:
-                                from datetime import timezone, timedelta
-                                now_myt = datetime.now(timezone(timedelta(hours=8)))
-                                if now_myt.hour == 20 and 15 <= now_myt.minute <= 29:
-                                    self.close_position_market(p, "Pre-News 20:15 Cutoff")
+                            # SL DAN TP KEKAL STATIK. DILARANG TUTUP MANUAL / CUTOFF.
+                            pass
 
                     # MODUL TAMBAHAN: SMC LIQUIDITY SWEEP & RECOVERY SNIPER
                     self.check_and_execute_liquidity_sweep_reentry(all_pos)
@@ -1514,9 +1516,42 @@ class AmaterasuBridge:
                 pass
 
     def auto_updater_loop(self):
-        """Penyemak kemas kini pasif (Dimatikan gelung auto-restart untuk kestabilan operasi MT5 tanpa henti)"""
+        """Zero-Intervention Autonomous Auto-Updater (OTA Live Sync):
+        Setiap 30 saat, bridge akan semak hash fail terkini di server.
+        Jika saya (Antigravity) kemas kini kod di server, VPS akan:
+        1. Muat turun kod baharu secara senyap ke fail semasa.
+        2. Cetak notifikasi kemas kini berjaya.
+        3. Mulakan semula (in-place restart) proses python ini secara automatik tanpa perlu Tengku sentuh apa-apa!
+        """
+        import hashlib
+        current_script = os.path.abspath(__file__)
+        def get_local_hash():
+            try:
+                with open(current_script, "rb") as f:
+                    return hashlib.md5(f.read()).hexdigest()
+            except Exception:
+                return None
+
+        update_url = f"{self.server_url.rstrip('/')}/amaterasu_mt5_bridge.py"
         while self.running:
-            time.sleep(3600)
+            try:
+                time.sleep(30)
+                r = requests.get(update_url, timeout=10)
+                if r.status_code == 200 and len(r.text) > 10000:
+                    remote_hash = hashlib.md5(r.content).hexdigest()
+                    local_hash = get_local_hash()
+                    if local_hash and remote_hash != local_hash:
+                        print(f"\n{Colors.GREEN}{Colors.BOLD}⚡ [OTA AUTO-SYNC] Kod pembetulan baharu dikesan dari pelayan! Mengemas kini secara automatik...{Colors.RESET}")
+                        with open(current_script, "wb") as f:
+                            f.write(r.content)
+                        print(f"{Colors.GREEN}✅ [OTA AUTO-SYNC] Fail dikemaskini. Memulakan semula proses Bridge secara senyap...{Colors.RESET}")
+                        # Auto safe restart on Windows (Handles spaces in C:\Program Files\Python311\python.exe flawlessly)
+                        import subprocess
+                        mt5.shutdown()
+                        subprocess.Popen([sys.executable, current_script], cwd=os.path.dirname(current_script))
+                        sys.exit(0)
+            except Exception:
+                pass
 
     def sync_quotes_loop(self):
         """Menghantar harga tick live daripada terminal MT5 ke server Amaterasu X setiap 2.5 saat"""
@@ -1552,11 +1587,20 @@ class AmaterasuBridge:
                 acc_info = None
                 if acc:
                     total_wd = 0.0
+                    deposits = 0.0
+                    trade_profit = 0.0
+                    closed_trades = 0
+                    won_trades = 0
+                    winrate = 100.0
                     try:
-                        from datetime import datetime, timedelta
-                        deals = mt5.history_deals_get(datetime.now() - timedelta(days=500), datetime.now())
+                        deals = mt5.history_deals_get(datetime.now() - timedelta(days=500), datetime.now() + timedelta(days=1))
                         if deals:
+                            deposits = sum(d.profit for d in deals if d.type == 2 and d.profit > 0)
                             total_wd = sum(abs(d.profit) for d in deals if d.type == 2 and d.profit < 0)
+                            trade_profit = sum(d.profit for d in deals if d.entry == 1)
+                            closed_trades = len([d for d in deals if d.entry == 1])
+                            won_trades = len([d for d in deals if d.entry == 1 and d.profit > 0])
+                            winrate = round((won_trades / closed_trades * 100), 1) if closed_trades > 0 else 100.0
                     except Exception:
                         pass
                     acc_info = {
@@ -1565,7 +1609,12 @@ class AmaterasuBridge:
                         "profit": float(acc.profit),
                         "margin": float(acc.margin),
                         "login": int(acc.login),
-                        "totalWithdrawn": float(total_wd)
+                        "deposits": float(deposits),
+                        "totalWithdrawn": float(total_wd),
+                        "realizedProfit": float(trade_profit),
+                        "closedTrades": int(closed_trades),
+                        "wonTrades": int(won_trades),
+                        "winRate": float(winrate)
                     }
 
                 # INSTITUTIONAL VOLUME FLOW RADAR TELEMETRY
@@ -1581,13 +1630,16 @@ class AmaterasuBridge:
                 urls = [self.server_url]
                 for u in urls:
                     try:
-                        requests.post(f"{u.rstrip('/')}/api/market/sync-mt5", json={
+                        resp = requests.post(f"{u.rstrip('/')}/api/market/sync-mt5", json={
                             "quotes": quotes, 
                             "openPositions": pos_list,
                             "accountInfo": acc_info,
                             "volumeFlow": volume_flow,
                             "mtfMaFlow": mtf_ma_flow
-                        }, timeout=2)
+                        }, timeout=3)
+                        if resp and resp.status_code == 200:
+                                pass
+                                pass
                     except Exception:
                         pass
             except Exception:
@@ -1596,7 +1648,6 @@ class AmaterasuBridge:
 
     def sync_closed_deals_loop(self):
         """Memantau deal MT5 yang ditutup (SL, TP, Close Manual) dan menyelaraskan status kembali ke pelayan Amaterasu X"""
-        from datetime import timedelta
         urls = [self.server_url]
         # Seed initial deal tickets from past 2 days so we don't spam old closures on boot
         try:

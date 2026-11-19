@@ -235,7 +235,7 @@ function StatPage(main) {
     const valProfit = $('#statProfitVal', main);
     if (lblProfit) lblProfit.textContent = titleLabel;
     if (valProfit) {
-      valProfit.textContent = \`\${pipsTotal >= 0 ? '+' : ''}\${pipsTotal} pip\`;
+      valProfit.textContent = \`\${fmtP(pipsTotal, true)} pip\`;
       valProfit.style.color = pipsTotal >= 0 ? '#00e676' : '#ef5350';
     }
 

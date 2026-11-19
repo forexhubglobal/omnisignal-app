@@ -1767,23 +1767,28 @@
   margin-bottom: 10px;
 }
 .stat-filter-pill {
-  flex: 1;
   text-align: center;
-  padding: 8px 12px;
   background: #111722;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #8e9aa8;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
+  outline: none;
+}
+.stat-filter-pill:hover {
+  background: #17212e;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #cbd5e1;
 }
 .stat-filter-pill.active {
-  background: #17212e;
-  border-color: rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, rgba(245, 196, 81, 0.18) 0%, #16202c 100%);
+  border-color: #f5c451;
   color: #fff;
+  box-shadow: 0 0 14px rgba(245, 196, 81, 0.25);
 }
 .stat-date-carousel {
   display: flex;

@@ -746,7 +746,7 @@ function init() {
       store.set('ama_logged_in', true);
       store.set('ama_operator', 'Tengku Khairi');
       store.set('ama_role', 'OWNER');
-      localStorage.setItem('ama_mt5', '5100154135');
+      localStorage.setItem('ama_mt5', '5100221532');
       localStorage.setItem('ama_master_unlocked', '1');
       BRAND.user = 'Tengku Khairi';
       // Clean up URL parameter gracefully without reload

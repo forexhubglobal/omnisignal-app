@@ -346,7 +346,8 @@ const AppState = {
       this.copytrade = this.db.copytrade || null;
       this.copytrade2 = this.db.copytrade2 || null;
       this.copytrade3 = this.db.copytrade3 || null;
-      this.copytrades = this.db.copytrades || [this.copytrade, this.copytrade2, this.copytrade3].filter(Boolean);
+      this.copytrade4 = this.db.copytrade4 || null;
+      this.copytrades = this.db.copytrades || [this.copytrade, this.copytrade2, this.copytrade3, this.copytrade4].filter(Boolean);
 
       // Fetch initial live quotes and market brain
       try {
@@ -388,7 +389,8 @@ const AppState = {
         this.copytrade = d.copytrade || null;
         this.copytrade2 = d.copytrade2 || null;
         this.copytrade3 = d.copytrade3 || null;
-        this.copytrades = d.copytrades || [this.copytrade, this.copytrade2, this.copytrade3].filter(Boolean);
+        this.copytrade4 = d.copytrade4 || null;
+        this.copytrades = d.copytrades || [this.copytrade, this.copytrade2, this.copytrade3, this.copytrade4].filter(Boolean);
         if (typeof route === 'function') route(true);
       });
       s.addEventListener('copytrade_update', e => {
@@ -397,10 +399,12 @@ const AppState = {
           if (raw.copytrade) this.copytrade = raw.copytrade;
           if (raw.copytrade2) this.copytrade2 = raw.copytrade2;
           if (raw.copytrade3) this.copytrade3 = raw.copytrade3;
-          if (raw.masterAccount === '5100154135') this.copytrade = raw;
-          if (raw.masterAccount === '5100207348') this.copytrade2 = raw;
-          if (raw.masterAccount === '5100209626') this.copytrade3 = raw;
-          this.copytrades = [this.copytrade, this.copytrade2, this.copytrade3].filter(Boolean);
+          if (raw.copytrade4) this.copytrade4 = raw.copytrade4;
+          if (raw.masterAccount === '5100221532' || raw.masterAccount === '5100154135') this.copytrade = raw;
+          if (raw.masterAccount === '5100221533' || raw.masterAccount === '5100207348') this.copytrade2 = raw;
+          if (raw.masterAccount === '5100221534' || raw.masterAccount === '5100209626') this.copytrade3 = raw;
+          if (raw.masterAccount === '5100227599') this.copytrade4 = raw;
+          this.copytrades = [this.copytrade, this.copytrade2, this.copytrade3, this.copytrade4].filter(Boolean);
           if (typeof window.refreshCopytradeUI === 'function') {
             window.refreshCopytradeUI();
           }
@@ -440,8 +444,9 @@ const AppState = {
           this._lastPipsSigKey = sigKey;
 
           this.activeSignals = list;
-          if (list.length > 0 && (!this.activeSignal || this.activeSignal.status === 'WAITING')) {
-            this.activeSignal = list[0];
+          const stillActive = list.find(s => this.activeSignal && s.symbol === this.activeSignal.symbol && s.id === this.activeSignal.id);
+          if (!stillActive) {
+            this.activeSignal = list[0] || { status: 'WAITING', symbol: 'XAUUSD', type: 'SELL', entry: 0, tp1: 0, tp2: 0, sl: 0, notes: 'Menunggu setup seterusnya...' };
           }
           if (hasChanged) {
             const isSigTab = !location.hash || location.hash === '#signal' || location.hash === '#';

@@ -2,5 +2,8 @@ node_modules
 .DS_Store
 *.log
 chrome-test-profile
-
 .vercel
+node.exe
+cloudflared.exe
+*.zip
+__pycache__

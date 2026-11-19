@@ -434,7 +434,7 @@ function openShareWinModal(sig, isWin = false) {
   }
 }
 
-// ===== The Mighty Duck Dual Master Copytrade System =====
+// ===== Multi-Master Copytrade System (DRAGON / Master 2 / Master 3) =====
 window.activeCopytradeVault = 1;
 window.copytradeCalcState = { depositUsd: 100, isExpanded: false };
 
@@ -496,52 +496,77 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
   const isV1 = vNum === 1;
   const isV2 = vNum === 2;
   const isV3 = vNum === 3;
+  const isV4 = vNum === 4;
 
   const cp1 = (AppState && AppState.copytrade) || {
     id: "master-1",
-    name: "The Mighty Duck",
-    avatar: "img/themightyduck.png",
-    masterAccount: "5100154135",
+    name: "DRAGON",
+    avatar: "img/dragon.png",
+    masterAccount: "5100221532",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
-    totalWithdrawn: 20000.0,
-    totalWithdrawnUsd: 200.0,
-    allTimeProfitUsc: 23523.00,
-    allTimeProfitUsd: 235.23,
-    growthPct: 235.23,
-    currentEquity: 10024.26,
-    winRate: 90.4
+    totalWithdrawn: 0.0,
+    totalWithdrawnUsd: 0.0,
+    allTimeProfitUsc: 2979.26,
+    netProfitUsc: 2979.26,
+    allTimeProfitUsd: 29.79,
+    growthPct: 29.79,
+    currentBalance: 12170.34,
+    currentEquity: 12979.26,
+    winRate: 69.9
   };
 
   const cp2 = (AppState && AppState.copytrade2) || {
     id: "master-2",
-    name: "Amaterasu X",
-    avatar: "img/amaterasux.png",
-    masterAccount: "5100207348",
+    name: "MANTIS",
+    avatar: "img/mantis.png",
+    masterAccount: "5100221533",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
     totalWithdrawn: 0.0,
     totalWithdrawnUsd: 0.0,
-    allTimeProfitUsc: 0.0,
-    allTimeProfitUsd: 0.0,
-    growthPct: 0.00,
-    currentEquity: 10000.0,
-    winRate: 100.0
+    allTimeProfitUsc: 3898.15,
+    netProfitUsc: 3898.15,
+    allTimeProfitUsd: 38.98,
+    growthPct: 38.98,
+    currentBalance: 13173.18,
+    currentEquity: 13898.15,
+    winRate: 71.2
   };
 
   const cp3 = (AppState && AppState.copytrade3) || {
     id: "master-3",
-    name: "Amaterasu X 2.0",
-    avatar: "img/amaterasux_2.jpg",
-    masterAccount: "5100209626",
+    name: "TIGER",
+    avatar: "img/tiger.png",
+    masterAccount: "5100221534",
     broker: "Versus Trade Ltd. (Live1)",
-    initialDeposit: 1000.0,
+    initialDeposit: 1100.0,
     currency: "USD",
+    totalWithdrawn: 100.0,
+    totalWithdrawnUsd: 100.0,
+    allTimeProfitUsd: 757.39,
+    netProfitUsd: 757.39,
+    growthPct: 68.85,
+    currentBalance: 1626.69,
+    currentEquity: 1757.39,
+    winRate: 59.1
+  };
+
+  const cp4 = (AppState && AppState.copytrade4) || {
+    id: "master-4",
+    name: "MEZ EA",
+    avatar: "img/mez-ea.png",
+    masterAccount: "5100227599",
+    broker: "Versus Trade Ltd. (Live1)",
+    initialDeposit: 10012.20,
     totalWithdrawn: 0.0,
     totalWithdrawnUsd: 0.0,
-    allTimeProfitUsd: 0.0,
-    growthPct: 0.00,
-    currentEquity: 1000.0,
+    allTimeProfitUsc: 1012.64,
+    netProfitUsc: 1012.64,
+    allTimeProfitUsd: 10.13,
+    growthPct: 10.11,
+    currentBalance: 10250.40,
+    currentEquity: 11024.84,
     winRate: 100.0
   };
 
@@ -549,90 +574,130 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
   let themeColor = '#00e676';
   let themeBorder = 'rgba(0, 230, 118, 0.45)';
   let themeShadow = 'rgba(0, 230, 118, 0.15)';
-  let themeBadge = 'MASTER 1 (VERIFIED LIVE)';
+  let themeBadge = 'MASTER 1 (DRAGON CENT+)';
 
-  if (isV3) {
+  if (isV4) {
+    themeColor = '#38bdf8';
+    themeBorder = 'rgba(56, 189, 248, 0.5)';
+    themeShadow = 'rgba(56, 189, 248, 0.2)';
+    themeBadge = (cp4 && cp4.badge) || 'MASTER 4 (MEZ EA CENT+)';
+    const growth4 = (cp4 && typeof cp4.growthPct === 'number') ? cp4.growthPct : 10.11;
+    const netProf4 = Number(cp4 && cp4.netProfitUsc !== undefined ? cp4.netProfitUsc : (cp4 && cp4.allTimeProfitUsc !== undefined ? cp4.allTimeProfitUsc : 1012.64));
+    const bal4 = Number(cp4 && cp4.currentBalance !== undefined ? cp4.currentBalance : 10250.40);
+    const eq4 = Number(cp4 && cp4.currentEquity !== undefined ? cp4.currentEquity : 11024.84);
+    const initDep4 = Number(cp4 && cp4.initialDeposit) || 10012.20;
+    const wd4Usc = Number(cp4 && cp4.totalWithdrawn !== undefined ? cp4.totalWithdrawn : 0.0);
+    const wd4Usd = Number(cp4 && cp4.totalWithdrawnUsd !== undefined ? cp4.totalWithdrawnUsd : (wd4Usc / 100));
+    cp = {
+      id: 4,
+      name: (cp4 && cp4.name) || "MEZ EA",
+      avatar: (cp4 && cp4.avatar) || "img/mez-ea.png",
+      masterAccount: "5100227599",
+      growthPct: growth4,
+      netProfitDisplay: (netProf4 >= 0 ? '+' : '-') + num(Math.abs(netProf4)) + ' USC',
+      allTimeProfitDisplay: (netProf4 >= 0 ? '+' : '-') + num(Math.abs(netProf4)) + ' USC',
+      usdProfitSubtitle: '(' + (netProf4 >= 0 ? '+$' : '-$') + Number(Math.abs(netProf4 / 100)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD)',
+      initialDepositDisplay: num(initDep4) + ' USC ($' + Number(initDep4 / 100).toFixed(2) + ' USD)',
+      currentEquityDisplay: num(eq4) + ' USC',
+      currentBalanceDisplay: num(bal4) + ' USC',
+      equitySubtitle: 'Baki Tunai: ' + num(bal4) + ' USC ($' + Number(bal4 / 100).toFixed(2) + ' USD)',
+      totalWithdrawn: wd4Usc,
+      totalWithdrawnDisplay: num(wd4Usc) + ' USC ($+' + wd4Usd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD ✓)',
+      lastSync: (cp4 && cp4.lastSync) || 'Live',
+      isUsd: false,
+      winRate: (cp4 && cp4.winRate !== undefined) ? cp4.winRate : 100.0
+    };
+  } else if (isV3) {
     themeColor = '#f5c451';
     themeBorder = 'rgba(245, 196, 81, 0.5)';
     themeShadow = 'rgba(245, 196, 81, 0.2)';
-    themeBadge = 'MASTER 3 (STANDARD $1,000 USD)';
-    const growth3 = (cp3 && typeof cp3.growthPct === 'number') ? cp3.growthPct : 0.00;
-    const netProf3 = Number(cp3 && cp3.netProfitUsd !== undefined ? cp3.netProfitUsd : 0);
-    const bal3 = Number(cp3 && cp3.currentBalance !== undefined ? cp3.currentBalance : 1000);
-    const eq3 = Number(cp3 && cp3.currentEquity !== undefined ? cp3.currentEquity : 1000);
-    const wd3Usd = Number(cp3 && cp3.totalWithdrawnUsd !== undefined ? cp3.totalWithdrawnUsd : 4100.0);
+    themeBadge = 'MASTER 3 (TIGER $1,000 USD)';
+    const growth3 = (cp3 && typeof cp3.growthPct === 'number') ? cp3.growthPct : 68.85;
+    const netProf3 = Number(cp3 && cp3.netProfitUsd !== undefined ? cp3.netProfitUsd : (cp3 && cp3.allTimeProfitUsd !== undefined ? cp3.allTimeProfitUsd : 757.39));
+    const bal3 = Number(cp3 && cp3.currentBalance !== undefined ? cp3.currentBalance : 1626.69);
+    const eq3 = Number(cp3 && cp3.currentEquity !== undefined ? cp3.currentEquity : 1757.39);
+    const initDep3 = Number(cp3 && cp3.initialDeposit) || 1100.0;
+    const wd3Usd = Number(cp3 && cp3.totalWithdrawnUsd !== undefined ? cp3.totalWithdrawnUsd : (cp3 && cp3.totalWithdrawn !== undefined ? cp3.totalWithdrawn : 100.0));
     cp = {
       id: 3,
-      name: "AMATERASU X 2.0",
-      avatar: (cp3 && cp3.avatar) || "img/amaterasux_2.jpg",
-      masterAccount: "5100209626",
+      name: "TIGER",
+      avatar: (cp3 && cp3.avatar) || "img/tiger.png",
+      masterAccount: "5100221534",
       growthPct: growth3,
       netProfitDisplay: (netProf3 >= 0 ? '+$' : '-$') + Math.abs(netProf3).toFixed(2) + ' USD',
       allTimeProfitDisplay: (netProf3 >= 0 ? '+$' : '-$') + Math.abs(netProf3).toFixed(2) + ' USD',
-      initialDepositDisplay: '$1,000.00 USD',
-      currentEquityDisplay: '$' + eq3.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD',
-      currentBalanceDisplay: '$' + bal3.toFixed(2) + ' USD',
-      equitySubtitle: 'Baki Tunai: $' + bal3.toFixed(2) + ' USD',
+      usdProfitSubtitle: '',
+      initialDepositDisplay: '$' + Number(initDep3).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD',
+      currentEquityDisplay: '$' + Number(eq3).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD',
+      currentBalanceDisplay: '$' + Number(bal3).toFixed(2) + ' USD',
+      equitySubtitle: 'Baki Tunai: $' + Number(bal3).toFixed(2) + ' USD',
+      totalWithdrawn: wd3Usd,
       totalWithdrawnDisplay: '$+' + wd3Usd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD ✓',
       lastSync: (cp3 && cp3.lastSync) || 'Live',
       isUsd: true,
-      winRate: (cp3 && cp3.winRate) || 94.0
+      winRate: (cp3 && cp3.winRate !== undefined) ? cp3.winRate : 59.1
     };
   } else if (isV2) {
     themeColor = '#ff6e40';
     themeBorder = 'rgba(255, 61, 0, 0.5)';
     themeShadow = 'rgba(255, 61, 0, 0.2)';
-    themeBadge = 'MASTER 2 (VERIFIED LIVE)';
-    const growth2 = (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 1734.70;
-    const netProf2 = Number(cp2 && cp2.netProfitUsc !== undefined ? cp2.netProfitUsc : 17347.0);
-    const bal2 = Number(cp2 && cp2.currentBalance !== undefined ? cp2.currentBalance : 12404.22);
-    const eq2 = Number(cp2 && cp2.currentEquity !== undefined ? cp2.currentEquity : 12347.0);
-    const wd2Usd = Number(cp2 && cp2.totalWithdrawnUsd !== undefined ? cp2.totalWithdrawnUsd : 60.0);
-    const wd2Usc = Number(cp2 && cp2.totalWithdrawn !== undefined ? cp2.totalWithdrawn : 6000.0);
+    themeBadge = 'MASTER 2 (MANTIS CENT+)';
+    const growth2 = (cp2 && typeof cp2.growthPct === 'number') ? cp2.growthPct : 38.98;
+    const netProf2 = Number(cp2 && cp2.netProfitUsc !== undefined ? cp2.netProfitUsc : (cp2 && cp2.allTimeProfitUsc !== undefined ? cp2.allTimeProfitUsc : 3898.15));
+    const bal2 = Number(cp2 && cp2.currentBalance !== undefined ? cp2.currentBalance : 13173.18);
+    const eq2 = Number(cp2 && cp2.currentEquity !== undefined ? cp2.currentEquity : 13898.15);
+    const initDep2 = Number(cp2 && cp2.initialDeposit) || 10000.0;
+    const wd2Usc = Number(cp2 && cp2.totalWithdrawn !== undefined ? cp2.totalWithdrawn : 0.0);
+    const wd2Usd = Number(cp2 && cp2.totalWithdrawnUsd !== undefined ? cp2.totalWithdrawnUsd : (wd2Usc / 100));
     cp = {
       id: 2,
-      name: "AMATERASU X",
-      avatar: "img/amaterasux.png",
-      masterAccount: "5100207348",
+      name: "MANTIS",
+      avatar: (cp2 && cp2.avatar) || "img/mantis.png",
+      masterAccount: "5100221533",
       growthPct: growth2,
       netProfitDisplay: (netProf2 >= 0 ? '+' : '-') + num(Math.abs(netProf2)) + ' USC',
       allTimeProfitDisplay: (netProf2 >= 0 ? '+' : '-') + num(Math.abs(netProf2)) + ' USC',
       usdProfitSubtitle: '(' + (netProf2 >= 0 ? '+$' : '-$') + Number(Math.abs(netProf2 / 100)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD)',
-      initialDepositDisplay: num(cp2.initialDeposit || 1000) + ' USC ($10.00 USD)',
+      initialDepositDisplay: num(initDep2) + ' USC ($' + Number(initDep2 / 100).toFixed(2) + ' USD)',
       currentEquityDisplay: num(eq2) + ' USC',
       currentBalanceDisplay: num(bal2) + ' USC',
       equitySubtitle: 'Baki Tunai: ' + num(bal2) + ' USC ($' + Number(bal2 / 100).toFixed(2) + ' USD)',
+      totalWithdrawn: wd2Usc,
       totalWithdrawnDisplay: num(wd2Usc) + ' USC ($+' + wd2Usd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD ✓)',
       lastSync: (cp2 && cp2.lastSync) || 'Live',
       isUsd: false,
-      winRate: (cp2 && cp2.winRate) || 100.0
+      winRate: (cp2 && cp2.winRate !== undefined) ? cp2.winRate : 71.2
     };
   } else {
     themeColor = '#00e676';
     themeBorder = 'rgba(0, 230, 118, 0.45)';
     themeShadow = 'rgba(0, 230, 118, 0.15)';
-    themeBadge = 'MASTER 1 (VERIFIED LIVE)';
-    const growth1 = (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 235.23;
-    const netProf1 = Number(cp1 && cp1.allTimeProfitUsc !== undefined ? cp1.allTimeProfitUsc : 23523.00);
-    const bal1 = Number(cp1 && cp1.currentBalance !== undefined ? cp1.currentBalance : 10000.54);
-    const eq1 = Number(cp1 && cp1.currentEquity !== undefined ? cp1.currentEquity : 10024.26);
+    themeBadge = 'MASTER 1 (DRAGON CENT+)';
+    const growth1 = (cp1 && typeof cp1.growthPct === 'number') ? cp1.growthPct : 29.79;
+    const netProf1 = Number(cp1 && cp1.netProfitUsc !== undefined ? cp1.netProfitUsc : (cp1 && cp1.allTimeProfitUsc !== undefined ? cp1.allTimeProfitUsc : 2979.26));
+    const bal1 = Number(cp1 && cp1.currentBalance !== undefined ? cp1.currentBalance : 12170.34);
+    const eq1 = Number(cp1 && cp1.currentEquity !== undefined ? cp1.currentEquity : 12979.26);
+    const initDep1 = Number(cp1 && cp1.initialDeposit) || 10000.0;
+    const wd1Usc = Number(cp1 && cp1.totalWithdrawn !== undefined ? cp1.totalWithdrawn : 0.0);
+    const wd1Usd = Number(cp1 && cp1.totalWithdrawnUsd !== undefined ? cp1.totalWithdrawnUsd : (wd1Usc / 100));
     cp = {
       id: 1,
-      name: "THE MIGHTY DUCK",
-      avatar: "img/themightyduck.png",
-      masterAccount: "5100154135",
+      name: "DRAGON",
+      avatar: "img/dragon.png",
+      masterAccount: "5100221532",
       growthPct: growth1,
       netProfitDisplay: (netProf1 >= 0 ? '+' : '-') + num(Math.abs(netProf1)) + ' USC',
       allTimeProfitDisplay: (netProf1 >= 0 ? '+' : '-') + num(Math.abs(netProf1)) + ' USC',
-      usdProfitSubtitle: '(' + (netProf1 >= 0 ? '+$' : '-$') + Math.abs(netProf1 / 100).toFixed(2) + ' USD)',
-      initialDepositDisplay: num(cp1.initialDeposit || 10000) + ' USC ($100.00 USD)',
+      usdProfitSubtitle: '(' + (netProf1 >= 0 ? '+$' : '-$') + Number(Math.abs(netProf1 / 100)).toFixed(2) + ' USD)',
+      initialDepositDisplay: num(initDep1) + ' USC ($' + Number(initDep1 / 100).toFixed(2) + ' USD)',
       currentEquityDisplay: num(eq1) + ' USC',
       currentBalanceDisplay: num(bal1) + ' USC',
-      equitySubtitle: 'Baki Tunai: ' + num(bal1) + ' USC',
-      totalWithdrawnDisplay: num(cp1.totalWithdrawn || 20000) + ' USC ($+200.00 USD ✓)',
+      equitySubtitle: 'Baki Tunai: ' + num(bal1) + ' USC ($' + Number(bal1 / 100).toFixed(2) + ' USD)',
+      totalWithdrawn: wd1Usc,
+      totalWithdrawnDisplay: num(wd1Usc) + ' USC ($+' + wd1Usd.toFixed(2) + ' USD ✓)',
       lastSync: (cp1 && cp1.lastSync) || 'Live',
       isUsd: false,
-      winRate: (cp1 && cp1.winRate) || 90.4
+      winRate: (cp1 && cp1.winRate !== undefined) ? cp1.winRate : 69.9
     };
   }
 
@@ -651,14 +716,17 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
       
       <!-- Vault Selector Tabs -->
       <div style="display:flex; gap:5px; margin-bottom:14px; background:rgba(0,0,0,0.5); padding:4px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); overflow-x:auto;">
-        <button type="button" class="btn-vault-tab ${isV1 ? 'active' : ''}" onclick="window.switchCopytradeVault(1)" style="flex:1; min-width:85px; padding:7px 4px; border-radius:7px; border:none; background:${isV1 ? 'rgba(0,230,118,0.22)' : 'transparent'}; border:${isV1 ? '1px solid #00e676' : '1px solid transparent'}; color:${isV1 ? '#00e676' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
-          <span>🦆</span> Master 1 (Cent)
+        <button type="button" class="btn-vault-tab ${isV1 ? 'active' : ''}" onclick="window.switchCopytradeVault(1)" style="flex:1; min-width:80px; padding:7px 4px; border-radius:7px; border:none; background:${isV1 ? 'rgba(0,230,118,0.22)' : 'transparent'}; border:${isV1 ? '1px solid #00e676' : '1px solid transparent'}; color:${isV1 ? '#00e676' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+          <span>🐉</span> DRAGON (Cent)
         </button>
-        <button type="button" class="btn-vault-tab ${isV2 ? 'active' : ''}" onclick="window.switchCopytradeVault(2)" style="flex:1; min-width:85px; padding:7px 4px; border-radius:7px; border:none; background:${isV2 ? 'rgba(255,61,0,0.25)' : 'transparent'}; border:${isV2 ? '1px solid #ff3d00' : '1px solid transparent'}; color:${isV2 ? '#ff6e40' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
-          <span>🔥</span> Master 2 (Cent)
+        <button type="button" class="btn-vault-tab ${isV2 ? 'active' : ''}" onclick="window.switchCopytradeVault(2)" style="flex:1; min-width:80px; padding:7px 4px; border-radius:7px; border:none; background:${isV2 ? 'rgba(255,61,0,0.25)' : 'transparent'}; border:${isV2 ? '1px solid #ff3d00' : '1px solid transparent'}; color:${isV2 ? '#ff6e40' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+          <span>🦗</span> MANTIS (Cent)
         </button>
-        <button type="button" class="btn-vault-tab ${isV3 ? 'active' : ''}" onclick="window.switchCopytradeVault(3)" style="flex:1; min-width:95px; padding:7px 4px; border-radius:7px; border:none; background:${isV3 ? 'rgba(245,196,81,0.25)' : 'transparent'}; border:${isV3 ? '1px solid #f5c451' : '1px solid transparent'}; color:${isV3 ? '#f5c451' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
-          <span>👑</span> Amaterasu X 2.0 ($1K)
+        <button type="button" class="btn-vault-tab ${isV3 ? 'active' : ''}" onclick="window.switchCopytradeVault(3)" style="flex:1; min-width:85px; padding:7px 4px; border-radius:7px; border:none; background:${isV3 ? 'rgba(245,196,81,0.25)' : 'transparent'}; border:${isV3 ? '1px solid #f5c451' : '1px solid transparent'}; color:${isV3 ? '#f5c451' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+          <span>🐯</span> TIGER ($1K USD)
+        </button>
+        <button type="button" class="btn-vault-tab ${isV4 ? 'active' : ''}" onclick="window.switchCopytradeVault(4)" style="flex:1; min-width:85px; padding:7px 4px; border-radius:7px; border:none; background:${isV4 ? 'rgba(56,189,248,0.25)' : 'transparent'}; border:${isV4 ? '1px solid #38bdf8' : '1px solid transparent'}; color:${isV4 ? '#38bdf8' : '#94a3b8'}; font-weight:800; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:all 0.2s;">
+          <span>⚡</span> MEZ EA (Cent)
         </button>
       </div>
 
@@ -693,33 +761,7 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
       </div>
 
       <!-- Status Strip (100% Dynamic MT5 Reality) -->
-      ${isV1 ? `
-      <div style="background:linear-gradient(90deg, rgba(245,196,81,0.15) 0%, rgba(0,230,118,0.1) 100%); border:1px solid rgba(245,196,81,0.4); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:17px;">💰</span>
-          <div>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:10px; color:#f5c451; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">TELAH DIKELUARKAN (WITHDRAWAL):</span>
-              <b style="font-size:11px; color:#00e676; font-weight:800;">${cp.totalWithdrawnDisplay}</b>
-            </div>
-            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Modal asal ditarik balik · Baki Live: ${cp.currentBalanceDisplay} (Denyutan: ${cp.lastSync})</span>
-          </div>
-        </div>
-        <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">PROFIT TAKEN</span>
-      </div>` : isV2 ? `
-      <div style="background:linear-gradient(90deg, rgba(255,61,0,0.15) 0%, rgba(0,230,118,0.1) 100%); border:1px solid rgba(255,61,0,0.4); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:17px;">💰</span>
-          <div>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size:10px; color:#ff6e40; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">TELAH DIKELUARKAN (WITHDRAWAL):</span>
-              <b style="font-size:11px; color:#00e676; font-weight:800;">${cp.totalWithdrawnDisplay}</b>
-            </div>
-            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Modal $10 USD asal ditarik balik · Baki Live: ${cp.currentBalanceDisplay} (Denyutan: ${cp.lastSync})</span>
-          </div>
-        </div>
-        <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">PROFIT SECURED</span>
-      </div>` : `
+      ${Number(cp.totalWithdrawn) > 0 ? `
       <div style="background:linear-gradient(90deg, rgba(245,196,81,0.18) 0%, rgba(0,230,118,0.1) 100%); border:1px solid rgba(245,196,81,0.5); border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <div style="display:flex; align-items:center; gap:8px;">
           <span style="font-size:17px;">💰</span>
@@ -728,10 +770,23 @@ function getCopytradeCardHTML(vaultId = (window.activeCopytradeVault || 1)) {
               <span style="font-size:10px; color:#f5c451; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">TELAH DIKELUARKAN (WITHDRAWAL):</span>
               <b style="font-size:11px; color:#00e676; font-weight:800;">${cp.totalWithdrawnDisplay}</b>
             </div>
-            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Modal $1,000 USD asal ditarik balik · Baki Live: ${cp.currentBalanceDisplay} (Denyutan: ${cp.lastSync})</span>
+            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Modal ditarik balik · Baki Live: ${cp.currentBalanceDisplay} (Denyutan: ${cp.lastSync})</span>
           </div>
         </div>
         <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">PROFIT SECURED</span>
+      </div>` : `
+      <div style="background:linear-gradient(90deg, ${themeShadow} 0%, rgba(0,230,118,0.08) 100%); border:1px solid ${themeBorder}; border-radius:8px; padding:9px 12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:17px;">⚡</span>
+          <div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:10px; color:${themeColor}; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">STATUS REAL-TIME MT5 LIVE:</span>
+              <b style="font-size:11px; color:#00e676; font-weight:800;">${cp.currentBalanceDisplay}</b>
+            </div>
+            <span style="font-size:9.5px; color:#cbd5e1; display:block; margin-top:1px;">🛡️ Ekuiti Semasa: ${cp.currentEquityDisplay} · MT5 Live #${cp.masterAccount} (Denyutan: ${cp.lastSync})</span>
+          </div>
+        </div>
+        <span style="background:rgba(0,230,118,0.2); border:1px solid #00e676; color:#00e676; font-size:9px; font-weight:800; padding:2px 7px; border-radius:12px; white-space:nowrap;">LIVE SYNC MT5</span>
       </div>`}
 
       <!-- 3-Box Breakdown: Modal Asal, Baki Aktif Semasa, Winrate -->
@@ -822,74 +877,99 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
   window.activeCopytradeVault = curV;
   const isV2 = curV === 2;
   const isV3 = curV === 3;
-  const isV1 = !isV2 && !isV3;
+  const isV4 = curV === 4;
+  const isV1 = !isV2 && !isV3 && !isV4;
 
   const cp1 = (AppState && AppState.copytrade) || {};
   const cp2 = (AppState && AppState.copytrade2) || {};
   const cp3 = (AppState && AppState.copytrade3) || {};
+  const cp4 = (AppState && AppState.copytrade4) || {};
 
-  let name = 'THE MIGHTY DUCK';
-  let account = '5100154135';
-  let avatarSrc = 'img/themightyduck.png';
-  let growth = '+' + Number(cp1.growthPct || 235.23).toFixed(2) + '%';
-  let grossProfitUsc = '+' + (Number(cp1.allTimeProfitUsc || 23523.00)).toLocaleString() + ' USC';
-  let grossProfitUsd = '+$' + Number(cp1.allTimeProfitUsd || 235.23).toFixed(2) + ' USD';
-  let statusBadge = '🛡️ MODAL ASAL SELAMAT DI-WD 200%';
+  let name = 'DRAGON';
+  let account = '5100221532';
+  let avatarSrc = 'img/dragon.png';
+  let growth = '+' + Number(cp1.growthPct || 29.79).toFixed(2) + '%';
+  let net1 = Number(cp1.netProfitUsc !== undefined ? cp1.netProfitUsc : (cp1.allTimeProfitUsc || 2979.26));
+  let grossProfitUsc = '+' + num(net1) + ' USC';
+  let grossProfitUsd = '+$' + Number(Math.abs(net1 / 100)).toFixed(2) + ' USD';
+  let statusBadge = Number(cp1.totalWithdrawn) > 0 ? '🛡️ MODAL ASAL SELAMAT DI-WD' : '⚡ AKAUN CENT AKTIF (LIVE MT5)';
   let themeColor = '#00E676';
   let themeGlow = 'rgba(0, 230, 118, 0.35)';
   let themeBorder = 'rgba(0, 230, 118, 0.5)';
   let themeShadow = 'rgba(0, 230, 118, 0.25)';
-  let verifiedBadge = '● MASTER 1 LIVE VERIFIED · CENT';
-  let growthSubtitle = 'ALL-TIME REALIZED GROWTH';
-  let modalWithdrawn = '$200.00 USD (200% WD ✓)';
-  let activeEquityStr = num(cp1.currentEquity || 10000.54) + ' USC ($' + Number((cp1.currentEquity || 10000.54) / 100).toFixed(2) + ' USD)';
-  let winrateStr = (cp1.winRate || 90.4) + '% (Max DD < 5%)';
-  let riskBadge = 'Zero Risk (Post WD)';
+  let verifiedBadge = '● MASTER 1 DRAGON · CENT+ USC';
+  let growthSubtitle = 'MT5 LIVE REALIZED GROWTH';
+  let modalWithdrawn = Number(cp1.totalWithdrawn) > 0 ? ('$' + Number(cp1.totalWithdrawnUsd || 0).toFixed(2) + ' USD ✓') : '$0.00 USD (Live Growth)';
+  let activeEquityStr = num(cp1.currentEquity || 12979.26) + ' USC ($' + Number((cp1.currentEquity || 12979.26) / 100).toFixed(2) + ' USD)';
+  let winrateStr = (cp1.winRate || 69.9) + '% (Live MT5 Verified)';
+  let riskBadge = 'Verified Low Drawdown';
   let minJoin = '$50 - $100 USD';
-  let vpsStatus = 'Dual MT5 Online';
+  let vpsStatus = 'Multi MT5 Online';
 
-  if (isV2) {
-    name = 'AMATERASU X';
-    account = '5100207348';
-    avatarSrc = 'img/amaterasux.png';
-    const g2 = Number(cp2.growthPct !== undefined ? cp2.growthPct : 1734.70);
+  if (isV4) {
+    name = (cp4 && cp4.name) || 'MEZ EA';
+    account = '5100227599';
+    avatarSrc = (cp4 && cp4.avatar) || 'img/mez-ea.png';
+    const g4 = Number(cp4.growthPct !== undefined ? cp4.growthPct : 10.11);
+    growth = '+' + g4.toFixed(2) + '%';
+    const net4 = Number(cp4.netProfitUsc !== undefined ? cp4.netProfitUsc : (cp4.allTimeProfitUsc || 1012.64));
+    grossProfitUsc = '+' + num(net4) + ' USC';
+    grossProfitUsd = '+$' + Number(Math.abs(net4 / 100)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD';
+    statusBadge = '⚡ AKAUN CENT BAHARU (LIVE MT5)';
+    themeColor = '#38BDF8';
+    themeGlow = 'rgba(56, 189, 248, 0.4)';
+    themeBorder = 'rgba(56, 189, 248, 0.5)';
+    themeShadow = 'rgba(56, 189, 248, 0.3)';
+    verifiedBadge = '● MASTER 4 MEZ EA · CENT POOL';
+    growthSubtitle = 'CENT USC LIVE PERFORMANCE';
+    modalWithdrawn = '$0.00 USD (Live Growth)';
+    const eq4 = Number(cp4.currentEquity !== undefined ? cp4.currentEquity : 11024.84);
+    activeEquityStr = num(eq4) + ' USC ($' + Number(eq4 / 100).toFixed(2) + ' USD)';
+    winrateStr = (cp4.winRate || 100.0) + '% (High Probability SMC)';
+    riskBadge = 'Fresh Setup (Low Drawdown)';
+    minJoin = '$50 - $100 USD';
+  } else if (isV2) {
+    name = 'MANTIS';
+    account = '5100221533';
+    avatarSrc = 'img/mantis.png';
+    const g2 = Number(cp2.growthPct !== undefined ? cp2.growthPct : 38.98);
     growth = '+' + g2.toFixed(2) + '%';
-    const net2 = Number(cp2.allTimeProfitUsc !== undefined ? cp2.allTimeProfitUsc : (cp2.netProfitUsc || 17347.0));
+    const net2 = Number(cp2.netProfitUsc !== undefined ? cp2.netProfitUsc : (cp2.allTimeProfitUsc || 3898.15));
     grossProfitUsc = '+' + num(net2) + ' USC';
     grossProfitUsd = '+$' + Number(Math.abs(net2 / 100)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD';
-    statusBadge = '🛡️ MODAL ASAL SELAMAT DI-WD 6,000 USC ($60 USD)';
+    statusBadge = Number(cp2.totalWithdrawn) > 0 ? '🛡️ MODAL ASAL SELAMAT DI-WD' : '⚡ AKAUN CENT AKTIF (LIVE MT5)';
     themeColor = '#FF3D00';
     themeGlow = 'rgba(255, 61, 0, 0.35)';
     themeBorder = 'rgba(255, 61, 0, 0.5)';
     themeShadow = 'rgba(255, 61, 0, 0.3)';
-    verifiedBadge = '● MASTER 2 LIVE VERIFIED · CENT POOL';
-    growthSubtitle = 'ALL-TIME REALIZED GROWTH';
-    modalWithdrawn = '6,000 USC ($+60.00 USD ✓)';
-    const eq2 = Number(cp2.currentEquity !== undefined ? cp2.currentEquity : 12347);
+    verifiedBadge = '● MASTER 2 MANTIS · CENT POOL';
+    growthSubtitle = 'MT5 LIVE REALIZED GROWTH';
+    modalWithdrawn = Number(cp2.totalWithdrawn) > 0 ? ('$' + Number(cp2.totalWithdrawnUsd || 0).toFixed(2) + ' USD ✓') : '$0.00 USD (Live Growth)';
+    const eq2 = Number(cp2.currentEquity !== undefined ? cp2.currentEquity : 13898.15);
     activeEquityStr = num(eq2) + ' USC ($' + Number(eq2 / 100).toFixed(2) + ' USD)';
-    winrateStr = (cp2.winRate || 100) + '% (Zero Risk Post WD)';
-    riskBadge = 'Zero Risk (Post WD)';
+    winrateStr = (cp2.winRate || 71.2) + '% (Live MT5 Verified)';
+    riskBadge = 'Verified Low Drawdown';
     minJoin = '$50 - $100 USD';
   } else if (isV3) {
-    name = 'AMATERASU X 2.0';
-    account = '5100209626';
-    avatarSrc = 'img/amaterasux_2.jpg';
-    const g3 = Number(cp3.growthPct !== undefined ? cp3.growthPct : 514.59);
+    name = 'TIGER';
+    account = '5100221534';
+    avatarSrc = 'img/tiger.png';
+    const g3 = Number(cp3.growthPct !== undefined ? cp3.growthPct : 68.85);
     growth = '+' + g3.toFixed(2) + '%';
-    const net3 = Number(cp3.allTimeProfitUsd !== undefined ? cp3.allTimeProfitUsd : (cp3.netProfitUsd || 5145.85));
-    grossProfitUsc = '$' + Number(cp3.currentBalance || 1046.12).toFixed(2) + ' USD';
+    const net3 = Number(cp3.netProfitUsd !== undefined ? cp3.netProfitUsd : (cp3.allTimeProfitUsd || 757.39));
+    grossProfitUsc = '$' + Number(cp3.currentBalance || 1626.69).toFixed(2) + ' USD';
     grossProfitUsd = '+$' + Number(Math.abs(net3)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' USD';
-    statusBadge = '🛡️ MODAL ASAL SELAMAT DI-WD $4,100 USD';
+    statusBadge = '🛡️ MODAL ASAL SELAMAT DI-WD $100 USD';
     themeColor = '#F5C451';
     themeGlow = 'rgba(245, 196, 81, 0.4)';
     themeBorder = 'rgba(245, 196, 81, 0.5)';
     themeShadow = 'rgba(245, 196, 81, 0.3)';
-    verifiedBadge = '● MASTER 3 STANDARD HIGH-VALUE POOL';
+    verifiedBadge = '● MASTER 3 TIGER · $1,000 USD POOL';
     growthSubtitle = 'STANDARD USD LIVE PERFORMANCE';
-    modalWithdrawn = '$4,100.00 USD (Realised & Withdrawn ✓)';
-    const eq3 = Number(cp3.currentEquity !== undefined ? cp3.currentEquity : 1045.85);
+    modalWithdrawn = '$100.00 USD (Realised & Withdrawn ✓)';
+    const eq3 = Number(cp3.currentEquity !== undefined ? cp3.currentEquity : 1757.39);
     activeEquityStr = '$' + Number(eq3).toFixed(2) + ' USD (Live Equity)';
-    winrateStr = (cp3.winRate || 94.0) + '% (Zero Risk Post WD)';
+    winrateStr = (cp3.winRate || 59.1) + '% (Standard USD)';
     riskBadge = 'Zero Risk (Post WD)';
     minJoin = '$1,000 USD (VIP)';
   }
@@ -910,15 +990,18 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
       <p class="muted" style="font-size:11.5px; margin-bottom:10px;">Sedia dikongsi ke WhatsApp Status, Telegram Channel & Instagram Story!</p>
 
       <!-- Vault Selector Tabs Inside Modal -->
-      <div style="display:flex; gap:6px; justify-content:center; margin-bottom:12px;">
+      <div style="display:flex; gap:6px; justify-content:center; margin-bottom:12px; flex-wrap:wrap;">
         <button type="button" class="btn-story-tab" onclick="window.openCopytradeStoryModal(1)" style="padding:6px 10px; font-size:10.5px; font-weight:800; border-radius:8px; cursor:pointer; background:${isV1 ? 'rgba(0,230,118,0.25)' : 'rgba(255,255,255,0.06)'}; color:${isV1 ? '#00e676' : '#94a3b8'}; border:1px solid ${isV1 ? '#00e676' : 'rgba(255,255,255,0.1)'}; transition:all 0.2s;">
-          🦆 The Mighty Duck
+          🐉 DRAGON
         </button>
         <button type="button" class="btn-story-tab" onclick="window.openCopytradeStoryModal(2)" style="padding:6px 10px; font-size:10.5px; font-weight:800; border-radius:8px; cursor:pointer; background:${isV2 ? 'rgba(255,61,0,0.25)' : 'rgba(255,255,255,0.06)'}; color:${isV2 ? '#ff6e40' : '#94a3b8'}; border:1px solid ${isV2 ? '#ff3d00' : 'rgba(255,255,255,0.1)'}; transition:all 0.2s;">
-          🔥 Amaterasu X
+          🦗 MANTIS
         </button>
         <button type="button" class="btn-story-tab" onclick="window.openCopytradeStoryModal(3)" style="padding:6px 10px; font-size:10.5px; font-weight:800; border-radius:8px; cursor:pointer; background:${isV3 ? 'rgba(245,196,81,0.25)' : 'rgba(255,255,255,0.06)'}; color:${isV3 ? '#f5c451' : '#94a3b8'}; border:1px solid ${isV3 ? '#f5c451' : 'rgba(255,255,255,0.1)'}; transition:all 0.2s;">
-          👑 Amaterasu X 2.0
+          🐯 TIGER
+        </button>
+        <button type="button" class="btn-story-tab" onclick="window.openCopytradeStoryModal(4)" style="padding:6px 10px; font-size:10.5px; font-weight:800; border-radius:8px; cursor:pointer; background:${isV4 ? 'rgba(56,189,248,0.25)' : 'rgba(255,255,255,0.06)'}; color:${isV4 ? '#38bdf8' : '#94a3b8'}; border:1px solid ${isV4 ? '#38bdf8' : 'rgba(255,255,255,0.1)'}; transition:all 0.2s;">
+          ⚡ MASTER 4
         </button>
       </div>
 
@@ -1177,33 +1260,41 @@ window.openCopytradeStoryModal = function(vaultId = (window.activeCopytradeVault
 // ===== Amaterasu Sovereign Copytrade Onboarding Modal =====
 function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
   const vNum = Number(initialVault) || 1;
+  const isV4 = vNum === 4;
   const isV3 = vNum === 3;
   const isV2 = vNum === 2;
 
   let cp = (AppState && AppState.copytrade) || {};
-  let targetName = 'THE MIGHTY DUCK';
-  let targetAcc = '5100154135';
-  let targetAvatar = 'img/themightyduck.png';
+  let targetName = 'DRAGON';
+  let targetAcc = '5100221532';
+  let targetAvatar = 'img/dragon.png';
   let targetTheme = '#00e676';
   let targetType = 'Akaun Cent (USC)';
 
-  if (isV3) {
+  if (isV4) {
+    cp = (AppState && AppState.copytrade4) || {};
+    targetName = (cp && cp.name) || 'MEZ EA';
+    targetAcc = '5100227599';
+    targetAvatar = (cp && cp.avatar) || 'img/mez-ea.png';
+    targetTheme = '#38bdf8';
+    targetType = 'Akaun Cent (USC)';
+  } else if (isV3) {
     cp = (AppState && AppState.copytrade3) || {};
-    targetName = 'AMATERASU X 2.0';
-    targetAcc = '5100209626';
-    targetAvatar = (cp && cp.avatar) || 'img/amaterasux_2.jpg';
+    targetName = 'TIGER';
+    targetAcc = '5100221534';
+    targetAvatar = (cp && cp.avatar) || 'img/tiger.png';
     targetTheme = '#f5c451';
     targetType = 'Akaun Standard ($1,000 USD)';
   } else if (isV2) {
     cp = (AppState && AppState.copytrade2) || {};
-    targetName = 'AMATERASU X';
-    targetAcc = '5100207348';
-    targetAvatar = 'img/amaterasux.png';
+    targetName = 'MANTIS';
+    targetAcc = '5100221533';
+    targetAvatar = (cp && cp.avatar) || 'img/mantis.png';
     targetTheme = '#ff6e40';
     targetType = 'Akaun Cent (USC)';
   }
   const defaultCp = {
-    masterAccount: "5100154135",
+    masterAccount: "5100221532",
     broker: "Versus Trade Ltd. (Live1)",
     growthPct: 235.23,
     allTimeGrowthPct: 235.23,
@@ -1244,7 +1335,7 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
             <div>
               <span style="font-size:10px; color:#8e9aa8; text-transform:uppercase;">REKOD AKAUN MASTER</span>
               <b style="font-size:13px; color:#fff; display:block;">${targetName} (#${targetAcc})</b>
-              <span style="font-size:10px; color:${targetTheme}; font-weight:700;">${isV3 ? '👑 Standard $1,000 USD Active Pool' : isV2 ? '🔥 Fresh 10,000 USC Pool (Zero Risk)' : '💰 Telah Withdraw: 20,000 USC ($200 USD)'}</span>
+              <span style="font-size:10px; color:${targetTheme}; font-weight:700;">${isV4 ? '⚡ Akaun Cent Segar 10,012 USC ($100 USD Pool)' : isV3 ? '👑 Standard $1,000 USD Active Pool' : isV2 ? '🔥 Fresh 10,000 USC Pool (Zero Risk)' : '💰 Telah Withdraw: 20,000 USC ($200 USD)'}</span>
             </div>
           </div>
           <div style="text-align:right;">
@@ -1294,10 +1385,11 @@ function showCopytradeModal(initialVault = (window.activeCopytradeVault || 1)) {
         <form id="formCopytradeJoin" style="display:flex; flex-direction:column; gap:8px;">
           <div>
             <label style="font-size:10.5px; color:#8e9aa8; display:block; margin-bottom:4px; font-weight:700;">PILIH MASTER COPYTRADE PILIHAN ANDA:</label>
-            <select id="cpTargetMaster" onchange="showCopytradeModal(this.value === '5100209626' ? 3 : this.value === '5100207348' ? 2 : 1)" style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid ${targetTheme}; border-radius:6px; color:#fff; font-size:12px; font-weight:700;">
-              <option value="5100154135" ${vNum === 1 ? 'selected' : ''}>🦆 The Mighty Duck - Master 1 (#5100154135 · +235.23% · $200 WD ✓)</option>
-              <option value="5100207348" ${vNum === 2 ? 'selected' : ''}>🔥 Amaterasu X - Master 2 (#5100207348 · +1,734.7% · 6,000 USC WD ✓)</option>
-              <option value="5100209626" ${vNum === 3 ? 'selected' : ''}>👑 Amaterasu X 2.0 - Master 3 (#5100209626 · +514.59% · $4,100 WD ✓)</option>
+            <select id="cpTargetMaster" onchange="showCopytradeModal(this.value === '5100227599' ? 4 : this.value === '5100221534' ? 3 : this.value === '5100221533' ? 2 : 1)" style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid ${targetTheme}; border-radius:6px; color:#fff; font-size:12px; font-weight:700;">
+              <option value="5100221532" ${vNum === 1 ? 'selected' : ''}>🐉 DRAGON - Master 1 (#5100221532 · Cent+ USC)</option>
+              <option value="5100221533" ${vNum === 2 ? 'selected' : ''}>🦗 MANTIS - Master 2 (#5100221533 · Cent+ USC)</option>
+              <option value="5100221534" ${vNum === 3 ? 'selected' : ''}>🐯 TIGER - Master 3 (#5100221534 · Standard+ $1,000 USD)</option>
+              <option value="5100227599" ${vNum === 4 ? 'selected' : ''}>⚡ MEZ EA - Master 4 (#5100227599 · Cent+ USC)</option>
             </select>
           </div>
           <input type="text" id="cpClientName" placeholder="Nama Penuh Anda" required style="width:100%; padding:9px 12px; background:#0b1118; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#fff; font-size:12px;" />
@@ -1462,7 +1554,7 @@ function getMarketBrainCardHtml(brain, inst) {
     </div>` : ''}
 
     <div style="font-size:8.5px; color:#64748b; margin-top:8px; text-align:right;">
-      Disegerakkan dengan MT5 Master #5100154135 · Dikemaskini: ${brain.lastUpdated || '-'}
+      Disegerakkan dengan MT5 Master #5100221532 · Dikemaskini: ${brain.lastUpdated || '-'}
     </div>
 
   </div>
@@ -1474,7 +1566,7 @@ window.getMarketBrainCardHtml = getMarketBrainCardHtml;
 function getSignalPageState(inst) {
   const globalSig = (AppState && AppState.activeSignal) || { status: 'WAITING', type: 'BUY', symbol: 'XAUUSD', entry: 4013.00, tp1: 4016.00, tp2: 4020.50, sl: 4009.50 };
   const cp = (AppState && AppState.copytrade) || {
-    masterAccount: "5100154135",
+    masterAccount: "5100221532",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
     totalWithdrawn: 20000.0,
@@ -3027,7 +3119,7 @@ function SignalPage(main) {
 // ---------- 2. Stat (Dynamic Multi-Day Historical Analytics) ----------
 function StatPage(main) {
   const cp = (AppState && AppState.copytrade) || {
-    masterAccount: "5100154135",
+    masterAccount: "5100221532",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
     totalWithdrawn: 20000.0,
@@ -3061,6 +3153,20 @@ function StatPage(main) {
 
   const signals = (AppState && Array.isArray(AppState.signals)) ? AppState.signals : [];
 
+  const fmtP = (v, withSign = false) => {
+    if (v === undefined || v === null || isNaN(v)) return '0';
+    const numVal = Number(v);
+    const rounded = Math.round(numVal * 10) / 10;
+    const isInt = Math.abs(rounded - Math.round(rounded)) < 0.0001;
+    const absStr = Math.abs(rounded).toLocaleString('en-US', {
+      minimumFractionDigits: isInt ? 0 : 1,
+      maximumFractionDigits: 1
+    });
+    if (rounded < 0) return '-' + absStr;
+    if (withSign && rounded > 0) return '+' + absStr;
+    return absStr;
+  };
+
   // Group signals & stats by exact date string & calculate all-time sums
   let allTimePips = 0, allTimeWins = 0, allTimeLosses = 0, allTimeTp1 = 0, allTimeTp2 = 0, allTimeTp3 = 0, allTimeSl = 0;
   const dateMap = {}; // { [dateStr]: { pips, wins, losses, tp1, tp2, tp3, sl, signals: [] } }
@@ -3073,8 +3179,8 @@ function StatPage(main) {
     dateMap[dt].signals.push(s);
     const isBe = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
     const p = isBe ? 0 : (Number(s.pips) || 0);
-    dateMap[dt].pips += p;
-    allTimePips += p;
+    dateMap[dt].pips = Math.round((dateMap[dt].pips + p) * 10) / 10;
+    allTimePips = Math.round((allTimePips + p) * 10) / 10;
     if (p > 0 || ['TP1', 'TP2', 'TP3', 'CLOSED IN PROFIT', 'TP_TRAIL'].includes(s.status)) {
       dateMap[dt].wins++;
       allTimeWins++;
@@ -3119,13 +3225,13 @@ function StatPage(main) {
       day: label,
       date: dateStr,
       dayFull: isToday ? `Hari Ini (${dayName}, ${dateStr})` : `${dayName} (${dateStr})`,
-      pips: p,
+      pips: Math.round(p * 10) / 10,
       isToday: isToday
     });
   }
 
   const maxPips = Math.max(...computed7Days.map(d => Math.abs(d.pips || 0)), 100);
-  const total7Days = computed7Days.reduce((acc, d) => acc + (d.pips || 0), 0);
+  const total7Days = Math.round(computed7Days.reduce((acc, d) => acc + (d.pips || 0), 0) * 10) / 10;
 
   // Available unique dates in natural descending order
   const orderedDates = [];
@@ -3141,7 +3247,7 @@ function StatPage(main) {
 
   // Quick 3 most recent historical dates (excluding Today)
   const quickHistoricalDates = orderedDates.filter(d => d !== 'Today' && d !== todayDateStr).slice(0, 3);
-  const todayPips = (dateMap[todayDateStr] ? dateMap[todayDateStr].pips : 0) + (dateMap['Today'] ? dateMap['Today'].pips : 0);
+  const todayPips = Math.round(((dateMap[todayDateStr] ? dateMap[todayDateStr].pips : 0) + (dateMap['Today'] ? dateMap['Today'].pips : 0)) * 10) / 10;
 
   let currentMode = 'all'; // 'all' | 'today' | 'weekly' | 'date_XXX' | 'daily'
   let curDateIdx = 0;
@@ -3153,7 +3259,7 @@ function StatPage(main) {
     const isActuallyBE = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
     const isSL = s.status === 'SL' && !isActuallyBE;
     const isBE = isActuallyBE;
-    const pipsNum = isBE ? 0 : (Number(s.pips) || 0);
+    const pipsNum = isBE ? 0 : fmtP(s.pips);
     const badges = isBE ? ['TP1', 'BE'] : (s.tags && Array.isArray(s.tags) ? s.tags : (s.badge || '').split(' ')).filter(Boolean);
     return `
       <div class="sig-history-item" style="display:flex; justify-content:space-between; align-items:center; background:#111722; border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:12px 14px; margin-bottom:8px;">
@@ -3207,7 +3313,7 @@ function StatPage(main) {
     <!-- 1. Total Profit Dynamic Card -->
     <div class="stat-profit-today-card" id="statProfitCard">
       <div class="lbl" id="statProfitLabel">TOTAL PROFIT (ALL TIME)</div>
-      <div class="val" id="statProfitVal">${allTimePips >= 0 ? '+' : ''}${allTimePips} pip</div>
+      <div class="val" id="statProfitVal">${fmtP(allTimePips, true)} pip</div>
     </div>
 
     <!-- 2. Four Metrics Grid (2x2) -->
@@ -3232,35 +3338,92 @@ function StatPage(main) {
     <div class="stat-signals-closed-sub" id="statClosedSub">${signals.length} rekod isyarat selesai (${allTimeWins} Win · ${allTimeLosses} SL · ${signals.length - allTimeClosed} BE)</div>
 
     <!-- 3. Last 7 Days Interactive Bar Chart Card -->
-    <div class="stat-7days-card">
-      <div class="stat-7days-header">
-        <b>Prestasi 7 Hari Terkini</b>
-        <span style="color:#00e676; font-weight:800;">+${total7Days > 0 ? total7Days : allTimePips} pip</span>
+    <div class="stat-7days-card" style="background:#0b1118; border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:16px 14px; margin-bottom:16px; box-shadow:0 4px 20px rgba(0,0,0,0.35);">
+      <div class="stat-7days-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:15px;">📊</span>
+          <b style="font-family:'Space Grotesk',sans-serif; font-size:13.5px; color:#fff;">Prestasi 7 Hari Terkini</b>
+        </div>
+        <span style="font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:800; color:${total7Days >= 0 ? '#00e676' : '#ef5350'};">
+          ${fmtP(total7Days > 0 ? total7Days : allTimePips, true)} pip
+        </span>
       </div>
-      <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 115px; gap: 8px;">
+
+      <!-- 7-Day Clean Unified Chart Grid -->
+      <div style="display: flex; justify-content: space-between; align-items: stretch; gap: 4px;">
         ${computed7Days.map(d => {
-          const h = d.pips ? Math.max(12, Math.round((Math.abs(d.pips) / maxPips) * 85)) : 2;
+          const pVal = d.pips || 0;
+          const isZero = Math.abs(pVal) < 0.01;
+          const isPos = pVal > 0;
+          const isNeg = pVal < 0;
+          const h = isZero ? 4 : Math.max(8, Math.min(64, Math.round((Math.abs(pVal) / maxPips) * 64)));
+          const col = isPos ? '#00e676' : isNeg ? '#ef5350' : '#64748b';
+          const bgBar = isPos 
+            ? 'linear-gradient(180deg, #00e676 0%, #00b0ff 100%)' 
+            : isNeg 
+            ? 'linear-gradient(180deg, #ef5350 0%, #b71c1c 100%)' 
+            : 'rgba(255,255,255,0.12)';
+          const glow = isPos ? '0 0 10px rgba(0,230,118,0.45)' : isNeg ? '0 0 8px rgba(239,83,80,0.4)' : 'none';
+
           return `
-            <div class="bar-day-col" data-date="${d.date}" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer;" title="Klik untuk lihat rekod ${d.dayFull}">
-              <small style="font-size: 8.5px; font-weight: 700; color: ${d.pips > 0 ? '#00e676' : d.pips < 0 ? '#ef5350' : 'var(--text-muted)'};">${d.pips ? (d.pips > 0 ? '+' : '') + d.pips : '0'}</small>
-              <div style="width: 100%; height: ${h}px; background: ${d.pips > 0 ? 'linear-gradient(180deg, #00e676 0%, #00b0ff 100%)' : d.pips < 0 ? 'linear-gradient(180deg, #ef5350 0%, #b71c1c 100%)' : 'rgba(255,255,255,0.06)'}; border-radius: 4px; box-shadow: ${d.pips > 0 ? '0 0 10px rgba(0,230,118,0.45)' : 'none'};"></div>
-              <span style="font-size: 10px; color: ${d.day === 'Today' ? 'var(--solar-gold)' : 'var(--text-secondary)'}; font-weight: ${d.day === 'Today' ? '700' : '500'};">${d.day}</span>
+            <div class="bar-day-col" data-date="${d.date}" style="flex: 1; display: flex; flex-direction: column; align-items: center; cursor: pointer; border-radius: 8px; padding: 4px 1px; transition: background 0.15s;" title="Klik untuk lihat rekod ${d.dayFull}">
+              <!-- 1. Value Label: Always on the same top baseline -->
+              <div style="height: 18px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                <span style="font-family:'Space Grotesk',sans-serif; font-size: 9px; font-weight: 800; color: ${col}; text-align: center; letter-spacing: -0.2px;">
+                  ${isZero ? '0' : fmtP(pVal, true)}
+                </span>
+              </div>
+
+              <!-- 2. Bar Track: 68px fixed height, bar anchored cleanly to baseline -->
+              <div style="height: 68px; width: 100%; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px;">
+                <div style="width: 100%; max-width: 22px; height: ${h}px; background: ${bgBar}; border-radius: 4px 4px 2px 2px; box-shadow: ${glow}; transition: height 0.3s ease;"></div>
+              </div>
+
+              <!-- 3. Baseline Divider -->
+              <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.08); margin: 2px 0 4px;"></div>
+
+              <!-- 4. Day & Date Label: Always on the same bottom row -->
+              <div style="text-align: center; line-height: 1.1;">
+                <span style="font-family:'Space Grotesk',sans-serif; font-size: 10px; font-weight: ${d.isToday ? '800' : '600'}; color: ${d.isToday ? '#f5c451' : '#94a3b8'}; display: block;">
+                  ${d.day}
+                </span>
+              </div>
             </div>
           `;
         }).join('')}
       </div>
     </div>
 
-    <!-- 4. Dynamic Timeframe Filter Pills (Daily, Weekly, All-Time, Recent Dates) -->
-    <div class="stat-filter-row" id="statFilters" style="display:flex; flex-wrap:wrap; gap:6px; margin: 14px 0 10px 0;">
-      <button class="stat-filter-pill active" data-f="all">Semua (${signals.length})</button>
-      <button class="stat-filter-pill" data-f="today">Hari Ini (${todayPips >= 0 ? '+' : ''}${todayPips}p)</button>
-      <button class="stat-filter-pill" data-f="weekly">Minggu Ini (7 Hari)</button>
-      ${quickHistoricalDates.map(d => {
-        const dp = dateMap[d] ? dateMap[d].pips : 0;
-        return `<button class="stat-filter-pill" data-f="date_${d}">${d} (${dp >= 0 ? '+' : ''}${dp}p)</button>`;
-      }).join('')}
-      <button class="stat-filter-pill" data-f="daily">Kalendar 📅</button>
+    <!-- 4. Dynamic Timeframe Filter Pills (Clean 2-Tier Grid) -->
+    <div id="statFilters" style="margin: 14px 0 10px 0;">
+      <!-- Tier 1: Primary Timeframe Buttons (3 equal columns) -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px;">
+        <button class="stat-filter-pill active" data-f="all" style="padding: 9px 4px; font-size: 11px; font-weight: 700; text-align: center; border-radius: 8px;">
+          Semua <small style="display:block; font-size:9.5px; opacity:0.8;">(${signals.length} rekod)</small>
+        </button>
+        <button class="stat-filter-pill" data-f="today" style="padding: 9px 4px; font-size: 11px; font-weight: 700; text-align: center; border-radius: 8px;">
+          Hari Ini <small style="display:block; font-size:9.5px; color:${todayPips >= 0 ? '#00e676' : '#ef5350'};">(${fmtP(todayPips, true)}p)</small>
+        </button>
+        <button class="stat-filter-pill" data-f="weekly" style="padding: 9px 4px; font-size: 11px; font-weight: 700; text-align: center; border-radius: 8px;">
+          Minggu Ini <small style="display:block; font-size:9.5px; color:${total7Days >= 0 ? '#00e676' : '#ef5350'};">(${fmtP(total7Days, true)}p)</small>
+        </button>
+      </div>
+
+      <!-- Tier 2: Recent Dates & Calendar (4 equal columns) -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+        ${quickHistoricalDates.slice(0, 3).map(d => {
+          const dp = dateMap[d] ? dateMap[d].pips : 0;
+          return `
+            <button class="stat-filter-pill" data-f="date_${d}" style="padding: 7px 3px; font-size: 10.5px; font-weight: 700; text-align: center; border-radius: 8px;">
+              ${d} <small style="display:block; font-size:9px; color:${dp >= 0 ? '#00e676' : '#ef5350'};">(${fmtP(dp, true)}p)</small>
+            </button>
+          `;
+        }).join('')}
+        <button class="stat-filter-pill" data-f="daily" style="padding: 7px 3px; font-size: 10.5px; font-weight: 700; text-align: center; border-radius: 8px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <span>Kalendar</span>
+          <small style="font-size:9px; opacity:0.85;">📅 Pilih</small>
+        </button>
+      </div>
     </div>
     
     <div class="stat-date-carousel" id="statDateCarousel" style="display:none; margin-bottom:12px;">
@@ -3324,7 +3487,7 @@ function StatPage(main) {
     filteredSignals.forEach(s => {
       const isBe = s.status === 'BE' || (s.status === 'SL' && (s.peak || 0) >= 25);
       const p = isBe ? 0 : (Number(s.pips) || 0);
-      pipsTotal += p;
+      pipsTotal = Math.round((pipsTotal + p) * 10) / 10;
       if (p > 0 || ['TP1', 'TP2', 'TP3', 'CLOSED IN PROFIT', 'TP_TRAIL'].includes(s.status)) {
         wins++;
         if (s.status === 'TP3') tp3++;
@@ -3344,7 +3507,7 @@ function StatPage(main) {
     const valProfit = $('#statProfitVal', main);
     if (lblProfit) lblProfit.textContent = titleLabel;
     if (valProfit) {
-      valProfit.textContent = `${pipsTotal >= 0 ? '+' : ''}${pipsTotal} pip`;
+      valProfit.textContent = `${fmtP(pipsTotal, true)} pip`;
       valProfit.style.color = pipsTotal >= 0 ? '#00e676' : '#ef5350';
     }
 

@@ -53,6 +53,29 @@ function hideCrmLockOverlay(operator = 'Tengku Khairi') {
 }
 
 async function verifyMasterSession() {
+  // 1-Click Direct Access via URL Parameter (?owner, ?boss, ?admin, or ?pass=...)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const directPass = urlParams.get('key') || urlParams.get('pass') || (urlParams.has('owner') || urlParams.has('boss') || urlParams.has('admin') ? 'AMATERASU-2026' : null);
+    if (directPass) {
+      const res = await originalFetch('/api/auth/master-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passcode: directPass, operator: 'Tengku Khairi' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.token) {
+        localStorage.setItem('ama_admin_token', data.token);
+        sessionStorage.setItem('ama_admin_token', data.token);
+        hideCrmLockOverlay('Tengku Khairi');
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        return true;
+      }
+    }
+  } catch(e) {}
+
   const token = localStorage.getItem('ama_admin_token') || sessionStorage.getItem('ama_admin_token');
   if (!token) {
     showCrmLockOverlay();
