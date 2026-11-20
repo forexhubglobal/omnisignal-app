@@ -656,6 +656,17 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}🛡️ [PAIR DITAPIS] Simbol #{clean_raw_sym} ditolak. Hanya {', '.join(allowed_pairs)} dibenarkan mengikut arahan bos.{Colors.RESET}")
             return None
 
+        # 0.0 ARAHAN MUTLAK BOS: DILARANG SAMA SEKALI MASUK ORDER SELAGI TIADA ARAHAN!
+        pause_flags = [
+            os.path.join(BASE_DIR, "pause_trading.flag"),
+            r"C:\AmaterasuX\pause_trading.flag",
+            r"C:\AmaterasuX_Acc2\pause_trading.flag",
+            r"C:\AmaterasuX_Acc3\pause_trading.flag"
+        ]
+        if any(os.path.exists(p) for p in pause_flags):
+            print(f"{Colors.RED}{Colors.BOLD}🛑 [ARAHAN BOS AKTIF] Order #{clean_raw_sym} DISEKAT 100%! Sistem dikunci: Dilarang masuk order selagi tiada arahan Tengku Khairi!{Colors.RESET}")
+            return None
+
         # 0.1 CIRCUIT BREAKER: SASARAN KEUNTUNGAN AKAUN (+2,500 USC / +$25.00 USD)
         if self.check_account_profit_target():
             return None
@@ -1054,6 +1065,20 @@ class AmaterasuBridge:
         allowed_pairs = self.config.get("allowed_pairs", ["XAUUSD", "USDCHF", "EURUSD", "USDCAD", "USDJPY"])
         clean_sym = str(sig.get("symbol", "")).split('.')[0].upper()
         if allowed_pairs and clean_sym not in [p.upper() for p in allowed_pairs]:
+            return
+
+        # 0.0 ARAHAN MUTLAK BOS: DILARANG SAMA SEKALI MASUK ORDER SELAGI TIADA ARAHAN!
+        pause_flags = [
+            os.path.join(BASE_DIR, "pause_trading.flag"),
+            r"C:\AmaterasuX\pause_trading.flag",
+            r"C:\AmaterasuX_Acc2\pause_trading.flag",
+            r"C:\AmaterasuX_Acc3\pause_trading.flag"
+        ]
+        if any(os.path.exists(p) for p in pause_flags):
+            now_t = time.time()
+            if (now_t - getattr(self, "last_boss_pause_log", 0)) > 60:
+                self.last_boss_pause_log = now_t
+                print(f"{Colors.RED}{Colors.BOLD}🛑 [ARAHAN BOS AKTIF] Signal #{clean_sym} DITOLAK! Sistem dikunci ketat: Dilarang buka sebarang order selagi tiada arahan Tengku Khairi!{Colors.RESET}")
             return
 
         # CIRCUIT BREAKER: SASARAN KEUNTUNGAN AKAUN (+2,500 USC / +$25.00 USD)

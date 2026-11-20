@@ -3661,6 +3661,18 @@ const AiEngine = {
 
   fireAutonomousSignal(db, forceAsset = null) {
     if (!this.enabled) return;
+
+    // 0.0 ARAHAN MUTLAK BOS: DILARANG SAMA SEKALI MASUK ORDER SELAGI TIADA ARAHAN!
+    const pauseFlags = [
+      path.join(__dirname, 'pause_trading.flag'),
+      'C:\\AmaterasuX\\pause_trading.flag',
+      'C:\\AmaterasuX_Acc2\\pause_trading.flag',
+      'C:\\AmaterasuX_Acc3\\pause_trading.flag'
+    ];
+    if (pauseFlags.some(p => fs.existsSync(p))) {
+      return;
+    }
+
     const asset = forceAsset || this.assets[Math.floor(Math.random() * this.assets.length)];
 
     // 0. STRICT 1-SETUP GUARD (BULAN LEPAS LOCKED SOP):
