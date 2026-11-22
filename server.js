@@ -981,6 +981,79 @@ const TelegramNotifier = {
     }
   },
 
+  sendPoll(question, options) {
+    try {
+      const db = getDB();
+      const cfg = db.telegramConfig || {};
+      if (!cfg.enabled || !cfg.botToken || !cfg.chatId) {
+        return Promise.resolve({ skipped: true });
+      }
+
+      const postData = JSON.stringify({
+        chat_id: cfg.chatId,
+        question: question,
+        options: options,
+        is_anonymous: true
+      });
+
+      return new Promise((resolve) => {
+        const req = https.request(`https://api.telegram.org/bot${cfg.botToken}/sendPoll`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+          },
+          timeout: 15000
+        }, res => {
+          let b = '';
+          res.on('data', c => b += c);
+          res.on('end', () => {
+            try {
+              const j = JSON.parse(b);
+              resolve({ ok: j.ok === true, data: j });
+            } catch(e) { resolve({ ok: false, error: e.message }); }
+          });
+        });
+        req.on('error', err => resolve({ ok: false, error: err.message }));
+        req.setTimeout(15000, () => { req.destroy(); resolve({ ok: false, error: 'Timeout' }); });
+        req.write(postData);
+        req.end();
+      });
+    } catch (e) {
+      return Promise.resolve({ ok: false, error: e.message });
+    }
+  },
+
+  formatMorningBriefing(db) {
+    const cp = db.copytrade || {};
+    const curBal = Number(cp.currentBalance || 10000).toFixed(2);
+    const balUsd = (Number(curBal) / 100).toFixed(2);
+    const dateStr = getMYTDate({ weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+    const timeStr = getMYTTime();
+
+    return '🦅 <b>AMATERASU X · MORNING VAULT BRIEFING</b>\n' +
+      '━━━━━━━━━━━━━━━━━━━━━\n' +
+      '📅 <b>Tarikh:</b> ' + dateStr + ' (' + timeStr + ' MYT)\n' +
+      '🏆 <b>Master Vault:</b> DRAGON CENT+ (OFFICIAL)\n' +
+      '💼 <b>Status Enjin:</b> SESI HARIAN BERMULA\n\n' +
+      '🏦 <b>PEMANTAUAN MODAL AWAL HARI</b>\n' +
+      '• Baki Pembukaan: <code>' + Number(curBal).toLocaleString() + ' USC ($' + balUsd + ' USD)</code>\n' +
+      '• Sasaran Harian: <code>+2,500.00 USC (+$25.00 USD)</code>\n' +
+      '• Floating Semasa: <code>0.00 USC (Sifar Drawdown)</code>\n\n' +
+      '📊 <b>ZON FOKUS & JADUAL BERITA HARI INI:</b>\n' +
+      '• 14:00 - 15:15 MYT: ⚠️ Pembukaan London (Zon Manipulasi Judas Swing - Elak Entry Terburu-buru)\n' +
+      '• 21:30 - 22:30 MYT: ⚡ Sesi New York (Auto-News Filter Aktif Untuk Lindungi Modal)\n\n' +
+      '🛡️ <b>DISIPLIN KETAT AMATERASUX:</b>\n' +
+      'Sebaik sahaja sasaran keuntungan harian tercapai (+2,500 USC), sistem akan berhenti automatik untuk mengunci profit pelabur.\n\n' +
+      '━━━━━━━━━━━━━━━━━━━━━\n' +
+      '🚀 <b>SERTAI COPYTRADE AMATERASUX:</b>\n' +
+      '1. Daftar akaun Versus Trade (Cent Account)\n' +
+      '2. Deposit minimum: 10,000 USC ($100 USD)\n' +
+      '3. Salin akaun Master secara automatik 1:1!\n\n' +
+      '🔗 <b>Pautan Pendaftaran Broker:</b>\n' +
+      'https://one.versustrade.link/links/go/78665?pid=170480';
+  },
+
   formatAiAvatarScript(db, vaultNum = 1) {
     const cp = vaultNum === 4 ? (db.copytrade4 || {}) : (vaultNum === 3 ? (db.copytrade3 || {}) : (vaultNum === 2 ? (db.copytrade2 || {}) : (db.copytrade || {})));
     const masterName = cp.name || (vaultNum === 1 ? 'DRAGON' : (vaultNum === 2 ? 'MANTIS' : (vaultNum === 3 ? 'TIGER' : 'MEZ EA')));
@@ -4703,20 +4776,49 @@ setInterval(() => {
 // Initial real market quote fetch on boot
 refreshAllLiveQuotes().catch(() => {});
 
-// Automated Telegram Daily Community Performance Broadcast (Every night at 23:30 MYT)
+// Automated Telegram 24-Hour Community Schedule Engine (Mon - Fri)
+let lastMorningBriefingDate = '';
+let lastCommunityPollDate = '';
 let lastCommunityReportDate = '';
+
 setInterval(() => {
   try {
+    const db = getDB();
+    const cfg = db.telegramConfig || {};
+    if (!cfg.enabled || !cfg.botToken || !cfg.chatId) return;
+
     const mytTime = getMYTTime();
     const mytDate = getMYTDate({ day: 'numeric', month: 'numeric', year: 'numeric' });
-    if (mytTime >= '23:30' && lastCommunityReportDate !== mytDate) {
+    const weekday = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Kuala_Lumpur', weekday: 'short' });
+    const isTradingDay = weekday !== 'Sat' && weekday !== 'Sun';
+
+    // 1. Morning Vault Briefing at 07:30 MYT (Isnin - Jumaat)
+    if (isTradingDay && mytTime >= '07:30' && mytTime < '08:30' && lastMorningBriefingDate !== mytDate) {
+      lastMorningBriefingDate = mytDate;
+      const morningMsg = TelegramNotifier.formatMorningBriefing(db);
+      TelegramNotifier.send(morningMsg).catch(err => console.error('[TELEGRAM MORNING ERROR]', err));
+      console.log(`[TELEGRAM] Auto-broadcasted Morning Vault Briefing for ${mytDate} at ${mytTime} MYT`);
+    }
+
+    // 2. Interactive Community Sentiment Poll at 12:30 MYT (Isnin - Jumaat)
+    if (isTradingDay && mytTime >= '12:30' && mytTime < '13:30' && lastCommunityPollDate !== mytDate) {
+      lastCommunityPollDate = mytDate;
+      TelegramNotifier.sendPoll(
+        `📊 Sentimen Emas (XAUUSD) Menjelang Sesi London (${getMYTDate({ day: 'numeric', month: 'short' })}):`,
+        [
+          '🟢 Bullish (Menguji zon rintangan tertinggi)',
+          '🔴 Bearish (Retracement mencari diskaun likuiditi)',
+          '⚖️ Sideways (Tunggu pengesahan struktur pasaran)'
+        ]
+      ).catch(err => console.error('[TELEGRAM POLL ERROR]', err));
+      console.log(`[TELEGRAM] Auto-broadcasted Community Sentiment Poll for ${mytDate} at ${mytTime} MYT`);
+    }
+
+    // 3. Automated Daily Performance Report at 23:30 MYT (Isnin - Jumaat)
+    if (isTradingDay && mytTime >= '23:30' && lastCommunityReportDate !== mytDate) {
       lastCommunityReportDate = mytDate;
-      const db = getDB();
-      const cfg = db.telegramConfig || {};
-      if (cfg.enabled && cfg.botToken && cfg.chatId) {
-        TelegramNotifier.send(TelegramNotifier.formatCommunityDailyReport(db, 1)).catch(() => {});
-        console.log(`[TELEGRAM] Auto-broadcasted daily community performance report for ${mytDate} at ${mytTime} MYT`);
-      }
+      TelegramNotifier.send(TelegramNotifier.formatCommunityDailyReport(db, 1)).catch(err => console.error('[TELEGRAM REPORT ERROR]', err));
+      console.log(`[TELEGRAM] Auto-broadcasted daily community performance report for ${mytDate} at ${mytTime} MYT`);
     }
   } catch (err) {
     console.error('[TELEGRAM CRON ERROR]', err && err.message ? err.message : err);
