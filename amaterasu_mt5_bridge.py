@@ -321,29 +321,26 @@ class AmaterasuBridge:
             print(f"ℹ️ Sistem Amaterasu X & akaun-akaun lain kekal beroperasi seperti biasa.")
             print(f"======================================================================={Colors.RESET}\n")
 
-            # Auto-broadcast Target Kemenangan ke Telegram Community Channel
+            # Auto-broadcast Target Kemenangan ke Telegram Community Channel (Hard Selling Pilihan 1)
             try:
                 msg = (
-                    "🎯 <b>AMATERASU X · TARGET HARIAN TERCAPAI!</b>\n"
+                    "🎯 <b>AMATERASU X · TARGET HARIAN +25% DIKUNCI!</b>\n"
                     "━━━━━━━━━━━━━━━━━━━━━\n"
                     "🏆 <b>Master Vault:</b> DRAGON CENT+ (OFFICIAL)\n"
                     f"📅 <b>Tarikh:</b> {now_myt}\n"
-                    "🏢 <b>Broker:</b> Versus Trade Ltd. (Live Cluster)\n"
-                    "💼 <b>Status:</b> SASARAN TERCAPAI & DIKUNCI\n\n"
-                    "💰 <b>PRESTASI KEMENANGAN</b>\n"
-                    f"• Untung Bersih Harian: <code>+{gain:,.2f} {self.account_currency} (+${usd_equiv:,.2f} USD)</code>\n"
-                    "• Status Sasaran: <code>100% SELESAI</code>\n"
-                    f"• Baki Terkini: <code>{cur_bal:,.2f} {self.account_currency}</code>\n"
-                    f"• Ekuiti Terkini: <code>{cur_eq:,.2f} {self.account_currency}</code>\n\n"
-                    "🛡️ <b>DISIPLIN KETAT AMATERASUX:</b>\n"
-                    "Semua posisi telah ditutup dalam keuntungan. Robot dihentikan automatik untuk mengunci profit & mengelak overtrade!\n\n"
-                    "━━━━━━━━━━━━━━━━━━━━━\n"
-                    "🚀 <b>SERTAI COPYTRADE AMATERASUX:</b>\n"
-                    "1. Daftar akaun Versus Trade (Cent Account)\n"
-                    "2. Deposit minimum: 10,000 USC ($100 USD)\n"
-                    "3. Salin akaun Master secara automatik 1:1!\n\n"
-                    "🔗 <b>Pautan Pendaftaran Broker:</b>\n"
-                    "https://one.versustrade.link/links/go/78665?pid=170480"
+                    f"💰 <b>Untung Bersih:</b> <code>+{gain:,.2f} {self.account_currency} (+${usd_equiv:,.2f} USD)</code>\n"
+                    "🛡️ <b>Status:</b> SASARAN TERCAPAI (Zero Floating)\n\n"
+                    "🚨 <b>BERHENTI TENGOK ORANG LAIN BUAT DUIT!</b>\n\n"
+                    "Hari ini Master Vault sekali lagi sapu bersih <b>+25.0% profit</b> dan terus kunci akaun. Zero floating. Zero pening kepala.\n\n"
+                    "Sampai bila anda nak jadi penonton? Sementara anda bertangguh, modal mereka yang copy akaun ini dah berkembang secara automatik hari ini!\n\n"
+                    "Anda tak perlu hadap chart 24 jam. Robot kawal risiko 100% disiplin.\n\n"
+                    "⚡ <b>MODAL MULA CUMA $100 SAHAJA (10,000 USC)!</b>\n\n"
+                    "Siapkan akaun anda sekarang sebelum sesi esok bermula:\n"
+                    "1️⃣ Klik pautan broker rasmi:\n"
+                    "👉 https://one.versustrade.link/links/go/78665?pid=170480\n"
+                    "2️⃣ Buka akaun <b>Cent (USC)</b> & deposit <b>$100</b>\n"
+                    "3️⃣ Aktifkan <b>Copytrade Master</b> (Auto 1:1)\n\n"
+                    "⏳ <i>Tindakan pantas bawa hasil pantas. Jangan tunggu slot penuh!</i>"
                 )
                 requests.post(
                     f"{self.server_url.rstrip('/')}/api/telegram/broadcast-custom",
