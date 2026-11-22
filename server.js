@@ -866,7 +866,7 @@ const TelegramNotifier = {
         `💰 <b>Modal Semasa:</b> ${balUsc} USC ($${balUsd} USD)\n` +
         '🛡️ <b>Strategi:</b> Institutional SMC Multi-Terminal AI\n' +
         '━━━━━━━━━━━━━━━━━━━━━\n' +
-        '👉 <i>Buka App: https://amaterasux.com</i>';
+        '🔗 <b>Daftar Akaun Follow:</b> https://one.versustrade.link/links/go/78665?pid=170480';
     } else if (vNum === 3) {
       const growth = Number(cp?.growthPct || 188.76).toFixed(2);
       const netUsd = Number(cp?.netProfitUsd || 1887.57).toFixed(2);
@@ -884,8 +884,7 @@ const TelegramNotifier = {
         '🚀 <b>Sertai Akaun Standard VIP:</b>\n' +
         '1. Buka akaun Versus Trade (Standard USD)\n' +
         '2. Deposit modal $1,000 USD\n' +
-        '3. Hantar No MT5 anda di App Amaterasu X untuk disambungkan automatik!\n' +
-        '👉 <i>Buka App: https://amaterasux.onrender.com</i>';
+        '🔗 <b>Pautan Broker:</b> https://one.versustrade.link/links/go/78665?pid=170480';
     } else if (vNum === 2) {
       const growth = Number(cp?.growthPct !== undefined ? cp.growthPct : 0.0).toFixed(2);
       return '🔥 <b>MANTIS · MASTER 2 OFFICIAL COPYTRADE ANNOUNCEMENT</b>\n' +
@@ -899,7 +898,7 @@ const TelegramNotifier = {
         '━━━━━━━━━━━━━━━━━━━━━\n' +
         '🚀 <b>Peluang Masuk Dari Baseline:</b>\n' +
         'Sertai MANTIS sekarang untuk menikmati pertumbuhan akaun sejak hari pertama!\n' +
-        '👉 <i>Buka App: https://amaterasux.onrender.com</i>';
+        '🔗 <b>Pautan Broker:</b> https://one.versustrade.link/links/go/78665?pid=170480';
     } else {
       const growth = Number(cp?.growthPct || 235.23).toFixed(2);
       const grossProfit = Number(cp?.allTimeProfitUsc || 23523.0).toLocaleString();
@@ -918,9 +917,8 @@ const TelegramNotifier = {
         '━━━━━━━━━━━━━━━━━━━━━\n' +
         '🚀 <b>Sertai Copytrade Sekarang:</b>\n' +
         '1. Buka akaun Versus Trade (Cent Account)\n' +
-        '2. Deposit serendah $50 - $100 USD (5,000 - 10,000 USC)\n' +
-        '3. Hantar No MT5 anda di App Amaterasu X untuk disambungkan automatik!\n' +
-        '👉 <i>Buka App: https://amaterasux.com</i>';
+        '2. Deposit minimum: 10,000 USC ($100 USD)\n' +
+        '🔗 <b>Pautan Broker:</b> https://one.versustrade.link/links/go/78665?pid=170480';
     }
   },
 
@@ -963,10 +961,9 @@ const TelegramNotifier = {
       '━━━━━━━━━━━━━━━━━━━━━\n' +
       '🚀 <b>SERTAI COPYTRADE AMATERASUX:</b>\n' +
       '1. Daftar akaun Versus Trade (Cent Account)\n' +
-      '2. Deposit serendah 2,000 - 10,000 USC ($20 - $100 USD)\n' +
+      '2. Deposit minimum: 10,000 USC ($100 USD)\n' +
       '3. Salin akaun Master secara automatik 1:1!\n\n' +
-      '🔗 <b>Pautan Broker:</b> https://one.versustrade.link/links/go/14490?pid=31255\n' +
-      '📱 <b>Pantau Sistem Live:</b> https://amaterasux.com';
+      '🔗 <b>Pautan Pendaftaran Broker:</b>\nhttps://one.versustrade.link/links/go/78665?pid=170480';
   }
 };
 
