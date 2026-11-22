@@ -2399,6 +2399,23 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // Broadcast Custom Message to Telegram Channel (Bridge / AI Engine)
+  if (pathname === '/api/telegram/broadcast-custom' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      if (payload && payload.text) {
+        const result = await TelegramNotifier.send(payload.text);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: result.ok === true, details: result }));
+      }
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: 'Text diperlukan' }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: false, error: e.message }));
+    }
+  }
+
   // Broadcast Community Daily Performance Report to Telegram
   if (pathname === '/api/telegram/broadcast-community-report' && req.method === 'POST') {
     if (!requireAdminAuth(req, res)) return;
@@ -2410,6 +2427,23 @@ const server = http.createServer(async (req, res) => {
       const result = await TelegramNotifier.send(msg);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: result.ok === true, details: result, vaultId }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ success: false, error: e.message }));
+    }
+  }
+
+  // Broadcast Custom Message to Telegram Channel (Bridge / AI Engine)
+  if (pathname === '/api/telegram/broadcast-custom' && req.method === 'POST') {
+    try {
+      const payload = await parseJsonBody(req);
+      if (payload && payload.text) {
+        const result = await TelegramNotifier.send(payload.text);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: result.ok === true, details: result }));
+      }
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: 'Text diperlukan' }));
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: false, error: e.message }));

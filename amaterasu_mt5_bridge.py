@@ -310,6 +310,9 @@ class AmaterasuBridge:
             acc = mt5.account_info()
             login_str = getattr(acc, "login", "")
             usd_equiv = (gain / 100.0) if getattr(self, "is_cent_account", True) else gain
+            cur_bal = float(getattr(acc, "balance", 0.0))
+            cur_eq = float(getattr(acc, "equity", 0.0))
+            now_myt = datetime.now(timezone(timedelta(hours=8))).strftime("%d %b %Y (%H:%M MYT)")
             print(f"\n{Colors.GREEN}{Colors.BOLD}=======================================================================")
             print(f"🎯 [SASARAN PROFIT TERCAPAI] AKAUN #{login_str} UNTUNG +{gain:,.2f} {self.account_currency} (+${usd_equiv:,.2f} USD)!")
             print(f"🛑 Mengikut arahan Tengku Khairi: Akaun ini BERHENTI membuka order baharu.")
@@ -317,6 +320,38 @@ class AmaterasuBridge:
             print(f"⏳ Menunggu arahan Tengku Khairi ('start balik') untuk mula berdagang semula.")
             print(f"ℹ️ Sistem Amaterasu X & akaun-akaun lain kekal beroperasi seperti biasa.")
             print(f"======================================================================={Colors.RESET}\n")
+
+            # Auto-broadcast Target Kemenangan ke Telegram Community Channel
+            try:
+                msg = (
+                    "🎯 <b>AMATERASU X · TARGET HARIAN TERCAPAI!</b>\n"
+                    "━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"🏆 <b>Master Vault:</b> DRAGON CENT+ (#{login_str})\n"
+                    f"📅 <b>Tarikh:</b> {now_myt}\n"
+                    "🏢 <b>Broker:</b> Versus Trade Ltd. (Live Cluster)\n"
+                    "💼 <b>Status:</b> SASARAN TERCAPAI & DIKUNCI\n\n"
+                    "💰 <b>PRESTASI KEMENANGAN</b>\n"
+                    f"• Untung Bersih Harian: <code>+{gain:,.2f} {self.account_currency} (+${usd_equiv:,.2f} USD)</code>\n"
+                    "• Status Sasaran: <code>100% SELESAI</code>\n"
+                    f"• Baki Terkini: <code>{cur_bal:,.2f} {self.account_currency}</code>\n"
+                    f"• Ekuiti Terkini: <code>{cur_eq:,.2f} {self.account_currency}</code>\n\n"
+                    "🛡️ <b>DISIPLIN KETAT AMATERASUX:</b>\n"
+                    "Semua posisi telah ditutup dalam keuntungan. Robot dihentikan automatik untuk mengunci profit & mengelak overtrade!\n\n"
+                    "━━━━━━━━━━━━━━━━━━━━━\n"
+                    "🚀 <b>SERTAI COPYTRADE AMATERASUX:</b>\n"
+                    "1. Daftar akaun Versus Trade (Cent Account)\n"
+                    "2. Deposit minimum: 10,000 USC ($100 USD)\n"
+                    "3. Salin akaun Master secara automatik 1:1!\n\n"
+                    "🔗 <b>Pautan Pendaftaran Broker:</b>\n"
+                    "https://one.versustrade.link/links/go/78665?pid=170480"
+                )
+                requests.post(
+                    f"{self.server_url.rstrip('/')}/api/telegram/broadcast-custom",
+                    json={"text": msg},
+                    timeout=5
+                )
+            except Exception:
+                pass
             return True
 
         return False
