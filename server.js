@@ -800,6 +800,66 @@ const TelegramNotifier = {
     }
   },
 
+  sendVideo(videoUrl, caption) {
+    try {
+      const db = getDB();
+      const cfg = db.telegramConfig || {};
+      if (!cfg.enabled || !cfg.botToken || !cfg.chatId) {
+        return Promise.resolve({ skipped: true });
+      }
+
+      const postData = JSON.stringify({
+        chat_id: cfg.chatId,
+        video: videoUrl,
+        caption: caption || '',
+        parse_mode: 'HTML'
+      });
+
+      return new Promise((resolve) => {
+        const req = https.request(`https://api.telegram.org/bot${cfg.botToken}/sendVideo`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+          },
+          timeout: 20000
+        }, res => {
+          let b = '';
+          res.on('data', c => b += c);
+          res.on('end', () => {
+            try {
+              const j = JSON.parse(b);
+              resolve({ ok: j.ok === true, data: j });
+            } catch(e) { resolve({ ok: false, error: e.message }); }
+          });
+        });
+        req.on('error', err => resolve({ ok: false, error: err.message }));
+        req.setTimeout(20000, () => { req.destroy(); resolve({ ok: false, error: 'Timeout' }); });
+        req.write(postData);
+        req.end();
+      });
+    } catch (e) {
+      return Promise.resolve({ ok: false, error: e.message });
+    }
+  },
+
+  formatAiAvatarScript(db, vaultNum = 1) {
+    const cp = vaultNum === 4 ? (db.copytrade4 || {}) : (vaultNum === 3 ? (db.copytrade3 || {}) : (vaultNum === 2 ? (db.copytrade2 || {}) : (db.copytrade || {})));
+    const masterName = cp.name || (vaultNum === 1 ? 'DRAGON' : (vaultNum === 2 ? 'MANTIS' : (vaultNum === 3 ? 'TIGER' : 'MEZ EA')));
+    const isCent = vaultNum !== 3;
+    const curBal = Number(cp.currentBalance || (isCent ? 10000 : 1000)).toFixed(0);
+    const balUsd = isCent ? (Number(curBal) / 100).toFixed(0) : curBal;
+    const dailyProfitUsc = Number(cp.todayProfitUsc || (db.stats && db.stats.totalProfitToday ? db.stats.totalProfitToday : 2500)).toFixed(0);
+    const dailyProfitUsd = isCent ? (Number(dailyProfitUsc) / 100).toFixed(0) : dailyProfitUsc;
+    const dateStr = getMYTDate({ day: 'numeric', month: 'long', year: 'numeric' });
+
+    return `Good day, Amaterasu X investors and community members. This is your official market strategist daily briefing for ${dateStr}. ` +
+      `Our ${masterName} Master Vault has successfully hit today's profit target, generating a net gain of ${Number(dailyProfitUsc).toLocaleString()} Cent, which equals $${dailyProfitUsd} US Dollars, with zero overnight floating drawdown. ` +
+      `Our capital currently stands strong at ${Number(curBal).toLocaleString()} Cent, or $${balUsd} US Dollars. ` +
+      `Under our strict institutional risk management rules, all positions are fully secured and trading is now closed for the day to lock in profits. ` +
+      `To copy this institutional strategy with a minimum of $100 US Dollars, register your account using the verified link in the caption below. Have a profitable day ahead.`;
+  },
+
   formatSignalMessage(sig) {
     const isBuy = sig.type === 'BUY';
     const arrow = isBuy ? '🟢 BUY' : '🔴 SELL';
