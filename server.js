@@ -1001,7 +1001,7 @@ const TelegramNotifier = {
 
     return '🦅 <b>AMATERASU X · OFFICIAL MASTER PERFORMANCE</b>\n' +
       '━━━━━━━━━━━━━━━━━━━━━\n' +
-      '🏆 <b>Master Vault:</b> ' + masterName + ' (#' + masterAcc + ')\n' +
+      '🏆 <b>Master Vault:</b> ' + masterName + ' (OFFICIAL)\n' +
       '🏢 <b>Broker:</b> Versus Trade Ltd. (Live Cluster)\n' +
       '📅 <b>Tarikh:</b> ' + dateStr + ' (' + timeStr + ' MYT)\n' +
       '💼 <b>Status Sistem:</b> LIVE & DISIPLIN TINGGI\n\n' +

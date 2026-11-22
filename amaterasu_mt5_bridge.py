@@ -326,7 +326,7 @@ class AmaterasuBridge:
                 msg = (
                     "🎯 <b>AMATERASU X · TARGET HARIAN TERCAPAI!</b>\n"
                     "━━━━━━━━━━━━━━━━━━━━━\n"
-                    f"🏆 <b>Master Vault:</b> DRAGON CENT+ (#{login_str})\n"
+                    "🏆 <b>Master Vault:</b> DRAGON CENT+ (OFFICIAL)\n"
                     f"📅 <b>Tarikh:</b> {now_myt}\n"
                     "🏢 <b>Broker:</b> Versus Trade Ltd. (Live Cluster)\n"
                     "💼 <b>Status:</b> SASARAN TERCAPAI & DIKUNCI\n\n"
