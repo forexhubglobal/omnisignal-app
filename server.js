@@ -800,6 +800,75 @@ const TelegramNotifier = {
     }
   },
 
+  sendMasterVideoFile(caption) {
+    try {
+      const db = getDB();
+      const cfg = db.telegramConfig || {};
+      if (!cfg.enabled || !cfg.botToken || !cfg.chatId) {
+        return Promise.resolve({ skipped: true });
+      }
+
+      const candidatePaths = [
+        path.join(__dirname, 'amaterasux_master_talking_briefing.mp4'),
+        path.join(__dirname, '..', 'brain', 'cb3cb3ce-090a-4aa4-a4fe-efac10e1d5a5', 'scratch', 'amaterasux_master_talking_briefing.mp4'),
+        path.join(__dirname, 'master_avatar_briefing.mp4'),
+        path.join('C:\\Users\\US\\.gemini\\antigravity\\brain\\cb3cb3ce-090a-4aa4-a4fe-efac10e1d5a5\\scratch\\amaterasux_master_talking_briefing.mp4'),
+        path.join('C:\\Users\\US\\.gemini\\antigravity\\brain\\cb3cb3ce-090a-4aa4-a4fe-efac10e1d5a5\\master_avatar_briefing.mp4')
+      ];
+
+      const videoPath = candidatePaths.find(p => fs.existsSync(p));
+      if (!videoPath) {
+        return this.send(caption);
+      }
+
+      const videoData = fs.readFileSync(videoPath);
+      const boundary = '----WebKitFormBoundary' + Math.random().toString(16).substring(2);
+
+      let body = '';
+      body += `--${boundary}\r\n`;
+      body += `Content-Disposition: form-data; name="chat_id"\r\n\r\n${cfg.chatId}\r\n`;
+      body += `--${boundary}\r\n`;
+      body += `Content-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`;
+      body += `--${boundary}\r\n`;
+      body += `Content-Disposition: form-data; name="parse_mode"\r\n\r\nHTML\r\n`;
+      body += `--${boundary}\r\n`;
+      body += `Content-Disposition: form-data; name="video"; filename="chief_market_strategist.mp4"\r\n`;
+      body += `Content-Type: video/mp4\r\n\r\n`;
+
+      const postData = Buffer.concat([
+        Buffer.from(body, 'utf8'),
+        videoData,
+        Buffer.from(`\r\n--${boundary}--\r\n`, 'utf8')
+      ]);
+
+      return new Promise((resolve) => {
+        const req = https.request(`https://api.telegram.org/bot${cfg.botToken}/sendVideo`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            'Content-Length': postData.length
+          },
+          timeout: 45000
+        }, res => {
+          let b = '';
+          res.on('data', c => b += c);
+          res.on('end', () => {
+            try {
+              const j = JSON.parse(b);
+              resolve({ ok: j.ok === true, data: j });
+            } catch(e) { resolve({ ok: false, error: e.message }); }
+          });
+        });
+        req.on('error', err => resolve({ ok: false, error: err.message }));
+        req.setTimeout(45000, () => { req.destroy(); resolve({ ok: false, error: 'Timeout' }); });
+        req.write(postData);
+        req.end();
+      });
+    } catch (e) {
+      return Promise.resolve({ ok: false, error: e.message });
+    }
+  },
+
   sendVideo(videoUrl, caption) {
     try {
       const db = getDB();
@@ -835,6 +904,75 @@ const TelegramNotifier = {
         });
         req.on('error', err => resolve({ ok: false, error: err.message }));
         req.setTimeout(20000, () => { req.destroy(); resolve({ ok: false, error: 'Timeout' }); });
+        req.write(postData);
+        req.end();
+      });
+    } catch (e) {
+      return Promise.resolve({ ok: false, error: e.message });
+    }
+  },
+
+  sendMasterVideoFile(caption) {
+    try {
+      const db = getDB();
+      const cfg = db.telegramConfig || {};
+      if (!cfg.enabled || !cfg.botToken || !cfg.chatId) {
+        return Promise.resolve({ skipped: true });
+      }
+
+      const candidatePaths = [
+        path.join(__dirname, 'amaterasux_master_talking_briefing.mp4'),
+        path.join(__dirname, '..', 'brain', 'cb3cb3ce-090a-4aa4-a4fe-efac10e1d5a5', 'scratch', 'amaterasux_master_talking_briefing.mp4'),
+        path.join(__dirname, 'master_avatar_briefing.mp4'),
+        path.join('C:\\Users\\US\\.gemini\\antigravity\\brain\\cb3cb3ce-090a-4aa4-a4fe-efac10e1d5a5\\scratch\\amaterasux_master_talking_briefing.mp4'),
+        path.join('C:\\Users\\US\\.gemini\\antigravity\\brain\\cb3cb3ce-090a-4aa4-a4fe-efac10e1d5a5\\master_avatar_briefing.mp4')
+      ];
+
+      const videoPath = candidatePaths.find(p => fs.existsSync(p));
+      if (!videoPath) {
+        return this.send(caption);
+      }
+
+      const videoData = fs.readFileSync(videoPath);
+      const boundary = '----WebKitFormBoundary' + Math.random().toString(16).substring(2);
+
+      let body = '';
+      body += `--${boundary}\r\n`;
+      body += `Content-Disposition: form-data; name="chat_id"\r\n\r\n${cfg.chatId}\r\n`;
+      body += `--${boundary}\r\n`;
+      body += `Content-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`;
+      body += `--${boundary}\r\n`;
+      body += `Content-Disposition: form-data; name="parse_mode"\r\n\r\nHTML\r\n`;
+      body += `--${boundary}\r\n`;
+      body += `Content-Disposition: form-data; name="video"; filename="chief_market_strategist.mp4"\r\n`;
+      body += `Content-Type: video/mp4\r\n\r\n`;
+
+      const postData = Buffer.concat([
+        Buffer.from(body, 'utf8'),
+        videoData,
+        Buffer.from(`\r\n--${boundary}--\r\n`, 'utf8')
+      ]);
+
+      return new Promise((resolve) => {
+        const req = https.request(`https://api.telegram.org/bot${cfg.botToken}/sendVideo`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            'Content-Length': postData.length
+          },
+          timeout: 45000
+        }, res => {
+          let b = '';
+          res.on('data', c => b += c);
+          res.on('end', () => {
+            try {
+              const j = JSON.parse(b);
+              resolve({ ok: j.ok === true, data: j });
+            } catch(e) { resolve({ ok: false, error: e.message }); }
+          });
+        });
+        req.on('error', err => resolve({ ok: false, error: err.message }));
+        req.setTimeout(45000, () => { req.destroy(); resolve({ ok: false, error: 'Timeout' }); });
         req.write(postData);
         req.end();
       });
@@ -2464,7 +2602,12 @@ const server = http.createServer(async (req, res) => {
     try {
       const payload = await parseJsonBody(req);
       if (payload && payload.text) {
-        const result = await TelegramNotifier.send(payload.text);
+        let result;
+        if (payload.video === true) {
+          result = await TelegramNotifier.sendMasterVideoFile(payload.text);
+        } else {
+          result = await TelegramNotifier.send(payload.text);
+        }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: result.ok === true, details: result }));
       }
@@ -2487,23 +2630,6 @@ const server = http.createServer(async (req, res) => {
       const result = await TelegramNotifier.send(msg);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: result.ok === true, details: result, vaultId }));
-    } catch (e) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: false, error: e.message }));
-    }
-  }
-
-  // Broadcast Custom Message to Telegram Channel (Bridge / AI Engine)
-  if (pathname === '/api/telegram/broadcast-custom' && req.method === 'POST') {
-    try {
-      const payload = await parseJsonBody(req);
-      if (payload && payload.text) {
-        const result = await TelegramNotifier.send(payload.text);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: result.ok === true, details: result }));
-      }
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ error: 'Text diperlukan' }));
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: false, error: e.message }));

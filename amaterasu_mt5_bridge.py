@@ -347,8 +347,8 @@ class AmaterasuBridge:
                 )
                 requests.post(
                     f"{self.server_url.rstrip('/')}/api/telegram/broadcast-custom",
-                    json={"text": msg},
-                    timeout=5
+                    json={"text": msg, "video": True},
+                    timeout=20
                 )
             except Exception:
                 pass
