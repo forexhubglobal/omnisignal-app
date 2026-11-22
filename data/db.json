@@ -1,25 +1,15 @@
 {
   "stats": {
-    "totalSignals": 273,
-    "totalSignalsClosed": 273,
-    "totalProfitAllTime": 372887,
-    "winRate": 100,
+    "totalSignals": 280,
+    "totalSignalsClosed": 283,
+    "totalProfitAllTime": 372622,
+    "winRate": 98,
     "tp1Hit": 272,
     "tp2Hit": 0,
-    "tp3Hit": 0,
-    "slHit": 1,
-    "totalProfitToday": 372887,
+    "tp3Hit": 2,
+    "slHit": 6,
+    "totalProfitToday": 0,
     "last7Days": [
-      {
-        "day": "Fri",
-        "date": "Nov 13",
-        "pips": 0
-      },
-      {
-        "day": "Sat",
-        "date": "Nov 14",
-        "pips": 0
-      },
       {
         "day": "Sun",
         "date": "Nov 15",
@@ -41,43 +31,192 @@
         "pips": 0
       },
       {
-        "day": "Today",
+        "day": "Thu",
         "date": "Nov 19",
-        "pips": 372887
+        "pips": 372997
+      },
+      {
+        "day": "Fri",
+        "date": "Nov 20",
+        "pips": -375
+      },
+      {
+        "day": "Today",
+        "date": "Nov 21",
+        "pips": 0
       }
     ],
-    "lastUpdated": "2026-11-19T04:25:45.000Z"
+    "lastUpdated": "2026-11-20T16:05:51.000Z"
   },
   "activeSignal": {
-    "id": "sig-1795062210607",
-    "status": "ACTIVE",
+    "id": "sig-1795152176260",
+    "status": "TP1_HIT",
     "symbol": "XAUUSD",
-    "type": "SELL",
+    "type": "BUY",
     "timeframe": "M15",
-    "entry": 3725.8,
-    "tp1": 3720.5,
-    "tp2": 3708.1,
-    "tp3": 3699.2,
-    "sl": 3732.8,
-    "tp1Pips": 53,
-    "tp2Pips": 177,
-    "tp3Pips": 266,
-    "slPips": 70,
+    "entry": 3521.91,
+    "tp1": 3530.21,
+    "tp2": 3720.01,
+    "tp3": 3819.11,
+    "sl": 3522.01,
+    "tp1Pips": 50,
+    "tp2Pips": 1981,
+    "tp3Pips": 2972,
+    "slPips": 110,
     "trailingStage": 0,
     "lockedProfitPips": 0,
     "willWin": true,
-    "firedAt": "12:23",
-    "currentPrice": 3725.12,
-    "floatingPips": 6.8,
-    "beLocked": false,
-    "ticks": 55,
+    "firedAt": "13:22",
+    "currentPrice": 3540.43,
+    "floatingPips": 185.2,
+    "beLocked": true,
+    "ticks": 15385,
     "isNews": false,
     "newsName": null,
     "newsBias": null,
-    "notes": "[SMC Wave Crest Rejection] Puncak julat dicapai (3725.80). Pengesahan M15 Liquidity Sweep + Rejection Wick. Entry SELL menunggang gelombang pembetulan. SL ketat. Sasaran TP1. Kunci BE automatik.",
-    "peakPips": 6.8
+    "notes": "[SMC Wave Trough Rebound] Lembah julat dicapai di zon lantai (3521.91). Pengesahan M15 Demand Order Block + Bullish Pinbar. Entry BUY menunggang lantunan. SL ketat. Sasaran TP1. Kunci BE automatik.",
+    "peakPips": 739,
+    "tp1Triggered": true,
+    "tp1HitAt": "13:46"
   },
   "signals": [
+    {
+      "id": "mt5-532484503",
+      "time": "21:15",
+      "date": "Nov 20",
+      "symbol": "USDCHF",
+      "type": "SELL",
+      "entry": 0.84396,
+      "status": "TP3",
+      "pips": 65,
+      "tags": [
+        "TP1",
+        "TP2",
+        "TP3"
+      ],
+      "peak": 55
+    },
+    {
+      "id": "sig-1795147362125",
+      "time": "12:22",
+      "date": "Nov 20",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 3547.4,
+      "status": "SL",
+      "pips": -110,
+      "tags": [],
+      "peak": 4
+    },
+    {
+      "id": "sig-1795143270757",
+      "time": "11:01",
+      "date": "Nov 20",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 3551.95,
+      "status": "SL",
+      "pips": -110,
+      "tags": [],
+      "peak": 5
+    },
+    {
+      "id": "sig-1795138938168",
+      "time": "09:53",
+      "date": "Nov 20",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 3575.6,
+      "status": "SL",
+      "pips": -110,
+      "tags": [],
+      "peak": 5
+    },
+    {
+      "id": "sig-1795137012683",
+      "time": "09:16",
+      "date": "Nov 20",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 3604.86,
+      "status": "SL",
+      "pips": -110,
+      "tags": [],
+      "peak": 5
+    },
+    {
+      "id": "sig-1795132800441",
+      "time": "08:38",
+      "date": "Nov 20",
+      "symbol": "XAUUSD",
+      "type": "BUY",
+      "entry": 3602.96,
+      "status": "BE",
+      "pips": 1,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 232
+    },
+    {
+      "id": "sig-1795083032074",
+      "time": "23:25",
+      "date": "Nov 19",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3730.14,
+      "status": "TP3",
+      "pips": 180,
+      "tags": [
+        "TP1",
+        "TP2",
+        "TP3"
+      ],
+      "peak": 340
+    },
+    {
+      "id": "sig-1795058237095",
+      "time": "23:07",
+      "date": "Nov 19",
+      "symbol": "USDCHF",
+      "type": "SELL",
+      "entry": 0.84396,
+      "status": "BE",
+      "pips": 1,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 25
+    },
+    {
+      "id": "sig-1795068469051",
+      "time": "17:39",
+      "date": "Nov 19",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3735.48,
+      "status": "BE",
+      "pips": 1,
+      "tags": [
+        "TP1",
+        "BE"
+      ],
+      "peak": 88
+    },
+    {
+      "id": "sig-1795062210607",
+      "time": "13:07",
+      "date": "Nov 19",
+      "symbol": "XAUUSD",
+      "type": "SELL",
+      "entry": 3725.8,
+      "status": "SL",
+      "pips": -70,
+      "tags": [],
+      "peak": 5
+    },
     {
       "id": "sig-1795060525456",
       "time": "11:58",
@@ -4172,13 +4311,158 @@
     }
   ],
   "aiNewsStats": {
-    "totalNewsSignals": 0,
-    "winRate": 0,
-    "tpHit": 0,
+    "totalNewsSignals": 12,
+    "winRate": 100,
+    "tpHit": 12,
     "slHit": 0,
-    "totalPips": 0
+    "totalPips": 940
   },
-  "aiNewsHistory": [],
+  "aiNewsHistory": [
+    {
+      "id": "nws-1795187101821",
+      "date": "Nov 20",
+      "time": "23:00",
+      "event": "US ISM Manufacturing PMI & JOLTS",
+      "symbol": "XAUUSD",
+      "bias": "BULLISH",
+      "entry": 3572.08,
+      "status": "TP2_HIT",
+      "pips": 78,
+      "notes": "Unjuran AI (BULLISH) bertepatan dengan data pasaran. Pasaran bergerak +78 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795183500406",
+      "date": "Nov 20",
+      "time": "22:00",
+      "event": "US Existing Home Sales & Flash PMI",
+      "symbol": "XAUUSD",
+      "bias": "BULLISH",
+      "entry": 3568.05,
+      "status": "TP2_HIT",
+      "pips": 94,
+      "notes": "Unjuran AI (BULLISH) bertepatan dengan data pasaran. Pasaran bergerak +94 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795181700123",
+      "date": "Nov 20",
+      "time": "21:30",
+      "event": "Canada Core CPI & BoC Policy Outlook",
+      "symbol": "XAUUSD",
+      "bias": "BEARISH",
+      "entry": 3557.41,
+      "status": "TP2_HIT",
+      "pips": 105,
+      "notes": "Unjuran AI (BEARISH) bertepatan dengan data pasaran. Pasaran bergerak +105 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795178102180",
+      "date": "Nov 20",
+      "time": "20:30",
+      "event": "US Initial Jobless Claims & Core PCE",
+      "symbol": "XAUUSD",
+      "bias": "BULLISH",
+      "entry": 3570.67,
+      "status": "TP2_HIT",
+      "pips": 103,
+      "notes": "Unjuran AI (BULLISH) bertepatan dengan data pasaran. Pasaran bergerak +103 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795165500477",
+      "date": "Nov 20",
+      "time": "17:00",
+      "event": "German Ifo Business Climate & CPI",
+      "symbol": "EURUSD",
+      "bias": "BEARISH",
+      "entry": 1.0967,
+      "status": "TP2_HIT",
+      "pips": 59,
+      "notes": "Unjuran AI (BEARISH) bertepatan dengan data pasaran. Pasaran bergerak +59 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795154701244",
+      "date": "Nov 20",
+      "time": "14:00",
+      "event": "UK Retail Sales & GDP Update",
+      "symbol": "GBPUSD",
+      "bias": "BEARISH",
+      "entry": 1.31,
+      "status": "TP2_HIT",
+      "pips": 51,
+      "notes": "Unjuran AI (BEARISH) bertepatan dengan data pasaran. Pasaran bergerak +51 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795100701488",
+      "date": "Nov 19",
+      "time": "23:00",
+      "event": "US ISM Manufacturing PMI & JOLTS",
+      "symbol": "XAUUSD",
+      "bias": "BULLISH",
+      "entry": 3711.18,
+      "status": "TP2_HIT",
+      "pips": 102,
+      "notes": "Unjuran AI (BULLISH) bertepatan dengan data pasaran. Pasaran bergerak +102 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795097100932",
+      "date": "Nov 19",
+      "time": "22:00",
+      "event": "US Existing Home Sales & Flash PMI",
+      "symbol": "XAUUSD",
+      "bias": "BULLISH",
+      "entry": 3714.56,
+      "status": "TP2_HIT",
+      "pips": 85,
+      "notes": "Unjuran AI (BULLISH) bertepatan dengan data pasaran. Pasaran bergerak +85 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795095300631",
+      "date": "Nov 19",
+      "time": "21:30",
+      "event": "Canada Core CPI & BoC Policy Outlook",
+      "symbol": "XAUUSD",
+      "bias": "BEARISH",
+      "entry": 3718.76,
+      "status": "TP2_HIT",
+      "pips": 89,
+      "notes": "Unjuran AI (BEARISH) bertepatan dengan data pasaran. Pasaran bergerak +89 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795091700271",
+      "date": "Nov 19",
+      "time": "20:30",
+      "event": "US Initial Jobless Claims & Core PCE",
+      "symbol": "XAUUSD",
+      "bias": "BULLISH",
+      "entry": 3716.53,
+      "status": "TP2_HIT",
+      "pips": 83,
+      "notes": "Unjuran AI (BULLISH) bertepatan dengan data pasaran. Pasaran bergerak +83 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795079100773",
+      "date": "Nov 19",
+      "time": "17:00",
+      "event": "German Ifo Business Climate & CPI",
+      "symbol": "EURUSD",
+      "bias": "BEARISH",
+      "entry": 1.0996,
+      "status": "TP1_HIT",
+      "pips": 38,
+      "notes": "Unjuran AI (BEARISH) bertepatan dengan data pasaran. Pasaran bergerak +38 pip melepasi zon sasaran."
+    },
+    {
+      "id": "nws-1795068301085",
+      "date": "Nov 19",
+      "time": "14:00",
+      "event": "UK Retail Sales & GDP Update",
+      "symbol": "GBPUSD",
+      "bias": "BEARISH",
+      "entry": 1.31,
+      "status": "TP2_HIT",
+      "pips": 53,
+      "notes": "Unjuran AI (BEARISH) bertepatan dengan data pasaran. Pasaran bergerak +53 pip melepasi zon sasaran."
+    }
+  ],
   "analysis": {
     "symbol": "XAUUSD",
     "date": "17 October 2026, 18:00",
@@ -5195,33 +5479,35 @@
   "copytradeRequests": [],
   "activeSignals": [
     {
-      "id": "sig-1795062210607",
-      "status": "ACTIVE",
+      "id": "sig-1795152176260",
+      "status": "TP1_HIT",
       "symbol": "XAUUSD",
-      "type": "SELL",
+      "type": "BUY",
       "timeframe": "M15",
-      "entry": 3725.8,
-      "tp1": 3720.5,
-      "tp2": 3708.1,
-      "tp3": 3699.2,
-      "sl": 3732.8,
-      "tp1Pips": 53,
-      "tp2Pips": 177,
-      "tp3Pips": 266,
-      "slPips": 70,
+      "entry": 3521.91,
+      "tp1": 3530.21,
+      "tp2": 3720.01,
+      "tp3": 3819.11,
+      "sl": 3522.01,
+      "tp1Pips": 50,
+      "tp2Pips": 1981,
+      "tp3Pips": 2972,
+      "slPips": 110,
       "trailingStage": 0,
       "lockedProfitPips": 0,
       "willWin": true,
-      "firedAt": "12:23",
-      "currentPrice": 3725.12,
-      "floatingPips": 6.8,
-      "beLocked": false,
-      "ticks": 55,
+      "firedAt": "13:22",
+      "currentPrice": 3540.43,
+      "floatingPips": 185.2,
+      "beLocked": true,
+      "ticks": 15385,
       "isNews": false,
       "newsName": null,
       "newsBias": null,
-      "notes": "[SMC Wave Crest Rejection] Puncak julat dicapai (3725.80). Pengesahan M15 Liquidity Sweep + Rejection Wick. Entry SELL menunggang gelombang pembetulan. SL ketat. Sasaran TP1. Kunci BE automatik.",
-      "peakPips": 6.8
+      "notes": "[SMC Wave Trough Rebound] Lembah julat dicapai di zon lantai (3521.91). Pengesahan M15 Demand Order Block + Bullish Pinbar. Entry BUY menunggang lantunan. SL ketat. Sasaran TP1. Kunci BE automatik.",
+      "peakPips": 739,
+      "tp1Triggered": true,
+      "tp1HitAt": "13:46"
     },
     {
       "id": "sig-1795058237097",
@@ -5242,10 +5528,10 @@
       "lockedProfitPips": 27,
       "willWin": true,
       "firedAt": "11:17",
-      "currentPrice": 1.0961,
-      "floatingPips": -9,
+      "currentPrice": 1.0981,
+      "floatingPips": 11,
       "beLocked": true,
-      "ticks": 1639,
+      "ticks": 52851,
       "isNews": false,
       "newsName": null,
       "newsBias": null,
@@ -5257,39 +5543,6 @@
       "mt5OpenPrice": 1.09726,
       "tp1Triggered": true,
       "tp1HitAt": "11:17"
-    },
-    {
-      "id": "sig-1795058237095",
-      "status": "ACTIVE",
-      "symbol": "USDCHF",
-      "type": "SELL",
-      "timeframe": "M15",
-      "entry": 0.84396,
-      "tp1": 0.84194,
-      "tp2": 0.8243,
-      "tp3": 0.8218,
-      "sl": 0.84744,
-      "tp1Pips": 20,
-      "tp2Pips": 40,
-      "tp3Pips": 65,
-      "slPips": 22,
-      "trailingStage": 0,
-      "lockedProfitPips": 0,
-      "willWin": true,
-      "firedAt": "11:17",
-      "currentPrice": 0.8439,
-      "floatingPips": 0.6,
-      "beLocked": false,
-      "ticks": 1639,
-      "isNews": false,
-      "newsName": null,
-      "newsBias": null,
-      "notes": "[MT5 Real-Time Verified] Selaras 100% dengan posisi terbuka MT5 (Tiket #532484503)",
-      "peakPips": 2.6,
-      "_firstMissingAt": null,
-      "mt5Verified": true,
-      "mt5Ticket": 532484503,
-      "mt5OpenPrice": 0.84396
     }
   ],
   "marketBrain": {
@@ -5346,15 +5599,26 @@
     }
   },
   "lastResolvedSignal": {
-    "id": "sig-1795060525456",
-    "time": "11:58",
-    "date": "Nov 19",
-    "symbol": "XAUUSD",
+    "id": "mt5-532484503",
+    "time": "21:15",
+    "date": "Nov 20",
+    "symbol": "USDCHF",
     "type": "SELL",
-    "entry": 3716.73,
-    "status": "SL",
-    "pips": -48,
-    "tags": [],
-    "peak": 2
+    "entry": 0.84396,
+    "status": "TP3",
+    "pips": 65,
+    "tags": [
+      "TP1",
+      "TP2",
+      "TP3"
+    ],
+    "peak": 55
+  },
+  "telegramConfig": {
+    "enabled": true,
+    "botToken": "9111208129:AAE1AfayEVIRtwC4HRMFKrTa61FOE-znvMc",
+    "chatId": "@AmaterasuXCommunity",
+    "channelId": "-1003953991182",
+    "updatedAt": "2026-11-22T02:28:49.953Z"
   }
 }
