@@ -827,16 +827,16 @@ class AmaterasuBridge:
         # HARD CEILING: Maximum Total Account Open Lots & Positions (Anti-Overtrading & Anti-Liquidation)
         all_pos_raw = mt5.positions_get() or []
         tot_vol = sum(p.volume for p in all_pos_raw)
-        default_max_lots = 1.0 if getattr(self, "is_cent_account", True) else 0.20
+        default_max_lots = 1.50 if getattr(self, "is_cent_account", True) else 0.30
         max_tot_vol = float(self.config.get("max_account_lots", default_max_lots))
-        max_total_pos = min(int(self.config.get("max_account_positions", 4)), 4)
+        max_total_pos = min(int(self.config.get("max_account_positions", 8)), 8)
         if tot_vol >= max_tot_vol or len(all_pos_raw) >= max_total_pos:
-            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= {max_total_pos}) telah mencapai had maksimum keselamatan (Max 4)! Menolak order baharu.{Colors.RESET}")
+            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= {max_total_pos}) telah mencapai had maksimum keselamatan akaun (Max 8)! Menolak order baharu.{Colors.RESET}")
             return None
 
-        # STRICT 1-SETUP PER SYMBOL (STRICT MAX 3 SPLIT LAYERS FOR GOLD, 2 FOR FOREX):
-        # Maksimum 3 posisi bagi XAUUSD dan 2 posisi bagi Forex untuk melindungi margin
-        max_allowed_layers = min(int(self.config.get("max_gold_positions", 3)), 3) if clean_raw_sym == "XAUUSD" else min(int(self.config.get("max_symbol_positions", 2)), 2)
+        # STRICT 1-SETUP PER SYMBOL (STRICT MAX 4 SPLIT LAYERS FOR GOLD, 2 FOR FOREX):
+        # Had maksima 4 posisi untuk SETIAP PAIR (Gold: Max 4 split layers, Forex: Max 2)
+        max_allowed_layers = min(int(self.config.get("max_gold_positions", 4)), 4) if clean_raw_sym == "XAUUSD" else min(int(self.config.get("max_symbol_positions", 2)), 2)
         existing_symbol_orders = [
             p for p in (mt5.positions_get() or [])
             if p.symbol.split('.')[0].upper() == clean_raw_sym
