@@ -4255,6 +4255,28 @@ const AiEngine = {
       const isAtRoof = liveP >= (roofRef - tolerance);
       const isAtFloor = liveP <= (floorRef + tolerance);
 
+      // IRONCLAD ANTI-LANTAI (MANDAT PULLBACK INSTITUSI):
+      // DILARANG SAMA SEKALI SELL DI LANTAI DASAR WALAUPUN TREND BEARISH!
+      if (type === 'SELL') {
+        const floorBuffer = isGoldAsset ? 4.5 : 0.0015;
+        const minPullbackZone = floorRef + (range * 0.35);
+        if (liveP <= (floorRef + floorBuffer) || liveP < minPullbackZone) {
+          this.log(`🛡️ [STRICT ANTI-LANTAI GUARD] Menolak isyarat SELL #${asset.symbol} pada ${liveP.toFixed(2)}. Harga berada di zon lantai sokongan (${floorRef.toFixed(2)}). Wajib tunggu Pullback melantun ke atas dahulu sebelum SELL!`);
+          return;
+        }
+      }
+
+      // IRONCLAD ANTI-PUCUK (MANDAT CELUPAN INSTITUSI):
+      // DILARANG SAMA SEKALI BUY DI BUMBUNG PUNCAK WALAUPUN TREND BULLISH!
+      if (type === 'BUY') {
+        const roofBuffer = isGoldAsset ? 4.5 : 0.0015;
+        const maxCelupanZone = roofRef - (range * 0.35);
+        if (liveP >= (roofRef - roofBuffer) || liveP > maxCelupanZone) {
+          this.log(`🛡️ [STRICT ANTI-PUCUK GUARD] Menolak isyarat BUY #${asset.symbol} pada ${liveP.toFixed(2)}. Harga berada di zon bumbung rintangan (${roofRef.toFixed(2)}). Wajib tunggu Pullback celup ke bawah dahulu sebelum BUY!`);
+          return;
+        }
+      }
+
       if (type === 'SELL' && (liveMtf.macro === 'STRONG_BUYER' || liveMtf.alignment === 'FULL_BULLISH')) {
         if (!isAtRoof) {
           this.log(`🛡️ [TRIPLE MA GUARD] Menolak isyarat SELL #${asset.symbol} di tengah aliran Bullish (bukan di zon bumbung rintangan).`);
