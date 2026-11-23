@@ -353,6 +353,62 @@ class AmaterasuBridge:
 
         return False
 
+    def check_max_drawdown_circuit_breaker(self):
+        """
+        PENGURUSAN RISIKO INSTITUSI: PEMUTUS LITAR KERUGIAN MAKSIMA (MAX DD HARD CUT-OFF 15%)
+        Jika kerugian terapung (floating loss) mencecah >= 15% daripada baki akaun:
+        1. TUTUP SEMUA ORDER SERTA-MERTA (CUT LOSS KESELURUHAN).
+        2. Kunci akaun daripada membuka sebarang order baharu untuk selamatkan baki 85% modal.
+        3. Hantar notifikasi perlindungan ke Telegram.
+        """
+        try:
+            acc = mt5.account_info()
+            if not acc:
+                return False
+            cur_bal = float(getattr(acc, "balance", 0.0))
+            cur_eq = float(getattr(acc, "equity", 0.0))
+            if cur_bal <= 0:
+                return False
+
+            floating = cur_eq - cur_bal
+            # Had kerugian maksima: 15% daripada balance
+            max_allowed_loss = -(cur_bal * 0.15)
+            if floating <= max_allowed_loss:
+                print(f"\n{Colors.RED}{Colors.BOLD}🚨 [CIRCUIT BREAKER 15% AKTIF] Kerugian terapung ({floating:.2f}) melebihi had 15% ({max_allowed_loss:.2f})!")
+                print(f"🛑 Menutup semua posisi terbuka serta-merta untuk menyelamatkan baki modal!{Colors.RESET}\n")
+
+                all_pos = mt5.positions_get()
+                if all_pos:
+                    for p in all_pos:
+                        self.close_position_market(p, "MaxDD-15%")
+
+                self.account_target_reached = True
+
+                now_myt = datetime.now(timezone(timedelta(hours=8))).strftime("%d %b %Y (%H:%M MYT)")
+                loss_usd = (abs(floating) / 100.0) if getattr(self, "is_cent_account", True) else abs(floating)
+                rem_eq_usd = (cur_eq / 100.0) if getattr(self, "is_cent_account", True) else cur_eq
+                msg = (
+                    "🛡️ <b>AMATERASU X · PERLINDUNGAN MODAL DIAKTIFKAN</b>\n"
+                    "━━━━━━━━━━━━━━━━━━━━━\n"
+                    f"📅 <b>Masa:</b> {now_myt}\n"
+                    "🛑 <b>Status:</b> Auto Cut-Loss 15% Dipicu\n\n"
+                    "💡 <b>DISIPLIN PERLINDUNGAN MODAL:</b>\n"
+                    f"Pasaran melanggar struktur. Sistem memotong kerugian pada paras 15% (-${loss_usd:.2f} USD) dan menutup semua posisi secara automatik untuk menyelamatkan baki modal utama (${rem_eq_usd:.2f} USD)!\n\n"
+                    "🔒 Sistem kini berehat untuk memelihara modal sehingga arahan seterusnya."
+                )
+                try:
+                    requests.post(
+                        f"{self.server_url.rstrip('/')}/api/telegram/broadcast-custom",
+                        json={"text": msg},
+                        timeout=10
+                    )
+                except Exception:
+                    pass
+                return True
+        except Exception:
+            pass
+        return False
+
     def is_dangerous_market_hour(self):
         """
         ARAHAN TEGAS BOS: HARAMKAN TRADE PADA WAKTU-WAKTU BAHAYA MANIPULASI:
@@ -771,16 +827,16 @@ class AmaterasuBridge:
         # HARD CEILING: Maximum Total Account Open Lots & Positions (Anti-Overtrading & Anti-Liquidation)
         all_pos_raw = mt5.positions_get() or []
         tot_vol = sum(p.volume for p in all_pos_raw)
-        default_max_lots = 5.0 if getattr(self, "is_cent_account", True) else 0.50
+        default_max_lots = 1.0 if getattr(self, "is_cent_account", True) else 0.20
         max_tot_vol = float(self.config.get("max_account_lots", default_max_lots))
-        max_total_pos = int(self.config.get("max_account_positions", 20))
-        if clean_raw_sym != "XAUUSD" and (tot_vol >= max_tot_vol or len(all_pos_raw) >= max_total_pos):
-            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= {max_total_pos}) telah mencapai had maksimum keselamatan! Menolak order baharu.{Colors.RESET}")
+        max_total_pos = min(int(self.config.get("max_account_positions", 4)), 4)
+        if tot_vol >= max_tot_vol or len(all_pos_raw) >= max_total_pos:
+            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= {max_total_pos}) telah mencapai had maksimum keselamatan (Max 4)! Menolak order baharu.{Colors.RESET}")
             return None
 
-        # STRICT 1-SETUP PER SYMBOL (STRICT MAX 9 SPLIT LAYERS FOR GOLD, 3 FOR FOREX):
-        # Maksimum 9 posisi bagi XAUUSD (sama seperti MEZ EA) dan 3 posisi bagi Forex
-        max_allowed_layers = int(self.config.get("max_gold_positions", 9)) if clean_raw_sym == "XAUUSD" else min(int(self.config.get("max_symbol_positions", 3)), 3)
+        # STRICT 1-SETUP PER SYMBOL (STRICT MAX 3 SPLIT LAYERS FOR GOLD, 2 FOR FOREX):
+        # Maksimum 3 posisi bagi XAUUSD dan 2 posisi bagi Forex untuk melindungi margin
+        max_allowed_layers = min(int(self.config.get("max_gold_positions", 3)), 3) if clean_raw_sym == "XAUUSD" else min(int(self.config.get("max_symbol_positions", 2)), 2)
         existing_symbol_orders = [
             p for p in (mt5.positions_get() or [])
             if p.symbol.split('.')[0].upper() == clean_raw_sym
@@ -789,13 +845,24 @@ class AmaterasuBridge:
             print(f"{Colors.YELLOW}🛡️ [SOP LAYER LIMIT] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} posisi aktif (Maksimum {max_allowed_layers}). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
             return None
 
-        # Anti-Hedging check: Elak buka posisi bertentangan jika sudah ada sebarang posisi aktif untuk simbol ini di MT5
+        # Stop-and-Reverse (SAR) & Anti-Hedging check:
         all_sym_pos = [p for p in (mt5.positions_get() or []) if p.symbol.split('.')[0].upper() == clean_raw_sym]
         if all_sym_pos:
-            for ep in all_sym_pos:
-                if (order_type == mt5.ORDER_TYPE_BUY and ep.type == mt5.POSITION_TYPE_SELL) or \
-                   (order_type == mt5.ORDER_TYPE_SELL and ep.type == mt5.POSITION_TYPE_BUY):
-                    print(f"{Colors.YELLOW}[ANTI-HEDGE] Menolak order {order_type_str} #{symbol} kerana sudah ada posisi bertentangan yang sedang aktif di MT5 (Ticket #{ep.ticket}, Type: {'BUY' if ep.type == mt5.POSITION_TYPE_BUY else 'SELL'}). Menunggu selesai dahulu.{Colors.RESET}")
+            is_opposing = any(
+                (order_type == mt5.ORDER_TYPE_BUY and ep.type == mt5.POSITION_TYPE_SELL) or
+                (order_type == mt5.ORDER_TYPE_SELL and ep.type == mt5.POSITION_TYPE_BUY)
+                for ep in all_sym_pos
+            )
+            if is_opposing:
+                # Jika isyarat disahkan sebagai pusingan arah (Reversal / SAR)
+                is_reversal = (sig.get("reversal") is True or sig.get("flip") is True)
+                if is_reversal:
+                    print(f"{Colors.GREEN}🔄 [STOP-AND-REVERSE] Pasaran memecahkan struktur! Menutup posisi lama yang bertentangan dan memutar arah ke {order_type_str}!{Colors.RESET}")
+                    for ep in all_sym_pos:
+                        self.close_position_market(ep, "SAR-Reversal")
+                    time.sleep(1)
+                else:
+                    print(f"{Colors.YELLOW}[ANTI-HEDGE] Menolak order {order_type_str} #{symbol} kerana sudah ada posisi bertentangan aktif di MT5. Menunggu pengesahan Reversal.{Colors.RESET}")
                     return None
 
         # INSTITUTIONAL VOLUME FLOW RADAR TELEMETRY:
@@ -1306,32 +1373,38 @@ class AmaterasuBridge:
 
 
     def close_position_market(self, p, reason=""):
-        """Tutup satu posisi pasaran serta-merta - DILUMPUHKAN 100% UNTUK KEKALKAN POSISI STATIK"""
-        return False
-        tick = mt5.symbol_info_tick(p.symbol)
-        if not tick:
-            return False
-        is_buy = (p.type == mt5.POSITION_TYPE_BUY)
-        price = tick.bid if is_buy else tick.ask
-        close_type = mt5.ORDER_TYPE_SELL if is_buy else mt5.ORDER_TYPE_BUY
-        filling = self.get_fill_type(p.symbol, close_type, price)
-        req = {
-            "action": mt5.TRADE_ACTION_DEAL,
-            "position": p.ticket,
-            "symbol": p.symbol,
-            "volume": p.volume,
-            "type": close_type,
-            "price": round(price, sym_info.digits),
-            "deviation": int(self.max_slippage_pips * 10),
-            "magic": self.magic_number,
-            "comment": "" if self.config.get("stealth_mode", True) else f"Close-{reason[:16]}",
-            "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": filling,
-        }
-        res = mt5.order_send(req)
-        if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-            print(f"{Colors.GREEN}🛡️ [PRE-NEWS CUTOFF] Berjaya menutup posisi #{p.ticket} {p.symbol} ({reason}) bagi mengelak risiko lonjakan news 20:30!{Colors.RESET}")
-            return True
+        """Tutup satu posisi pasaran serta-merta"""
+        try:
+            tick = mt5.symbol_info_tick(p.symbol)
+            sym_info = mt5.symbol_info(p.symbol)
+            if not tick or not sym_info:
+                return False
+            is_buy = (p.type == mt5.POSITION_TYPE_BUY)
+            price = tick.bid if is_buy else tick.ask
+            close_type = mt5.ORDER_TYPE_SELL if is_buy else mt5.ORDER_TYPE_BUY
+            filling = self.get_fill_type(p.symbol, close_type, price)
+            req = {
+                "action": mt5.TRADE_ACTION_DEAL,
+                "position": p.ticket,
+                "symbol": p.symbol,
+                "volume": p.volume,
+                "type": close_type,
+                "price": round(price, sym_info.digits),
+                "deviation": int(self.max_slippage_pips * 10),
+                "magic": self.magic_number,
+                "comment": f"Cut-{reason[:16]}" if not self.config.get("stealth_mode", True) else "",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": filling,
+            }
+            res = mt5.order_send(req)
+            if res and res.retcode == mt5.TRADE_RETCODE_DONE:
+                print(f"{Colors.GREEN}🛡️ [AUTO-CLOSE] Berjaya menutup posisi #{p.ticket} {p.symbol} ({reason})!{Colors.RESET}")
+                return True
+            else:
+                retcode = getattr(res, 'retcode', 'Unknown')
+                print(f"{Colors.RED}⚠️ [AUTO-CLOSE GAGAL] Tiket #{p.ticket} retcode={retcode}{Colors.RESET}")
+        except Exception as e:
+            print(f"{Colors.RED}⚠️ [AUTO-CLOSE ERROR] {e}{Colors.RESET}")
         return False
 
     def apply_breakeven_for_signal(self, sig_id, entry_price=None, raw_symbol=None):
@@ -1717,6 +1790,8 @@ class AmaterasuBridge:
                 # Semak setiap posisi MT5 aktif secara langsung untuk perlindungan BE & Penyelarasan SL Baru
                 all_pos = mt5.positions_get()
                 self.check_account_profit_target()
+                if self.check_max_drawdown_circuit_breaker():
+                    continue
                 if all_pos:
                     # Lindungi semua posisi manual yang tiada SL atau TP (SL=0 / TP=0) serta-merta
                     self.protect_naked_manual_positions(all_pos)

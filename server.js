@@ -4295,28 +4295,20 @@ const AiEngine = {
         return (type === 'BUY' && isSell) || (type === 'SELL' && isBuy);
       });
 
+      let isReversalSignal = false;
       if (hasOpposing) {
-        this.log(`🛡️ [CROSS-ACCOUNT ANTI-HEDGE] Menolak isyarat ${type} #${asset.symbol} kerana akaun Master MT5 sedang memegang posisi bertentangan!`);
-        return;
-      }
+        // Semak jika pasaran membuat Break of Structure (BOS) atau Lonjakan Momentum Sebenar
+        const isStrongReversal = (liveVFlow && liveVFlow.vol_ratio >= 1.15) ||
+                                (liveMtf && ((type === 'BUY' && (liveMtf.m5 === 'BULLISH_FAN' || liveMtf.m15 === 'BULLISH')) ||
+                                             (type === 'SELL' && (liveMtf.m5 === 'BEARISH_FAN' || liveMtf.m15 === 'BEARISH'))));
 
-      // Single-Direction Consensus: If master already has positions in same symbol, enforce identical direction
-      const existingBuy = symPositions.some(p => {
-        const rawT = (p.type !== undefined ? p.type : p.t);
-        return rawT === 0 || rawT === '0' || String(rawT).toUpperCase() === 'BUY';
-      });
-      const existingSell = symPositions.some(p => {
-        const rawT = (p.type !== undefined ? p.type : p.t);
-        return rawT === 1 || rawT === '1' || String(rawT).toUpperCase() === 'SELL';
-      });
-
-      if (existingBuy && type !== 'BUY') {
-        this.log(`🛡️ [SINGLE-DIRECTION CONSENSUS] Akaun Master sedang memegang BUY #${asset.symbol}. Menolak ${type} bagi memelihara konsensus.`);
-        return;
-      }
-      if (existingSell && type !== 'SELL') {
-        this.log(`🛡️ [SINGLE-DIRECTION CONSENSUS] Akaun Master sedang memegang SELL #${asset.symbol}. Menolak ${type} bagi memelihara konsensus.`);
-        return;
+        if (isStrongReversal) {
+          this.log(`🔄 [SMART STOP-AND-REVERSE] Pasaran memecahkan struktur! Mengesahkan isyarat pemutaran arah ${type} #${asset.symbol} untuk memotong posisi salah dan mengikut arus momentum baharu!`);
+          isReversalSignal = true;
+        } else {
+          this.log(`🛡️ [CROSS-ACCOUNT ANTI-HEDGE] Menolak isyarat ${type} #${asset.symbol} kerana akaun Master MT5 sedang memegang posisi bertentangan dan belum ada pengesahan Reversal kukuh.`);
+          return;
+        }
       }
     }
 
@@ -4454,12 +4446,14 @@ const AiEngine = {
       isNews: !!newsSynergy,
       newsName: newsSynergy ? newsSynergy.newsName : null,
       newsBias: newsSynergy ? newsSynergy.bias : null,
+      reversal: !!isReversalSignal,
+      flip: !!isReversalSignal,
       notes: notes
     };
 
     if (!Array.isArray(db.activeSignals)) db.activeSignals = [];
     const existingIdx = db.activeSignals.findIndex(s => s.symbol === asset.symbol && (s.status === 'ACTIVE' || s.status === 'TP1_HIT'));
-    if (existingIdx !== -1) {
+    if (existingIdx !== -1 && !isReversalSignal) {
       this.log(`🛡️ [1-SETUP GUARD] Menolak isyarat ${type} ${asset.symbol} kerana setup sedia ada (#${db.activeSignals[existingIdx].id}) masih berjalan.`);
       return;
     }
