@@ -272,7 +272,8 @@ class AmaterasuBridge:
             floating = sum(p.profit for p in positions)
             total_today_gain = realized_today + floating
 
-            effective_gain = max(equity_gain, total_today_gain)
+            # Untung bersih harian dinilai daripada closed trading deals + floating (Deposit dikecualikan)
+            effective_gain = total_today_gain
             return effective_gain, realized_today, floating
         except Exception:
             return 0.0, 0.0, 0.0
@@ -1961,7 +1962,16 @@ class AmaterasuBridge:
                             "mtfMaFlow": mtf_ma_flow
                         }, timeout=3)
                         if resp and resp.status_code == 200:
-                                pass
+                            try:
+                                rj = resp.json()
+                                if rj.get("resumeTrading") is True or rj.get("resetTarget") is True:
+                                    if self.account_target_reached:
+                                        self.account_target_reached = False
+                                        acc = mt5.account_info()
+                                        if acc:
+                                            self.session_baseline_equity = float(acc.equity)
+                                        print(f"\n{Colors.GREEN}{Colors.BOLD}🚀 [REMOTE RESUME] Arahan START dari Pelayan disahkan! Enjin Dragon memulakan pusingan dagangan baharu.{Colors.RESET}\n")
+                            except Exception:
                                 pass
                     except Exception:
                         pass

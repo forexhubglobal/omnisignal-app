@@ -1948,6 +1948,8 @@ const server = http.createServer(async (req, res) => {
         synced: Object.keys(payload?.quotes || {}).length, 
         reconciled: !!payload?.openPositions, 
         copytrade: db.copytrade,
+        resumeTrading: db.copytrade?.targetReached === false,
+        resetTarget: db.copytrade?.targetReached === false,
         close_symbols: db.pendingCloseSymbols || []
       }));
     } catch (err) {
