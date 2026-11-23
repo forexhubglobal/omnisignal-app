@@ -4320,6 +4320,38 @@ const AiEngine = {
       }
     }
 
+    // =========================================================================
+    // 5. IRONCLAD ANTI-PHASE-2 GRIND & CLUSTERING GUARD (Aktif Bermula 24 Nov 2026 / Esok)
+    // =========================================================================
+    const mytDateIso = new Date(Date.now() + 8 * 3600 * 1000).toISOString().split('T')[0];
+    const isTomorrowOrLater = mytDateIso >= '2026-11-24';
+    if (isTomorrowOrLater) {
+      // Penapis A: Sekat Counter-Trend jika Dominasi Pembeli/Penjual Melebihi 60%
+      const bDom = (this.liveDominance && this.liveDominance[asset.symbol]) ? this.liveDominance[asset.symbol].buyer_pct : 50;
+      if (type === 'SELL' && bDom > 60.0) {
+        this.log(`🛡️ [IRONCLAD DOMINANCE GUARD] Menolak isyarat SELL #${asset.symbol} kerana dominasi pembeli (${bDom.toFixed(1)}%) melebihi had 60%. Wajib tunggu tekanan belian reda!`);
+        return;
+      }
+      if (type === 'BUY' && bDom < 40.0) {
+        this.log(`🛡️ [IRONCLAD DOMINANCE GUARD] Menolak isyarat BUY #${asset.symbol} kerana dominasi penjual (${(100 - bDom).toFixed(1)}%) melebihi had 60%. Wajib tunggu tekanan jualan reda!`);
+        return;
+      }
+
+      // Penapis B: Anti-Clustering Spacing (Wajib sekurang-kurangnya 30 pips dari posisi sedia ada)
+      if (symPositions.length > 0) {
+        const minSpacingPips = (asset.symbol === 'XAUUSD') ? 30.0 : 15.0;
+        const minSpacingPrice = (asset.symbol === 'XAUUSD') ? (minSpacingPips / 10.0) : (minSpacingPips * 0.0001);
+        const tooClose = symPositions.some(p => {
+          const openP = Number(p.openPrice !== undefined ? p.openPrice : (p.p !== undefined ? p.p : 0));
+          return Math.abs(liveP - openP) < minSpacingPrice;
+        });
+        if (tooClose) {
+          this.log(`🛡️ [ANTI-CLUSTERING GUARD] Menolak isyarat ${type} #${asset.symbol} kerana harga semasa (${liveP.toFixed(2)}) terlalu rapat (< ${minSpacingPips} pips) dengan posisi sedia ada.`);
+          return;
+        }
+      }
+    }
+
     // Dynamic ATR Session Volatility Adaptation (Waktu Malaysia MYT)
     let volMult = 1.0;
     if (nowH >= 6 && nowH < 14) {
