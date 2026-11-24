@@ -3620,21 +3620,30 @@ const AiEngine = {
         supportFloor = Number(Math.min(m1_ma20, curPrice - 2.5).toFixed(2));
         resistanceCeiling = Number(Math.max(curPrice + 8.0, Math.ceil(curPrice / 10) * 10).toFixed(2));
 
-        const isNearCeiling = curPrice >= (resistanceCeiling - 2.0) || (mtf.d1_high > 0 && curPrice >= mtf.d1_high - 1.5);
-        const isNearFloor = curPrice <= (supportFloor + 2.0) || (mtf.d1_low > 0 && curPrice <= mtf.d1_low + 1.5);
+        const isNearCeiling = curPrice >= (resistanceCeiling - 3.5) || (mtf.d1_high > 0 && curPrice >= mtf.d1_high - 2.5);
+        const isNearFloor = curPrice <= (supportFloor + 3.5) || (mtf.d1_low > 0 && curPrice <= mtf.d1_low + 2.5);
 
-        if (isNearCeiling || (m15.includes('BEARISH') && buyerPct <= 40) || macro === 'STRONG_SELLER') {
-          verdict = isNearCeiling ? 'SELL AT RESISTANCE (REJECTION ZON BUMBUNG)' : 'SELL ON RALLY (M15 BEARISH FLOW)';
-          biasClass = 'bearish';
-          advisory = `Zon rintangan / liquidity sweep (${curPrice.toFixed(2)} vs bumbung ${resistanceCeiling.toFixed(2)}). Data logik untuk SELL pembetulan ke arah sokongan ${supportFloor.toFixed(2)}. SL ketat di atas puncak.`;
-        } else if (isNearFloor || (m15.includes('BULLISH') && buyerPct >= 60) || macro === 'STRONG_BUYER') {
-          verdict = isNearFloor ? 'BUY AT SUPPORT (DEMAND REBOUND)' : 'BUY ON PULLBACK (M15 BULLISH FLOW)';
+        // 👑 TENGKU KHAIRI MASTER SNR PRIORITY: Lantai Wajib BUY, Bumbung Wajib SELL!
+        if (isNearFloor) {
+          verdict = 'BUY AT SUPPORT (DEMAND REBOUND / LANTAI)';
           biasClass = 'bullish';
-          advisory = `Zon sokongan / demand (${curPrice.toFixed(2)} vs lantai ${supportFloor.toFixed(2)}). Data logik untuk BUY lantunan ke arah sasaran bumbung ${resistanceCeiling.toFixed(2)}. SL ketat di bawah lantai.`;
+          advisory = `👑 [SOP TENGKU KHAIRI]: Harga berada di Zon Lantai Sokongan (${curPrice.toFixed(2)} vs Lantai ${supportFloor.toFixed(2)}). Dilarang SELL di lantai! Data logik: Entri BUY untuk menyapu keuntungan lantunan naik ke arah bumbung ${resistanceCeiling.toFixed(2)}. SL ketat di bawah lantai.`;
+        } else if (isNearCeiling) {
+          verdict = 'SELL AT RESISTANCE (SUPPLY REJECTION / BUMBUNG)';
+          biasClass = 'bearish';
+          advisory = `👑 [SOP TENGKU KHAIRI]: Harga berada di Zon Bumbung Rintangan (${curPrice.toFixed(2)} vs Bumbung ${resistanceCeiling.toFixed(2)}). Dilarang BUY di puncak! Data logik: Entri SELL untuk menyapu keuntungan terjunan pembetulan ke arah lantai ${supportFloor.toFixed(2)}. SL ketat di atas puncak.`;
+        } else if (macro === 'STRONG_BUYER' || (m15.includes('BULLISH') && buyerPct >= 60)) {
+          verdict = 'BUY ON PULLBACK (M15 BULLISH FLOW)';
+          biasClass = 'bullish';
+          advisory = `Aliran belian aktif. Tunggu celupan ke arah lantai ${supportFloor.toFixed(2)} sebelum BUY.`;
+        } else if (macro === 'STRONG_SELLER' || (m15.includes('BEARISH') && buyerPct <= 40)) {
+          verdict = 'SELL ON RALLY (M15 BEARISH FLOW)';
+          biasClass = 'bearish';
+          advisory = `Aliran jualan aktif. Tunggu lantunan ke arah bumbung ${resistanceCeiling.toFixed(2)} sebelum SELL.`;
         } else {
           verdict = '2-WAY SMC WAVE (BUY LANTAI, SELL BUMBUNG)';
           biasClass = 'neutral';
-          advisory = `Pasaran bergerak berombak dua hala. Logik: Masuk BUY di lantai sokongan (${supportFloor.toFixed(2)}) dan masuk SELL di bumbung rintangan (${resistanceCeiling.toFixed(2)}). Dilarang kejar lilin di tengah ombak.`;
+          advisory = `Pasaran bergerak berombak dua hala. Logik Tengku Khairi: Masuk BUY di lantai sokongan (${supportFloor.toFixed(2)}) dan masuk SELL di bumbung rintangan (${resistanceCeiling.toFixed(2)}). Dilarang kejar lilin di tengah ombak.`;
         }
       } else {
         const pipVal = sym.includes('JPY') ? 0.01 : 0.0001;
@@ -4012,7 +4021,8 @@ const AiEngine = {
         ...(Array.isArray(db.copytrade?.openPositions) ? db.copytrade.openPositions : []),
         ...(Array.isArray(db.copytrade2?.openPositions) ? db.copytrade2.openPositions : []),
         ...(Array.isArray(db.copytrade3?.openPositions) ? db.copytrade3.openPositions : []),
-        ...(Array.isArray(db.copytrade4?.openPositions) ? db.copytrade4.openPositions : [])
+        ...(Array.isArray(db.copytrade4?.openPositions) ? db.copytrade4.openPositions : []),
+        ...(Array.isArray(db.copytrade5?.openPositions) ? db.copytrade5.openPositions : [])
       ];
       let dbUpdated = false;
       for (const p of allMasters) {
@@ -4078,7 +4088,8 @@ const AiEngine = {
         ...(db.copytrade && Array.isArray(db.copytrade.openPositions) ? db.copytrade.openPositions : []),
         ...(db.copytrade2 && Array.isArray(db.copytrade2.openPositions) ? db.copytrade2.openPositions : []),
         ...(db.copytrade3 && Array.isArray(db.copytrade3.openPositions) ? db.copytrade3.openPositions : []),
-        ...(db.copytrade4 && Array.isArray(db.copytrade4.openPositions) ? db.copytrade4.openPositions : [])
+        ...(db.copytrade4 && Array.isArray(db.copytrade4.openPositions) ? db.copytrade4.openPositions : []),
+        ...(db.copytrade5 && Array.isArray(db.copytrade5.openPositions) ? db.copytrade5.openPositions : [])
       ];
       for (const p of allMasterCheck) {
         const sym = (p.symbol || p.s || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase();
@@ -4140,7 +4151,8 @@ const AiEngine = {
       ...(db.copytrade && Array.isArray(db.copytrade.openPositions) ? db.copytrade.openPositions : []),
       ...(db.copytrade2 && Array.isArray(db.copytrade2.openPositions) ? db.copytrade2.openPositions : []),
       ...(db.copytrade3 && Array.isArray(db.copytrade3.openPositions) ? db.copytrade3.openPositions : []),
-      ...(db.copytrade4 && Array.isArray(db.copytrade4.openPositions) ? db.copytrade4.openPositions : [])
+      ...(db.copytrade4 && Array.isArray(db.copytrade4.openPositions) ? db.copytrade4.openPositions : []),
+      ...(db.copytrade5 && Array.isArray(db.copytrade5.openPositions) ? db.copytrade5.openPositions : [])
     ];
     if (allMasterExisting.some(p => (p.symbol || p.s || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() === asset.symbol.toUpperCase())) {
       return;
@@ -4176,6 +4188,12 @@ const AiEngine = {
     const roofRef = asset.symbol === 'XAUUSD'
       ? ((liveMtfInit && liveMtfInit.h4_high > 0 && Math.abs(liveMtfInit.h4_high - liveP) < 70) ? liveMtfInit.h4_high : (mbInit.resistanceCeiling > 0 ? mbInit.resistanceCeiling : (this.goldAsianSession.high || Number((liveP + 8.0).toFixed(2)))))
       : ((liveMtfInit && liveMtfInit.d1_high > 0) ? liveMtfInit.d1_high : (mbInit.resistanceCeiling > 0 ? mbInit.resistanceCeiling : (liveP + 0.0030)));
+
+    const range = Math.max(roofRef - floorRef, asset.symbol === 'XAUUSD' ? 8.0 : 0.0030);
+    const candlePattern = liveMtfInit?.candle_pattern || 'NEUTRAL';
+    const lowerWickPct = Number(liveMtfInit?.lower_wick_pct || 0);
+    const upperWickPct = Number(liveMtfInit?.upper_wick_pct || 0);
+    const sweepStatus = liveMtfInit?.sweep_status || 'NONE';
 
     // 1. Semak sama ada ada News AI yang aktif untuk mata wang ini
     const newsSynergy = this.getActiveNewsBias(asset.symbol, db);
@@ -4215,29 +4233,36 @@ const AiEngine = {
       const mtfM15Init = liveMtfInit ? (liveMtfInit.m15 || 'NEUTRAL') : 'NEUTRAL';
 
       if (asset.symbol === 'XAUUSD') {
-        const range = Math.max(roofRef - floorRef, 8.0);
         const waveProgress = (liveP - floorRef) / range;
-        
+        const isNearFloor = waveProgress <= 0.38 || liveP <= (floorRef + 4.5) || sweepStatus === 'BEAR_TRAP_SWEEP';
+        const isNearRoof = waveProgress >= 0.62 || liveP >= (roofRef - 4.5) || sweepStatus === 'BULL_TRAP_SWEEP';
+
         // =========================================================================
-        // TRUE 2-WAY DUAL STRIKE MANDATE (BUY DI LANTAI, SELL DI BUMBUNG):
-        // Di time frame kecil (M1/M5/M15), kita sapu keuntungan DUA-DUA ARAH!
+        // 👑 TENGKU KHAIRI MASTER SNR & SMC MULTI-TECHNICAL CONFLUENCE ENGINE:
+        // Confluence: Malaysian SNR Lantai/Bumbung + Candlestick Rejection + SMC Sweeps
         // =========================================================================
         
         // 1. ZON LANTAI DASAR (Demand / Support Rebound): BUY untuk sapu pips lantunan naik!
-        if (waveProgress <= 0.38 || liveP <= (floorRef + 4.0)) {
+        if (isNearFloor) {
           type = 'BUY';
           this._lastGoldWave = 'BUY';
-          notes = `[⚡ 2-WAY SCALP PRO: BUY DI LANTAI] Harga berada di zon lantai sokongan (${liveP.toFixed(2)} vs Floor ${floorRef.toFixed(2)}). Entri BUY untuk menyapu keuntungan lantunan pada timeframe kecil. SL penampan bawah lantai. Sasaran TP1 (+35p). Kunci BE automatik.`;
-          this.log(`🎯 [2-WAY SCALP PRO] Mengesahkan isyarat BUY XAUUSD pada lantai ${liveP.toFixed(2)} (Floor: ${floorRef.toFixed(2)}) untuk kutip pips lantunan!`);
+          const wickTxt = lowerWickPct > 0 ? ` + Rejection Wick ${lowerWickPct}%` : '';
+          const sweepTxt = sweepStatus === 'BEAR_TRAP_SWEEP' ? ' + SMC Bear Trap Sweep' : '';
+          const patTxt = candlePattern !== 'NEUTRAL' ? ` [${candlePattern}]` : '';
+          notes = `[👑 SOP TENGKU KHAIRI: BUY DI LANTAI] Harga di Zon Lantai Sokongan (${liveP.toFixed(2)} vs Lantai ${floorRef.toFixed(2)})${patTxt}${wickTxt}${sweepTxt}. Dilarang SELL di lantai! Entri BUY menyapu lantunan. SL penampan bawah ekor lantai. Sasaran TP1 (+35p), TP2 (+70p), TP3 (+120p). Kunci BE automatik.`;
+          this.log(`🎯 [TENGKU KHAIRI MASTER SNR] Mengesahkan isyarat BUY XAUUSD pada lantai ${liveP.toFixed(2)} (Floor: ${floorRef.toFixed(2)}${sweepTxt}) untuk kutip pips lantunan!`);
         }
         // 2. ZON BUMBUNG PUNCAK (Supply / Resistance Rejection): SELL untuk sapu pips terjunan turun!
-        else if (waveProgress >= 0.62 || liveP >= (roofRef - 4.0)) {
+        else if (isNearRoof) {
           type = 'SELL';
           this._lastGoldWave = 'SELL';
-          notes = `[⚡ 2-WAY SCALP PRO: SELL DI BUMBUNG] Harga berada di zon bumbung rintangan (${liveP.toFixed(2)} vs Roof ${roofRef.toFixed(2)}). Entri SELL untuk menyapu keuntungan terjunan pada timeframe kecil. SL penampan atas bumbung. Sasaran TP1 (+35p). Kunci BE automatik.`;
-          this.log(`🎯 [2-WAY SCALP PRO] Mengesahkan isyarat SELL XAUUSD pada bumbung ${liveP.toFixed(2)} (Roof: ${roofRef.toFixed(2)}) untuk kutip pips terjunan!`);
+          const wickTxt = upperWickPct > 0 ? ` + Rejection Wick ${upperWickPct}%` : '';
+          const sweepTxt = sweepStatus === 'BULL_TRAP_SWEEP' ? ' + SMC Bull Trap Sweep' : '';
+          const patTxt = candlePattern !== 'NEUTRAL' ? ` [${candlePattern}]` : '';
+          notes = `[👑 SOP TENGKU KHAIRI: SELL DI BUMBUNG] Harga di Zon Bumbung Rintangan (${liveP.toFixed(2)} vs Bumbung ${roofRef.toFixed(2)})${patTxt}${wickTxt}${sweepTxt}. Dilarang BUY di puncak! Entri SELL menyapu terjunan. SL penampan atas ekor bumbung. Sasaran TP1 (+35p), TP2 (+70p), TP3 (+120p). Kunci BE automatik.`;
+          this.log(`🎯 [TENGKU KHAIRI MASTER SNR] Mengesahkan isyarat SELL XAUUSD pada bumbung ${liveP.toFixed(2)} (Roof: ${roofRef.toFixed(2)}${sweepTxt}) untuk kutip pips terjunan!`);
         }
-        // 3. ZON KELABU / TENGAH (40% - 60%): Dilarang masuk di tengah-tengah jalan!
+        // 3. ZON KELABU / TENGAH (39% - 61%): Dilarang masuk di tengah-tengah jalan!
         else {
           this.log(`🛡️ [2-WAY SMC GUARD] Menolak isyarat XAUUSD pada ${liveP.toFixed(2)}. Harga berada di zon pertengahan (Progress: ${(waveProgress * 100).toFixed(1)}%). Wajib tunggu harga sampai ke Lantai (${floorRef.toFixed(2)}) untuk BUY atau ke Bumbung (${roofRef.toFixed(2)}) untuk SELL!`);
           return;
@@ -4263,20 +4288,26 @@ const AiEngine = {
     // 3. INSTITUTIONAL VOLUME FLOW RADAR:
     // Menyelaras arah order mengikut lonjakan volume sebenar institusi M15 (Buyer vs Seller dominance)
     const liveVFlow = (this.liveVolumeFlow && this.liveVolumeFlow[asset.symbol]) ? this.liveVolumeFlow[asset.symbol] : null;
+    const isGoldAsset = (asset.symbol === 'XAUUSD');
+    const tolerance = isGoldAsset ? 4.5 : 0.0025;
+    const isAtRoof = liveP >= (roofRef - tolerance) || sweepStatus === 'BULL_TRAP_SWEEP';
+    const isAtFloor = liveP <= (floorRef + tolerance) || sweepStatus === 'BEAR_TRAP_SWEEP';
+
     if (liveVFlow && liveVFlow.vol_ratio >= 1.25) {
-      if (liveVFlow.flow === 'BUYER_SURGE') {
+      if (liveVFlow.flow === 'BUYER_SURGE' && !isAtRoof) {
         type = 'BUY';
         notes = `[⚡ INSTITUTIONAL BUYER SURGE] Lonjakan belian institusi dikesan (${liveVFlow.vol_ratio}x purata M15, Dominasi Buyer ${liveVFlow.buyer_score}%). Entry BUY seiring kuasa jerung pasaran! SL ketat. Sasaran TP1 (+50p). SOP: Alih SL ke BE selepas TP1.`;
         this.log(`🌊 [VOLUME RADAR] #${asset.symbol} BUYER_SURGE dikesan (${liveVFlow.vol_ratio}x purata, ${liveVFlow.buyer_score}% buyer). Menyelaraskan isyarat ke BUY.`);
-      } else if (liveVFlow.flow === 'SELLER_SURGE') {
+      } else if (liveVFlow.flow === 'SELLER_SURGE' && !isAtFloor) {
         type = 'SELL';
         notes = `[⚡ INSTITUTIONAL SELLER SURGE] Lonjakan jualan institusi dikesan (${liveVFlow.vol_ratio}x purata M15, Dominasi Seller ${(100 - liveVFlow.buyer_score).toFixed(1)}%). Entry SELL seiring lambakan jerung pasaran! SL ketat. Sasaran TP1 (+50p). SOP: Alih SL ke BE selepas TP1.`;
         this.log(`🌊 [VOLUME RADAR] #${asset.symbol} SELLER_SURGE dikesan (${liveVFlow.vol_ratio}x purata, ${(100 - liveVFlow.buyer_score).toFixed(1)}% seller). Menyelaraskan isyarat ke SELL.`);
       }
     }
 
-    // Sekiranya ada lonjakan volume bertentangan, jangan sekali-kali melawan arus!
-    if (liveVFlow && liveVFlow.vol_ratio >= 1.25) {
+    // Sekiranya ada lonjakan volume bertentangan di tengah julat, jangan sekali-kali melawan arus!
+    // KECUALI jika harga berada di Lantai (di mana lonjakan seller diserap jerung) atau di Bumbung (di mana lonjakan buyer diperangkap jerung)!
+    if (liveVFlow && liveVFlow.vol_ratio >= 1.25 && !isAtFloor && !isAtRoof) {
       if (type === 'SELL' && liveVFlow.flow === 'BUYER_SURGE') {
         this.log(`🛡️ [VOLUME RADAR GUARD] Menolak isyarat SELL #${asset.symbol} kerana lonjakan belian institusi (BUYER_SURGE) sedang aktif! Dilarang melawan arus.`);
         return;
@@ -4291,10 +4322,6 @@ const AiEngine = {
     // Selaraskan isyarat dengan susunan MA menegak M1/M5/M15 dan lilin makro D1/H4
     const liveMtf = (this.liveMtfMaFlow && this.liveMtfMaFlow[asset.symbol]) ? this.liveMtfMaFlow[asset.symbol] : null;
     if (liveMtf) {
-      const isGoldAsset = (asset.symbol === 'XAUUSD');
-      const tolerance = isGoldAsset ? 4.5 : 0.0025;
-      const isAtRoof = liveP >= (roofRef - tolerance);
-      const isAtFloor = liveP <= (floorRef + tolerance);
 
       if (liveMtf.macro === 'STRONG_BUYER' && (liveMtf.m15.includes('BULLISH') || liveMtf.m5.includes('BULLISH'))) {
         if (!isAtRoof) {
@@ -4358,7 +4385,8 @@ const AiEngine = {
       ...(db.copytrade && Array.isArray(db.copytrade.openPositions) ? db.copytrade.openPositions : []),
       ...(db.copytrade2 && Array.isArray(db.copytrade2.openPositions) ? db.copytrade2.openPositions : []),
       ...(db.copytrade3 && Array.isArray(db.copytrade3.openPositions) ? db.copytrade3.openPositions : []),
-      ...(db.copytrade4 && Array.isArray(db.copytrade4.openPositions) ? db.copytrade4.openPositions : [])
+      ...(db.copytrade4 && Array.isArray(db.copytrade4.openPositions) ? db.copytrade4.openPositions : []),
+      ...(db.copytrade5 && Array.isArray(db.copytrade5.openPositions) ? db.copytrade5.openPositions : [])
     ];
 
     const symPositions = allMasterPositions.filter(p => {

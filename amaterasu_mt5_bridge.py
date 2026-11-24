@@ -713,6 +713,46 @@ class AmaterasuBridge:
             elif "BEARISH" in m15_status and "BEARISH" in m5_status:
                 alignment = "M15_M5_BEARISH"
 
+            # 👑 TENGKU KHAIRI PRICE ACTION & CANDLESTICK REJECTION RADAR (M15 & M5)
+            rates_m15_pa = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_M15, 0, 6)
+            candle_pattern = "NEUTRAL"
+            lower_wick_pct = 0.0
+            upper_wick_pct = 0.0
+            if rates_m15_pa is not None and len(rates_m15_pa) >= 2:
+                latest = rates_m15_pa[-1]
+                c_o = float(latest['open'])
+                c_h = float(latest['high'])
+                c_l = float(latest['low'])
+                c_c = float(latest['close'])
+                c_rng = max(c_h - c_l, 0.00001)
+                u_wick = c_h - max(c_o, c_c)
+                l_wick = min(c_o, c_c) - c_l
+                upper_wick_pct = round((u_wick / c_rng) * 100, 1)
+                lower_wick_pct = round((l_wick / c_rng) * 100, 1)
+                if lower_wick_pct >= 40.0 and upper_wick_pct <= 25.0:
+                    candle_pattern = "BULLISH_PINBAR"
+                elif upper_wick_pct >= 40.0 and lower_wick_pct <= 25.0:
+                    candle_pattern = "BEARISH_PINBAR"
+                elif lower_wick_pct >= 28.0 and c_c >= c_o:
+                    candle_pattern = "BULLISH_REJECTION"
+                elif upper_wick_pct >= 28.0 and c_c <= c_o:
+                    candle_pattern = "BEARISH_REJECTION"
+
+            # 👑 SMC LIQUIDITY SWEEP & TRAPPED TRADERS RADAR (M15)
+            rates_sweep = mt5.copy_rates_from_pos(broker_sym, mt5.TIMEFRAME_M15, 0, 12)
+            sweep_status = "NONE"
+            if rates_sweep is not None and len(rates_sweep) >= 6:
+                prior_high = max(float(r['high']) for r in rates_sweep[:-1])
+                prior_low = min(float(r['low']) for r in rates_sweep[:-1])
+                cur_r = rates_sweep[-1]
+                cur_h = float(cur_r['high'])
+                cur_l = float(cur_r['low'])
+                cur_c = float(cur_r['close'])
+                if cur_h > prior_high and cur_c < prior_high:
+                    sweep_status = "BULL_TRAP_SWEEP"
+                elif cur_l < prior_low and cur_c > prior_low:
+                    sweep_status = "BEAR_TRAP_SWEEP"
+
             return {
                 "alignment": alignment,
                 "macro": macro,
@@ -730,7 +770,11 @@ class AmaterasuBridge:
                 "m1": m1_status,
                 "m1_ma20": round(m1_20, 5),
                 "m1_ma100": round(m1_100, 5),
-                "m1_ma200": round(m1_200, 5)
+                "m1_ma200": round(m1_200, 5),
+                "candle_pattern": candle_pattern,
+                "lower_wick_pct": lower_wick_pct,
+                "upper_wick_pct": upper_wick_pct,
+                "sweep_status": sweep_status
             }
         except Exception:
             pass
@@ -839,17 +883,22 @@ class AmaterasuBridge:
 
         # STRICT 1-SETUP PER SYMBOL (STRICT MAX 4 SPLIT LAYERS FOR GOLD, 2 FOR FOREX):
         # Had maksima 4 posisi untuk SETIAP PAIR (Gold: Max 4 split layers, Forex: Max 2)
+        # 👑 KEDAULATAN MANUAL TENGKU KHAIRI: Hanya mengira posisi milik Bot AmaterasuX! Posisi manual tidak dihadkan.
         max_allowed_layers = min(int(self.config.get("max_gold_positions", 4)), 4) if clean_raw_sym == "XAUUSD" else min(int(self.config.get("max_symbol_positions", 2)), 2)
         existing_symbol_orders = [
             p for p in (mt5.positions_get() or [])
-            if p.symbol.split('.')[0].upper() == clean_raw_sym
+            if p.symbol.split('.')[0].upper() == clean_raw_sym and (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
         ]
         if len(existing_symbol_orders) >= max_allowed_layers:
-            print(f"{Colors.YELLOW}🛡️ [SOP LAYER LIMIT] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} posisi aktif (Maksimum {max_allowed_layers}). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
+            print(f"{Colors.YELLOW}🛡️ [SOP LAYER LIMIT] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} posisi aktif bot (Maksimum {max_allowed_layers}). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
             return None
 
         # Stop-and-Reverse (SAR) & Anti-Hedging check:
-        all_sym_pos = [p for p in (mt5.positions_get() or []) if p.symbol.split('.')[0].upper() == clean_raw_sym]
+        # 👑 KEDAULATAN MANUAL TENGKU KHAIRI: SAR hanya menutup posisi lama milik Bot AmaterasuX! Posisi manual tidak disentuh sama sekali.
+        all_sym_pos = [
+            p for p in (mt5.positions_get() or [])
+            if p.symbol.split('.')[0].upper() == clean_raw_sym and (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
+        ]
         if all_sym_pos:
             is_opposing = any(
                 (order_type == mt5.ORDER_TYPE_BUY and ep.type == mt5.POSITION_TYPE_SELL) or
@@ -860,12 +909,12 @@ class AmaterasuBridge:
                 # Jika isyarat disahkan sebagai pusingan arah (Reversal / SAR)
                 is_reversal = (sig.get("reversal") is True or sig.get("flip") is True)
                 if is_reversal:
-                    print(f"{Colors.GREEN}🔄 [STOP-AND-REVERSE] Pasaran memecahkan struktur! Menutup posisi lama yang bertentangan dan memutar arah ke {order_type_str}!{Colors.RESET}")
+                    print(f"{Colors.GREEN}🔄 [STOP-AND-REVERSE] Pasaran memecahkan struktur! Menutup posisi lama bot yang bertentangan dan memutar arah ke {order_type_str}!{Colors.RESET}")
                     for ep in all_sym_pos:
                         self.close_position_market(ep, "SAR-Reversal")
                     time.sleep(1)
                 else:
-                    print(f"{Colors.YELLOW}[ANTI-HEDGE] Menolak order {order_type_str} #{symbol} kerana sudah ada posisi bertentangan aktif di MT5. Menunggu pengesahan Reversal.{Colors.RESET}")
+                    print(f"{Colors.YELLOW}[ANTI-HEDGE] Menolak order {order_type_str} #{symbol} kerana sudah ada posisi bot bertentangan aktif di MT5. Menunggu pengesahan Reversal.{Colors.RESET}")
                     return None
 
         # INSTITUTIONAL VOLUME FLOW RADAR TELEMETRY:
@@ -1719,7 +1768,6 @@ class AmaterasuBridge:
         # ARAHAN MUTLAK TENGKU KHAIRI: UNTUK ENTRY MANUAL JANGAN KACAU POSITION!
         # Dilarang sama sekali menyentuh, mengubah SL/TP, atau mengganggu posisi manual Tengku Khairi.
         return
-                    print(f"{Colors.YELLOW}[MANUAL PROTECTION INFO] Ticket #{p.ticket}: retcode {err}{Colors.RESET}")
 
     def breakeven_guardian_loop(self):
         """Guardian berterusan setiap 2.5 saat memeriksa tiket MT5 untuk kunci BE serta-merta apabila TP1 dicapai"""

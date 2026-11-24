@@ -1554,7 +1554,7 @@ function getMarketBrainCardHtml(brain, inst) {
     </div>` : ''}
 
     <div style="font-size:8.5px; color:#64748b; margin-top:8px; text-align:right;">
-      Disegerakkan dengan MT5 Master #5100221532 · Dikemaskini: ${brain.lastUpdated || '-'}
+      Disegerakkan dengan MT5 Multi-Master Sovereign Engine · Dikemaskini: ${brain.lastUpdated || '-'}
     </div>
 
   </div>
