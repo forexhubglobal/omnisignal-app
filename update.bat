@@ -7,6 +7,11 @@ echo          AMATERASU X - 100% AUTOMATION & VPS SYNCHRONIZATION ENGINE
 echo ===============================================================================
 echo.
 
+:: 0. SUIS PAUSE AKAUN (1 = PAUSE / TIDAK DIJALANKAN, 0 = AKTIF)
+:: Akaun 2 (MANTIS) baki 0 USC & Akaun 4 (MEZ EA) baki 19.22 USC - pause sehingga deposit semula.
+set "PAUSE_ACC2=1"
+set "PAUSE_ACC4=1"
+
 :: 1. TUTUP SEMUA PYTHON BRIDGE LAMA DI VPS
 echo [1/4] Menutup semua proses bridge lama di VPS...
 taskkill /F /IM python.exe >nul 2>&1
@@ -89,7 +94,7 @@ foreach ($f in $files) { ^
 
 :: 4. MULAKAN SEMULA SEMUA BRIDGE DI VPS SECARA DETACHED
 echo.
-echo [4/4] Memulakan semula semua 4 Bridge di VPS...
+echo [4/4] Memulakan semula Bridge aktif di VPS...
 timeout /t 2 >nul
 
 set "PY=C:\Users\US\AppData\Local\Programs\Python\Python311\pythonw.exe"
@@ -104,7 +109,9 @@ if exist "C:\AmaterasuX\amaterasu_mt5_bridge.py" (
 )
 timeout /t 1 >nul
 
-if exist "C:\AmaterasuX_Acc2\amaterasu_mt5_bridge.py" (
+if "%PAUSE_ACC2%"=="1" (
+    echo [PAUSED] Bridge Master 2 ^(Mantis Cent^) - baki tiada, set PAUSE_ACC2=0 selepas deposit
+) else if exist "C:\AmaterasuX_Acc2\amaterasu_mt5_bridge.py" (
     cd /d C:\AmaterasuX_Acc2
     start "BRIDGE MASTER 2" %PY% amaterasu_mt5_bridge.py
     echo [RUNNING] Bridge Master 2 (Mantis Cent)
@@ -118,7 +125,9 @@ if exist "C:\AmaterasuX_Acc3\amaterasu_mt5_bridge.py" (
 )
 timeout /t 1 >nul
 
-if exist "C:\AmaterasuX_Acc4\amaterasu_mt5_bridge.py" (
+if "%PAUSE_ACC4%"=="1" (
+    echo [PAUSED] Bridge Master 4 ^(MEZ EA Cent^) - baki tiada, set PAUSE_ACC4=0 selepas deposit
+) else if exist "C:\AmaterasuX_Acc4\amaterasu_mt5_bridge.py" (
     cd /d C:\AmaterasuX_Acc4
     start "BRIDGE MASTER 4" %PY% amaterasu_mt5_bridge.py
     echo [RUNNING] Bridge Master 4 (MEZ EA Cent)
@@ -133,7 +142,7 @@ if exist "C:\AmaterasuX_Acc5\amaterasu_mt5_bridge.py" (
 
 echo.
 echo ===============================================================================
-echo     SEMUA 5 BRIDGE DI VPS BERJAYA DISINKRONKAN 100%% DENGAN SERVER PUSAT!
+echo     SEMUA BRIDGE AKTIF DI VPS BERJAYA DISINKRONKAN 100%% DENGAN SERVER PUSAT!
 echo ===============================================================================
 echo.
 timeout /t 5

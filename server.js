@@ -195,8 +195,8 @@ const defaultDB = {
     masterAccount: "5100221532",
     broker: "Versus Trade Ltd. (Live1)",
     initialDeposit: 10000.0,
-    currentBalance: 11136.74,
-    currentEquity: 11450.00,
+    currentBalance: 10000.2,
+    currentEquity: 10000.2,
     growthPct: 235.23,
     netProfitUsc: 23523.00,
     netProfitUsd: 235.23,
@@ -223,8 +223,8 @@ const defaultDB = {
     growthPct: 1585.29,
     netProfitUsc: 15852.87,
     netProfitUsd: 158.53,
-    currentBalance: 10511.08,
-    currentEquity: 10848.26,
+    currentBalance: 0.0,
+    currentEquity: 0.0,
     activeEquity: 10848.26,
     activeEquityUsd: 108.48,
     winRate: 100.0,
@@ -250,8 +250,8 @@ const defaultDB = {
     allTimeGrowthPct: 0.0,
     growthPct: 0.0,
     netProfitUsd: 0.0,
-    currentBalance: 1484.56,
-    currentEquity: 1484.56,
+    currentBalance: 2845.22,
+    currentEquity: 2845.22,
     activeEquity: 1484.56,
     activeEquityUsd: 1484.56,
     winRate: 100.0,
@@ -279,8 +279,8 @@ const defaultDB = {
     growthPct: 0.0,
     netProfitUsc: 0.0,
     netProfitUsd: 0.0,
-    currentBalance: 10012.2,
-    currentEquity: 10012.2,
+    currentBalance: 19.22,
+    currentEquity: 19.22,
     activeEquity: 10012.2,
     activeEquityUsd: 100.12,
     winRate: 100.0,
@@ -308,8 +308,8 @@ const defaultDB = {
     growthPct: 0.0,
     netProfitUsc: 0.0,
     netProfitUsd: 0.0,
-    currentBalance: 5000.0,
-    currentEquity: 5000.0,
+    currentBalance: 5520.26,
+    currentEquity: 5520.26,
     activeEquity: 5000.0,
     activeEquityUsd: 5000.0,
     winRate: 100.0,
@@ -1088,7 +1088,7 @@ const TelegramNotifier = {
   },
 
   formatAiAvatarScript(db, vaultNum = 1) {
-    const cp = vaultNum === 4 ? (db.copytrade4 || {}) : (vaultNum === 3 ? (db.copytrade3 || {}) : (vaultNum === 2 ? (db.copytrade2 || {}) : (db.copytrade || {})));
+    const cp = vaultNum === 5 ? (db.copytrade5 || {}) : (vaultNum === 4 ? (db.copytrade4 || {}) : (vaultNum === 3 ? (db.copytrade3 || {}) : (vaultNum === 2 ? (db.copytrade2 || {}) : (db.copytrade || {}))));
     const masterName = cp.name || (vaultNum === 1 ? 'DRAGON' : (vaultNum === 2 ? 'MANTIS' : (vaultNum === 3 ? 'TIGER' : 'MEZ EA')));
     const isCent = vaultNum !== 3;
     const curBal = Number(cp.currentBalance || (isCent ? 10000 : 1000)).toFixed(0);
@@ -1227,7 +1227,7 @@ const TelegramNotifier = {
   },
 
   formatCommunityDailyReport(db, vaultNum = 1) {
-    const cp = vaultNum === 4 ? (db.copytrade4 || {}) : (vaultNum === 3 ? (db.copytrade3 || {}) : (vaultNum === 2 ? (db.copytrade2 || {}) : (db.copytrade || {})));
+    const cp = vaultNum === 5 ? (db.copytrade5 || {}) : (vaultNum === 4 ? (db.copytrade4 || {}) : (vaultNum === 3 ? (db.copytrade3 || {}) : (vaultNum === 2 ? (db.copytrade2 || {}) : (db.copytrade || {}))));
     const masterName = cp.name || (vaultNum === 1 ? 'DRAGON' : (vaultNum === 2 ? 'MANTIS' : (vaultNum === 3 ? 'TIGER' : 'MEZ EA')));
     const masterAcc = cp.masterAccount || (vaultNum === 1 ? '5100221532' : (vaultNum === 2 ? '5100221533' : (vaultNum === 3 ? '5100221534' : '5100227599')));
     const isCent = vaultNum !== 3;
@@ -2010,7 +2010,7 @@ const server = http.createServer(async (req, res) => {
                   AiEngine.assetCooldowns[sym] = Date.now() + (30 * 60 * 1000);
                 }
 
-                for (const vault of [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4]) {
+                for (const vault of [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4, db.copytrade5]) {
                   if (vault && Array.isArray(vault.openPositions)) {
                     vault.openPositions = vault.openPositions.filter(p => (p.symbol || '').replace(/\.[a-zA-Z0-9]+$/, '').toUpperCase() !== sym);
                   }
@@ -2099,13 +2099,13 @@ const server = http.createServer(async (req, res) => {
       db.copytrade.lastSync = getMYTTimeWithSeconds();
 
       if (!Array.isArray(db.copytrades)) {
-        db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4].filter(Boolean);
+        db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4, db.copytrade5].filter(Boolean);
       } else {
         db.copytrades[0] = db.copytrade;
       }
 
       saveDB(db);
-      broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrade4: db.copytrade4, copytrades: db.copytrades });
+      broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrade4: db.copytrade4, copytrade5: db.copytrade5, copytrades: db.copytrades });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ success: true, copytrade: db.copytrade, copytrades: db.copytrades }));
     } catch (err) {
@@ -2117,7 +2117,7 @@ const server = http.createServer(async (req, res) => {
   // 0.1c GET /api/copytrade/info
   if (pathname === '/api/copytrade/info' && req.method === 'GET') {
     const db = getDB();
-    const list = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4].filter(Boolean);
+    const list = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4, db.copytrade5].filter(Boolean);
     db.copytrades = list;
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({
@@ -2125,6 +2125,7 @@ const server = http.createServer(async (req, res) => {
       copytrade2: db.copytrade2 || {},
       copytrade3: db.copytrade3 || {},
       copytrade4: db.copytrade4 || {},
+      copytrade5: db.copytrade5 || {},
       copytrades: list
     }));
   }
@@ -2252,7 +2253,7 @@ const server = http.createServer(async (req, res) => {
     const db = getDB();
     if (db.copytrade) {
       if (!Array.isArray(db.copytrades)) {
-        db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4].filter(Boolean);
+        db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4, db.copytrade5].filter(Boolean);
       } else {
         db.copytrades[0] = db.copytrade;
         if (db.copytrade2) db.copytrades[1] = db.copytrade2;
@@ -2261,7 +2262,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
     const sanitized = { ...db };
-    sanitized.copytrades = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4].filter(Boolean);
+    sanitized.copytrades = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4, db.copytrade5].filter(Boolean);
     delete sanitized.telegramConfig;
     delete sanitized.invitationCodes;
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -2325,7 +2326,7 @@ const server = http.createServer(async (req, res) => {
       } catch (e) {}
     }
     const db = getDB();
-    const accounts = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4].filter(Boolean);
+    const accounts = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4, db.copytrade5].filter(Boolean);
     for (const acc of accounts) {
       acc.targetReached = false;
       if (acc.status && acc.status.includes('TARGET REACHED')) {
@@ -2760,7 +2761,7 @@ const server = http.createServer(async (req, res) => {
       const payload = await parseJsonBody(req);
       const db = getDB();
       const vaultId = Number(payload.vaultId) || 1;
-      const cp = vaultId === 4 ? (db.copytrade4 || {}) : (vaultId === 3 ? (db.copytrade3 || {}) : (vaultId === 2 ? (db.copytrade2 || {}) : (db.copytrade || {})));
+      const cp = vaultId === 5 ? (db.copytrade5 || {}) : (vaultId === 4 ? (db.copytrade4 || {}) : (vaultId === 3 ? (db.copytrade3 || {}) : (vaultId === 2 ? (db.copytrade2 || {}) : (db.copytrade || {}))));
       const msg = TelegramNotifier.formatCopytradeMessage(vaultId, cp);
       const result = await TelegramNotifier.send(msg);
       res.writeHead(200, { 'Content-Type': 'application/json' });
