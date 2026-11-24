@@ -12,19 +12,42 @@ echo [1/4] Menutup semua proses bridge lama di VPS...
 taskkill /F /IM python.exe >nul 2>&1
 timeout /t 2 >nul
 
-:: 2. MUAT TURUN KOD JAMBATAN TERKINI DARI SERVER AMATERASU X
-echo [2/4] Memuat turun amaterasu_mt5_bridge.py terkini dari https://amaterasux.com...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-"$url = 'https://amaterasux.com/amaterasu_mt5_bridge.py'; ^
-$code = (New-Object System.Net.WebClient).DownloadString($url); ^
-$dirs = @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3', 'C:\AmaterasuX_Acc4', 'C:\AmaterasuX_Acc5', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master1_Cent', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master2_Cent', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master3_Standard'); ^
-foreach ($d in $dirs) { ^
-    if (Test-Path $d) { ^
-        $dest = Join-Path $d 'amaterasu_mt5_bridge.py'; ^
-        [System.IO.File]::WriteAllText($dest, $code); ^
-        Write-Host ('Updated bridge code in: ' + $dest) -ForegroundColor Green; ^
-    } ^
-}"
+:: 1.5 JIKA TERMINAL/BRIDGE AKAUN 5 BELUM WUJUD, LAKUKAN SETUP AUTOMATIK
+if not exist "C:\AmaterasuX_Acc5\bridge_config.json" (
+    if exist "%~dp0acc5.bat" (
+        echo [INFO] Menyiapkan Akaun 5 (Wan Farouk $5k Standard) secara automatik...
+        call "%~dp0acc5.bat"
+    )
+)
+
+:: 2. KEMASKINI KOD JAMBATAN (DARI REPO TEMPATAN ATAU PELAYAN)
+if exist "%~dp0amaterasu_mt5_bridge.py" (
+    echo [2/4] Menyalin amaterasu_mt5_bridge.py terkini dari repositori tempatan...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$src = '%~dp0amaterasu_mt5_bridge.py'; ^
+    $code = [System.IO.File]::ReadAllText($src); ^
+    $dirs = @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3', 'C:\AmaterasuX_Acc4', 'C:\AmaterasuX_Acc5', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master1_Cent', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master2_Cent', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master3_Standard'); ^
+    foreach ($d in $dirs) { ^
+        if (Test-Path $d) { ^
+            $dest = Join-Path $d 'amaterasu_mt5_bridge.py'; ^
+            [System.IO.File]::WriteAllText($dest, $code); ^
+            Write-Host ('[OK] Updated local bridge in: ' + $dest) -ForegroundColor Green; ^
+        } ^
+    }"
+) else (
+    echo [2/4] Memuat turun amaterasu_mt5_bridge.py terkini dari pelayan pusat...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$url = 'https://amaterasux.com/amaterasu_mt5_bridge.py'; ^
+    $code = (New-Object System.Net.WebClient).DownloadString($url); ^
+    $dirs = @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3', 'C:\AmaterasuX_Acc4', 'C:\AmaterasuX_Acc5', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master1_Cent', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master2_Cent', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master3_Standard'); ^
+    foreach ($d in $dirs) { ^
+        if (Test-Path $d) { ^
+            $dest = Join-Path $d 'amaterasu_mt5_bridge.py'; ^
+            [System.IO.File]::WriteAllText($dest, $code); ^
+            Write-Host ('Updated bridge code in: ' + $dest) -ForegroundColor Green; ^
+        } ^
+    }"
+)
 
 :: 3. KEMASKINI SEMUA BRIDGE_CONFIG.JSON DI SELURUH VPS (LEPASKAN HAD LOT & SYNC SERVER)
 echo.
@@ -39,8 +62,8 @@ foreach ($f in $files) { ^
         $c.auto_breakeven = $true; ^
         $c.execution_mode = 'SPLIT_TP'; ^
         $login = [string]$c.mt5_login; ^
-        if ($login -match '5100221534|5100209626') { ^
-            $c.max_account_lots = 0.20; ^
+        if ($login -match '5100221534|5100209626|5100242908') { ^
+            $c.max_account_lots = 0.30; ^
         } else { ^
             $c.max_account_lots = 1.50; ^
         } ^

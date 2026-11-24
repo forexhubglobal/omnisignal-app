@@ -1,0 +1,7 @@
+#!/bin/sh
+echo ""
+echo "==============================================================================="
+echo "⚡ [AMATERASU X AUTO-HOOK] Kod terkini berjaya ditarik dari GitHub!"
+echo "⚡ [AMATERASU X AUTO-HOOK] Menjalankan update.bat untuk selaraskan 5 akaun..."
+echo "==============================================================================="
+cmd.exe /c "update.bat"
