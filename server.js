@@ -3718,19 +3718,19 @@ const AiEngine = {
       const minute = mytDate.getMinutes();
       const totalMin = hour * 60 + minute;
 
-      // Hujung Minggu: Tutup Sabtu selepas jam 06:00 AM MYT sehingga Isnin 07:00 AM MYT
+      // Hujung Minggu: Tutup Sabtu selepas jam 06:00 AM MYT sehingga Isnin 07:30 AM MYT
       if (day === 6 && hour >= 6) return false;
       if (day === 0) return false;
-      if (day === 1 && hour < 7) return false;
+      if (day === 1 && totalMin < 450) return false;
 
       // ARAHAN TEGAS BOS: HARAMKAN TRADE PADA WAKTU BAHAYA MANIPULASI:
-      // 1. Rollover & Midnight Spread Spiking (00:00 - 07:00 MYT)
-      if (hour >= 0 && hour < 7) return false;
+      // 1. Waktu Rehat Tengah Malam & Rollover (00:00 - 07:30 MYT) -> Mula trade jam 07:30 AM
+      if (totalMin >= 0 && totalMin < 450) return false;
 
       // 2. London Open Judas Swing Manipulation Trap (14:00 - 15:15 MYT)
       if (totalMin >= 840 && totalMin < 915) return false;
 
-      return true; // Aktif pada waktu bersih & Golden Window (London 15:15 - 19:00, US 19:30 - 23:59)
+      return true; // Aktif 07:30 - 14:00 MYT & 15:15 - 00:00 MYT (Tepat 12:00 tengah malam rehat)
     } catch (e) {
       return true;
     }
@@ -4173,9 +4173,10 @@ const AiEngine = {
     const liveP = liveQ ? liveQ.price : (asset.symbol === 'XAUUSD' ? currentMarketPrice : asset.base);
     const entry = Number(liveP.toFixed(asset.pipDec));
 
-    // 🛡️ INSTITUTIONAL CIRCUIT BREAKER: WAKTU REHAT TENGAH MALAM / THIN LIQUIDITY WHIPSAW (00:00 - 06:00 MYT)
-    // DILARANG SAMA SEKALI MEMBUKA ISYARAT BARU UNTUK GOLD PADA WAKTU SPREAD KEMBANG & WHIPSAW LEWAT MALAM!
-    if (asset.symbol === 'XAUUSD' && nowH >= 0 && nowH < 6) {
+    // 🛡️ INSTITUTIONAL CIRCUIT BREAKER: WAKTU REHAT TENGAH MALAM (00:00 - 07:30 MYT) & LONDON JUDAS SWING (14:00 - 15:15 MYT)
+    // DILARANG MEMBUKA ISYARAT BARU SEBELUM 07:30 AM, SEMASA LONDON TRAP, ATAU SELEPAS 12:00 MALAM!
+    const nowTotalMin = nowH * 60 + nowM;
+    if ((nowTotalMin >= 0 && nowTotalMin < 450) || (nowTotalMin >= 840 && nowTotalMin < 915)) {
       return; // Rehat selamat melindungi modal
     }
 

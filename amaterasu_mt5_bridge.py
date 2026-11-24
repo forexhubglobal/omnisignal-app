@@ -428,9 +428,9 @@ class AmaterasuBridge:
     def is_dangerous_market_hour(self):
         """
         ARAHAN TEGAS BOS: HARAMKAN TRADE PADA WAKTU-WAKTU BAHAYA MANIPULASI:
-        1. Waktu Rollover & Midnight Spread Spiking (00:00 - 07:00 MYT)
+        1. Waktu Rehat Tengah Malam & Rollover (00:00 - 07:30 MYT) -> Mula trade 07:30 AM, tamat 12:00 malam
         2. Waktu Pembukaan London Judas Swing Trap (14:00 - 15:15 MYT)
-        3. Hujung Minggu / Sesi Awal Isnin Sebelum 07:00 MYT
+        3. Hujung Minggu / Sesi Awal Isnin Sebelum 07:30 MYT
         """
         try:
             now_myt = datetime.now(timezone(timedelta(hours=8)))
@@ -444,12 +444,12 @@ class AmaterasuBridge:
                 return True, "Pasaran Forex Hujung Minggu ditutup (Sabtu)."
             if weekday == 6:
                 return True, "Pasaran Forex Hujung Minggu ditutup (Ahad)."
-            if weekday == 0 and hour < 7:
-                return True, "Sesi Awal Isnin sebelum 07:00 AM MYT (Spread Pembukaan Sangat Lebar)."
+            if weekday == 0 and total_min < 450:
+                return True, "Sesi Awal Isnin sebelum 07:30 AM MYT (Spread Pembukaan Sangat Lebar)."
 
-            # Zon 1: Rollover & Midnight Spread Spiking (00:00 - 07:00 MYT)
-            if 0 <= hour < 7:
-                return True, f"Zon Bahaya Rollover & Midnight ({now_myt.strftime('%H:%M')} MYT). Spread melebar liar & manipulasi kecairan nipis! Diharamkan trade mengikut arahan Bos."
+            # Zon 1: Waktu Rehat Tengah Malam & Rollover (00:00 - 07:30 MYT)
+            if 0 <= total_min < 450:
+                return True, f"Zon Rehat Tengah Malam & Rollover ({now_myt.strftime('%H:%M')} MYT). Bot mula trade tepat 07:30 AM MYT mengikut arahan Bos."
 
             # Zon 2: London Open Judas Swing Trap (14:00 - 15:15 MYT)
             if 840 <= total_min < 915:
