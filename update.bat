@@ -62,12 +62,25 @@ foreach ($f in $files) { ^
         $c.auto_breakeven = $true; ^
         $c.execution_mode = 'SPLIT_TP'; ^
         $login = [string]$c.mt5_login; ^
-        if ($login -match '5100221534|5100209626|5100242908') { ^
+        if ($login -match '5100242908') { ^
+            $c.max_gold_positions = 10; ^
+            $c.max_account_positions = 12; ^
+            $c.max_account_lots = 1.00; ^
+            $c.daily_profit_target_pct = 25.0; ^
+            $c.daily_profit_target_usd = 1250.0; ^
+        } elseif ($login -match '5100221534|5100209626') { ^
+            $c.max_gold_positions = 4; ^
+            $c.max_account_positions = 8; ^
             $c.max_account_lots = 0.30; ^
+            $c.daily_profit_target_pct = 25.0; ^
+            $c.daily_profit_target_usd = 25.0; ^
         } else { ^
+            $c.max_gold_positions = 4; ^
+            $c.max_account_positions = 8; ^
             $c.max_account_lots = 1.50; ^
+            $c.daily_profit_target_pct = 25.0; ^
+            $c.daily_profit_target_usc = 2500.0; ^
         } ^
-        $c.max_account_positions = 15; ^
         $newJson = ConvertTo-Json $c -Depth 10; ^
         [System.IO.File]::WriteAllText($f.FullName, $newJson); ^
         Write-Host ('[OK] Synced max_lots & server in: ' + $f.FullName) -ForegroundColor Cyan; ^

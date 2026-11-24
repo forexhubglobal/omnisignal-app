@@ -42,7 +42,7 @@ curl -s -L "https://amaterasux.com/amaterasu_mt5_bridge.py" -o "%B5_DIR%\amatera
 
 :: 4. Write Configuration for Account 5 ($5,000 USD Standard Account)
 echo [3/4] Menyediakan bridge_config.json untuk Master 5 (#5100242908)...
-python -c "import json, os; cfg={'server_url':'https://amaterasux.com','lot_size':0.05,'execution_mode':'SPLIT_TP','auto_breakeven':True,'gold_min_be_pips':50.0,'max_concurrent_pairs':4,'max_account_lots':1.50,'max_slippage_pips':10,'magic_number':888995,'mt5_login':5100242908,'mt5_password':r'>.=m0^nB?.L1','mt5_server':'VersusTrade-Live1','mt5_terminal_path':r'%T5_EXE%','allowed_pairs':['XAUUSD','USDCHF','EURUSD'],'custom_lot_map':{'XAUUSD':0.05,'USDCHF':0.05,'EURUSD':0.05},'dynamic_floating_atr':True}; open(r'%B5_DIR%\bridge_config.json','w').write(json.dumps(cfg,indent=2))"
+python -c "import json, os; cfg={'server_url':'https://amaterasux.com','lot_size':0.05,'execution_mode':'SPLIT_TP','auto_breakeven':True,'gold_min_be_pips':35.0,'max_concurrent_pairs':4,'max_gold_positions':10,'max_account_positions':12,'max_account_lots':1.00,'daily_profit_target_pct':25.0,'daily_profit_target_usd':1250.0,'max_slippage_pips':10,'magic_number':888995,'mt5_login':5100242908,'mt5_password':r'>.=m0^nB?.L1','mt5_server':'VersusTrade-Live1','mt5_terminal_path':r'%T5_EXE%','allowed_pairs':['XAUUSD','USDCHF','EURUSD'],'custom_lot_map':{'XAUUSD':0.05,'USDCHF':0.05,'EURUSD':0.05},'dynamic_floating_atr':True}; open(r'%B5_DIR%\bridge_config.json','w').write(json.dumps(cfg,indent=2))"
 
 :: 5. Launch Terminal & Bridge
 echo [4/4] Memulakan Terminal MT5 Acc5 & Bridge...

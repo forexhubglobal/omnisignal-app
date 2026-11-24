@@ -110,6 +110,7 @@ class AmaterasuBridge:
         self.custom_map = config.get("custom_symbol_map", {})
         
         self.running = True
+        self.login = str(config.get("mt5_login", ""))
         self.executed_signal_ids = set()
         # active_positions map: signal_id -> list of MT5 tickets: [{'ticket': 123, 'tp_level': 1, 'entry': 2738.5, 'symbol': 'XAUUSD'}]
         self.active_positions = {}
@@ -235,14 +236,26 @@ class AmaterasuBridge:
             self.broker_symbols = {s.name.upper(): s.name for s in symbols}
             print(f" • Simbol Dikesan: {len(self.broker_symbols)} pasaran sedia didagangkan.")
         
-        # INVARIANT: SASARAN PROFIT PER AKAUN (+2,500 USC / +$25.00 USD)
-        self.account_profit_target_usc = 2500.0  # 2,500 USC = $25.00 USD
-        self.account_profit_target_usd = 25.0
+        self.login = str(getattr(account, "login", self.login))
+        
+        # DYNAMIC PROFIT TARGET: 25% Sehari (atau mengikut konfigurasi bridge_config.json)
+        configured_target_pct = float(self.config.get("daily_profit_target_pct", 25.0))
+        starting_bal = float(account.balance)
+        
+        if self.is_cent_account:
+            default_usc = (starting_bal * (configured_target_pct / 100.0)) if starting_bal > 0 else 2500.0
+            self.account_profit_target_usc = float(self.config.get("daily_profit_target_usc", default_usc))
+            self.account_profit_target_usd = self.account_profit_target_usc / 100.0
+            target_display = f"{self.account_profit_target_usc:,.0f} USC (${self.account_profit_target_usd:,.2f} USD | +{configured_target_pct:.0f}%)"
+        else:
+            default_usd = (starting_bal * (configured_target_pct / 100.0)) if starting_bal > 0 else 1250.0
+            self.account_profit_target_usd = float(self.config.get("daily_profit_target_usd", default_usd))
+            target_display = f"${self.account_profit_target_usd:,.2f} USD (+{configured_target_pct:.0f}%)"
+        
         self.account_target_reached = False
         self.session_baseline_equity = float(account.equity)
         self.last_target_log_time = 0
-        target_display = f"2,500 USC ($25.00 USD)" if self.is_cent_account else "$25.00 USD"
-        print(f" • Circuit Breaker: Had Untung Harian {target_display} (Henti Automatik Per Akaun)")
+        print(f" • Circuit Breaker: Had Untung Harian {target_display} (Capai 25% Sehari Stop Trade)")
 
         return True
 
@@ -874,17 +887,20 @@ class AmaterasuBridge:
         # HARD CEILING: Maximum Total Account Open Lots & Positions (Anti-Overtrading & Anti-Liquidation)
         all_pos_raw = mt5.positions_get() or []
         tot_vol = sum(p.volume for p in all_pos_raw)
-        default_max_lots = 1.50 if getattr(self, "is_cent_account", True) else 0.30
+        is_acc5 = (str(getattr(self, "login", "")) == "5100242908")
+        default_max_lots = 1.00 if is_acc5 else (1.50 if getattr(self, "is_cent_account", True) else 0.30)
         max_tot_vol = float(self.config.get("max_account_lots", default_max_lots))
-        max_total_pos = min(int(self.config.get("max_account_positions", 8)), 8)
+        default_max_pos = 12 if is_acc5 else 8
+        max_total_pos = int(self.config.get("max_account_positions", default_max_pos))
         if tot_vol >= max_tot_vol or len(all_pos_raw) >= max_total_pos:
-            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= {max_total_pos}) telah mencapai had maksimum keselamatan akaun (Max 8)! Menolak order baharu.{Colors.RESET}")
+            print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= {max_total_pos}) telah mencapai had maksimum keselamatan akaun (Max {max_total_pos})! Menolak order baharu.{Colors.RESET}")
             return None
 
-        # STRICT 1-SETUP PER SYMBOL (STRICT MAX 4 SPLIT LAYERS FOR GOLD, 2 FOR FOREX):
-        # Had maksima 4 posisi untuk SETIAP PAIR (Gold: Max 4 split layers, Forex: Max 2)
+        # STRICT 1-SETUP PER SYMBOL:
         # 👑 KEDAULATAN MANUAL TENGKU KHAIRI: Hanya mengira posisi milik Bot AmaterasuX! Posisi manual tidak dihadkan.
-        max_allowed_layers = min(int(self.config.get("max_gold_positions", 4)), 4) if clean_raw_sym == "XAUUSD" else min(int(self.config.get("max_symbol_positions", 2)), 2)
+        # Mandat Tengku Khairi untuk Akaun 5 (#5100242908): Had maksimum 10 order untuk XAUUSD!
+        default_gold_max = 10 if is_acc5 else 4
+        max_allowed_layers = int(self.config.get("max_gold_positions", default_gold_max)) if clean_raw_sym == "XAUUSD" else int(self.config.get("max_symbol_positions", 2))
         existing_symbol_orders = [
             p for p in (mt5.positions_get() or [])
             if p.symbol.split('.')[0].upper() == clean_raw_sym and (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
