@@ -381,7 +381,9 @@ class AmaterasuBridge:
                 all_pos = mt5.positions_get()
                 if all_pos:
                     for p in all_pos:
-                        self.close_position_market(p, "MaxDD-15%")
+                        # ARAHAN MUTLAK TENGKU KHAIRI: UNTUK ENTRY MANUAL JANGAN KACAU POSITION!
+                        if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")):
+                            self.close_position_market(p, "MaxDD-15%")
 
                 self.account_target_reached = True
 
@@ -1714,55 +1716,9 @@ class AmaterasuBridge:
                 print(f"{Colors.YELLOW}[SWEEP REENTRY NOTA] Gagal buka sniper layer #{sym}: {err}{Colors.RESET}")
 
     def protect_naked_manual_positions(self, all_pos):
-        """Auto-set SL & TP for all manual / naked positions with SL=0 or TP=0"""
-        if not all_pos:
-            return
-        for p in all_pos:
-            if p.sl == 0.0 or p.tp == 0.0:
-                sym_upper = p.symbol.upper()
-                s_info = mt5.symbol_info(p.symbol)
-                digits = s_info.digits if s_info else 2
-                is_buy = (p.type == mt5.POSITION_TYPE_BUY)
-                open_p = p.price_open
-                new_sl = p.sl
-                new_tp = p.tp
-
-                if "XAU" in sym_upper or "GOLD" in sym_upper:
-                    if not is_buy:  # SELL
-                        if new_sl == 0.0:
-                            new_sl = round(max(3749.50, open_p + 14.50), digits)
-                        if new_tp == 0.0:
-                            new_tp = round(min(3720.00, open_p - 14.00), digits)
-                    else:  # BUY
-                        if new_sl == 0.0:
-                            new_sl = round(min(3690.00, open_p - 14.50), digits)
-                        if new_tp == 0.0:
-                            new_tp = round(max(3755.00, open_p + 14.00), digits)
-                else:  # Forex
-                    pip = 0.0001
-                    if not is_buy:  # SELL
-                        if new_sl == 0.0:
-                            new_sl = round(open_p + 35 * pip, digits)
-                        if new_tp == 0.0:
-                            new_tp = round(open_p - 40 * pip, digits)
-                    else:  # BUY
-                        if new_sl == 0.0:
-                            new_sl = round(open_p - 35 * pip, digits)
-                        if new_tp == 0.0:
-                            new_tp = round(open_p + 40 * pip, digits)
-
-                req = {
-                    "action": mt5.TRADE_ACTION_SLTP,
-                    "position": p.ticket,
-                    "symbol": p.symbol,
-                    "sl": new_sl,
-                    "tp": new_tp,
-                }
-                res = mt5.order_send(req)
-                if res and res.retcode == mt5.TRADE_RETCODE_DONE:
-                    print(f"{Colors.GREEN}🛡️ [MANUAL POSITION PROTECTED] Ticket #{p.ticket} {p.symbol} {('BUY' if is_buy else 'SELL')} Berjaya disetkan SL: {new_sl} dan TP: {new_tp}! Modal kini terlindung.{Colors.RESET}")
-                else:
-                    err = res.retcode if res else mt5.last_error()
+        # ARAHAN MUTLAK TENGKU KHAIRI: UNTUK ENTRY MANUAL JANGAN KACAU POSITION!
+        # Dilarang sama sekali menyentuh, mengubah SL/TP, atau mengganggu posisi manual Tengku Khairi.
+        return
                     print(f"{Colors.YELLOW}[MANUAL PROTECTION INFO] Ticket #{p.ticket}: retcode {err}{Colors.RESET}")
 
     def breakeven_guardian_loop(self):
