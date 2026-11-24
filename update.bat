@@ -87,10 +87,17 @@ if exist "C:\AmaterasuX_Acc4\amaterasu_mt5_bridge.py" (
     start "BRIDGE MASTER 4" %PY% amaterasu_mt5_bridge.py
     echo [RUNNING] Bridge Master 4 (MEZ EA Cent)
 )
+timeout /t 1 >nul
+
+if exist "C:\AmaterasuX_Acc5\amaterasu_mt5_bridge.py" (
+    cd /d C:\AmaterasuX_Acc5
+    start "BRIDGE MASTER 5" %PY% amaterasu_mt5_bridge.py
+    echo [RUNNING] Bridge Master 5 (Wan Farouk $5k Standard)
+)
 
 echo.
 echo ===============================================================================
-echo     SEMUA 4 BRIDGE DI VPS BERJAYA DISINKRONKAN 100%% DENGAN AMATERASUX.COM!
+echo     SEMUA 5 BRIDGE DI VPS BERJAYA DISINKRONKAN 100%% DENGAN SERVER PUSAT!
 echo ===============================================================================
 echo.
 timeout /t 5
