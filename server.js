@@ -291,6 +291,35 @@ const defaultDB = {
     affiliateLink: "https://one.versustrade.link/links/go/14490?pid=31255",
     lastSync: "18:15:00"
   },
+  copytrade5: {
+    id: "master-5",
+    name: "WAN FAROUK",
+    avatar: "img/tiger.png",
+    masterAccount: "5100242908",
+    broker: "Versus Trade Ltd. (Live1)",
+    accountType: "Standard Account (USD)",
+    currency: "USD",
+    initialDeposit: 5000.0,
+    totalWithdrawn: 0.0,
+    totalWithdrawnUsd: 0.0,
+    allTimeProfitUsc: 0.0,
+    allTimeProfitUsd: 0.0,
+    allTimeGrowthPct: 0.0,
+    growthPct: 0.0,
+    netProfitUsc: 0.0,
+    netProfitUsd: 0.0,
+    currentBalance: 5000.0,
+    currentEquity: 5000.0,
+    activeEquity: 5000.0,
+    activeEquityUsd: 5000.0,
+    winRate: 100.0,
+    maxDrawdown: 0.0,
+    status: "LIVE & ACTIVE",
+    badge: "VAULT 5 (WAN FAROUK - $5K STANDARD)",
+    copiersCount: 1,
+    affiliateLink: "https://one.versustrade.link/links/go/78665?pid=170480",
+    lastSync: "08:45:00"
+  },
   copytrades: [],
   copytradeRequests: []
 };
@@ -1505,15 +1534,39 @@ const server = http.createServer(async (req, res) => {
               db.copytrade4.lastSync = getMYTTimeWithSeconds();
             }
           }
+          // Master 5 (#5100242908 Standard USD - WAN FAROUK)
+          if (loginStr === '5100242908') {
+            if (db.copytrade5) {
+              db.copytrade5.currentBalance = rep.balance;
+              db.copytrade5.currentEquity = rep.equity;
+              if (rep.deposits) db.copytrade5.initialDeposit = rep.deposits;
+              if (rep.withdrawals !== undefined) {
+                db.copytrade5.totalWithdrawn = rep.withdrawals;
+                db.copytrade5.totalWithdrawnUsd = rep.withdrawals;
+              }
+              if (rep.netRealised !== undefined) {
+                db.copytrade5.allTimeProfitUsd = rep.netRealised;
+                db.copytrade5.netProfitUsd = rep.netRealised;
+              }
+              if (rep.growthPct !== undefined) {
+                db.copytrade5.growthPct = rep.growthPct;
+                db.copytrade5.allTimeGrowthPct = rep.growthPct;
+              }
+              db.copytrade5.activeEquity = rep.equity;
+              db.copytrade5.activeEquityUsd = rep.equity;
+              db.copytrade5.lastSync = getMYTTimeWithSeconds();
+            }
+          }
         }
         if (Array.isArray(db.copytrades)) {
           if (db.copytrade) db.copytrades[0] = db.copytrade;
           if (db.copytrade2) db.copytrades[1] = db.copytrade2;
           if (db.copytrade3) db.copytrades[2] = db.copytrade3;
           if (db.copytrade4) db.copytrades[3] = db.copytrade4;
+          if (db.copytrade5) db.copytrades[4] = db.copytrade5;
         }
         saveDB(db);
-        broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrade4: db.copytrade4, copytrades: db.copytrades });
+        broadcastEvent('copytrade_update', { copytrade: db.copytrade, copytrade2: db.copytrade2, copytrade3: db.copytrade3, copytrade4: db.copytrade4, copytrade5: db.copytrade5, copytrades: db.copytrades });
       }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1741,10 +1794,10 @@ const server = http.createServer(async (req, res) => {
           db.copytrade4.openPositions = payload.openPositions || [];
         }
 
-        // 5. MASTER 5 (VAULT 5 #270588)
-        else if (loginStr === '270588') {
-          if (!db.copytrade5) db.copytrade5 = { id: 'master-5', name: 'TITAN', avatar: 'img/tiger.png', masterAccount: '270588', broker: 'Versus Trade Ltd. (Live1)' };
-          const initDep5 = Number(acc.deposits) > 0 ? Number(acc.deposits) : 10000.0;
+        // 5. MASTER 5 (VAULT 5 #5100242908 - WAN FAROUK $5,000 STANDARD)
+        else if (loginStr === '5100242908') {
+          if (!db.copytrade5) db.copytrade5 = { id: 'master-5', name: 'WAN FAROUK', avatar: 'img/tiger.png', masterAccount: '5100242908', broker: 'Versus Trade Ltd. (Live1)' };
+          const initDep5 = Number(acc.deposits) > 0 ? Number(acc.deposits) : 5000.0;
           const totalWd5 = Number(acc.totalWithdrawn) || 0.0;
           const bal5 = Number(acc.balance);
           const eq5 = Number(acc.equity);
@@ -1753,7 +1806,9 @@ const server = http.createServer(async (req, res) => {
           const growthPct5 = initDep5 > 0 ? +((netProfit5 / initDep5) * 100).toFixed(2) : 0;
           const isCent5 = String(acc.currency || '').includes('USC') || String(acc.currency || '').includes('CENT');
 
-          db.copytrade5.masterAccount = '270588';
+          db.copytrade5.name = 'WAN FAROUK';
+          db.copytrade5.masterAccount = '5100242908';
+          db.copytrade5.broker = 'Versus Trade Ltd. (Live1)';
           db.copytrade5.currency = acc.currency || (isCent5 ? 'USC' : 'USD');
           db.copytrade5.accountType = isCent5 ? 'Cent Account (USC)' : 'Standard Account (USD)';
           db.copytrade5.initialDeposit = initDep5;
@@ -1771,7 +1826,7 @@ const server = http.createServer(async (req, res) => {
           db.copytrade5.closedTrades = Number(acc.closedTrades) || 0;
           db.copytrade5.wonTrades = Number(acc.wonTrades) || 0;
           db.copytrade5.winRate = acc.winRate !== undefined ? Number(acc.winRate) : 100.0;
-          db.copytrade5.badge = isCent5 ? "VAULT 5 (#270588 CENT+)" : "VAULT 5 (#270588 STANDARD)";
+          db.copytrade5.badge = isCent5 ? "VAULT 5 (WAN FAROUK CENT+)" : "VAULT 5 (WAN FAROUK - $5K STANDARD)";
           db.copytrade5.status = "LIVE & ACTIVE";
           db.copytrade5.lastSync = getMYTTimeWithSeconds();
           db.copytrade5.openPositions = payload.openPositions || [];
@@ -3269,7 +3324,7 @@ const server = http.createServer(async (req, res) => {
       auth ||
       callSign.toLowerCase() === 'tengku khairi' ||
       callSign.toLowerCase() === 'owner' ||
-      ['5100221532', '5100221533', '5100221534', '5100227599'].includes(String(mt5).trim())
+      ['5100221532', '5100221533', '5100221534', '5100227599', '5100242908'].includes(String(mt5).trim())
     );
     if (isOwnerOrMaster) {
       res.writeHead(200, { 'Content-Type': 'application/json' });

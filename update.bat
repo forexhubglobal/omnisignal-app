@@ -17,7 +17,7 @@ echo [2/4] Memuat turun amaterasu_mt5_bridge.py terkini dari https://amaterasux.
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 "$url = 'https://amaterasux.com/amaterasu_mt5_bridge.py'; ^
 $code = (New-Object System.Net.WebClient).DownloadString($url); ^
-$dirs = @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3', 'C:\AmaterasuX_Acc4', 'C:\AmaterasuX_270588', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master1_Cent', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master2_Cent', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master3_Standard'); ^
+$dirs = @('C:\AmaterasuX', 'C:\AmaterasuX_Acc2', 'C:\AmaterasuX_Acc3', 'C:\AmaterasuX_Acc4', 'C:\AmaterasuX_Acc5', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master1_Cent', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master2_Cent', 'C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\Master3_Standard'); ^
 foreach ($d in $dirs) { ^
     if (Test-Path $d) { ^
         $dest = Join-Path $d 'amaterasu_mt5_bridge.py'; ^
