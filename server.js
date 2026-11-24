@@ -1741,12 +1741,49 @@ const server = http.createServer(async (req, res) => {
           db.copytrade4.openPositions = payload.openPositions || [];
         }
 
-        db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4].filter(Boolean);
+        // 5. MASTER 5 (VAULT 5 #270588)
+        else if (loginStr === '270588') {
+          if (!db.copytrade5) db.copytrade5 = { id: 'master-5', name: 'TITAN', avatar: 'img/tiger.png', masterAccount: '270588', broker: 'Versus Trade Ltd. (Live1)' };
+          const initDep5 = Number(acc.deposits) > 0 ? Number(acc.deposits) : 10000.0;
+          const totalWd5 = Number(acc.totalWithdrawn) || 0.0;
+          const bal5 = Number(acc.balance);
+          const eq5 = Number(acc.equity);
+          const flt5 = Number(acc.profit) || 0.0;
+          const netProfit5 = (bal5 + totalWd5) - initDep5;
+          const growthPct5 = initDep5 > 0 ? +((netProfit5 / initDep5) * 100).toFixed(2) : 0;
+          const isCent5 = String(acc.currency || '').includes('USC') || String(acc.currency || '').includes('CENT');
+
+          db.copytrade5.masterAccount = '270588';
+          db.copytrade5.currency = acc.currency || (isCent5 ? 'USC' : 'USD');
+          db.copytrade5.accountType = isCent5 ? 'Cent Account (USC)' : 'Standard Account (USD)';
+          db.copytrade5.initialDeposit = initDep5;
+          db.copytrade5.totalWithdrawn = totalWd5;
+          db.copytrade5.totalWithdrawnUsd = isCent5 ? +(totalWd5 / 100).toFixed(2) : totalWd5;
+          db.copytrade5.currentBalance = bal5;
+          db.copytrade5.currentEquity = eq5;
+          db.copytrade5.activeEquity = eq5;
+          db.copytrade5.activeEquityUsd = isCent5 ? +(eq5 / 100).toFixed(2) : eq5;
+          db.copytrade5.netProfitUsc = isCent5 ? netProfit5 : +(netProfit5 * 100).toFixed(0);
+          db.copytrade5.netProfitUsd = isCent5 ? +(netProfit5 / 100).toFixed(2) : netProfit5;
+          db.copytrade5.growthPct = growthPct5;
+          db.copytrade5.floatingProfit = flt5;
+          db.copytrade5.realizedProfit = Number(acc.realizedProfit) || 0.0;
+          db.copytrade5.closedTrades = Number(acc.closedTrades) || 0;
+          db.copytrade5.wonTrades = Number(acc.wonTrades) || 0;
+          db.copytrade5.winRate = acc.winRate !== undefined ? Number(acc.winRate) : 100.0;
+          db.copytrade5.badge = isCent5 ? "VAULT 5 (#270588 CENT+)" : "VAULT 5 (#270588 STANDARD)";
+          db.copytrade5.status = "LIVE & ACTIVE";
+          db.copytrade5.lastSync = getMYTTimeWithSeconds();
+          db.copytrade5.openPositions = payload.openPositions || [];
+        }
+
+        db.copytrades = [db.copytrade, db.copytrade2, db.copytrade3, db.copytrade4, db.copytrade5].filter(Boolean);
         broadcastEvent('copytrade_update', {
           copytrade: db.copytrade,
           copytrade2: db.copytrade2,
           copytrade3: db.copytrade3,
           copytrade4: db.copytrade4,
+          copytrade5: db.copytrade5,
           copytrades: db.copytrades
         });
         saveDB(db);
@@ -1760,7 +1797,7 @@ const server = http.createServer(async (req, res) => {
 
         // =========================================================================
         // CONTINUOUS CONSOLIDATED MULTI-MASTER AUTO-RECONCILIATION ENGINE
-        // Aggregates positions from ALL Masters (Cent 1, Cent 2, Standard 3, Cent 4)
+        // Aggregates positions from ALL Masters (Cent 1, Cent 2, Standard 3, Cent 4, Vault 5)
         // so no master's active trades are ever lost, purged, or orphaned!
         // =========================================================================
         const allowedWhitelist = ['XAUUSD', 'USDCHF', 'EURUSD'];
@@ -1770,7 +1807,8 @@ const server = http.createServer(async (req, res) => {
           ...(Array.isArray(db.copytrade?.openPositions) ? db.copytrade.openPositions : []),
           ...(Array.isArray(db.copytrade2?.openPositions) ? db.copytrade2.openPositions : []),
           ...(Array.isArray(db.copytrade3?.openPositions) ? db.copytrade3.openPositions : []),
-          ...(Array.isArray(db.copytrade4?.openPositions) ? db.copytrade4.openPositions : [])
+          ...(Array.isArray(db.copytrade4?.openPositions) ? db.copytrade4.openPositions : []),
+          ...(Array.isArray(db.copytrade5?.openPositions) ? db.copytrade5.openPositions : [])
         ];
 
         // Map MT5 positions by clean symbol (e.g. 'XAUUSD', 'USDCHF', 'EURUSD')
