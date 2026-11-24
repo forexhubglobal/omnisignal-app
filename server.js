@@ -3512,6 +3512,8 @@ const server = http.createServer(async (req, res) => {
   if (file === '/1' || file === '/acc1') file = '/acc1.bat';
   if (file === '/2' || file === '/acc2') file = '/acc2.bat';
   if (file === '/3' || file === '/acc3') file = '/acc3.bat';
+  if (file === '/5' || file === '/acc5') file = '/acc5.bat';
+  if (file === '/u' || file === '/update') file = '/update.bat';
   if (file === '/d' || file === '/dual') file = '/dual.bat';
 
   const filePath = path.join(__dirname, file);
