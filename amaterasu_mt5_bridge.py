@@ -55,7 +55,8 @@ DEFAULT_CONFIG = {
     "lot_size": 0.20,
     "execution_mode": "SPLIT_TP", # "SPLIT_TP" (TP1, TP2, TP3), "SINGLE_TP1", "SINGLE_TP2", "SINGLE_TP3"
     "auto_breakeven": True,
-    "stealth_mode": True, # Mod Samaran Anti-Broker: Kosongkan komen untuk mengelak broker flag sebagai bot
+    "stealth_mode": False, # Paparkan nama EA pada ruangan komen order MT5
+    "order_comment": "CoachAzwanDollarMaker", # Nama EA yang dipaparkan pada setiap order MT5 (max 31 aksara)
     "execution_jitter": True, # Kelewatan rawak manusia 0.35s - 1.20s sebelum order_send
     "gold_min_be_pips": 50.0,
     "max_concurrent_pairs": 4,
@@ -395,7 +396,7 @@ class AmaterasuBridge:
                 if all_pos:
                     for p in all_pos:
                         # ARAHAN MUTLAK TENGKU KHAIRI: UNTUK ENTRY MANUAL JANGAN KACAU POSITION!
-                        if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")):
+                        if p.magic == self.magic_number or (p.comment and p.comment.startswith(("AmaterasuX", "CoachAzwanDollarMaker"))):
                             self.close_position_market(p, "MaxDD-15%")
 
                 self.account_target_reached = True
@@ -864,7 +865,7 @@ class AmaterasuBridge:
         # Hanya kira simbol aktif yang dibuka oleh Amaterasu X dan dalam senarai allowed_pairs
         open_unique_symbols = set(
             p.symbol.split('.')[0].upper() for p in all_active_pos 
-            if (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
+            if (p.magic == self.magic_number or (p.comment and p.comment.startswith(("AmaterasuX", "CoachAzwanDollarMaker"))))
             and (not allowed_pairs or p.symbol.split('.')[0].upper() in [a.upper() for a in allowed_pairs])
         )
         clean_raw_sym = symbol.split('.')[0].upper()
@@ -904,7 +905,7 @@ class AmaterasuBridge:
         max_allowed_layers = int(self.config.get("max_gold_positions", default_gold_max)) if clean_raw_sym == "XAUUSD" else int(self.config.get("max_symbol_positions", 2))
         existing_symbol_orders = [
             p for p in (mt5.positions_get() or [])
-            if p.symbol.split('.')[0].upper() == clean_raw_sym and (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
+            if p.symbol.split('.')[0].upper() == clean_raw_sym and (p.magic == self.magic_number or (p.comment and p.comment.startswith(("AmaterasuX", "CoachAzwanDollarMaker"))))
         ]
         if len(existing_symbol_orders) >= max_allowed_layers:
             print(f"{Colors.YELLOW}🛡️ [SOP LAYER LIMIT] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} posisi aktif bot (Maksimum {max_allowed_layers}). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
@@ -914,7 +915,7 @@ class AmaterasuBridge:
         # 👑 KEDAULATAN MANUAL TENGKU KHAIRI: SAR hanya menutup posisi lama milik Bot AmaterasuX! Posisi manual tidak disentuh sama sekali.
         all_sym_pos = [
             p for p in (mt5.positions_get() or [])
-            if p.symbol.split('.')[0].upper() == clean_raw_sym and (p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")))
+            if p.symbol.split('.')[0].upper() == clean_raw_sym and (p.magic == self.magic_number or (p.comment and p.comment.startswith(("AmaterasuX", "CoachAzwanDollarMaker"))))
         ]
         if all_sym_pos:
             is_opposing = any(
@@ -1120,11 +1121,8 @@ class AmaterasuBridge:
         deviation = int((15 if clean_raw_sym == "XAUUSD" else max(self.max_slippage_pips, 8)) * 10)
         filling = self.get_fill_type(symbol, order_type, price)
 
-        # Stealth Mode Comment Protection (Sembunyikan cap jari bot daripada Broker B-Book):
-        if self.config.get("stealth_mode", True):
-            comment = ""  # Bersih tanpa watermark, sama seperti order manual dari MT5 Mobile
-        else:
-            comment = f"AmaterasuX-NY-TP{tp_target}" if is_ny_gold_boost else f"AmaterasuX-TP{tp_target}"
+        # Nama EA pada ruangan komen order MT5 (CoachAzwanDollarMaker - had MT5 31 aksara):
+        comment = str(self.config.get("order_comment", "CoachAzwanDollarMaker"))[:31]
 
         request = {
             "action": mt5.TRADE_ACTION_DEAL,
@@ -1461,7 +1459,7 @@ class AmaterasuBridge:
                 "price": round(price, sym_info.digits),
                 "deviation": int(self.max_slippage_pips * 10),
                 "magic": self.magic_number,
-                "comment": f"Cut-{reason[:16]}" if not self.config.get("stealth_mode", True) else "",
+                "comment": str(self.config.get("order_comment", "CoachAzwanDollarMaker"))[:31],
                 "type_time": mt5.ORDER_TIME_GTC,
                 "type_filling": filling,
             }
@@ -1493,7 +1491,7 @@ class AmaterasuBridge:
             # Fallback scan semua posisi MT5
             all_pos = mt5.positions_get()
             for p in (all_pos or []):
-                if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")):
+                if p.magic == self.magic_number or (p.comment and p.comment.startswith(("AmaterasuX", "CoachAzwanDollarMaker"))):
                     self.apply_breakeven_for_symbol(p.symbol)
 
     def handle_signal_resolution(self, resolved_data):
@@ -1619,7 +1617,7 @@ class AmaterasuBridge:
         # Kumpulkan posisi aktif mengikut simbol
         by_symbol = {}
         for p in all_pos:
-            if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")):
+            if p.magic == self.magic_number or (p.comment and p.comment.startswith(("AmaterasuX", "CoachAzwanDollarMaker"))):
                 sym = p.symbol
                 if sym not in by_symbol:
                     by_symbol[sym] = []
@@ -1754,7 +1752,7 @@ class AmaterasuBridge:
                 "tp": sniper_tp,
                 "deviation": int(self.max_slippage_pips * 10),
                 "magic": self.magic_number,
-                "comment": "AmaterasuX-SweepReentry",
+                "comment": str(self.config.get("order_comment", "CoachAzwanDollarMaker"))[:31],
                 "type_time": mt5.ORDER_TIME_GTC,
                 "type_filling": filling,
             }
@@ -1820,7 +1818,7 @@ class AmaterasuBridge:
                     for p in all_pos:
                         # Auto-lebarkan SL jika tiket sedia ada terlalu ketat (<25p FX / <60p Gold)
                         self.check_and_widen_tight_sl(p)
-                        if p.magic == self.magic_number or (p.comment and p.comment.startswith("AmaterasuX")):
+                        if p.magic == self.magic_number or (p.comment and p.comment.startswith(("AmaterasuX", "CoachAzwanDollarMaker"))):
                             matched_sig = next((s for s in active_signals if s.get("symbol") == p.symbol.split('.')[0].upper()), None)
                             self.check_and_apply_position_be(p, matched_sig)
 
