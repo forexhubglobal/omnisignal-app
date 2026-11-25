@@ -73,6 +73,12 @@ foreach ($f in $files) { ^
             $c.max_account_lots = 1.00; ^
             $c.daily_profit_target_pct = 25.0; ^
             $c.daily_profit_target_usd = 1250.0; ^
+        } elseif ($login -match '5100221532') { ^
+            $c.max_gold_positions = 10; ^
+            $c.max_account_positions = 12; ^
+            $c.max_account_lots = 2.50; ^
+            $c.daily_profit_target_pct = 25.0; ^
+            $c.daily_profit_target_usc = 2500.0; ^
         } elseif ($login -match '5100221534|5100209626') { ^
             $c.max_gold_positions = 4; ^
             $c.max_account_positions = 8; ^

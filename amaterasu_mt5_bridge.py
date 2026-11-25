@@ -888,9 +888,10 @@ class AmaterasuBridge:
         all_pos_raw = mt5.positions_get() or []
         tot_vol = sum(p.volume for p in all_pos_raw)
         is_acc5 = (str(getattr(self, "login", "")) == "5100242908")
-        default_max_lots = 1.00 if is_acc5 else (1.50 if getattr(self, "is_cent_account", True) else 0.30)
+        is_dragon = (str(getattr(self, "login", "")) == "5100221532")
+        default_max_lots = 1.00 if is_acc5 else (2.50 if is_dragon else (1.50 if getattr(self, "is_cent_account", True) else 0.30))
         max_tot_vol = float(self.config.get("max_account_lots", default_max_lots))
-        default_max_pos = 12 if is_acc5 else 8
+        default_max_pos = 12 if (is_acc5 or is_dragon) else 8
         max_total_pos = int(self.config.get("max_account_positions", default_max_pos))
         if tot_vol >= max_tot_vol or len(all_pos_raw) >= max_total_pos:
             print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= {max_total_pos}) telah mencapai had maksimum keselamatan akaun (Max {max_total_pos})! Menolak order baharu.{Colors.RESET}")
@@ -898,8 +899,8 @@ class AmaterasuBridge:
 
         # STRICT 1-SETUP PER SYMBOL:
         # 👑 KEDAULATAN MANUAL TENGKU KHAIRI: Hanya mengira posisi milik Bot AmaterasuX! Posisi manual tidak dihadkan.
-        # Mandat Tengku Khairi untuk Akaun 5 (#5100242908): Had maksimum 10 order untuk XAUUSD!
-        default_gold_max = 10 if is_acc5 else 4
+        # Mandat Tengku Khairi untuk Akaun 5 (#5100242908) & DRAGON (#5100221532): Had maksimum 10 order untuk XAUUSD!
+        default_gold_max = 10 if (is_acc5 or is_dragon) else 4
         max_allowed_layers = int(self.config.get("max_gold_positions", default_gold_max)) if clean_raw_sym == "XAUUSD" else int(self.config.get("max_symbol_positions", 2))
         existing_symbol_orders = [
             p for p in (mt5.positions_get() or [])
