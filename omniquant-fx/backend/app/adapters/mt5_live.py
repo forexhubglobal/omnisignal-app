@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import glob
 import json
 import os
 import subprocess
@@ -16,120 +17,142 @@ except ImportError:
 
 _mt5_lock = threading.Lock()
 _mt5_initialized = False
-_last_proc_check_ts = 0.0
-_last_proc_running = False
 _broker_symbol_cache: Dict[str, str] = {}
 
 KNOWN_MT5_PATHS = [
-    r"C:\VersusTrade_Acc2\terminal64.exe",
-    r"C:\VersusTrade_Acc3\terminal64.exe",
+    r"C:\VersusTrade_Acc1\terminal64.exe",
     r"C:\VersusTrade_Acc5\terminal64.exe",
+    r"C:\VersusTrade_Acc3\terminal64.exe",
+    r"C:\VersusTrade_Acc2\terminal64.exe",
     r"C:\Program Files\Versus Trade MetaTrader 5 Terminal\terminal64.exe",
     r"C:\Program Files\MetaTrader 5 EXNESS\terminal64.exe",
     r"C:\Program Files\MetaTrader 5\terminal64.exe",
 ]
 
 
-def _load_amaterasu_bridge_cfg() -> Dict:
-    for cfg_path in [
+def _load_all_bridge_configs() -> List[Dict]:
+    configs: List[Dict] = []
+    search_paths = [
         r"C:\AmaterasuX\bridge_config.json",
-        r"C:\AmaterasuX_Acc2\bridge_config.json",
+        r"C:\AmaterasuX_Acc1\bridge_config.json",
         r"C:\AmaterasuX_Acc5\bridge_config.json",
+        r"C:\AmaterasuX_Acc3\bridge_config.json",
+        r"C:\AmaterasuX_Acc2\bridge_config.json",
         r"C:\Users\US\.gemini\antigravity\scratch\trading-academy-app\bridge_config.json",
-    ]:
-        if os.path.exists(cfg_path):
+    ]
+    search_paths.extend(glob.glob(r"C:\Users\Administrator\Desktop\AMATERASU_VPS_PACKAGE\*\bridge_config.json"))
+    for p in search_paths:
+        if os.path.exists(p):
             try:
-                with open(cfg_path, "r", encoding="utf-8-sig") as f:
-                    data = json.load(f)
-                    if data.get("mt5_terminal_path") or data.get("mt5_login"):
-                        return data
+                with open(p, "r", encoding="utf-8-sig") as f:
+                    d = json.load(f)
+                    if isinstance(d, dict):
+                        configs.append(d)
             except Exception:
                 pass
-    return {}
+    return configs
 
 
-def _is_terminal64_running() -> bool:
-    global _last_proc_check_ts, _last_proc_running
-    now = time.time()
-    if now - _last_proc_check_ts < 5.0:
-        return _last_proc_running
-    _last_proc_check_ts = now
+def _get_running_terminal_paths() -> List[str]:
+    """
+    Returns exact ExecutablePaths of currently running `terminal64.exe` instances!
+    Avoids touching paused/closed MT5 folders on multi-account VPS setups.
+    """
     if os.name != "nt":
-        _last_proc_running = False
-        return False
+        return []
     try:
         out = subprocess.check_output(
-            ["tasklist", "/FI", "IMAGENAME eq terminal64.exe", "/NH"],
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "Get-Process -Name terminal64 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Path",
+            ],
             stderr=subprocess.DEVNULL,
-            timeout=1.5,
+            timeout=3.5,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         ).decode("utf-8", errors="ignore")
-        _last_proc_running = "terminal64.exe" in out.lower()
+        paths: List[str] = []
+        for line in out.splitlines():
+            clean = line.strip()
+            if clean and os.path.exists(clean) and clean not in paths:
+                paths.append(clean)
+        return paths
     except Exception:
-        _last_proc_running = False
-    return _last_proc_running
+        return []
 
 
 def init_mt5_on_main_thread() -> bool:
     """
-    MUST be called from Python's main thread (FastAPI lifespan startup or async route).
-    MetaTrader5's Windows IPC requires initialization on the main STA thread; once initialized,
-    data reads (`copy_rates_from_pos`, `account_info`, `positions_get`) work across all threads in <3ms.
+    Attaches to the best active, logged-in MetaTrader 5 terminal on this PC/VPS.
+    Prioritizes already-running `terminal64.exe` processes with positive account equity.
     """
-    global _mt5_initialized
+    global _mt5_initialized, _broker_symbol_cache
     if not MT5_AVAILABLE or mt5 is None:
-        return False
-
-    if not _is_terminal64_running():
-        _mt5_initialized = False
         return False
 
     with _mt5_lock:
         if _mt5_initialized and mt5.terminal_info() is not None and mt5.account_info() is not None:
             return True
 
-        settings = get_settings()
-        bridge_cfg = _load_amaterasu_bridge_cfg()
+        running_paths = _get_running_terminal_paths()
+        if not running_paths:
+            _mt5_initialized = False
+            return False
 
-        candidate_paths: List[str] = []
-        if settings.mt5_terminal_path and os.path.exists(settings.mt5_terminal_path):
-            candidate_paths.append(settings.mt5_terminal_path)
+        all_cfgs = _load_all_bridge_configs()
+        cfg_by_path: Dict[str, Dict] = {}
+        for c in all_cfgs:
+            tp = str(c.get("mt5_terminal_path", "")).strip()
+            if tp:
+                cfg_by_path[os.path.normcase(tp)] = c
 
-        cfg_term = str(bridge_cfg.get("mt5_terminal_path", "")).strip()
-        if cfg_term and os.path.exists(cfg_term) and cfg_term not in candidate_paths:
-            candidate_paths.append(cfg_term)
+        best_path: Optional[str] = None
+        best_equity = -1.0
 
-        for kp in KNOWN_MT5_PATHS:
-            if os.path.exists(kp) and kp not in candidate_paths:
-                candidate_paths.append(kp)
+        # Probe each running terminal64.exe to pick an active funded logged-in account
+        for exe_path in running_paths:
+            connected_this = False
+            if mt5.initialize(path=exe_path, timeout=5000):
+                acc = mt5.account_info()
+                if acc is not None and acc.login:
+                    connected_this = True
+                    eq = float(acc.equity or 0.0)
+                    if eq > best_equity:
+                        best_equity = eq
+                        best_path = exe_path
+                    if eq > 10.0:
+                        # Active funded terminal found immediately!
+                        _mt5_initialized = True
+                        _broker_symbol_cache.clear()
+                        return True
 
-        for path in candidate_paths:
-            if bridge_cfg.get("mt5_login") and bridge_cfg.get("mt5_password") and bridge_cfg.get("mt5_server"):
-                if not cfg_term or os.path.normcase(path) == os.path.normcase(cfg_term):
+            if not connected_this:
+                matched_cfg = cfg_by_path.get(os.path.normcase(exe_path))
+                if matched_cfg and matched_cfg.get("mt5_login") and matched_cfg.get("mt5_password") and matched_cfg.get("mt5_server"):
                     if mt5.initialize(
-                        path=path,
-                        login=int(bridge_cfg["mt5_login"]),
-                        password=str(bridge_cfg["mt5_password"]),
-                        server=str(bridge_cfg["mt5_server"]),
-                        timeout=8000,
+                        path=exe_path,
+                        login=int(matched_cfg["mt5_login"]),
+                        password=str(matched_cfg["mt5_password"]),
+                        server=str(matched_cfg["mt5_server"]),
+                        timeout=6000,
                     ):
-                        if mt5.account_info() is not None:
+                        acc = mt5.account_info()
+                        if acc is not None:
                             _mt5_initialized = True
+                            _broker_symbol_cache.clear()
                             return True
 
-            if mt5.initialize(path=path, timeout=4500):
-                if mt5.account_info() is not None:
-                    _mt5_initialized = True
-                    return True
+        if best_path and mt5.initialize(path=best_path, timeout=5000):
+            if mt5.account_info() is not None:
+                _mt5_initialized = True
+                _broker_symbol_cache.clear()
+                return True
 
         return False
 
 
 def ensure_mt5_connected() -> bool:
-    """
-    Zero-overhead C-level pointer check (<0.05ms) once initialized.
-    Never spawns tasklist.exe on active requests!
-    """
     global _mt5_initialized
     if not MT5_AVAILABLE or mt5 is None or not _mt5_initialized:
         return False
@@ -144,30 +167,26 @@ def ensure_mt5_connected() -> bool:
 
 
 def launch_and_connect_mt5_main_thread() -> Dict[str, object]:
-    global _mt5_initialized, _last_proc_check_ts, _broker_symbol_cache
+    global _mt5_initialized, _broker_symbol_cache
     if not MT5_AVAILABLE or mt5 is None:
         return {"ok": False, "message": "Modul MetaTrader5 hanya tersedia pada Windows."}
 
     _mt5_initialized = False
-    _last_proc_check_ts = 0.0
     _broker_symbol_cache.clear()
 
-    bridge_cfg = _load_amaterasu_bridge_cfg()
-    settings = get_settings()
-    exe_path = (
-        settings.mt5_terminal_path
-        or str(bridge_cfg.get("mt5_terminal_path", "")).strip()
-    )
-    if not exe_path or not os.path.exists(exe_path):
-        exe_path = next((cand for cand in KNOWN_MT5_PATHS if os.path.exists(cand)), "")
-
-    if not _is_terminal64_running() and exe_path:
-        try:
-            subprocess.Popen([exe_path, "/portable"], close_fds=True)
-            time.sleep(3.0)
-            _last_proc_check_ts = 0.0
-        except Exception as exc:
-            return {"ok": False, "message": f"Gagal membuka MT5: {exc}"}
+    running = _get_running_terminal_paths()
+    exe_path = running[0] if running else ""
+    if not exe_path:
+        settings = get_settings()
+        exe_path = settings.mt5_terminal_path if (settings.mt5_terminal_path and os.path.exists(settings.mt5_terminal_path)) else ""
+        if not exe_path:
+            exe_path = next((cand for cand in KNOWN_MT5_PATHS if os.path.exists(cand)), "")
+        if exe_path:
+            try:
+                subprocess.Popen([exe_path, "/portable"], close_fds=True)
+                time.sleep(3.0)
+            except Exception as exc:
+                return {"ok": False, "message": f"Gagal membuka MT5: {exc}"}
 
     connected = init_mt5_on_main_thread()
     telemetry = get_mt5_bridge_telemetry() if connected else {"connected": False}
@@ -196,10 +215,13 @@ def resolve_mt5_symbol(ui_symbol: str) -> Optional[str]:
     if clean in _broker_symbol_cache:
         return _broker_symbol_cache[clean]
 
+    # Supports Standard (.s), Cent (.c), Micro (m/.m), ECN, Pro, and raw symbols
     candidates = [
         f"{clean}.c",
+        f"{clean}.s",
         clean,
         f"{clean}c",
+        f"{clean}s",
         f"{clean}m",
         f"{clean}.m",
         f"{clean}.pro",
@@ -207,7 +229,7 @@ def resolve_mt5_symbol(ui_symbol: str) -> Optional[str]:
         f"{clean}#",
     ]
     if clean == "XAUUSD":
-        candidates.extend(["GOLD.c", "GOLD", "GOLDm", "GOLD.m"])
+        candidates.extend(["GOLD.c", "GOLD.s", "GOLD", "GOLDm", "GOLD.m"])
 
     with _mt5_lock:
         for cand in candidates:
@@ -324,7 +346,7 @@ def get_mt5_bridge_telemetry() -> Dict:
         profit = float(p.profit)
         total_profit += profit
         is_bot = bool(
-            p.magic in (888999, 888995)
+            p.magic in (888999, 888998, 888997, 888995, 888994)
             or (p.comment and p.comment.startswith(("AmaterasuX", "CoachAzwanDollarMaker")))
         )
         pos_list.append(
