@@ -20,11 +20,14 @@ from app.config import get_settings
 from app.database import init_db
 from app.quant.engine import analyze_pair
 from app.scheduler import (
+    AUTO_DISPATCH_STATE,
     CRON_TELEMETRY,
+    get_active_auto_signals,
     get_recent_persisted_signals,
     start_background_cron,
     stop_background_cron,
     sync_all_pairs_and_signals,
+    toggle_auto_dispatch,
 )
 
 GATEKEEPER_AUDIT_LOG: Deque[Dict] = deque(maxlen=25)
@@ -137,7 +140,12 @@ async def add_static_cache_headers(request: Request, call_next):
     return response
 
 
-def _build_24h_timeline(events: List[Dict], active_symbol: str, candles: List[Dict]) -> Dict:
+def _build_24h_timeline(
+    events: List[Dict],
+    active_symbol: str,
+    candles: List[Dict],
+    signals_24h: List[Dict] | None = None,
+) -> Dict:
     now_utc = datetime.now(timezone.utc)
     now_hour = round(now_utc.hour + now_utc.minute / 60.0, 2)
 
@@ -157,18 +165,30 @@ def _build_24h_timeline(events: List[Dict], active_symbol: str, candles: List[Di
             )
 
     sig_spans = []
-    for c in candles[-72:]:
-        if c.get("signal"):
-            dt = datetime.fromisoformat(c["timestamp"])
-            sh = round(dt.hour + dt.minute / 60.0, 2)
+    if signals_24h:
+        for s in signals_24h[-28:]:
+            sh = float(s["utc_hour"])
             sig_spans.append(
                 {
                     "start": sh,
-                    "end": min(24.0, round(sh + 0.85, 2)),
-                    "type": c["signal"],
-                    "label": f"{active_symbol} {c['signal']} @ {c['close']}",
+                    "end": min(24.0, round(sh + 0.38, 2)),
+                    "type": s["type"],
+                    "label": f"{active_symbol} {s['type']} @ {s['price']}",
                 }
             )
+    else:
+        for c in candles[-96:]:
+            if c.get("signal"):
+                dt = datetime.fromisoformat(c["timestamp"])
+                sh = round(dt.hour + dt.minute / 60.0, 2)
+                sig_spans.append(
+                    {
+                        "start": sh,
+                        "end": min(24.0, round(sh + 0.45, 2)),
+                        "type": c["signal"],
+                        "label": f"{active_symbol} {c['signal']} @ {c['close']}",
+                    }
+                )
 
     tracks = [
         {
@@ -209,7 +229,7 @@ def _build_24h_timeline(events: List[Dict], active_symbol: str, candles: List[Di
         },
         {
             "id": "signals_track",
-            "label": f"{active_symbol} SIGNALS",
+            "label": f"{active_symbol} SIGNALS ({len(sig_spans)})",
             "spans": [
                 {
                     "start": ss["start"],
@@ -217,7 +237,7 @@ def _build_24h_timeline(events: List[Dict], active_symbol: str, candles: List[Di
                     "kind": "SIG_BUY" if ss["type"] == "BUY" else "SIG_SELL",
                     "text": ss["label"],
                 }
-                for ss in sig_spans[-8:]
+                for ss in sig_spans[-28:]
             ],
         },
     ]
@@ -316,6 +336,27 @@ async def receive_amaterasu_bridge_heartbeat(request: Request):
         }
 
     return {"ok": True, "syncedAccounts": len(SYNCED_MT5_ACCOUNTS)}
+
+
+@app.get("/api/v1/auto-signals")
+def get_omniquant_auto_signals():
+    """
+    Polled every 4s by Amaterasu X Master Bridges (Account 1 & Account 5)
+    to auto-execute fresh >=75% confidence scalp signals into MT5!
+    """
+    return {
+        "enabled": bool(AUTO_DISPATCH_STATE.get("enabled", True)),
+        "minConfidence": float(AUTO_DISPATCH_STATE.get("min_confidence", 75.0)),
+        "activeSignals": get_active_auto_signals(),
+        "history": list(AUTO_DISPATCH_STATE.get("history", []))[:10],  # type: ignore
+    }
+
+
+@app.post("/api/v1/auto-trade/toggle")
+def toggle_omniquant_auto_trade(enabled: bool | None = Query(None)):
+    res = toggle_auto_dispatch(enabled)
+    DASHBOARD_RAM_CACHE.clear()
+    return res
 
 
 @app.get("/api/v1/gatekeeper")
@@ -439,6 +480,12 @@ def get_dashboard_payload(
         payload = dict(cached_entry[1])
         payload["gatekeeper_logs"] = list(GATEKEEPER_AUDIT_LOG)[:8]
         payload["synced_accounts"] = _build_synced_accounts_view(payload.get("mt5_bridge") or {})
+        payload["auto_dispatch"] = {
+            "enabled": bool(AUTO_DISPATCH_STATE.get("enabled", True)),
+            "min_confidence": float(AUTO_DISPATCH_STATE.get("min_confidence", 75.0)),
+            "active_count": len(get_active_auto_signals()),
+            "history": list(AUTO_DISPATCH_STATE.get("history", []))[:6],  # type: ignore
+        }
         return payload
 
     now_utc = datetime.now(timezone.utc)
@@ -550,7 +597,12 @@ def get_dashboard_payload(
     )
 
     active_analysis["manifold"]["right_nodes"] = right_nodes
-    timeline = _build_24h_timeline(events, symbol, active_analysis["candles"])
+    timeline = _build_24h_timeline(
+        events,
+        symbol,
+        active_analysis["candles"],
+        active_analysis.get("signals_24h"),
+    )
 
     ordered_matrix = [cached_matrix[p] for p in settings.tracked_pairs if p in cached_matrix]
 
@@ -576,6 +628,13 @@ def get_dashboard_payload(
         "matrix": ordered_matrix,
         "mt5_bridge": mt5_telemetry,
         "synced_accounts": synced_accounts_list,
+        "cached_entry_auto_inject": True,
+        "auto_dispatch": {
+            "enabled": bool(AUTO_DISPATCH_STATE.get("enabled", True)),
+            "min_confidence": float(AUTO_DISPATCH_STATE.get("min_confidence", 75.0)),
+            "active_count": len(get_active_auto_signals()),
+            "history": list(AUTO_DISPATCH_STATE.get("history", []))[:6],  # type: ignore
+        },
         "gatekeeper_logs": list(GATEKEEPER_AUDIT_LOG)[:8],
         "economic_calendar": {
             "shield_enabled": news_shield,

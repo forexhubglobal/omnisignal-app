@@ -25,13 +25,14 @@ const DIRECT_API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8005";
 
 export default function OmniQuantTerminalPage() {
   const [symbol, setSymbol] = useState<string>("XAU/USD");
-  const [timeframe, setTimeframe] = useState<string>("M15");
+  const [timeframe, setTimeframe] = useState<string>("M5");
   const [sessionFilter, setSessionFilter] = useState<string>("ALL");
   const [newsShield, setNewsShield] = useState<boolean>(true);
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [scanning, setScanning] = useState<boolean>(false);
   const [connectingMt5, setConnectingMt5] = useState<boolean>(false);
+  const [togglingAuto, setTogglingAuto] = useState<boolean>(false);
   const [testingAction, setTestingAction] = useState<"BUY" | "SELL" | null>(null);
   const [latestVerdict, setLatestVerdict] = useState<GatekeeperAuditItem | null>(null);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
@@ -115,6 +116,28 @@ export default function OmniQuantTerminalPage() {
     }
     await fetchDashboard();
     setConnectingMt5(false);
+  };
+
+  const handleToggleAutoTrade = async () => {
+    setTogglingAuto(true);
+    for (const url of [`/api/v1/auto-trade/toggle`, `${DIRECT_API}/api/v1/auto-trade/toggle`]) {
+      try {
+        const res = await fetch(url, { method: "POST" });
+        if (res.ok) {
+          const j = await res.json();
+          setStatusNotice(
+            j.enabled
+              ? "🔥 AUTO-TRADE MT5 DIAKTIFKAN! Signal ≥75% akan terus ditembak ke Akaun 1 & Akaun 5."
+              : "⏸️ AUTO-TRADE MT5 DIJEDA. Signal hanya dipaparkan di skrin tanpa auto-entry."
+          );
+          break;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    await fetchDashboard();
+    setTogglingAuto(false);
   };
 
   const handleTestGatekeeper = async (action: "BUY" | "SELL") => {
@@ -226,6 +249,21 @@ export default function OmniQuantTerminalPage() {
             }`}
           >
             NEWS SHIELD: {newsShield ? "ON (±30m)" : "OFF"}
+          </button>
+
+          <button
+            onClick={handleToggleAutoTrade}
+            disabled={togglingAuto}
+            title="Hidupkan/matikan tembakan order automatik ke Akaun 1 & Akaun 5 apabila Confidence ≥ 75%"
+            className={`px-2.5 py-1 border font-bold transition cursor-pointer disabled:opacity-50 ${
+              data?.auto_dispatch?.enabled !== false
+                ? "border-amber-400 bg-amber-500/20 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.25)]"
+                : "border-slate-700 bg-slate-900 text-slate-400"
+            }`}
+          >
+            {data?.auto_dispatch?.enabled !== false
+              ? `🔥 AUTO-TRADE (≥${data?.auto_dispatch?.min_confidence ?? 75}%): ON`
+              : "⏸ AUTO-TRADE: OFF"}
           </button>
 
           <button

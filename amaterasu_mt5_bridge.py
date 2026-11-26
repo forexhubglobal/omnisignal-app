@@ -1211,6 +1211,12 @@ class AmaterasuBridge:
         Pre-Trade Quantitative Gatekeeper & News Shield integration with OMNIQUANT FX (:8005).
         Fail-open design: if OMNIQUANT FX is offline, proceeds cleanly with native Amaterasu X SOP.
         """
+        if str(sig.get("id", "")).startswith("OMNI-"):
+            print(
+                f"{Colors.GREEN}⚡ [OMNIQUANT DIRECT SCALP] #{clean_sym} {sig.get('type')} ({sig.get('confidence')}% Conf) disahkan terus dari enjin OMNIQUANT!{Colors.RESET}"
+            )
+            return True
+
         if not self.config.get("omniquant_gatekeeper_enabled", True):
             return True
 
@@ -1912,6 +1918,31 @@ class AmaterasuBridge:
                             self.process_new_signal(s)
                         elif s.get("status") == "TP1_HIT" or s.get("beLocked"):
                             self.apply_breakeven_for_symbol(s.get("symbol"), s)
+            except Exception:
+                pass
+
+            # SEMAKAN TAMBAHAN SETIAP 4s: AUTO-SIGNAL HIGH-FREQUENCY SCALP DARI OMNIQUANT FX (>=75% CONFIDENCE)
+            try:
+                omni_url = str(self.config.get("omniquant_url", "http://127.0.0.1:8005")).rstrip("/")
+                if omni_url:
+                    ro = requests.get(f"{omni_url}/api/v1/auto-signals", timeout=2.5)
+                    if ro.status_code == 200:
+                        odata = ro.json()
+                        if odata.get("enabled", True):
+                            now_ep = time.time()
+                            for osig in odata.get("activeSignals", []):
+                                oid = osig.get("id")
+                                created_ep = float(osig.get("created_epoch", 0))
+                                if (
+                                    oid
+                                    and oid not in self.executed_signal_ids
+                                    and osig.get("status") == "ACTIVE"
+                                    and (now_ep - created_ep) < 240.0
+                                ):
+                                    print(
+                                        f"\n{Colors.CYAN}{Colors.BOLD}🔥 [OMNIQUANT AUTO-SCALP] Signal Kuat Diterima: #{osig.get('symbol')} {osig.get('type')} ({osig.get('confidence')}%)!{Colors.RESET}"
+                                    )
+                                    self.process_new_signal(osig)
             except Exception:
                 pass
 

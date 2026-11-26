@@ -16,7 +16,9 @@ class Settings(BaseSettings):
 
     fmp_api_key: str = ""
     news_shield_minutes: int = 30
-    cron_interval_seconds: int = 60
+    cron_interval_seconds: int = 20
+    auto_trade_enabled: bool = True
+    auto_trade_min_confidence: float = 75.0
 
     # Aligned with Amaterasu X Elite Whitelist (XAUUSD, USDCHF, EURUSD) + GBPUSD, USDJPY
     tracked_pairs: List[str] = ["XAU/USD", "USD/CHF", "EUR/USD", "GBP/USD", "USD/JPY"]

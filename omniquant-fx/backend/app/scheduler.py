@@ -1,5 +1,7 @@
+from collections import deque
 from datetime import datetime, timezone
-from typing import Dict, List
+import time
+from typing import Deque, Dict, List
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import desc
 from app.adapters.economic_calendar import evaluate_news_shield, fetch_economic_calendar
@@ -8,28 +10,63 @@ from app.config import get_settings
 from app.database import OHLCVCandle, QuantSignalRecord, SessionLocal
 from app.quant.engine import analyze_pair
 
+WHITELIST_AUTO_PAIRS = ("XAU/USD", "USD/CHF", "EUR/USD")
+
 CRON_TELEMETRY: Dict[str, object] = {
     "status": "INITIALIZING",
     "last_sync_utc": None,
-    "next_sync_seconds": 60,
+    "next_sync_seconds": 20,
     "sync_count": 0,
     "db_backend": "SQLite (Local Embedded)",
     "cached_matrix": {},
 }
 
+AUTO_DISPATCH_STATE: Dict[str, object] = {
+    "enabled": True,
+    "min_confidence": 75.0,
+    "cooldown_seconds": 720.0,  # 12 minutes per symbol anti-spam guard
+    "active_signals": {},       # clean_sym -> active Amaterasu signal payload
+    "last_fired_epoch": {},     # clean_sym -> epoch timestamp
+    "history": deque(maxlen=25),
+}
+
 _scheduler: BackgroundScheduler | None = None
 
 
-def sync_all_pairs_and_signals(timeframe: str = "M15") -> Dict[str, object]:
+def get_active_auto_signals() -> List[Dict]:
+    if not AUTO_DISPATCH_STATE.get("enabled", True):
+        return []
+    now_ep = time.time()
+    active_map: Dict[str, Dict] = AUTO_DISPATCH_STATE["active_signals"]  # type: ignore
+    return [
+        sig for sig in active_map.values()
+        if float(sig.get("expires_epoch", 0)) > now_ep
+    ]
+
+
+def toggle_auto_dispatch(enabled: bool | None = None) -> Dict:
+    cur = bool(AUTO_DISPATCH_STATE.get("enabled", True))
+    new_val = (not cur) if enabled is None else bool(enabled)
+    AUTO_DISPATCH_STATE["enabled"] = new_val
+    if not new_val:
+        AUTO_DISPATCH_STATE["active_signals"] = {}
+    return {
+        "enabled": new_val,
+        "min_confidence": AUTO_DISPATCH_STATE["min_confidence"],
+        "history": list(AUTO_DISPATCH_STATE["history"])[:8],  # type: ignore
+    }
+
+
+def sync_all_pairs_and_signals(timeframe: str = "M5") -> Dict[str, object]:
     """
-    Periodic Cron Task:
-    1. Pulls latest OHLCV + Tick Volume candles for all tracked pairs
-    2. Persists recent candles into TimescaleDB / SQLite
-    3. Evaluates Economic Calendar News Shield + London/NY Session Filter
-    4. Synthesizes Quantitative Signals and logs to `quant_signals` hypertable
+    High-Frequency Scalp Cron Worker (runs every 20s):
+    1. Scans all tracked pairs on M5 for real-time scalp setups
+    2. Auto-dispatches >=75% confidence signals on Whitelist Pairs (XAUUSD, USDCHF, EURUSD)
+       to Amaterasu X Master Bridges (Account 1 & Account 5) with 12-min per-symbol cooldown!
     """
     settings = get_settings()
     now_utc = datetime.now(timezone.utc)
+    now_ep = time.time()
     events = fetch_economic_calendar(now_utc)
     matrix_summary: Dict[str, Dict] = {}
 
@@ -48,8 +85,8 @@ def sync_all_pairs_and_signals(timeframe: str = "M15") -> Dict[str, object]:
                 data_source=source,
             )
 
-            # Upsert latest 8 candles for historical persistence
-            for c in candles[-8:]:
+            # Upsert latest 4 candles
+            for c in candles[-4:]:
                 ts = datetime.fromisoformat(c["timestamp"])
                 existing = (
                     db.query(OHLCVCandle)
@@ -85,25 +122,69 @@ def sync_all_pairs_and_signals(timeframe: str = "M15") -> Dict[str, object]:
             ind = analysis["indicators_latest"]
             pm = analysis["pattern_matching"]
 
-            db.add(
-                QuantSignalRecord(
-                    symbol=symbol,
-                    timeframe=timeframe,
-                    timestamp=now_utc,
-                    direction=sig["direction"],
-                    confidence=sig["confidence"],
-                    entry_price=sig["entry"],
-                    stop_loss=sig["stop_loss"],
-                    take_profit=sig["take_profit"],
-                    rsi_14=ind["rsi14"],
-                    macd_hist=ind["macd_hist"],
-                    trend_regime=sig["regime"],
-                    pattern_similarity=pm["avg_similarity_pct"],
-                    session_name=sig["session_current"],
-                    news_blocked=sig["news_blocked"],
-                    blocked_reason=sig["news_reason"],
+            # Persist signal record periodically (every 3rd scan or when BUY/SELL >= 70%)
+            if int(CRON_TELEMETRY["sync_count"]) % 3 == 0 or (
+                sig["direction"] in ("BUY", "SELL") and sig["confidence"] >= 70.0
+            ):
+                db.add(
+                    QuantSignalRecord(
+                        symbol=symbol,
+                        timeframe=timeframe,
+                        timestamp=now_utc,
+                        direction=sig["direction"],
+                        confidence=sig["confidence"],
+                        entry_price=sig["entry"],
+                        stop_loss=sig["stop_loss"],
+                        take_profit=sig["take_profit"],
+                        rsi_14=ind["rsi14"],
+                        macd_hist=ind["macd_hist"],
+                        trend_regime=sig["regime"],
+                        pattern_similarity=pm["avg_similarity_pct"],
+                        session_name=sig["session_current"],
+                        news_blocked=sig["news_blocked"],
+                        blocked_reason=sig["news_reason"],
+                    )
                 )
-            )
+
+            # AUTO-DISPATCH ENGINE: Push >=75% Confidence Whitelist Signals to Account 1 & Account 5!
+            min_conf = float(AUTO_DISPATCH_STATE.get("min_confidence", 75.0))
+            if (
+                bool(AUTO_DISPATCH_STATE.get("enabled", True))
+                and symbol in WHITELIST_AUTO_PAIRS
+                and sig["direction"] in ("BUY", "SELL")
+                and float(sig["confidence"]) >= min_conf
+                and not sig["news_blocked"]
+            ):
+                clean_sym = symbol.replace("/", "")
+                last_map: Dict[str, float] = AUTO_DISPATCH_STATE["last_fired_epoch"]  # type: ignore
+                cooldown = float(AUTO_DISPATCH_STATE.get("cooldown_seconds", 720.0))
+                if (now_ep - last_map.get(clean_sym, 0.0)) >= cooldown:
+                    sig_id = f"OMNI-{clean_sym}-{timeframe}-{int(now_ep)}"
+                    dispatch_payload = {
+                        "id": sig_id,
+                        "symbol": clean_sym,
+                        "ui_symbol": symbol,
+                        "type": sig["direction"],
+                        "status": "ACTIVE",
+                        "entry": sig["entry"],
+                        "sl": sig["stop_loss"],
+                        "tp1": sig["tp1"],
+                        "tp2": sig["tp2"],
+                        "tp3": sig["take_profit"],
+                        "confidence": sig["confidence"],
+                        "timeframe": timeframe,
+                        "regime": sig["regime"],
+                        "source": "OMNIQUANT_SCALP_AI",
+                        "notes": f"OMNIQUANT {timeframe} Scalp ({sig['confidence']}%)",
+                        "created_at": now_utc.isoformat(),
+                        "created_epoch": now_ep,
+                        "expires_epoch": now_ep + 240.0,  # Valid for 4 minutes so stale signals never execute
+                    }
+                    active_map: Dict[str, Dict] = AUTO_DISPATCH_STATE["active_signals"]  # type: ignore
+                    hist_dq: Deque[Dict] = AUTO_DISPATCH_STATE["history"]  # type: ignore
+                    active_map[clean_sym] = dispatch_payload
+                    last_map[clean_sym] = now_ep
+                    hist_dq.appendleft(dispatch_payload)
 
             matrix_summary[symbol] = {
                 "symbol": symbol,
@@ -177,10 +258,12 @@ def get_recent_persisted_signals(limit: int = 16) -> List[Dict]:
 def start_background_cron(db_backend_label: str) -> None:
     global _scheduler
     settings = get_settings()
+    AUTO_DISPATCH_STATE["enabled"] = settings.auto_trade_enabled
+    AUTO_DISPATCH_STATE["min_confidence"] = settings.auto_trade_min_confidence
     CRON_TELEMETRY["db_backend"] = db_backend_label
     CRON_TELEMETRY["next_sync_seconds"] = settings.cron_interval_seconds
 
-    sync_all_pairs_and_signals("M15")
+    sync_all_pairs_and_signals("M5")
 
     if _scheduler is None:
         _scheduler = BackgroundScheduler(timezone="UTC")

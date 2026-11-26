@@ -264,19 +264,33 @@ def analyze_pair(
 
     news_blocked = bool(news_shield_enabled and news_status and news_status.get("blocked"))
 
-    # Signal Synthesis
+    # Signal Synthesis (High-Frequency Scalp Calibration)
     latest_comp = float(composite_score[-1])
-    pattern_bias = (pattern_data["bullish_prob_pct"] - 50.0) * 1.6
-    total_alpha = 0.68 * latest_comp + 0.32 * pattern_bias
-    raw_confidence = float(np.clip(52.0 + abs(total_alpha) * 0.52 + r_squared * 14.0, 51.0, 96.8))
+    pattern_bias = (pattern_data["bullish_prob_pct"] - 50.0) * 1.85
+
+    # Candle rejection / scalp micro-trigger on latest bar
+    last_rng = max(float(highs[-1] - lows[-1]), pip * 0.5)
+    lower_wick_ratio = float((min(opens[-1], closes[-1]) - lows[-1]) / last_rng)
+    upper_wick_ratio = float((highs[-1] - max(opens[-1], closes[-1])) / last_rng)
+    wick_boost = 9.5 if lower_wick_ratio >= 0.38 else (-9.5 if upper_wick_ratio >= 0.38 else 0.0)
+    vol_boost = float(np.clip(vol_zscore[-1] * 4.5, -4.0, 11.0)) * (1.0 if latest_comp >= 0 else -1.0)
+
+    total_alpha = 0.62 * latest_comp + 0.28 * pattern_bias + wick_boost + vol_boost
+    raw_confidence = float(
+        np.clip(
+            56.0 + abs(total_alpha) * 0.62 + r_squared * 12.0 + max(0.0, float(vol_zscore[-1])) * 3.2,
+            52.0,
+            97.4,
+        )
+    )
 
     if news_blocked:
         direction = "NEWS LOCKED"
     elif not session_allowed:
         direction = "SESSION WAIT"
-    elif total_alpha >= 14.0:
+    elif total_alpha >= 8.5:
         direction = "BUY"
-    elif total_alpha <= -14.0:
+    elif total_alpha <= -8.5:
         direction = "SELL"
     else:
         direction = "NEUTRAL"
@@ -284,9 +298,11 @@ def analyze_pair(
     cur_atr = float(atr14[-1])
     is_bull = total_alpha >= 0
     sl_price = round(last_close - 1.5 * cur_atr if is_bull else last_close + 1.5 * cur_atr, digits)
-    tp_price = round(last_close + 3.0 * cur_atr if is_bull else last_close - 3.0 * cur_atr, digits)
+    tp1_price = round(last_close + 1.2 * cur_atr if is_bull else last_close - 1.2 * cur_atr, digits)
+    tp2_price = round(last_close + 2.2 * cur_atr if is_bull else last_close - 2.2 * cur_atr, digits)
+    tp_price = round(last_close + 3.4 * cur_atr if is_bull else last_close - 3.4 * cur_atr, digits)
 
-    # Historical Backtest & Equity Curve (Filtered vs Unfiltered across the 420 bars)
+    # Historical Backtest & High-Frequency Scalp Signal Detection (15-30 signals/24h)
     eq_filtered = [100000.0]
     eq_unfiltered = [100000.0]
     wins = 0
@@ -295,24 +311,50 @@ def analyze_pair(
     gross_loss = 0.0
     total_pips = 0.0
     signal_markers: Dict[int, str] = {}
+    last_marker_idx = -999
 
     for i in range(55, len(closes) - 1):
         bar_dt = datetime.fromisoformat(timestamps[i])
-        in_killzone = 8 <= bar_dt.hour < 21
+        # Active 22 hours/day across Asia, London & NY (skip only thin 21:00-23:00 UTC rollover)
+        in_active_hours = not (21 <= bar_dt.hour < 23)
         bar_ret = (closes[i + 1] - closes[i]) / max(closes[i], 1e-9)
-        pos = 1.0 if composite_score[i] > 15.0 else (-1.0 if composite_score[i] < -15.0 else 0.0)
+        pos = 1.0 if composite_score[i] > 8.5 else (-1.0 if composite_score[i] < -8.5 else 0.0)
+        prev_pos = 1.0 if composite_score[i - 1] > 8.5 else (-1.0 if composite_score[i - 1] < -8.5 else 0.0)
 
-        # Mark discrete crossover signals for chart arrows
-        prev_pos = 1.0 if composite_score[i - 1] > 15.0 else (-1.0 if composite_score[i - 1] < -15.0 else 0.0)
-        if pos != 0.0 and pos != prev_pos and in_killzone:
-            signal_markers[i] = "BUY" if pos > 0 else "SELL"
+        # 3 Institutional Scalp Triggers:
+        # (1) Regime Crossover, (2) EMA20 Trend Pullback Continuation, (3) Liquidity Wick Sweep
+        b_rng = max(float(highs[i] - lows[i]), pip * 0.5)
+        lw_rat = (min(opens[i], closes[i]) - lows[i]) / b_rng
+        uw_rat = (highs[i] - max(opens[i], closes[i])) / b_rng
+
+        bull_pullback = (
+            ema20[i] > sma50[i]
+            and lows[i] <= ema20[i] * 1.0006
+            and closes[i] > opens[i]
+            and 38.0 <= rsi14[i] <= 64.0
+        )
+        bear_pullback = (
+            ema20[i] < sma50[i]
+            and highs[i] >= ema20[i] * 0.9994
+            and closes[i] < opens[i]
+            and 36.0 <= rsi14[i] <= 62.0
+        )
+        bull_sweep = lw_rat >= 0.42 and closes[i] >= opens[i] and vol_zscore[i] >= 0.25
+        bear_sweep = uw_rat >= 0.42 and closes[i] <= opens[i] and vol_zscore[i] >= 0.25
+
+        if in_active_hours and (i - last_marker_idx) >= 6:
+            if (pos > 0 and pos != prev_pos) or bull_pullback or bull_sweep:
+                signal_markers[i] = "BUY"
+                last_marker_idx = i
+            elif (pos < 0 and pos != prev_pos) or bear_pullback or bear_sweep:
+                signal_markers[i] = "SELL"
+                last_marker_idx = i
 
         leverage = 14.0
         unfilt_pnl = eq_unfiltered[-1] * pos * bar_ret * leverage
         eq_unfiltered.append(eq_unfiltered[-1] + unfilt_pnl)
 
-        filt_pos = pos if in_killzone else 0.0
-        # Slight positive edge from session + news filtering
+        filt_pos = pos if in_active_hours else 0.0
         filt_pnl = eq_filtered[-1] * filt_pos * bar_ret * leverage
         eq_filtered.append(eq_filtered[-1] + filt_pnl)
 
@@ -494,11 +536,27 @@ def analyze_pair(
         },
     ]
 
+    # Collect all signals within the last 24 hours across the full candle buffer for the 24H Timeline
+    cutoff_24h = now_utc.timestamp() - 86400.0
+    signals_24h = []
+    for s_idx, s_dir in signal_markers.items():
+        s_dt = datetime.fromisoformat(timestamps[s_idx])
+        if s_dt.timestamp() >= cutoff_24h:
+            signals_24h.append(
+                {
+                    "timestamp": timestamps[s_idx],
+                    "utc_hour": round(s_dt.hour + s_dt.minute / 60.0, 2),
+                    "type": s_dir,
+                    "price": candles[s_idx]["close"],
+                }
+            )
+
     return {
         "symbol": symbol,
         "timeframe": timeframe,
         "data_source": data_source,
         "generated_at": now_utc.isoformat(),
+        "signals_24h": signals_24h,
         "quote": {
             "price": last_close,
             "bid": bid,
@@ -516,8 +574,10 @@ def analyze_pair(
             "composite_alpha": round(total_alpha, 1),
             "entry": last_close,
             "stop_loss": sl_price,
+            "tp1": tp1_price,
+            "tp2": tp2_price,
             "take_profit": tp_price,
-            "risk_reward": "1 : 2.0",
+            "risk_reward": "1 : 2.2",
             "regime": regime,
             "session_current": sess_info["name"],
             "session_filter": session_filter,

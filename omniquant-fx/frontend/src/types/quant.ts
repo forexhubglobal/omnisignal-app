@@ -258,6 +258,20 @@ export interface DashboardPayload {
   matrix: MatrixRow[];
   mt5_bridge?: MT5BridgeTelemetry;
   synced_accounts?: SyncedMT5Account[];
+  auto_dispatch?: {
+    enabled: boolean;
+    min_confidence: number;
+    active_count: number;
+    history: {
+      id: string;
+      symbol: string;
+      type: "BUY" | "SELL";
+      entry: number;
+      confidence: number;
+      timeframe: string;
+      created_at: string;
+    }[];
+  };
   gatekeeper_logs?: GatekeeperAuditItem[];
   economic_calendar: {
     shield_enabled: boolean;
