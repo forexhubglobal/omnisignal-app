@@ -1978,7 +1978,9 @@ class AmaterasuBridge:
                             "ticket": p.ticket,
                             "symbol": p.symbol.split('.')[0].upper(),
                             "type": "BUY" if p.type == 0 else "SELL",
+                            "volume": float(p.volume),
                             "openPrice": p.price_open,
+                            "currentPrice": p.price_current,
                             "sl": p.sl,
                             "tp": p.tp,
                             "profit": p.profit
@@ -2009,6 +2011,8 @@ class AmaterasuBridge:
                         "profit": float(acc.profit),
                         "margin": float(acc.margin),
                         "login": int(acc.login),
+                        "currency": str(getattr(acc, "currency", "USD")),
+                        "server": str(getattr(acc, "server", "VersusTrade-Live1")),
                         "deposits": float(deposits),
                         "totalWithdrawn": float(total_wd),
                         "realizedProfit": float(trade_profit),
@@ -2028,6 +2032,9 @@ class AmaterasuBridge:
                     mtf_ma_flow[raw_sym] = self.get_mtf_triple_ma(raw_sym)
 
                 urls = [self.server_url]
+                omni_sync_url = str(self.config.get("omniquant_url", "http://127.0.0.1:8005")).rstrip("/")
+                if omni_sync_url and omni_sync_url not in urls:
+                    urls.append(omni_sync_url)
                 for u in urls:
                     try:
                         resp = requests.post(f"{u.rstrip('/')}/api/market/sync-mt5", json={

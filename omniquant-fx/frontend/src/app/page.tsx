@@ -282,6 +282,116 @@ export default function OmniQuantTerminalPage() {
         </div>
       ) : data ? (
         <>
+          {/* DUAL / MULTI-ACCOUNT LIVE SYNC STRIP (AKAUN 1 #5100221532 & AKAUN 5 #5100242908) */}
+          {data.synced_accounts && data.synced_accounts.length > 0 && (
+            <section
+              className={`grid grid-cols-1 ${
+                data.synced_accounts.length >= 3 ? "lg:grid-cols-3" : "lg:grid-cols-2"
+              } gap-2`}
+            >
+              {data.synced_accounts.slice(0, 3).map((acc) => {
+                const pnlPos = acc.floating_pnl >= 0;
+                return (
+                  <div
+                    key={acc.login}
+                    className={`hud-panel px-3 py-2 flex flex-col gap-1.5 border ${
+                      acc.connected ? "border-[#00f59b]/35" : "border-slate-800"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-[10px]">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            acc.connected
+                              ? "bg-[#00f59b] shadow-[0_0_8px_#00f59b] animate-pulse"
+                              : "bg-slate-600"
+                          }`}
+                        />
+                        <span className="font-bold text-slate-100 tracking-wide">
+                          {acc.label}
+                        </span>
+                        <span className="text-cyan-300 font-semibold">#{acc.login}</span>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-[9.5px]">
+                        <span className="text-slate-400">
+                          BAL:{" "}
+                          <strong className="text-slate-200">
+                            {acc.balance.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}{" "}
+                            {acc.currency}
+                          </strong>
+                        </span>
+                        <span className="text-slate-400">
+                          EQ:{" "}
+                          <strong className="text-cyan-200">
+                            {acc.equity.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}{" "}
+                            {acc.currency}
+                          </strong>
+                        </span>
+                        <span
+                          className={`px-1.5 py-0.5 border font-bold ${
+                            !acc.connected
+                              ? "border-slate-700 bg-slate-900 text-slate-400"
+                              : pnlPos
+                              ? "border-[#00f59b]/50 bg-[#00f59b]/15 text-[#00f59b]"
+                              : "border-[#ff3b5c]/50 bg-[#ff3b5c]/15 text-[#ff3b5c]"
+                          }`}
+                        >
+                          {acc.connected
+                            ? `PnL ${pnlPos ? "+" : ""}${acc.floating_pnl.toFixed(2)} ${acc.currency}`
+                            : "WAITING VPS SYNC"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Open Positions Pills for This Account */}
+                    <div className="flex flex-wrap items-center justify-between gap-1.5 text-[8.5px] pt-1 border-t border-slate-800/80">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-slate-500">
+                          OPEN ({acc.open_positions_count}):
+                        </span>
+                        {acc.positions.length > 0 ? (
+                          acc.positions.slice(0, 4).map((pos) => (
+                            <span
+                              key={pos.ticket}
+                              className={`px-1.5 py-0.5 border ${
+                                pos.profit >= 0
+                                  ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-200"
+                                  : "border-rose-500/40 bg-rose-950/30 text-rose-200"
+                              }`}
+                            >
+                              #{pos.ticket} <strong>{pos.symbol}</strong> {pos.type}{" "}
+                              {pos.volume}L ({pos.profit >= 0 ? "+" : ""}
+                              {pos.profit})
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-slate-500">
+                            {acc.connected
+                              ? "Tiada posisi terbuka semasa — sedia menunggu signal"
+                              : "Jalankan pull.bat / on.bat di VPS untuk mula sync 2.5s"}
+                          </span>
+                        )}
+                      </div>
+
+                      {acc.win_rate > 0 && (
+                        <span className="text-amber-300 font-semibold">
+                          WIN RATE {acc.win_rate}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+          )}
+
           {/* ROW 1 */}
           <TopTelemetryRow
             active={data.active}

@@ -10,7 +10,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.adapters.economic_calendar import evaluate_news_shield, fetch_economic_calendar
-from app.adapters.forex_feed import get_forex_candles, normalize_ui_symbol
+from app.adapters.forex_feed import LIVE_MT5_QUOTES, PAIR_SPECS, get_forex_candles, normalize_ui_symbol
 from app.adapters.mt5_live import (
     get_mt5_bridge_telemetry,
     init_mt5_on_main_thread,
@@ -30,6 +30,77 @@ from app.scheduler import (
 GATEKEEPER_AUDIT_LOG: Deque[Dict] = deque(maxlen=25)
 DASHBOARD_RAM_CACHE: Dict[Tuple[str, str, str, bool], Tuple[float, Dict]] = {}
 DASHBOARD_CACHE_TTL_SEC = 3.5
+
+# Multi-Account Registry populated every 2.5s by Amaterasu X Master Bridges (Acc 1 #5100221532 & Acc 5 #5100242908)
+ACCOUNT_LABELS: Dict[int, Tuple[str, str]] = {
+    5100221532: ("AKAUN 1 · DRAGON CENT", "USC"),
+    5100242908: ("AKAUN 5 · WAN FAROUK ($5K STD)", "USD"),
+    5100221534: ("AKAUN 3 · TIGER STANDARD", "USD"),
+    5100209626: ("AKAUN 3 · TIGER STANDARD", "USD"),
+}
+SYNCED_MT5_ACCOUNTS: Dict[int, Dict] = {}
+
+
+def _build_synced_accounts_view(direct_ipc: Dict) -> List[Dict]:
+    now_ts = time.time()
+    # Seed from direct local IPC if present
+    if direct_ipc.get("connected") and direct_ipc.get("account_login"):
+        ipc_login = int(direct_ipc["account_login"])
+        lbl, def_ccy = ACCOUNT_LABELS.get(ipc_login, (f"MT5 MASTER #{ipc_login}", direct_ipc.get("currency", "USD")))
+        existing = SYNCED_MT5_ACCOUNTS.get(ipc_login)
+        if not existing or (now_ts - float(existing.get("last_seen_epoch", 0))) > 8.0:
+            SYNCED_MT5_ACCOUNTS[ipc_login] = {
+                "login": ipc_login,
+                "label": lbl,
+                "connected": True,
+                "broker_server": direct_ipc.get("broker_server") or "VersusTrade-Live1",
+                "balance": direct_ipc.get("balance", 0.0),
+                "equity": direct_ipc.get("equity", 0.0),
+                "floating_pnl": direct_ipc.get("floating_pnl", 0.0),
+                "currency": direct_ipc.get("currency") or def_ccy,
+                "win_rate": 0.0,
+                "realized_profit": 0.0,
+                "open_positions_count": direct_ipc.get("open_positions_count", 0),
+                "positions": direct_ipc.get("positions", []),
+                "last_seen_epoch": now_ts,
+                "source": "DIRECT_IPC",
+            }
+
+    # Always return Account 1 (#5100221532) and Account 5 (#5100242908) first, plus any other active synced accounts
+    priority_logins = [5100221532, 5100242908]
+    for extra_login in list(SYNCED_MT5_ACCOUNTS.keys()):
+        if extra_login not in priority_logins:
+            priority_logins.append(extra_login)
+
+    cards: List[Dict] = []
+    for lg in priority_logins:
+        lbl, def_ccy = ACCOUNT_LABELS.get(lg, (f"MT5 MASTER #{lg}", "USD"))
+        rec = SYNCED_MT5_ACCOUNTS.get(lg)
+        if rec and (now_ts - float(rec.get("last_seen_epoch", 0))) < 45.0:
+            item = dict(rec)
+            item["connected"] = True
+            item["age_sec"] = round(now_ts - float(rec.get("last_seen_epoch", now_ts)), 1)
+            cards.append(item)
+        else:
+            cards.append(
+                {
+                    "login": lg,
+                    "label": lbl,
+                    "connected": False,
+                    "broker_server": "VersusTrade-Live1",
+                    "balance": rec.get("balance", 0.0) if rec else 0.0,
+                    "equity": rec.get("equity", 0.0) if rec else 0.0,
+                    "floating_pnl": 0.0,
+                    "currency": def_ccy,
+                    "win_rate": rec.get("win_rate", 0.0) if rec else 0.0,
+                    "realized_profit": rec.get("realized_profit", 0.0) if rec else 0.0,
+                    "open_positions_count": 0,
+                    "positions": [],
+                    "age_sec": None,
+                    "source": "WAITING_BRIDGE",
+                }
+            )
+    return cards
 
 
 @asynccontextmanager
@@ -177,6 +248,76 @@ async def connect_mt5_terminal():
     return res
 
 
+@app.post("/api/market/sync-mt5")
+async def receive_amaterasu_bridge_heartbeat(request: Request):
+    """
+    Receives real-time 2.5s heartbeat pushes from ALL running Amaterasu X Master Bridges
+    (e.g. Account 1 #5100221532 Dragon Cent & Account 5 #5100242908 Wan Farouk $5K Standard).
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return {"ok": False}
+
+    now_ts = time.time()
+    quotes = body.get("quotes") or {}
+    for raw_sym, qdata in quotes.items():
+        if isinstance(qdata, dict) and qdata.get("bid") and qdata.get("ask"):
+            norm_s = normalize_ui_symbol(str(raw_sym))
+            if norm_s in PAIR_SPECS:
+                spec = PAIR_SPECS[norm_s]
+                bid_v = float(qdata["bid"])
+                ask_v = float(qdata["ask"])
+                LIVE_MT5_QUOTES[norm_s] = {
+                    "broker_symbol": str(raw_sym),
+                    "bid": round(bid_v, int(spec["digits"])),
+                    "ask": round(ask_v, int(spec["digits"])),
+                    "spread_pips": round(abs(ask_v - bid_v) / max(spec["pip"], 1e-9), 1),
+                    "digits": int(spec["digits"]),
+                    "pip": spec["pip"],
+                }
+
+    acc_info = body.get("accountInfo") or {}
+    open_pos = body.get("openPositions") or []
+    if acc_info and acc_info.get("login"):
+        lg = int(acc_info["login"])
+        lbl, def_ccy = ACCOUNT_LABELS.get(lg, (f"MT5 MASTER #{lg}", "USD"))
+        formatted_pos = [
+            {
+                "ticket": int(p.get("ticket", 0)),
+                "symbol": str(p.get("symbol", "")),
+                "type": str(p.get("type", "BUY")),
+                "volume": float(p.get("volume", 0.20)),
+                "price_open": float(p.get("openPrice", 0.0)),
+                "price_current": float(p.get("currentPrice", p.get("openPrice", 0.0))),
+                "sl": float(p.get("sl", 0.0)),
+                "tp": float(p.get("tp", 0.0)),
+                "profit": round(float(p.get("profit", 0.0)), 2),
+                "origin": "AMATERASU_BOT",
+            }
+            for p in open_pos[:12]
+        ]
+
+        SYNCED_MT5_ACCOUNTS[lg] = {
+            "login": lg,
+            "label": lbl,
+            "connected": True,
+            "broker_server": str(acc_info.get("server") or "VersusTrade-Live1"),
+            "balance": round(float(acc_info.get("balance", 0.0)), 2),
+            "equity": round(float(acc_info.get("equity", 0.0)), 2),
+            "floating_pnl": round(float(acc_info.get("profit", 0.0)), 2),
+            "currency": str(acc_info.get("currency") or def_ccy),
+            "win_rate": round(float(acc_info.get("winRate", 0.0)), 1),
+            "realized_profit": round(float(acc_info.get("realizedProfit", 0.0)), 2),
+            "open_positions_count": len(open_pos),
+            "positions": formatted_pos,
+            "last_seen_epoch": now_ts,
+            "source": "BRIDGE_HEARTBEAT",
+        }
+
+    return {"ok": True, "syncedAccounts": len(SYNCED_MT5_ACCOUNTS)}
+
+
 @app.get("/api/v1/gatekeeper")
 def evaluate_amaterasu_gatekeeper(
     symbol: str = Query("XAUUSD", description="Broker or UI symbol, e.g. XAUUSD, USDCHF, EURUSD"),
@@ -297,6 +438,7 @@ def get_dashboard_payload(
     if cached_entry and (now_mono - cached_entry[0]) < DASHBOARD_CACHE_TTL_SEC:
         payload = dict(cached_entry[1])
         payload["gatekeeper_logs"] = list(GATEKEEPER_AUDIT_LOG)[:8]
+        payload["synced_accounts"] = _build_synced_accounts_view(payload.get("mt5_bridge") or {})
         return payload
 
     now_utc = datetime.now(timezone.utc)
@@ -412,10 +554,28 @@ def get_dashboard_payload(
 
     ordered_matrix = [cached_matrix[p] for p in settings.tracked_pairs if p in cached_matrix]
 
+    synced_accounts_list = _build_synced_accounts_view(mt5_telemetry)
+    # If direct IPC wasn't attached yet, promote any active bridge heartbeat into mt5_bridge summary!
+    if not mt5_telemetry.get("connected"):
+        live_bridge_acc = next((a for a in synced_accounts_list if a.get("connected")), None)
+        if live_bridge_acc:
+            mt5_telemetry = {
+                "connected": True,
+                "account_login": live_bridge_acc["login"],
+                "broker_server": live_bridge_acc["broker_server"],
+                "balance": live_bridge_acc["balance"],
+                "equity": live_bridge_acc["equity"],
+                "currency": live_bridge_acc["currency"],
+                "open_positions_count": sum(a.get("open_positions_count", 0) for a in synced_accounts_list if a.get("connected")),
+                "floating_pnl": round(sum(a.get("floating_pnl", 0.0) for a in synced_accounts_list if a.get("connected")), 2),
+                "positions": [p for a in synced_accounts_list if a.get("connected") for p in a.get("positions", [])][:12],
+            }
+
     result_payload = {
         "active": active_analysis,
         "matrix": ordered_matrix,
         "mt5_bridge": mt5_telemetry,
+        "synced_accounts": synced_accounts_list,
         "gatekeeper_logs": list(GATEKEEPER_AUDIT_LOG)[:8],
         "economic_calendar": {
             "shield_enabled": news_shield,

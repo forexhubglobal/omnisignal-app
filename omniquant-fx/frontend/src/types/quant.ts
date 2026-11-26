@@ -225,10 +225,39 @@ export interface GatekeeperAuditItem {
   data_source: string;
 }
 
+export interface SyncedMT5Account {
+  login: number;
+  label: string;
+  connected: boolean;
+  broker_server: string;
+  balance: number;
+  equity: number;
+  floating_pnl: number;
+  currency: string;
+  win_rate: number;
+  realized_profit: number;
+  open_positions_count: number;
+  age_sec?: number | null;
+  source?: string;
+  positions: {
+    ticket: number;
+    symbol: string;
+    type: "BUY" | "SELL";
+    volume: number;
+    price_open: number;
+    price_current: number;
+    sl: number;
+    tp: number;
+    profit: number;
+    origin: string;
+  }[];
+}
+
 export interface DashboardPayload {
   active: ActivePairAnalysis;
   matrix: MatrixRow[];
   mt5_bridge?: MT5BridgeTelemetry;
+  synced_accounts?: SyncedMT5Account[];
   gatekeeper_logs?: GatekeeperAuditItem[];
   economic_calendar: {
     shield_enabled: boolean;
