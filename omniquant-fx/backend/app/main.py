@@ -1,9 +1,11 @@
 from collections import deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Deque, Dict, List
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.adapters.economic_calendar import evaluate_news_shield, fetch_economic_calendar
 from app.adapters.forex_feed import get_forex_candles, normalize_ui_symbol
@@ -423,3 +425,8 @@ def trigger_manual_signal_scan(timeframe: str = Query("M15")):
 @app.get("/api/v1/signals/history")
 def list_signal_history(limit: int = Query(25, ge=1, le=100)):
     return {"signals": get_recent_persisted_signals(limit)}
+
+
+STATIC_UI_DIR = Path(__file__).resolve().parent.parent / "static_ui"
+if STATIC_UI_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=str(STATIC_UI_DIR), html=True), name="static_ui")

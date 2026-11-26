@@ -1,24 +1,17 @@
 # =====================================================================
-# OMNIQUANT FX - 24/7 VPS SELF-HEALING WATCHDOG (WINDOWS VPS)
-# Auto-monitors FastAPI (:8005) & Next.js (:3005) every 15 seconds.
+# OMNIQUANT FX - 24/7 PURE-PYTHON VPS WATCHDOG (WINDOWS SERVER 2016+)
+# Serves BOTH 3D Web UI (:3005 for quant.amaterasux.com) & Gatekeeper (:8005)
 # =====================================================================
 
 $Host.UI.RawUI.WindowTitle = "OMNIQUANT-24-7-WATCHDOG"
 $RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $BackendDir = Join-Path $RootDir "backend"
-$FrontendDir = Join-Path $RootDir "frontend"
 $VenvPython = Join-Path $BackendDir ".venv\Scripts\python.exe"
-
-$NpmCmd = "npm.cmd"
-if (Test-Path "C:\Program Files\nodejs\npm.cmd") {
-    $env:Path = "C:\Program Files\nodejs;" + $env:Path
-    $NpmCmd = "C:\Program Files\nodejs\npm.cmd"
-}
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "  OMNIQUANT FX x AMATERASU X - 24/7 VPS WATCHDOG ACTIVE   " -ForegroundColor Cyan
-Write-Host "  FastAPI Engine : http://127.0.0.1:8005                  " -ForegroundColor Green
-Write-Host "  Next.js Web UI : http://127.0.0.1:3005 (Cloudflare Ready)" -ForegroundColor Green
+Write-Host "  Cloudflare Web UI (:3005) : https://quant.amaterasux.com" -ForegroundColor Green
+Write-Host "  Bot Gatekeeper    (:8005) : http://127.0.0.1:8005       " -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 function Test-LocalPort($Port) {
@@ -40,30 +33,19 @@ function Test-LocalPort($Port) {
 while ($true) {
     $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
 
-    # 1. Ensure FastAPI Quant Engine (:8005) is running
-    if (-not (Test-LocalPort 8005)) {
-        Write-Host "[$ts] [WATCHDOG] Menghidupkan FastAPI Quant Engine (:8005)..." -ForegroundColor Yellow
+    if (-not (Test-LocalPort 3005)) {
+        Write-Host "[$ts] [WATCHDOG] Menghidupkan Unified OMNIQUANT Server (:3005 & :8005)..." -ForegroundColor Yellow
         if (Test-Path $VenvPython) {
             Start-Process -FilePath $VenvPython `
-                -ArgumentList "-m uvicorn app.main:app --host 127.0.0.1 --port 8005" `
+                -ArgumentList "serve_vps.py" `
                 -WorkingDirectory $BackendDir `
                 -WindowStyle Minimized
-            Start-Sleep -Seconds 5
+            Start-Sleep -Seconds 6
             try {
-                Invoke-RestMethod -Uri "http://127.0.0.1:8005/api/v1/mt5/connect" -Method Post -TimeoutSec 10 | Out-Null
-                Write-Host "[$ts] [MT5-IPC] Auto-connected FastAPI ke terminal MT5 VPS!" -ForegroundColor Green
+                Invoke-RestMethod -Uri "http://127.0.0.1:3005/api/v1/mt5/connect" -Method Post -TimeoutSec 10 | Out-Null
+                Write-Host "[$ts] [ONLINE] quant.amaterasux.com (:3005) & MT5 Live tersambung!" -ForegroundColor Green
             } catch {}
         }
-    }
-
-    # 2. Ensure Next.js Production Server (:3005) is running
-    if (-not (Test-LocalPort 3005)) {
-        Write-Host "[$ts] [WATCHDOG] Menghidupkan Next.js Production UI (:3005)..." -ForegroundColor Yellow
-        Start-Process -FilePath "cmd.exe" `
-            -ArgumentList "/c `"$NpmCmd`" run start" `
-            -WorkingDirectory $FrontendDir `
-            -WindowStyle Minimized
-        Start-Sleep -Seconds 4
     }
 
     Start-Sleep -Seconds 15
