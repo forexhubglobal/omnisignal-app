@@ -45,8 +45,10 @@ export default function OmniQuantTerminalPage() {
       news_shield: String(newsShield),
     }).toString();
 
-    // Same-origin /api/v1/... works over HTTPS public domains (Cloudflare Tunnel) & mobile!
-    const endpoints = [`/api/v1/dashboard?${qs}`, `${DIRECT_API}/api/v1/dashboard?${qs}`];
+    const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+    const endpoints = isHttps
+      ? [`/api/v1/dashboard?${qs}`]
+      : [`/api/v1/dashboard?${qs}`, `${DIRECT_API}/api/v1/dashboard?${qs}`];
 
     for (const url of endpoints) {
       try {
@@ -68,7 +70,11 @@ export default function OmniQuantTerminalPage() {
 
   useEffect(() => {
     fetchDashboard();
-    const timer = setInterval(fetchDashboard, 5000);
+    const timer = setInterval(() => {
+      if (!document.hidden) {
+        fetchDashboard();
+      }
+    }, 8000);
     return () => clearInterval(timer);
   }, [fetchDashboard]);
 

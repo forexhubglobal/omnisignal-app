@@ -2,9 +2,11 @@ from collections import deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Deque, Dict, List
-from fastapi import FastAPI, Query
+import time
+from typing import Deque, Dict, List, Tuple
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.adapters.economic_calendar import evaluate_news_shield, fetch_economic_calendar
@@ -26,6 +28,8 @@ from app.scheduler import (
 )
 
 GATEKEEPER_AUDIT_LOG: Deque[Dict] = deque(maxlen=25)
+DASHBOARD_RAM_CACHE: Dict[Tuple[str, str, str, bool], Tuple[float, Dict]] = {}
+DASHBOARD_CACHE_TTL_SEC = 3.5
 
 
 @asynccontextmanager
@@ -43,6 +47,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(GZipMiddleware, minimum_size=500)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -50,6 +55,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_static_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.startswith("/_next/static/"):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
 
 
 def _build_24h_timeline(events: List[Dict], active_symbol: str, candles: List[Dict]) -> Dict:
@@ -157,6 +171,7 @@ def health_check():
 @app.post("/api/v1/mt5/connect")
 async def connect_mt5_terminal():
     res = launch_and_connect_mt5_main_thread()
+    DASHBOARD_RAM_CACHE.clear()
     if res.get("ok"):
         sync_all_pairs_and_signals("M15")
     return res
@@ -276,6 +291,14 @@ def get_dashboard_payload(
 ):
     settings = get_settings()
     symbol = normalize_ui_symbol(symbol)
+    cache_key = (symbol, timeframe.upper(), session_filter.upper(), bool(news_shield))
+    now_mono = time.monotonic()
+    cached_entry = DASHBOARD_RAM_CACHE.get(cache_key)
+    if cached_entry and (now_mono - cached_entry[0]) < DASHBOARD_CACHE_TTL_SEC:
+        payload = dict(cached_entry[1])
+        payload["gatekeeper_logs"] = list(GATEKEEPER_AUDIT_LOG)[:8]
+        return payload
+
     now_utc = datetime.now(timezone.utc)
     events = fetch_economic_calendar(now_utc)
     news_status = evaluate_news_shield(symbol, events, settings.news_shield_minutes)
@@ -389,7 +412,7 @@ def get_dashboard_payload(
 
     ordered_matrix = [cached_matrix[p] for p in settings.tracked_pairs if p in cached_matrix]
 
-    return {
+    result_payload = {
         "active": active_analysis,
         "matrix": ordered_matrix,
         "mt5_bridge": mt5_telemetry,
@@ -409,11 +432,14 @@ def get_dashboard_payload(
         },
         "recent_signals": get_recent_persisted_signals(10),
     }
+    DASHBOARD_RAM_CACHE[cache_key] = (time.monotonic(), result_payload)
+    return result_payload
 
 
 @app.post("/api/v1/signals/refresh")
 def trigger_manual_signal_scan(timeframe: str = Query("M15")):
     telemetry = sync_all_pairs_and_signals(timeframe=timeframe)
+    DASHBOARD_RAM_CACHE.clear()
     return {
         "ok": True,
         "message": "Quantitative signal scan & DB persistence completed.",

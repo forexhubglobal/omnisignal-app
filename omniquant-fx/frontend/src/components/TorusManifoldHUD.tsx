@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { memo, useEffect, useMemo, useRef } from "react";
 import { ActivePairAnalysis, ManifoldNode } from "@/types/quant";
 
 interface Props {
@@ -11,15 +11,24 @@ interface Props {
 }
 
 interface TorusParticle {
+  cosU: number;
+  sinU: number;
+  cosV: number;
+  sinV: number;
   u: number;
-  v: number;
   spike: number;
   size: number;
-  zone: "CYAN" | "TEAL" | "GOLD" | "CORAL";
+  zone: 0 | 1 | 2 | 3; // 0=CYAN, 1=TEAL, 2=GOLD, 3=CORAL
   phase: number;
 }
 
-function MiniSparkline({ data, bias }: { data?: number[]; bias: ManifoldNode["bias"] }) {
+const MiniSparkline = memo(function MiniSparkline({
+  data,
+  bias,
+}: {
+  data?: number[];
+  bias: ManifoldNode["bias"];
+}) {
   if (!data || data.length < 2) return null;
   const min = Math.min(...data);
   const max = Math.max(...data);
@@ -44,22 +53,19 @@ function MiniSparkline({ data, bias }: { data?: number[]; bias: ManifoldNode["bi
       ? "#f59e0b"
       : "#00d4ff";
 
-  const areaPts = `0,${h} ${pts} ${w},${h}`;
-
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-[22px] mt-1 overflow-visible">
-      <polygon points={areaPts} fill={stroke} fillOpacity={0.12} />
-      <polyline
-        fill="none"
-        stroke={stroke}
-        strokeWidth="1.25"
-        points={pts}
-      />
+      <polygon points={`0,${h} ${pts} ${w},${h}`} fill={stroke} fillOpacity={0.12} />
+      <polyline fill="none" stroke={stroke} strokeWidth="1.25" points={pts} />
     </svg>
   );
-}
+});
 
-function CompositeMiniCurve({ candles }: { candles: ActivePairAnalysis["candles"] }) {
+const CompositeMiniCurve = memo(function CompositeMiniCurve({
+  candles,
+}: {
+  candles: ActivePairAnalysis["candles"];
+}) {
   const slice = candles.slice(-48);
   if (slice.length < 2) return null;
   const vals = slice.map((c) => c.composite);
@@ -94,25 +100,24 @@ function CompositeMiniCurve({ candles }: { candles: ActivePairAnalysis["candles"
           stroke="rgba(148,163,184,0.22)"
           strokeDasharray="2 2"
         />
-        <polygon
-          points={`0,${h} ${pts} ${w},${h}`}
-          fill="rgba(0, 212, 255, 0.10)"
-        />
+        <polygon points={`0,${h} ${pts} ${w},${h}`} fill="rgba(0, 212, 255, 0.10)" />
         <polyline fill="none" stroke="#e2e8f0" strokeWidth="1.4" points={pts} />
       </svg>
     </div>
   );
-}
+});
 
-export default function TorusManifoldHUD({
-  active,
-  onSelectPair,
-  onManualScan,
-  scanning,
-}: Props) {
+function TorusManifoldHUD({ active, onSelectPair, onManualScan, scanning }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const dragRef = useRef<{ dragging: boolean; lastX: number; lastY: number; rotX: number; rotZ: number }>({
+  const sizeRef = useRef<{ w: number; h: number }>({ w: 1200, h: 515 });
+  const dragRef = useRef<{
+    dragging: boolean;
+    lastX: number;
+    lastY: number;
+    rotX: number;
+    rotZ: number;
+  }>({
     dragging: false,
     lastX: 0,
     lastY: 0,
@@ -120,45 +125,44 @@ export default function TorusManifoldHUD({
     rotZ: 0.35,
   });
 
-  const [anchors, setAnchors] = useState<{
-    left: { x: number; y: number }[];
-    right: { x: number; y: number }[];
-    size: { w: number; h: number };
-  }>({ left: [], right: [], size: { w: 1200, h: 470 } });
-
-  // Deterministic 2,500-particle 3D torus + radial filament spikes matching reference image
+  // Precompute trigonometric tables once -> 0 trig overhead per particle!
   const particles = useMemo<TorusParticle[]>(() => {
     const list: TorusParticle[] = [];
-    const ringSteps = 84;
-    const tubeSteps = 28;
+    const ringSteps = 60;
+    const tubeSteps = 20;
 
     for (let i = 0; i < ringSteps; i++) {
       const u = (i / ringSteps) * Math.PI * 2;
+      const cosU = Math.cos(u);
+      const sinU = Math.sin(u);
       for (let j = 0; j < tubeSteps; j++) {
         const v = (j / tubeSteps) * Math.PI * 2;
+        const cosV = Math.cos(v);
+        const sinV = Math.sin(v);
         const hash = Math.sin(i * 12.9898 + j * 78.233) * 43758.5453;
         const frac = hash - Math.floor(hash);
 
-        // Create organic radial burst filaments in 4 cluster lobes like the screenshot
         const lobeA = Math.exp(-Math.pow(Math.sin((u - 0.55) * 1.5), 2) * 14);
         const lobeB = Math.exp(-Math.pow(Math.sin((u - 3.75) * 1.5), 2) * 14);
-        const isOuter = Math.cos(v) > 0.25;
-        const spike = isOuter && frac > 0.76 ? (lobeA * 42 + lobeB * 36 + frac * 14) : 0;
+        const spike = cosV > 0.25 && frac > 0.74 ? lobeA * 40 + lobeB * 34 + frac * 12 : 0;
 
-        let zone: TorusParticle["zone"] = "CYAN";
+        let zone: 0 | 1 | 2 | 3 = 0;
         if (u > 5.1 || u < 1.35) {
-          zone = spike > 12 ? "CORAL" : "GOLD";
+          zone = spike > 12 ? 3 : 2;
         } else if (u > 3.35 && u < 4.35 && spike > 8) {
-          zone = "GOLD";
-        } else if (Math.sin(v) > 0.3) {
-          zone = "TEAL";
+          zone = 2;
+        } else if (sinV > 0.3) {
+          zone = 1;
         }
 
         list.push({
+          cosU,
+          sinU,
+          cosV,
+          sinV,
           u,
-          v,
           spike,
-          size: spike > 10 ? 1.75 : 1.35 + frac * 0.65,
+          size: spike > 10 ? 2.4 : 1.85 + frac * 0.65,
           zone,
           phase: frac * Math.PI * 2,
         });
@@ -172,56 +176,65 @@ export default function TorusManifoldHUD({
   const { energy, bull_ratio, turbulence } = active.manifold.params;
 
   useEffect(() => {
-    let animId = 0;
-    let frameCount = 0;
+    const container = containerRef.current;
+    if (!container) return;
 
-    const projectPoint = (
+    const updateBounds = () => {
+      const rect = container.getBoundingClientRect();
+      sizeRef.current = {
+        w: Math.max(320, Math.floor(rect.width)),
+        h: Math.max(360, Math.floor(rect.height)),
+      };
+    };
+    updateBounds();
+
+    const ro = new ResizeObserver(updateBounds);
+    ro.observe(container);
+
+    let animId = 0;
+    let lastFrameMs = 0;
+
+    const projectAngle = (
       u: number,
       v: number,
       R: number,
       r: number,
-      rotX: number,
+      cosX: number,
+      sinX: number,
       rotZ: number,
       cx: number,
       cy: number
     ) => {
       const uRot = u + rotZ;
-      const x0 = (R + r * Math.cos(v)) * Math.cos(uRot);
-      const y0 = (R + r * Math.cos(v)) * Math.sin(uRot);
+      const rad = R + r * Math.cos(v);
+      const x0 = rad * Math.cos(uRot);
+      const y0 = rad * Math.sin(uRot);
       const z0 = r * Math.sin(v);
-
-      // Tilt torus in 3D space
-      const cosX = Math.cos(rotX);
-      const sinX = Math.sin(rotX);
       const y1 = y0 * cosX - z0 * sinX;
       const z1 = y0 * sinX + z0 * cosX;
-
-      const fov = 560;
-      const scale = fov / (fov + y1 + 360);
-      return {
-        sx: cx + x0 * scale,
-        sy: cy - z1 * scale,
-        depth: y1,
-        scale,
-      };
+      const scale = 560 / (920 + y1);
+      return { sx: cx + x0 * scale, sy: cy - z1 * scale };
     };
 
     const render = (timeMs: number) => {
+      animId = requestAnimationFrame(render);
+
+      if (document.hidden) return;
+      // Smooth 30 FPS cap when idle (60 FPS while actively dragging) -> ultra-low CPU!
+      const minDelta = dragRef.current.dragging ? 16 : 33;
+      if (timeMs - lastFrameMs < minDelta) return;
+      lastFrameMs = timeMs;
+
       const canvas = canvasRef.current;
-      const container = containerRef.current;
-      if (!canvas || !container) {
-        animId = requestAnimationFrame(render);
-        return;
-      }
+      if (!canvas) return;
 
-      const rect = container.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      const w = Math.max(320, Math.floor(rect.width));
-      const h = Math.max(360, Math.floor(rect.height));
-
-      if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
-        canvas.width = Math.floor(w * dpr);
-        canvas.height = Math.floor(h * dpr);
+      const { w, h } = sizeRef.current;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const targetW = Math.floor(w * dpr);
+      const targetH = Math.floor(h * dpr);
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
       }
 
       const ctx = canvas.getContext("2d");
@@ -231,7 +244,7 @@ export default function TorusManifoldHUD({
       ctx.clearRect(0, 0, w, h);
 
       if (!dragRef.current.dragging) {
-        dragRef.current.rotZ += 0.0026 * energy;
+        dragRef.current.rotZ += 0.005 * energy;
       }
 
       const t = timeMs * 0.0018;
@@ -240,86 +253,141 @@ export default function TorusManifoldHUD({
       const majorR = Math.min(w * 0.215, 195);
       const minorR = Math.min(majorR * 0.44, 84);
 
-      // Ambient radial core glow
-      const grad = ctx.createRadialGradient(cx, cy, 12, cx, cy, majorR * 1.55);
-      grad.addColorStop(0, "rgba(0, 212, 255, 0.11)");
-      grad.addColorStop(0.55, "rgba(16, 185, 129, 0.04)");
-      grad.addColorStop(1, "rgba(3, 7, 12, 0)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
-
       const rotX = dragRef.current.rotX;
       const rotZ = dragRef.current.rotZ;
+      const cosX = Math.cos(rotX);
+      const sinX = Math.sin(rotX);
+      const cosZ = Math.cos(rotZ);
+      const sinZ = Math.sin(rotZ);
 
-      const projected = particles.map((p) => {
-        const wave = Math.sin(p.u * 4 + t + p.phase) * (3.5 + turbulence * 5.0);
+      // Ambient glow
+      const grad = ctx.createRadialGradient(cx, cy, 14, cx, cy, majorR * 1.45);
+      grad.addColorStop(0, "rgba(0, 212, 255, 0.10)");
+      grad.addColorStop(1, "rgba(3, 7, 12, 0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(cx - majorR * 1.5, cy - majorR * 1.5, majorR * 3, majorR * 3);
+
+      const tealRgb = bull_ratio >= 0.5 ? "0, 245, 165" : "20, 184, 166";
+      const palettes = ["0, 224, 255", tealRgb, "245, 178, 35", "255, 92, 75"];
+
+      // Fast direct particle rendering using rotation identity cos(u+rotZ) = cosU*cosZ - sinU*sinZ
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const wave = Math.sin(p.u * 4 + t + p.phase) * (3.2 + turbulence * 4.5);
         const spikePulse = p.spike > 0 ? p.spike * (0.72 + 0.28 * Math.sin(t * 1.7 + p.phase)) : 0;
         const rLocal = minorR + wave + spikePulse;
-        const pt = projectPoint(p.u, p.v, majorR, rLocal, rotX, rotZ, cx, cy);
 
-        // If particle has a high radial spike, also project its base to draw filament hairlines
-        let basePt: { sx: number; sy: number } | null = null;
-        if (spikePulse > 11) {
-          const b = projectPoint(p.u, p.v, majorR, minorR + wave * 0.4, rotX, rotZ, cx, cy);
-          basePt = { sx: b.sx, sy: b.sy };
-        }
-        return { ...pt, p, basePt };
-      });
+        const cosUR = p.cosU * cosZ - p.sinU * sinZ;
+        const sinUR = p.sinU * cosZ + p.cosU * sinZ;
+        const rad = majorR + rLocal * p.cosV;
+        const x0 = rad * cosUR;
+        const y0 = rad * sinUR;
+        const z0 = rLocal * p.sinV;
 
-      projected.sort((a, b) => b.depth - a.depth);
+        const y1 = y0 * cosX - z0 * sinX;
+        const z1 = y0 * sinX + z0 * cosX;
+        const scale = 560 / (920 + y1);
+        const sx = cx + x0 * scale;
+        const sy = cy - z1 * scale;
 
-      for (const item of projected) {
-        const alpha = Math.max(0.14, Math.min(0.96, (item.scale - 0.52) * 1.95));
-        let rgb = "0, 224, 255";
-        if (item.p.zone === "TEAL") {
-          rgb = bull_ratio >= 0.5 ? "0, 245, 165" : "20, 184, 166";
-        } else if (item.p.zone === "GOLD") {
-          rgb = "245, 178, 35";
-        } else if (item.p.zone === "CORAL") {
-          rgb = "255, 92, 75";
-        }
+        const alpha = Math.max(0.16, Math.min(0.95, (scale - 0.5) * 2.1));
+        const rgb = palettes[p.zone];
 
-        if (item.basePt) {
-          ctx.strokeStyle = `rgba(${rgb}, ${alpha * 0.34})`;
+        if (spikePulse > 12) {
+          const bRad = majorR + (minorR + wave * 0.4) * p.cosV;
+          const bx0 = bRad * cosUR;
+          const by0 = bRad * sinUR;
+          const bz0 = (minorR + wave * 0.4) * p.sinV;
+          const by1 = by0 * cosX - bz0 * sinX;
+          const bz1 = by0 * sinX + bz0 * cosX;
+          const bScale = 560 / (920 + by1);
+          ctx.strokeStyle = `rgba(${rgb}, ${alpha * 0.32})`;
           ctx.lineWidth = 0.75;
           ctx.beginPath();
-          ctx.moveTo(item.basePt.sx, item.basePt.sy);
-          ctx.lineTo(item.sx, item.sy);
+          ctx.moveTo(cx + bx0 * bScale, cy - bz1 * bScale);
+          ctx.lineTo(sx, sy);
           ctx.stroke();
         }
 
+        const sz = p.size * scale;
         ctx.fillStyle = `rgba(${rgb}, ${alpha})`;
-        const radius = item.p.size * item.scale * 1.15;
-        ctx.beginPath();
-        ctx.arc(item.sx, item.sy, radius, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillRect(sx - sz * 0.5, sy - sz * 0.5, sz, sz);
       }
 
-      // Update SVG leader line anchor coordinates every 3 frames for smooth 20fps React overlay without CPU waste
-      frameCount++;
-      if (frameCount % 3 === 0) {
-        const leftPts = leftNodes.map((n, idx) => {
-          const rad = ((n.anchor_angle || 150 + idx * 16) * Math.PI) / 180;
-          const vAng = -0.35 + idx * 0.22;
-          const pt = projectPoint(rad - rotZ * 0.82, vAng, majorR * 0.96, minorR * 0.85, rotX, rotZ, cx, cy);
-          return { x: pt.sx, y: pt.sy };
-        });
+      // Draw HUD Callout Leader Lines directly on Canvas (ZERO React re-renders!)
+      if (w >= 1024) {
+        ctx.lineWidth = 0.9;
+        for (let i = 0; i < leftNodes.length; i++) {
+          const node = leftNodes[i];
+          const ang = ((node.anchor_angle || 150 + i * 16) * Math.PI) / 180;
+          const pt = projectAngle(
+            ang - rotZ * 0.82,
+            -0.35 + i * 0.22,
+            majorR * 0.96,
+            minorR * 0.85,
+            cosX,
+            sinX,
+            rotZ,
+            cx,
+            cy
+          );
+          const cardY = 36 + i * 66;
+          ctx.strokeStyle =
+            node.bias === "BULL"
+              ? "rgba(0,245,155,0.58)"
+              : node.bias === "BEAR"
+              ? "rgba(255,59,92,0.58)"
+              : "rgba(226,232,240,0.48)";
+          ctx.beginPath();
+          ctx.moveTo(196, cardY);
+          ctx.lineTo(234, cardY);
+          ctx.lineTo(pt.sx, pt.sy);
+          ctx.stroke();
 
-        const rightPts = rightNodes.map((n, idx) => {
-          const rad = ((n.anchor_angle || 330 + idx * 14) * Math.PI) / 180;
-          const vAng = -0.4 + idx * 0.2;
-          const pt = projectPoint(rad - rotZ * 0.82, vAng, majorR * 0.96, minorR * 0.85, rotX, rotZ, cx, cy);
-          return { x: pt.sx, y: pt.sy };
-        });
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(pt.sx - 2, pt.sy - 2, 4, 4);
+        }
 
-        setAnchors({ left: leftPts, right: rightPts, size: { w, h } });
+        const endX = w - 210;
+        const kneeX = endX - 36;
+        for (let i = 0; i < rightNodes.length; i++) {
+          const node = rightNodes[i];
+          const ang = ((node.anchor_angle || 330 + i * 14) * Math.PI) / 180;
+          const pt = projectAngle(
+            ang - rotZ * 0.82,
+            -0.4 + i * 0.2,
+            majorR * 0.96,
+            minorR * 0.85,
+            cosX,
+            sinX,
+            rotZ,
+            cx,
+            cy
+          );
+          const cardY = 30 + i * 48;
+          ctx.strokeStyle =
+            node.bias === "BULL"
+              ? "rgba(0,245,155,0.55)"
+              : node.bias === "BEAR"
+              ? "rgba(255,59,92,0.55)"
+              : "rgba(0,212,255,0.48)";
+          ctx.beginPath();
+          ctx.moveTo(pt.sx, pt.sy);
+          ctx.lineTo(kneeX, cardY);
+          ctx.lineTo(endX, cardY);
+          ctx.stroke();
+
+          ctx.fillStyle = "#00d4ff";
+          ctx.fillRect(pt.sx - 2, pt.sy - 2, 4, 4);
+        }
       }
-
-      animId = requestAnimationFrame(render);
     };
 
     animId = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(animId);
+    return () => {
+      cancelAnimationFrame(animId);
+      ro.disconnect();
+    };
   }, [particles, leftNodes, rightNodes, energy, bull_ratio, turbulence]);
 
   const badgeColor = (bias: ManifoldNode["bias"]) => {
@@ -331,7 +399,6 @@ export default function TorusManifoldHUD({
 
   return (
     <section className="hud-panel w-full overflow-hidden">
-      {/* Top Manifold Strip */}
       <div className="flex flex-wrap items-center justify-between px-3 py-1.5 border-b border-cyan-500/15 bg-[#040a13]/90 text-[10px]">
         <div className="flex items-center gap-2">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
@@ -344,10 +411,13 @@ export default function TorusManifoldHUD({
         </div>
         <div className="flex items-center gap-4 text-[10px]">
           <span className="text-slate-400">
-            NODES <strong className="text-cyan-300">2,352</strong>
+            NODES <strong className="text-cyan-300">1,200 TURBO</strong>
           </span>
           <span className="text-slate-400">
-            COHERENCE <strong className="text-[#00f59b]">{(active.manifold.params.coherence * 100).toFixed(1)}%</strong>
+            COHERENCE{" "}
+            <strong className="text-[#00f59b]">
+              {(active.manifold.params.coherence * 100).toFixed(1)}%
+            </strong>
           </span>
           <button
             onClick={onManualScan}
@@ -359,7 +429,6 @@ export default function TorusManifoldHUD({
         </div>
       </div>
 
-      {/* Main 3D Manifold Stage */}
       <div
         ref={containerRef}
         onMouseDown={(e) => {
@@ -384,77 +453,18 @@ export default function TorusManifoldHUD({
         }}
         className="relative w-full min-h-[500px] lg:h-[515px] select-none cursor-grab active:cursor-grabbing"
       >
-        {/* 3D Particle Canvas */}
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
-
-        {/* Dynamic SVG HUD Callout Leader Lines (Desktop) */}
-        <svg
-          viewBox={`0 0 ${anchors.size.w} ${anchors.size.h}`}
-          className="hidden lg:block absolute inset-0 w-full h-full pointer-events-none"
-        >
-          {leftNodes.map((node, i) => {
-            const target = anchors.left[i];
-            if (!target) return null;
-            const cardY = 36 + i * 66;
-            const startX = 196;
-            const kneeX = startX + 38;
-            const stroke =
-              node.bias === "BULL"
-                ? "rgba(0,245,155,0.62)"
-                : node.bias === "BEAR"
-                ? "rgba(255,59,92,0.62)"
-                : "rgba(226,232,240,0.52)";
-            return (
-              <g key={node.id}>
-                <polyline
-                  fill="none"
-                  stroke={stroke}
-                  strokeWidth="0.9"
-                  points={`${startX},${cardY} ${kneeX},${cardY} ${target.x.toFixed(1)},${target.y.toFixed(1)}`}
-                />
-                <circle cx={target.x} cy={target.y} r="2.3" fill="#ffffff" />
-              </g>
-            );
-          })}
-
-          {rightNodes.map((node, i) => {
-            const target = anchors.right[i];
-            if (!target) return null;
-            const cardY = 30 + i * 48;
-            const endX = anchors.size.w - 210;
-            const kneeX = endX - 36;
-            const stroke =
-              node.bias === "BULL"
-                ? "rgba(0,245,155,0.58)"
-                : node.bias === "BEAR"
-                ? "rgba(255,59,92,0.58)"
-                : "rgba(0,212,255,0.52)";
-            return (
-              <g key={node.id}>
-                <polyline
-                  fill="none"
-                  stroke={stroke}
-                  strokeWidth="0.9"
-                  points={`${target.x.toFixed(1)},${target.y.toFixed(1)} ${kneeX},${cardY} ${endX},${cardY}`}
-                />
-                <circle cx={target.x} cy={target.y} r="2.3" fill="#00d4ff" />
-              </g>
-            );
-          })}
-        </svg>
 
         {/* Left 7 Factor & Indicator Micro-Cards */}
         <div className="relative lg:absolute lg:left-2.5 lg:top-2.5 lg:w-[190px] flex flex-col gap-1.5 p-2 lg:p-0 z-10">
           {leftNodes.map((node) => (
             <div
               key={node.id}
-              className="border border-slate-700/60 bg-[#050c16]/90 px-2 py-1.5 backdrop-blur-sm hover:border-cyan-400/50 transition"
+              className="border border-slate-700/60 bg-[#050c16]/90 px-2 py-1.5 hover:border-cyan-400/50 transition"
             >
               <div className="flex items-center justify-between gap-1 text-[9px]">
                 <span className="text-slate-400 truncate">{node.label}</span>
-                <span
-                  className={`font-bold px-1 border text-[9px] ${badgeColor(node.bias)}`}
-                >
+                <span className={`font-bold px-1 border text-[9px] ${badgeColor(node.bias)}`}>
                   {node.value}
                 </span>
               </div>
@@ -465,7 +475,7 @@ export default function TorusManifoldHUD({
         </div>
 
         {/* Center Floating Active Signal Pill */}
-        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 bottom-3 items-center gap-4 px-4 py-1.5 bg-[#040a13]/90 border border-cyan-500/30 text-[10px] z-10">
+        <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 bottom-3 items-center gap-4 px-4 py-1.5 bg-[#040a13]/95 border border-cyan-500/30 text-[10px] z-10">
           <div>
             <span className="text-slate-400 mr-1.5">ACTIVE PAIR:</span>
             <strong className="text-cyan-200">{active.symbol}</strong>
@@ -502,7 +512,7 @@ export default function TorusManifoldHUD({
               <div
                 key={node.id}
                 onClick={() => isPairCard && onSelectPair(pairSym)}
-                className={`border px-2 py-1 bg-[#050c16]/90 backdrop-blur-sm transition ${
+                className={`border px-2 py-1 bg-[#050c16]/90 transition ${
                   isPairCard
                     ? "cursor-pointer hover:border-cyan-400/70"
                     : "border-slate-700/60"
@@ -529,3 +539,5 @@ export default function TorusManifoldHUD({
     </section>
   );
 }
+
+export default memo(TorusManifoldHUD);
