@@ -75,7 +75,10 @@ DEFAULT_CONFIG = {
         "WTI": "USOIL",
         "BTCUSD": "BTCUSD"
     },
-    "enable_smc_sweep_reentry": True
+    "enable_smc_sweep_reentry": True,
+    "omniquant_gatekeeper_enabled": True,
+    "omniquant_url": "http://127.0.0.1:8005",
+    "omniquant_news_shield": True
 }
 
 def load_config():
@@ -1203,6 +1206,56 @@ class AmaterasuBridge:
             "signal_id": signal.get("id")
         }
 
+    def verify_omniquant_gatekeeper(self, sig, clean_sym):
+        """
+        Pre-Trade Quantitative Gatekeeper & News Shield integration with OMNIQUANT FX (:8005).
+        Fail-open design: if OMNIQUANT FX is offline, proceeds cleanly with native Amaterasu X SOP.
+        """
+        if not self.config.get("omniquant_gatekeeper_enabled", True):
+            return True
+
+        omni_url = str(self.config.get("omniquant_url", "http://127.0.0.1:8005")).rstrip("/")
+        sig_type = str(sig.get("type", "BUY")).upper().strip()
+        is_news_trade = bool(
+            sig.get("isNews") or sig.get("is_news") or "NEWS AI" in str(sig.get("notes", ""))
+        )
+        enforce_news = bool(self.config.get("omniquant_news_shield", True))
+
+        try:
+            resp = requests.get(
+                f"{omni_url}/api/v1/gatekeeper",
+                params={
+                    "symbol": clean_sym,
+                    "action": sig_type,
+                    "timeframe": "M15",
+                    "is_news_signal": str(is_news_trade).lower(),
+                    "enforce_news_shield": str(enforce_news).lower(),
+                },
+                timeout=2.0,
+            )
+            if resp.status_code == 200:
+                gk = resp.json()
+                if not gk.get("approved", True):
+                    print(
+                        f"{Colors.RED}{Colors.BOLD}🛑 [OMNIQUANT GATEKEEPER] Signal #{clean_sym} {sig_type} DISEKAT ({gk.get('reason_code')}): {gk.get('reason')}{Colors.RESET}"
+                    )
+                    return False
+
+                print(
+                    f"{Colors.GREEN}🟢 [OMNIQUANT VERIFIED] #{clean_sym} {sig_type} LULUS ({gk.get('verdict')}) | "
+                    f"Conf: {gk.get('confidence')}% | Pattern: {gk.get('pattern_similarity')}% | "
+                    f"Prob: {gk.get('matching_prob_pct')}% | Hurst: {gk.get('hurst')} | Src: {gk.get('data_source')}{Colors.RESET}"
+                )
+                return True
+        except Exception:
+            now_t = time.time()
+            if (now_t - getattr(self, "last_omniquant_offline_log", 0)) > 60:
+                self.last_omniquant_offline_log = now_t
+                print(
+                    f"{Colors.YELLOW}⚠️ [OMNIQUANT STANDBY] Server OMNIQUANT ({omni_url}) tidak aktif; meneruskan SOP asal Amaterasu X.{Colors.RESET}"
+                )
+        return True
+
     def process_new_signal(self, sig):
         sig_id = sig.get("id")
         if not sig_id or sig_id in self.executed_signal_ids:
@@ -1258,6 +1311,10 @@ class AmaterasuBridge:
             if (now_t - getattr(self, "last_danger_log_time", 0)) > 60:
                 self.last_danger_log_time = now_t
                 print(f"{Colors.YELLOW}🛑 [WAKTU BAHAYA DIHARAMKAN] Signal #{clean_sym} ditolak: {danger_reason}{Colors.RESET}")
+            return
+
+        # OMNIQUANT FX QUANTITATIVE GATEKEEPER & NEWS SHIELD PRE-CHECK
+        if not self.verify_omniquant_gatekeeper(sig, clean_sym):
             return
 
         order_records = []

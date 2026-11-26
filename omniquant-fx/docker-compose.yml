@@ -1,0 +1,77 @@
+version: "3.9"
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: omniquant_timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: quant
+      POSTGRES_PASSWORD: quant_secret_2026
+      POSTGRES_DB: omniquant_fx
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./infra/sql/init_timescale.sql:/docker-entrypoint-initdb.d/01_init_timescale.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quant -d omniquant_fx"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: omniquant_backend
+    restart: unless-stopped
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://quant:quant_secret_2026@timescaledb:5432/omniquant_fx
+      PRICE_PROVIDER: ${PRICE_PROVIDER:-auto}
+      TWELVEDATA_API_KEY: ${TWELVEDATA_API_KEY:-}
+      OANDA_API_KEY: ${OANDA_API_KEY:-}
+      OANDA_ACCOUNT_ID: ${OANDA_ACCOUNT_ID:-}
+      OANDA_ENV: ${OANDA_ENV:-practice}
+      FMP_API_KEY: ${FMP_API_KEY:-}
+      NEWS_SHIELD_MINUTES: 30
+      CRON_INTERVAL_SECONDS: 60
+    ports:
+      - "8005:8005"
+
+  cron_worker:
+    build:
+      context: ./backend
+    container_name: omniquant_cron_worker
+    restart: unless-stopped
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://quant:quant_secret_2026@timescaledb:5432/omniquant_fx
+      PRICE_PROVIDER: ${PRICE_PROVIDER:-auto}
+      TWELVEDATA_API_KEY: ${TWELVEDATA_API_KEY:-}
+      OANDA_API_KEY: ${OANDA_API_KEY:-}
+      FMP_API_KEY: ${FMP_API_KEY:-}
+      CRON_INTERVAL_SECONDS: 60
+    command: ["python", "cron_worker.py"]
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        BACKEND_INTERNAL_URL: http://backend:8005
+    container_name: omniquant_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      BACKEND_INTERNAL_URL: http://backend:8005
+      NEXT_PUBLIC_API_URL: http://localhost:8005
+    ports:
+      - "3005:3005"
+
+volumes:
+  timescale_data:

@@ -24,5 +24,8 @@
   },
   "ny_gold_multiplier_active": true,
   "ny_gold_lot_size": 0.35,
-  "dynamic_floating_atr": true
+  "dynamic_floating_atr": true,
+  "omniquant_gatekeeper_enabled": true,
+  "omniquant_url": "http://127.0.0.1:8005",
+  "omniquant_news_shield": true
 }

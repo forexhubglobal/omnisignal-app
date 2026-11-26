@@ -92,11 +92,21 @@ foreach ($f in $files) { ^
             $c.daily_profit_target_pct = 25.0; ^
             $c.daily_profit_target_usc = 2500.0; ^
         } ^
+        $c | Add-Member -NotePropertyName omniquant_gatekeeper_enabled -NotePropertyValue $true -Force; ^
+        $c | Add-Member -NotePropertyName omniquant_url -NotePropertyValue 'http://127.0.0.1:8005' -Force; ^
+        $c | Add-Member -NotePropertyName omniquant_news_shield -NotePropertyValue $true -Force; ^
         $newJson = ConvertTo-Json $c -Depth 10; ^
         [System.IO.File]::WriteAllText($f.FullName, $newJson); ^
         Write-Host ('[OK] Synced max_lots & server in: ' + $f.FullName) -ForegroundColor Cyan; ^
     } catch {} ^
 }"
+
+:: 3.5 AUTO-SETUP & HIDUPKAN OMNIQUANT FX 24/7 (:8005 GATEKEEPER & :3005 WEB UI)
+if exist "%~dp0omniquant-fx\auto_setup_vps.ps1" (
+    echo.
+    echo [OMNIQUANT] Menyelaraskan dan menghidupkan enjin OMNIQUANT FX 24/7...
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0omniquant-fx\auto_setup_vps.ps1"
+)
 
 :: 4. MULAKAN SEMULA SEMUA BRIDGE DI VPS SECARA DETACHED
 echo.
