@@ -1,6 +1,7 @@
 from collections import deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+import json
 from pathlib import Path
 import time
 from typing import Deque, Dict, List, Tuple
@@ -43,6 +44,46 @@ ACCOUNT_LABELS: Dict[int, Tuple[str, str]] = {
 }
 SYNCED_MT5_ACCOUNTS: Dict[int, Dict] = {}
 
+# Persistent Per-Account Trading Switch (Boss Mandate: Acc 5 ON, Acc 1 OFF until further notice!)
+ACCOUNT_CONTROLS_FILE = Path(__file__).resolve().parent.parent / "account_controls.json"
+DEFAULT_ACCOUNT_TRADING_ENABLED: Dict[str, bool] = {
+    "5100221532": False,  # AKAUN 1 -> OFF (LOCKED BY BOSS)
+    "5100242908": True,   # AKAUN 5 -> ON  (ACTIVE)
+}
+
+
+def _load_account_controls() -> Dict[str, bool]:
+    state = dict(DEFAULT_ACCOUNT_TRADING_ENABLED)
+    if ACCOUNT_CONTROLS_FILE.exists():
+        try:
+            saved = json.loads(ACCOUNT_CONTROLS_FILE.read_text(encoding="utf-8"))
+            if isinstance(saved, dict):
+                for k, v in saved.items():
+                    state[str(k)] = bool(v)
+        except Exception:
+            pass
+    return state
+
+
+def _save_account_controls(state: Dict[str, bool]) -> None:
+    try:
+        ACCOUNT_CONTROLS_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+
+ACCOUNT_TRADING_ENABLED: Dict[str, bool] = _load_account_controls()
+
+
+def is_account_trading_allowed(login_id: int | str) -> bool:
+    key = str(login_id).strip()
+    if key in ACCOUNT_TRADING_ENABLED:
+        return bool(ACCOUNT_TRADING_ENABLED[key])
+    # Default: Account 1 OFF, Account 5 ON
+    if key == "5100221532":
+        return False
+    return True
+
 
 def _build_synced_accounts_view(direct_ipc: Dict) -> List[Dict]:
     now_ts = time.time()
@@ -79,9 +120,11 @@ def _build_synced_accounts_view(direct_ipc: Dict) -> List[Dict]:
     for lg in priority_logins:
         lbl, def_ccy = ACCOUNT_LABELS.get(lg, (f"MT5 MASTER #{lg}", "USD"))
         rec = SYNCED_MT5_ACCOUNTS.get(lg)
+        trade_on = is_account_trading_allowed(lg)
         if rec and (now_ts - float(rec.get("last_seen_epoch", 0))) < 45.0:
             item = dict(rec)
             item["connected"] = True
+            item["trading_enabled"] = trade_on
             item["age_sec"] = round(now_ts - float(rec.get("last_seen_epoch", now_ts)), 1)
             cards.append(item)
         else:
@@ -90,6 +133,7 @@ def _build_synced_accounts_view(direct_ipc: Dict) -> List[Dict]:
                     "login": lg,
                     "label": lbl,
                     "connected": False,
+                    "trading_enabled": trade_on,
                     "broker_server": "VersusTrade-Live1",
                     "balance": rec.get("balance", 0.0) if rec else 0.0,
                     "equity": rec.get("equity", 0.0) if rec else 0.0,
@@ -334,18 +378,49 @@ async def receive_amaterasu_bridge_heartbeat(request: Request):
             "last_seen_epoch": now_ts,
             "source": "BRIDGE_HEARTBEAT",
         }
+        return {
+            "ok": True,
+            "syncedAccounts": len(SYNCED_MT5_ACCOUNTS),
+            "accountTradingEnabled": is_account_trading_allowed(lg),
+        }
 
     return {"ok": True, "syncedAccounts": len(SYNCED_MT5_ACCOUNTS)}
 
 
+@app.post("/api/v1/accounts/{login_id}/toggle")
+def toggle_specific_account_trading(login_id: int, enabled: bool | None = Query(None)):
+    key = str(login_id)
+    cur = is_account_trading_allowed(key)
+    new_val = (not cur) if enabled is None else bool(enabled)
+    ACCOUNT_TRADING_ENABLED[key] = new_val
+    _save_account_controls(ACCOUNT_TRADING_ENABLED)
+    DASHBOARD_RAM_CACHE.clear()
+    return {
+        "ok": True,
+        "login": login_id,
+        "trading_enabled": new_val,
+        "controls": ACCOUNT_TRADING_ENABLED,
+    }
+
+
 @app.get("/api/v1/auto-signals")
-def get_omniquant_auto_signals():
+def get_omniquant_auto_signals(login: str = Query("", description="MT5 Account Login polling for signals")):
     """
-    Polled every 4s by Amaterasu X Master Bridges (Account 1 & Account 5)
-    to auto-execute fresh >=75% confidence scalp signals into MT5!
+    Polled every 4s by Amaterasu X Master Bridges.
+    Enforces per-account trading switch (e.g. Account 5 ON, Account 1 OFF)!
     """
+    if login and not is_account_trading_allowed(login):
+        return {
+            "enabled": False,
+            "accountPaused": True,
+            "minConfidence": float(AUTO_DISPATCH_STATE.get("min_confidence", 75.0)),
+            "activeSignals": [],
+            "history": [],
+        }
+
     return {
         "enabled": bool(AUTO_DISPATCH_STATE.get("enabled", True)),
+        "accountPaused": False,
         "minConfidence": float(AUTO_DISPATCH_STATE.get("min_confidence", 75.0)),
         "activeSignals": get_active_auto_signals(),
         "history": list(AUTO_DISPATCH_STATE.get("history", []))[:10],  # type: ignore
@@ -364,9 +439,24 @@ def evaluate_amaterasu_gatekeeper(
     symbol: str = Query("XAUUSD", description="Broker or UI symbol, e.g. XAUUSD, USDCHF, EURUSD"),
     action: str = Query("BUY", description="Proposed Amaterasu X order direction: BUY or SELL"),
     timeframe: str = Query("M15", description="Timeframe for quantitative check"),
+    login: str = Query("", description="MT5 Account Login checking gatekeeper"),
     is_news_signal: bool = Query(False, description="True if signal is an explicit News Volatility trade"),
     enforce_news_shield: bool = Query(True, description="Block standard entries inside ±30m High-Impact news"),
 ):
+    if login and not is_account_trading_allowed(login):
+        return {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "symbol": normalize_ui_symbol(symbol),
+            "proposed_action": action.upper().strip(),
+            "approved": False,
+            "verdict": "BLOCK",
+            "reason_code": "ACCOUNT_PAUSED_BY_BOSS",
+            "reason": f"Akaun #{login} sedang OFF mengikut arahan Bos.",
+            "confidence": 0.0,
+            "pattern_similarity": 0.0,
+            "matching_prob_pct": 0.0,
+            "data_source": "BOSS_CONTROL",
+        }
     """
     Pre-Trade Quantitative Gatekeeper for Amaterasu X Auto-Bot (`amaterasu_mt5_bridge.py`).
     Evaluates News Shield, Indicator Confluence (RSI/MACD/MA/TickVol), Hurst Persistence,

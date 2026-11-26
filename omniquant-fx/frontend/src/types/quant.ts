@@ -229,6 +229,7 @@ export interface SyncedMT5Account {
   login: number;
   label: string;
   connected: boolean;
+  trading_enabled?: boolean;
   broker_server: string;
   balance: number;
   equity: number;

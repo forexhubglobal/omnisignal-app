@@ -127,7 +127,7 @@ export default function OmniQuantTerminalPage() {
           const j = await res.json();
           setStatusNotice(
             j.enabled
-              ? "🔥 AUTO-TRADE MT5 DIAKTIFKAN! Signal ≥75% akan terus ditembak ke Akaun 1 & Akaun 5."
+              ? "🔥 AUTO-TRADE MT5 DIAKTIFKAN! Signal ≥75% akan terus ditembak ke akaun yang ON."
               : "⏸️ AUTO-TRADE MT5 DIJEDA. Signal hanya dipaparkan di skrin tanpa auto-entry."
           );
           break;
@@ -138,6 +138,29 @@ export default function OmniQuantTerminalPage() {
     }
     await fetchDashboard();
     setTogglingAuto(false);
+  };
+
+  const handleToggleAccountTrading = async (accLogin: number) => {
+    for (const url of [
+      `/api/v1/accounts/${accLogin}/toggle`,
+      `${DIRECT_API}/api/v1/accounts/${accLogin}/toggle`,
+    ]) {
+      try {
+        const res = await fetch(url, { method: "POST" });
+        if (res.ok) {
+          const j = await res.json();
+          setStatusNotice(
+            j.trading_enabled
+              ? `🔥 Akaun #${accLogin} kini ON (Dibenarkan masuk order automatik).`
+              : `🛑 Akaun #${accLogin} kini OFF (Semua order baharu disekat sehingga arahan baharu).`
+          );
+          break;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    await fetchDashboard();
   };
 
   const handleTestGatekeeper = async (action: "BUY" | "SELL") => {
@@ -349,6 +372,17 @@ export default function OmniQuantTerminalPage() {
                           {acc.label}
                         </span>
                         <span className="text-cyan-300 font-semibold">#{acc.login}</span>
+                        <button
+                          onClick={() => handleToggleAccountTrading(acc.login)}
+                          title="Klik untuk ON / OFF dagangan automatik pada akaun ini"
+                          className={`px-2 py-0.5 border text-[9px] font-bold transition cursor-pointer ${
+                            acc.trading_enabled !== false
+                              ? "border-[#00f59b] bg-[#00f59b]/20 text-[#00f59b]"
+                              : "border-[#ff3b5c] bg-[#ff3b5c]/20 text-[#ff3b5c]"
+                          }`}
+                        >
+                          {acc.trading_enabled !== false ? "🔥 TRADE: ON" : "🛑 TRADE: OFF"}
+                        </button>
                       </div>
 
                       <div className="flex items-center gap-3 text-[9.5px]">

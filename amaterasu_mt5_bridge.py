@@ -809,6 +809,12 @@ class AmaterasuBridge:
             return None
 
         # 0.0 ARAHAN MUTLAK BOS: DILARANG SAMA SEKALI MASUK ORDER SELAGI TIADA ARAHAN!
+        acc_chk = mt5.account_info()
+        cur_login_str = str(acc_chk.login) if acc_chk else str(self.config.get("mt5_login", ""))
+        def_acc_on = False if cur_login_str == "5100221532" else True
+        if not getattr(self, "account_trading_enabled", def_acc_on):
+            print(f"{Colors.RED}{Colors.BOLD}🛑 [AKAUN OFF - ARAHAN BOS] Akaun #{cur_login_str} sedang OFF! Order #{clean_raw_sym} ditahan sehingga arahan baharu.{Colors.RESET}")
+            return None
         pause_flags = [
             os.path.join(BASE_DIR, "pause_trading.flag"),
             r"C:\AmaterasuX\pause_trading.flag",
@@ -1228,12 +1234,15 @@ class AmaterasuBridge:
         enforce_news = bool(self.config.get("omniquant_news_shield", True))
 
         try:
+            acc_chk = mt5.account_info()
+            my_login = str(acc_chk.login) if acc_chk else str(self.config.get("mt5_login", ""))
             resp = requests.get(
                 f"{omni_url}/api/v1/gatekeeper",
                 params={
                     "symbol": clean_sym,
                     "action": sig_type,
                     "timeframe": "M15",
+                    "login": my_login,
                     "is_news_signal": str(is_news_trade).lower(),
                     "enforce_news_shield": str(enforce_news).lower(),
                 },
@@ -1267,6 +1276,17 @@ class AmaterasuBridge:
         if not sig_id or sig_id in self.executed_signal_ids:
             return
 
+        # PER-ACCOUNT TRADING SWITCH (Akaun 5 #5100242908 = ON, Akaun 1 #5100221532 = OFF sehingga arahan Bos!)
+        acc_chk = mt5.account_info()
+        cur_login_str = str(acc_chk.login) if acc_chk else str(self.config.get("mt5_login", ""))
+        def_acc_on = False if cur_login_str == "5100221532" else True
+        if not getattr(self, "account_trading_enabled", def_acc_on):
+            now_t = time.time()
+            if (now_t - getattr(self, "last_acc_off_log", 0)) > 60:
+                self.last_acc_off_log = now_t
+                print(f"{Colors.YELLOW}⏸️ [AKAUN OFF - ARAHAN BOS] Akaun #{cur_login_str} sedang OFF. Signal diabaikan sehingga arahan baharu.{Colors.RESET}")
+            return
+
         # TARGET ACCOUNT GUARD: Jika isyarat disasarkan kepada akaun tertentu (cth: Akaun 3 #5100209626)
         target_acc = sig.get("targetAccount")
         if target_acc:
@@ -1293,6 +1313,12 @@ class AmaterasuBridge:
             return
 
         # 0.0 ARAHAN MUTLAK BOS: DILARANG SAMA SEKALI MASUK ORDER SELAGI TIADA ARAHAN!
+        acc_chk = mt5.account_info()
+        cur_login_str = str(acc_chk.login) if acc_chk else str(self.config.get("mt5_login", ""))
+        def_acc_on = False if cur_login_str == "5100221532" else True
+        if not getattr(self, "account_trading_enabled", def_acc_on):
+            print(f"{Colors.RED}{Colors.BOLD}🛑 [AKAUN OFF - ARAHAN BOS] Akaun #{cur_login_str} sedang OFF! Order #{clean_raw_sym} ditahan sehingga arahan baharu.{Colors.RESET}")
+            return None
         pause_flags = [
             os.path.join(BASE_DIR, "pause_trading.flag"),
             r"C:\AmaterasuX\pause_trading.flag",
@@ -1923,26 +1949,34 @@ class AmaterasuBridge:
 
             # SEMAKAN TAMBAHAN SETIAP 4s: AUTO-SIGNAL HIGH-FREQUENCY SCALP DARI OMNIQUANT FX (>=75% CONFIDENCE)
             try:
-                omni_url = str(self.config.get("omniquant_url", "http://127.0.0.1:8005")).rstrip("/")
-                if omni_url:
-                    ro = requests.get(f"{omni_url}/api/v1/auto-signals", timeout=2.5)
-                    if ro.status_code == 200:
-                        odata = ro.json()
-                        if odata.get("enabled", True):
-                            now_ep = time.time()
-                            for osig in odata.get("activeSignals", []):
-                                oid = osig.get("id")
-                                created_ep = float(osig.get("created_epoch", 0))
-                                if (
-                                    oid
-                                    and oid not in self.executed_signal_ids
-                                    and osig.get("status") == "ACTIVE"
-                                    and (now_ep - created_ep) < 240.0
-                                ):
-                                    print(
-                                        f"\n{Colors.CYAN}{Colors.BOLD}🔥 [OMNIQUANT AUTO-SCALP] Signal Kuat Diterima: #{osig.get('symbol')} {osig.get('type')} ({osig.get('confidence')}%)!{Colors.RESET}"
-                                    )
-                                    self.process_new_signal(osig)
+                acc_chk = mt5.account_info()
+                cur_login_str = str(acc_chk.login) if acc_chk else str(self.config.get("mt5_login", ""))
+                def_acc_on = False if cur_login_str == "5100221532" else True
+                if getattr(self, "account_trading_enabled", def_acc_on):
+                    omni_url = str(self.config.get("omniquant_url", "http://127.0.0.1:8005")).rstrip("/")
+                    if omni_url:
+                        ro = requests.get(
+                            f"{omni_url}/api/v1/auto-signals",
+                            params={"login": cur_login_str},
+                            timeout=2.5,
+                        )
+                        if ro.status_code == 200:
+                            odata = ro.json()
+                            if odata.get("enabled", True) and not odata.get("accountPaused", False):
+                                now_ep = time.time()
+                                for osig in odata.get("activeSignals", []):
+                                    oid = osig.get("id")
+                                    created_ep = float(osig.get("created_epoch", 0))
+                                    if (
+                                        oid
+                                        and oid not in self.executed_signal_ids
+                                        and osig.get("status") == "ACTIVE"
+                                        and (now_ep - created_ep) < 240.0
+                                    ):
+                                        print(
+                                            f"\n{Colors.CYAN}{Colors.BOLD}🔥 [OMNIQUANT AUTO-SCALP] Signal Kuat Diterima: #{osig.get('symbol')} {osig.get('type')} ({osig.get('confidence')}%)!{Colors.RESET}"
+                                        )
+                                        self.process_new_signal(osig)
             except Exception:
                 pass
 
@@ -2078,6 +2112,14 @@ class AmaterasuBridge:
                         if resp and resp.status_code == 200:
                             try:
                                 rj = resp.json()
+                                if "accountTradingEnabled" in rj:
+                                    new_acc_state = bool(rj["accountTradingEnabled"])
+                                    prev_acc_state = getattr(self, "account_trading_enabled", None)
+                                    self.account_trading_enabled = new_acc_state
+                                    if prev_acc_state is not None and prev_acc_state != new_acc_state:
+                                        print(
+                                            f"\n{Colors.CYAN}{Colors.BOLD}⚡ [SUIS AKAUN BOS] Status dagangan Akaun #{acc_info.get('login') if acc_info else ''} ditukar kepada: {'ON (AKTIF)' if new_acc_state else 'OFF (DIKUNCI)'}!{Colors.RESET}\n"
+                                        )
                                 if rj.get("resumeTrading") is True or rj.get("resetTarget") is True:
                                     if self.account_target_reached:
                                         self.account_target_reached = False
