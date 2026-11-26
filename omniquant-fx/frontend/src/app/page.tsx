@@ -27,7 +27,6 @@ export default function OmniQuantTerminalPage() {
   const [symbol, setSymbol] = useState<string>("XAU/USD");
   const [timeframe, setTimeframe] = useState<string>("M5");
   const [sessionFilter, setSessionFilter] = useState<string>("ALL");
-  const [newsShield, setNewsShield] = useState<boolean>(true);
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [scanning, setScanning] = useState<boolean>(false);
@@ -43,7 +42,7 @@ export default function OmniQuantTerminalPage() {
       symbol,
       timeframe,
       session_filter: sessionFilter,
-      news_shield: String(newsShield),
+      news_shield: "false",
     }).toString();
 
     const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
@@ -67,7 +66,7 @@ export default function OmniQuantTerminalPage() {
     }
     setErrorMsg("Menyambung ke FastAPI Quant Engine (:8005)...");
     setLoading(false);
-  }, [symbol, timeframe, sessionFilter, newsShield]);
+  }, [symbol, timeframe, sessionFilter]);
 
   useEffect(() => {
     fetchDashboard();
@@ -170,7 +169,7 @@ export default function OmniQuantTerminalPage() {
       symbol: cleanSym,
       action,
       timeframe,
-      enforce_news_shield: String(newsShield),
+      enforce_news_shield: "false",
     }).toString();
 
     for (const url of [`/api/v1/gatekeeper?${qs}`, `${DIRECT_API}/api/v1/gatekeeper?${qs}`]) {
@@ -208,7 +207,7 @@ export default function OmniQuantTerminalPage() {
               </span>
             </div>
             <p className="text-[9px] tracking-[0.2em] text-slate-400 uppercase">
-              LIVE MT5 FEED · QUANT GATEKEEPER · NEWS & SESSION SHIELD
+              LIVE MT5 FEED · HIGH-FREQ SCALP · QUANT GATEKEEPER
             </p>
           </div>
         </div>
@@ -262,17 +261,6 @@ export default function OmniQuantTerminalPage() {
               </button>
             ))}
           </div>
-
-          <button
-            onClick={() => setNewsShield((v) => !v)}
-            className={`px-2.5 py-1 border font-semibold transition cursor-pointer ${
-              newsShield
-                ? "border-[#00f59b]/50 bg-[#00f59b]/10 text-[#00f59b]"
-                : "border-rose-500/50 bg-rose-500/10 text-rose-300"
-            }`}
-          >
-            NEWS SHIELD: {newsShield ? "ON (±30m)" : "OFF"}
-          </button>
 
           <button
             onClick={handleToggleAutoTrade}

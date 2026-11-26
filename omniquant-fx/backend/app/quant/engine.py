@@ -262,9 +262,9 @@ def analyze_pair(
     else:
         session_allowed = True
 
-    news_blocked = bool(news_shield_enabled and news_status and news_status.get("blocked"))
+    news_blocked = False
 
-    # Signal Synthesis (High-Frequency Scalp Calibration)
+    # Signal Synthesis (High-Frequency Scalp Calibration — 100% Unblocked During News!)
     latest_comp = float(composite_score[-1])
     pattern_bias = (pattern_data["bullish_prob_pct"] - 50.0) * 1.85
 

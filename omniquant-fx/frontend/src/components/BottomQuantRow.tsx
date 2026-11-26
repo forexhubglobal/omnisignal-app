@@ -254,16 +254,10 @@ export default function BottomQuantRow({ active, calendar, timeline }: Props) {
         <div className="flex flex-wrap items-center justify-between text-[9.5px] mb-1.5 gap-2">
           <div className="flex items-center gap-2">
             <span className="text-cyan-100 font-semibold">
-              • 24H SESSION KILLZONE & ECONOMIC NEWS TIMELINE (UTC)
+              • 24H SESSION KILLZONE & HIGH-FREQ SIGNALS TIMELINE (UTC)
             </span>
-            <span
-              className={`px-1.5 py-0.5 text-[8.5px] border ${
-                calendar.status.blocked
-                  ? "border-[#ff3b5c] bg-[#ff3b5c]/20 text-[#ff3b5c]"
-                  : "border-[#00f59b]/40 bg-[#00f59b]/10 text-[#00f59b]"
-              }`}
-            >
-              {calendar.status.reason}
+            <span className="px-1.5 py-0.5 text-[8.5px] border border-[#00f59b]/40 bg-[#00f59b]/10 text-[#00f59b]">
+              UNRESTRICTED 24H SCALP ACTIVE
             </span>
           </div>
           <span className="text-amber-300 font-bold">{timeline.utc_clock}</span>

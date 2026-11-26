@@ -78,7 +78,7 @@ DEFAULT_CONFIG = {
     "enable_smc_sweep_reentry": True,
     "omniquant_gatekeeper_enabled": True,
     "omniquant_url": "http://127.0.0.1:8005",
-    "omniquant_news_shield": True
+    "omniquant_news_shield": False
 }
 
 def load_config():
@@ -1231,7 +1231,7 @@ class AmaterasuBridge:
         is_news_trade = bool(
             sig.get("isNews") or sig.get("is_news") or "NEWS AI" in str(sig.get("notes", ""))
         )
-        enforce_news = bool(self.config.get("omniquant_news_shield", True))
+        enforce_news = False
 
         try:
             acc_chk = mt5.account_info()

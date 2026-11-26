@@ -259,19 +259,6 @@ def _build_24h_timeline(
             "spans": [{"start": 13.0, "end": 22.0, "kind": "SESSION_NY", "text": "NEW YORK SESSION (13:00-22:00 UTC)"}],
         },
         {
-            "id": "news_shield",
-            "label": "ECON NEWS SHIELD",
-            "spans": [
-                {
-                    "start": ns["start"],
-                    "end": ns["end"],
-                    "kind": "NEWS_HIGH" if ns["impact"] == "HIGH" else "NEWS_MED",
-                    "text": ns["label"],
-                }
-                for ns in news_spans
-            ],
-        },
-        {
             "id": "signals_track",
             "label": f"{active_symbol} SIGNALS ({len(sig_spans)})",
             "spans": [
@@ -441,7 +428,7 @@ def evaluate_amaterasu_gatekeeper(
     timeframe: str = Query("M15", description="Timeframe for quantitative check"),
     login: str = Query("", description="MT5 Account Login checking gatekeeper"),
     is_news_signal: bool = Query(False, description="True if signal is an explicit News Volatility trade"),
-    enforce_news_shield: bool = Query(True, description="Block standard entries inside ±30m High-Impact news"),
+    enforce_news_shield: bool = Query(False, description="News Shield removed per Boss mandate"),
 ):
     if login and not is_account_trading_allowed(login):
         return {
@@ -497,13 +484,7 @@ def evaluate_amaterasu_gatekeeper(
     reason_code = "QUANT_CLEAR"
     lot_mult = 1.0
 
-    if enforce_news_shield and news_status.get("blocked") and not is_news_signal:
-        approved = False
-        verdict = "BLOCK"
-        reason_code = "NEWS_SHIELD_LOCKOUT"
-        reason = news_status.get("reason", "High-Impact Macro News Lockout")
-        lot_mult = 0.0
-    elif (not aligned) and conf >= 68.0 and matching_prob < 42.0:
+    if (not aligned) and conf >= 68.0 and matching_prob < 42.0:
         approved = False
         verdict = "BLOCK"
         reason_code = "STRONG_QUANT_OPPOSITION"
@@ -656,15 +637,11 @@ def get_dashboard_payload(
                 "anchor_angle": 36,
             },
             {
-                "id": "news_gate",
-                "label": "ECON NEWS SHIELD",
-                "value": "LOCKED" if active_analysis["signal"]["news_blocked"] else ("ARMED" if news_shield else "BYPASSED"),
-                "sub": (
-                    f"Next: {next_ev['currency']} {next_ev['title'][:18]} ({next_ev['minutes_from_now']:+.0f}m)"
-                    if next_ev
-                    else "No High-Impact Imminent"
-                ),
-                "bias": "BEAR" if active_analysis["signal"]["news_blocked"] else "BULL",
+                "id": "auto_scalp_engine",
+                "label": "AUTO-SCALP ENGINE",
+                "value": "ACTIVE ≥75%" if AUTO_DISPATCH_STATE.get("enabled", True) else "PAUSED",
+                "sub": f"20s Scan · {len(get_active_auto_signals())} Active Signals",
+                "bias": "BULL" if AUTO_DISPATCH_STATE.get("enabled", True) else "WARN",
                 "anchor_angle": 52,
             },
             {

@@ -411,7 +411,7 @@ export default function TopTelemetryRow({ active, matrix, onSelectPair }: Props)
         {/* Equity Curve + Side Stats */}
         <div className="mt-2">
           <div className="flex items-center justify-between text-[9px] text-slate-400 mb-1">
-            <span>• EQUITY CURVE · LDN/NY + NEWS SHIELD</span>
+            <span>• EQUITY CURVE · QUANT SCALP ALPHA</span>
             <span className="text-[#00f59b]">ACTIVE</span>
           </div>
           <div className="grid grid-cols-12 gap-2 items-center">

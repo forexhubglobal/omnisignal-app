@@ -94,7 +94,7 @@ foreach ($f in $files) { ^
         } ^
         $c | Add-Member -NotePropertyName omniquant_gatekeeper_enabled -NotePropertyValue $true -Force; ^
         $c | Add-Member -NotePropertyName omniquant_url -NotePropertyValue 'http://127.0.0.1:8005' -Force; ^
-        $c | Add-Member -NotePropertyName omniquant_news_shield -NotePropertyValue $true -Force; ^
+        $c | Add-Member -NotePropertyName omniquant_news_shield -NotePropertyValue $false -Force; ^
         $newJson = ConvertTo-Json $c -Depth 10; ^
         [System.IO.File]::WriteAllText($f.FullName, $newJson); ^
         Write-Host ('[OK] Synced max_lots & server in: ' + $f.FullName) -ForegroundColor Cyan; ^
