@@ -1,17 +1,23 @@
 # =====================================================================
-# OMNIQUANT FX - 24/7 PURE-PYTHON VPS WATCHDOG (WINDOWS SERVER 2016+)
-# Serves BOTH 3D Web UI (:3005 for quant.amaterasux.com) & Gatekeeper (:8005)
+# OMNIQUANT FX x AMATERASU X - MASTER 24/7 VPS WATCHDOG
+# Auto-heals EVERY 15 SECONDS:
+#   1. Cloudflare Tunnel (`cloudflared.exe`) -> Prevents Error 1033!
+#   2. Amaterasu X Web Server (`:3000`)      -> amaterasux.com
+#   3. OMNIQUANT FX Unified (`:3005 & :8005`)-> quant.amaterasux.com
 # =====================================================================
 
 $Host.UI.RawUI.WindowTitle = "OMNIQUANT-24-7-WATCHDOG"
 $RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Split-Path -Parent $RootDir
 $BackendDir = Join-Path $RootDir "backend"
 $VenvPython = Join-Path $BackendDir ".venv\Scripts\python.exe"
 
+$TunnelToken = "eyJhIjoiZDJkMTY3OWU2MGQwZmQzMzVlMTU5ZTQyYTBmMjZkMjAiLCJ0IjoiZTkxZmFiYzYtNzA0NC00ODJkLWJlYzktMDA3MjI1OWMyMzJiIiwicyI6Ik5tTTVPVEZtTkdRdE1XSXhOaTAwT0RjNExXSmpNR0l0T1dJMVptRmlOelEyWVdVNCJ9"
+
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "  OMNIQUANT FX x AMATERASU X - 24/7 VPS WATCHDOG ACTIVE   " -ForegroundColor Cyan
-Write-Host "  Cloudflare Web UI (:3005) : https://quant.amaterasux.com" -ForegroundColor Green
-Write-Host "  Bot Gatekeeper    (:8005) : http://127.0.0.1:8005       " -ForegroundColor Green
+Write-Host "  MASTER 24/7 VPS GUARDIAN (CLOUDFLARE + :3000 + :3005)   " -ForegroundColor Cyan
+Write-Host "  Main Domain  : https://amaterasux.com (:3000)           " -ForegroundColor Green
+Write-Host "  Quant Domain : https://quant.amaterasux.com (:3005)     " -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 function Test-LocalPort($Port) {
@@ -30,9 +36,46 @@ function Test-LocalPort($Port) {
     }
 }
 
+function Get-CloudflaredExe {
+    foreach ($cand in @(
+        "C:\AmaterasuX\tools\cloudflared.exe",
+        (Join-Path $RepoRoot "cloudflared.exe"),
+        "C:\Program Files (x86)\cloudflared\cloudflared.exe",
+        "C:\Program Files\cloudflared\cloudflared.exe"
+    )) {
+        if (Test-Path $cand) { return $cand }
+    }
+    return $null
+}
+
 while ($true) {
     $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
 
+    # 1. Auto-Heal Cloudflare Tunnel (Fixes Error 1033 / 530!)
+    $cfProc = Get-Process -Name "cloudflared" -ErrorAction SilentlyContinue
+    if (-not $cfProc) {
+        $cfExe = Get-CloudflaredExe
+        if ($cfExe) {
+            Write-Host "[$ts] [TUNNEL] Menghidupkan semula Cloudflare Tunnel (cloudflared.exe)..." -ForegroundColor Yellow
+            Start-Process -FilePath $cfExe `
+                -ArgumentList "tunnel run --token $TunnelToken" `
+                -WindowStyle Minimized
+            Start-Sleep -Seconds 3
+        }
+    }
+
+    # 2. Auto-Heal Amaterasu Main Server (:3000) if installed in C:\AmaterasuX
+    if ((-not (Test-LocalPort 3000)) -and (Test-Path "C:\AmaterasuX\server.js")) {
+        $nodeBin = if (Test-Path "C:\AmaterasuX\node.exe") { "C:\AmaterasuX\node.exe" } else { "node" }
+        Write-Host "[$ts] [AMATERASU] Menghidupkan semula server.js (:3000)..." -ForegroundColor Yellow
+        Start-Process -FilePath $nodeBin `
+            -ArgumentList "server.js" `
+            -WorkingDirectory "C:\AmaterasuX" `
+            -WindowStyle Minimized
+        Start-Sleep -Seconds 2
+    }
+
+    # 3. Auto-Heal OMNIQUANT FX Unified Server (:3005 & :8005)
     if (-not (Test-LocalPort 3005)) {
         Write-Host "[$ts] [WATCHDOG] Menghidupkan Unified OMNIQUANT Server (:3005 & :8005)..." -ForegroundColor Yellow
         if (Test-Path $VenvPython) {
@@ -40,11 +83,7 @@ while ($true) {
                 -ArgumentList "serve_vps.py" `
                 -WorkingDirectory $BackendDir `
                 -WindowStyle Minimized
-            Start-Sleep -Seconds 6
-            try {
-                Invoke-RestMethod -Uri "http://127.0.0.1:3005/api/v1/mt5/connect" -Method Post -TimeoutSec 10 | Out-Null
-                Write-Host "[$ts] [ONLINE] quant.amaterasux.com (:3005) & MT5 Live tersambung!" -ForegroundColor Green
-            } catch {}
+            Start-Sleep -Seconds 4
         }
     }
 

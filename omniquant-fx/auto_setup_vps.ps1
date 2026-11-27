@@ -66,7 +66,21 @@ foreach ($line in $netstatLines) {
 }
 Start-Sleep -Seconds 1
 
-# 4. Register 24/7 Boot Task in Windows Task Scheduler & Launch Watchdog
+# 4. Ensure cloudflared.exe binary exists in C:\AmaterasuX\tools so Tunnel never stays offline (Error 1033 fix)
+$CfDir = "C:\AmaterasuX\tools"
+$CfExe = Join-Path $CfDir "cloudflared.exe"
+if ((-not (Test-Path $CfExe)) -and (-not (Test-Path (Join-Path $RepoRoot "cloudflared.exe")))) {
+    Write-Host "[TUNNEL] Memuat turun cloudflared.exe rasmi ke $CfExe..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Force -Path $CfDir | Out-Null
+    try {
+        (New-Object Net.WebClient).DownloadFile(
+            "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe",
+            $CfExe
+        )
+    } catch {}
+}
+
+# 5. Register 24/7 Boot Task in Windows Task Scheduler & Launch Watchdog
 schtasks /Create /TN "OmniQuantFX_24_7" /TR "powershell.exe -ExecutionPolicy Bypass -WindowStyle Minimized -File `"$WatchdogScript`"" /SC ONLOGON /RL HIGHEST /F >$null 2>&1
 
 Write-Host "[3/3] Melancarkan OMNIQUANT FX Unified Server 24/7 (:3005 & :8005)..." -ForegroundColor Green

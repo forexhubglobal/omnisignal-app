@@ -1,11 +1,10 @@
 """
 Unified Single-Process Production Server for OMNIQUANT FX on Windows VPS.
-Serves BOTH:
-  - Port 3005: Full 3D Next.js Static UI + /api/v1/* (for Cloudflare Tunnel quant.amaterasux.com)
-  - Port 8005: /api/v1/* Quant Gatekeeper API (for amaterasu_mt5_bridge.py)
-Requires ZERO Node.js on the VPS (100% compatible with Windows Server 2016/2019/2022).
+Binds ports 3005 & 8005 IMMEDIATELY (<0.5s) and runs initial scan asynchronously
+so Cloudflare Tunnel & watchdog never encounter startup timeouts.
 """
 import asyncio
+import threading
 import uvicorn
 from app.adapters.mt5_live import init_mt5_on_main_thread
 from app.database import init_db
@@ -30,7 +29,10 @@ def main() -> None:
     db_backend = init_db()
     mt5_ok = init_mt5_on_main_thread()
     print(f"[INIT] Database: {db_backend} | MT5 Live IPC: {mt5_ok}")
-    start_background_cron(db_backend)
+
+    # Start background cron in a non-blocking daemon thread so HTTP ports open immediately!
+    threading.Thread(target=start_background_cron, args=(db_backend,), daemon=True).start()
+
     try:
         asyncio.run(serve_dual_ports())
     finally:
