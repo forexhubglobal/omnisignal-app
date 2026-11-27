@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     oanda_env: str = "practice"
 
     fmp_api_key: str = ""
+    gemini_api_key: str = ""
+    jarvis_voice: str = "ms-MY-OsmanNeural"
     news_shield_minutes: int = 30
     cron_interval_seconds: int = 20
     auto_trade_enabled: bool = True

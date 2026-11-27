@@ -44,11 +44,11 @@ if (-not (Test-Path $VenvPython)) {
     Write-Host "[1/3] Membina persekitaran Python (.venv) untuk OMNIQUANT FX..." -ForegroundColor Yellow
     & $SysPython -m venv (Join-Path $BackendDir ".venv")
 }
-if (-not (Test-Path (Join-Path $BackendDir ".venv\Lib\site-packages\fastapi"))) {
-    Write-Host "[2/3] Memasang pakej Python (FastAPI, Uvicorn, NumPy, MetaTrader5)..." -ForegroundColor Yellow
+if (-not (Test-Path (Join-Path $BackendDir ".venv\Lib\site-packages\edge_tts"))) {
+    Write-Host "[2/3] Memasang pakej Python & Enjin Suara Neural JARVIS (edge-tts)..." -ForegroundColor Yellow
     & $VenvPython -m pip install --quiet -r (Join-Path $BackendDir "requirements.txt")
 } else {
-    Write-Host "[2/3] Pakej Python sudah lengkap (fast start)." -ForegroundColor Green
+    Write-Host "[2/3] Pakej Python & Suara JARVIS sudah lengkap (fast start)." -ForegroundColor Green
 }
 
 # 3. Stop any previous OMNIQUANT Watchdog or listeners on 3005 / 8005 (compatible with Server 2016)

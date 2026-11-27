@@ -12,6 +12,11 @@ from fastapi.staticfiles import StaticFiles
 
 from app.adapters.economic_calendar import evaluate_news_shield, fetch_economic_calendar
 from app.adapters.forex_feed import LIVE_MT5_QUOTES, PAIR_SPECS, get_forex_candles, normalize_ui_symbol
+from app.ai_voice import (
+    detect_voice_command_actions,
+    generate_jarvis_response,
+    synthesize_jarvis_mp3_b64,
+)
 from app.adapters.mt5_live import (
     get_mt5_bridge_telemetry,
     init_mt5_on_main_thread,
@@ -737,6 +742,69 @@ def trigger_manual_signal_scan(timeframe: str = Query("M15")):
 @app.get("/api/v1/signals/history")
 def list_signal_history(limit: int = Query(25, ge=1, le=100)):
     return {"signals": get_recent_persisted_signals(limit)}
+
+
+@app.post("/api/v1/ai/voice-chat")
+async def ai_jarvis_voice_chat(request: Request):
+    """
+    JARVIS Malay Voice AI Endpoint:
+    1. Executes spoken commands (ON/OFF accounts, Auto-Trade, Chart switching)
+    2. Answers ANY user question with live MT5 & Quantitative data
+    3. Synthesizes natural Malaysian Male Corporate Neural Voice (ms-MY-OsmanNeural)
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return {"ok": False, "reply": "Maaf Bos, input suara tidak dapat dibaca."}
+
+    user_msg = str(body.get("message") or "").strip()
+    if not user_msg:
+        return {"ok": False, "reply": "Sila sebut soalan atau arahan Bos."}
+
+    cur_sym = str(body.get("symbol") or "XAU/USD")
+    cur_tf = str(body.get("timeframe") or "M5")
+    history = body.get("history") or []
+
+    action_note, ui_action = detect_voice_command_actions(
+        transcript=user_msg,
+        toggle_account_fn=lambda lg, en: toggle_specific_account_trading(lg, en),
+        toggle_autotrade_fn=lambda en: toggle_omniquant_auto_trade(en),
+    )
+
+    eff_sym = ui_action.get("symbol") or cur_sym
+    eff_tf = ui_action.get("timeframe") or cur_tf
+    live_ctx = get_dashboard_payload(
+        symbol=eff_sym,
+        timeframe=eff_tf,
+        session_filter="ALL",
+        news_shield=False,
+    )
+
+    reply_text, audio_b64 = await generate_jarvis_response(
+        user_message=user_msg,
+        history=history,
+        live_context=live_ctx,
+        action_note=action_note,
+    )
+
+    return {
+        "ok": True,
+        "reply": reply_text,
+        "audio_b64": audio_b64,
+        "ui_action": ui_action,
+        "action_executed": bool(action_note),
+    }
+
+
+@app.post("/api/v1/ai/speak")
+async def ai_jarvis_speak(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        return {"ok": False, "audio_b64": None}
+    text = str(body.get("text") or "").strip()
+    audio_b64 = await synthesize_jarvis_mp3_b64(text)
+    return {"ok": bool(audio_b64), "audio_b64": audio_b64}
 
 
 STATIC_UI_DIR = Path(__file__).resolve().parent.parent / "static_ui"

@@ -8,6 +8,7 @@ interface Props {
   onSelectPair: (symbol: string) => void;
   onManualScan: () => void;
   scanning: boolean;
+  jarvisSpeaking?: boolean;
 }
 
 interface TorusParticle {
@@ -107,7 +108,13 @@ const CompositeMiniCurve = memo(function CompositeMiniCurve({
   );
 });
 
-function TorusManifoldHUD({ active, onSelectPair, onManualScan, scanning }: Props) {
+function TorusManifoldHUD({
+  active,
+  onSelectPair,
+  onManualScan,
+  scanning,
+  jarvisSpeaking = false,
+}: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sizeRef = useRef<{ w: number; h: number }>({ w: 1200, h: 515 });
@@ -244,7 +251,7 @@ function TorusManifoldHUD({ active, onSelectPair, onManualScan, scanning }: Prop
       ctx.clearRect(0, 0, w, h);
 
       if (!dragRef.current.dragging) {
-        dragRef.current.rotZ += 0.005 * energy;
+        dragRef.current.rotZ += 0.005 * energy * (jarvisSpeaking ? 2.4 : 1.0);
       }
 
       const t = timeMs * 0.0018;
@@ -388,7 +395,7 @@ function TorusManifoldHUD({ active, onSelectPair, onManualScan, scanning }: Prop
       cancelAnimationFrame(animId);
       ro.disconnect();
     };
-  }, [particles, leftNodes, rightNodes, energy, bull_ratio, turbulence]);
+  }, [particles, leftNodes, rightNodes, energy, bull_ratio, turbulence, jarvisSpeaking]);
 
   const badgeColor = (bias: ManifoldNode["bias"]) => {
     if (bias === "BULL") return "text-[#00f59b] border-[#00f59b]/40 bg-[#00f59b]/10";

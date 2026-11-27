@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import TopTelemetryRow from "@/components/TopTelemetryRow";
 import TorusManifoldHUD from "@/components/TorusManifoldHUD";
 import BottomQuantRow from "@/components/BottomQuantRow";
+import JarvisVoiceHUD from "@/components/JarvisVoiceHUD";
 import { DashboardPayload, GatekeeperAuditItem } from "@/types/quant";
 
 const PAIRS = [
@@ -32,6 +33,7 @@ export default function OmniQuantTerminalPage() {
   const [scanning, setScanning] = useState<boolean>(false);
   const [connectingMt5, setConnectingMt5] = useState<boolean>(false);
   const [togglingAuto, setTogglingAuto] = useState<boolean>(false);
+  const [jarvisSpeaking, setJarvisSpeaking] = useState<boolean>(false);
   const [testingAction, setTestingAction] = useState<"BUY" | "SELL" | null>(null);
   const [latestVerdict, setLatestVerdict] = useState<GatekeeperAuditItem | null>(null);
   const [statusNotice, setStatusNotice] = useState<string | null>(null);
@@ -320,6 +322,19 @@ export default function OmniQuantTerminalPage() {
         </div>
       )}
 
+      {/* JARVIS AI VOICE COMMAND & CONVERSATION CORE */}
+      <JarvisVoiceHUD
+        symbol={symbol}
+        timeframe={timeframe}
+        data={data}
+        onApplyUiAction={(act) => {
+          if (act.symbol) setSymbol(act.symbol);
+          if (act.timeframe) setTimeframe(act.timeframe);
+        }}
+        onRefreshDashboard={fetchDashboard}
+        onSpeakingChange={setJarvisSpeaking}
+      />
+
       {/* LOADING / CONNECTION STATE */}
       {loading && !data ? (
         <div className="hud-panel p-12 text-center text-cyan-300 text-xs tracking-widest animate-pulse">
@@ -465,6 +480,7 @@ export default function OmniQuantTerminalPage() {
             onSelectPair={setSymbol}
             onManualScan={handleManualScan}
             scanning={scanning}
+            jarvisSpeaking={jarvisSpeaking}
           />
 
           {/* ROW 3 */}
