@@ -1,7 +1,9 @@
 import base64
 from datetime import datetime, timedelta, timezone
+import random
 import re
 from typing import Callable, Dict, List, Optional, Tuple
+import urllib.parse
 import httpx
 
 from app.config import get_settings
@@ -76,34 +78,30 @@ def detect_voice_command_actions(
     ui_action: Dict[str, str] = {}
     action_note: Optional[str] = None
 
-    # 1. Account 1 (#5100221532) ON/OFF voice commands
     if any(k in low for k in ("akaun 1", "akaun satu", "account 1", "account one", "dragon")):
         if any(w in low for w in ("hidupkan", "buka", "aktifkan", "on kan", "onkan", "turn on", "start")):
             toggle_account_fn(5100221532, True)
-            action_note = "TELAH DILAKSANAKAN: Dagangan Akaun 1 (#5100221532 Dragon Cent) kini diaktifkan kepada ON."
+            action_note = "Dagangan Akaun 1 (#5100221532 Dragon Cent) kini diaktifkan kepada ON."
         elif any(w in low for w in ("matikan", "tutup", "hentikan", "off kan", "offkan", "pause", "turn off", "stop", "kunci")):
             toggle_account_fn(5100221532, False)
-            action_note = "TELAH DILAKSANAKAN: Dagangan Akaun 1 (#5100221532 Dragon Cent) kini dikunci kepada OFF."
+            action_note = "Dagangan Akaun 1 (#5100221532 Dragon Cent) kini dikunci kepada OFF."
 
-    # 2. Account 5 (#5100242908) ON/OFF voice commands
     if any(k in low for k in ("akaun 5", "akaun lima", "account 5", "account five", "farouk")):
         if any(w in low for w in ("hidupkan", "buka", "aktifkan", "on kan", "onkan", "turn on", "start")):
             toggle_account_fn(5100242908, True)
-            action_note = "TELAH DILAKSANAKAN: Dagangan Akaun 5 (#5100242908 Wan Farouk) kini diaktifkan kepada ON."
+            action_note = "Dagangan Akaun 5 (#5100242908 Wan Farouk) kini diaktifkan kepada ON."
         elif any(w in low for w in ("matikan", "tutup", "hentikan", "off kan", "offkan", "pause", "turn off", "stop", "kunci")):
             toggle_account_fn(5100242908, False)
-            action_note = "TELAH DILAKSANAKAN: Dagangan Akaun 5 (#5100242908 Wan Farouk) kini dikunci kepada OFF."
+            action_note = "Dagangan Akaun 5 (#5100242908 Wan Farouk) kini dikunci kepada OFF."
 
-    # 3. Master Auto-Trade ON/OFF voice commands
     if "auto trade" in low or "autotrade" in low or "auto scalp" in low:
         if any(w in low for w in ("matikan", "tutup", "off", "stop", "henti", "pause")):
             toggle_autotrade_fn(False)
-            action_note = "TELAH DILAKSANAKAN: Suis utama Auto-Trade telah dimatikan."
+            action_note = "Suis utama Auto-Trade telah dimatikan."
         elif any(w in low for w in ("hidupkan", "buka", "on", "start", "aktif")):
             toggle_autotrade_fn(True)
-            action_note = "TELAH DILAKSANAKAN: Suis utama Auto-Trade telah diaktifkan semula."
+            action_note = "Suis utama Auto-Trade telah diaktifkan semula."
 
-    # 4. Pair / Timeframe UI switching
     if any(w in low for w in ("tukar", "buka chart", "papar", "tunjuk", "switch")):
         if "emas" in low or "gold" in low or "xau" in low:
             ui_action["symbol"] = "XAU/USD"
@@ -123,100 +121,77 @@ def detect_voice_command_actions(
     return action_note, ui_action
 
 
-def _build_system_prompt(live_context: Dict, action_note: Optional[str]) -> str:
-    myt_now = (datetime.now(timezone.utc) + timedelta(hours=8)).strftime("%H:%M MYT (%d %b %Y)")
+def _is_trading_or_account_query(text: str) -> bool:
+    low = text.lower()
+    keywords = (
+        "gold", "emas", "xau", "eur", "euro", "usd", "chf", "gbp", "jpy", "pair",
+        "chart", "market", "pasaran", "harga", "price", "signal", "isyarat", "buy",
+        "sell", "entry", "sl", "tp", "rsi", "macd", "trend", "scalp", "monte carlo",
+        "akaun", "account", "baki", "balance", "ekuiti", "equity", "profit", "untung",
+        "rugi", "lot", "layer", "posisi", "mt5", "auto trade", "autotrade", "taklimat",
+        "laporan",
+    )
+    return any(k in low for k in keywords)
+
+
+def _build_compact_system_prompt(live_context: Dict, include_market: bool, action_note: Optional[str]) -> str:
+    myt_now = (datetime.now(timezone.utc) + timedelta(hours=8)).strftime("%H:%M MYT, %d %b %Y")
+
+    base_persona = (
+        f"Anda ialah JARVIS, pembantu AI peribadi pintar gaya korporat lelaki Melayu untuk Bos (masa sekarang {myt_now}). "
+        "Anda boleh menjawab APA SAHAJA soalan Bos tentang apa jua topik di dunia (pengetahuan am, bisnes, sains, sejarah, teknologi, matematik, kehidupan harian, nasihat, lawak, mahupun kewangan). "
+        "Jawab dalam Bahasa Melayu yang maskulin, korporat, jelas, dan ringkas (2 hingga 4 ayat lisan sahaja, TANPA simbol bintang/pagar markdown). "
+    )
+
+    if not include_market and not action_note:
+        return (
+            base_persona
+            + "PENTING: Soalan Bos ini BUKAN tentang trading, jadi jawab terus soalan Bos dengan pintar dan JANGAN sebut pasal Gold, Forex, atau MT5."
+        )
+
     active = live_context.get("active", {})
     quote = active.get("quote", {})
     sig = active.get("signal", {})
     ind = active.get("indicators_latest", {})
     pm = active.get("pattern_matching", {})
-    perf = active.get("performance", {})
 
-    matrix_lines = []
-    for m in live_context.get("matrix", []):
-        matrix_lines.append(
-            f"- {m['symbol']}: Harga {m['price']}, Arah {m['direction']} (Keyakinan {m['confidence']}%), RSI {m['rsi14']}, Regime {m['regime']}, SL {m['stop_loss']}, TP {m['take_profit']}"
-        )
+    pairs_short = ", ".join(
+        f"{m['symbol']}={m['price']}({m['direction']} {m['confidence']}%)"
+        for m in live_context.get("matrix", [])[:5]
+    )
+    accs_short = " | ".join(
+        f"{a['label']}: Ekuiti {a['equity']} {a['currency']} ({'ON' if a.get('trading_enabled', True) else 'OFF'}, {a['open_positions_count']} pos)"
+        for a in live_context.get("synced_accounts", [])[:2]
+    )
+    act_str = f" Tindakan baru selesai: {action_note}" if action_note else ""
 
-    acc_lines = []
-    for a in live_context.get("synced_accounts", []):
-        status_str = "AKTIF SYNC" if a.get("connected") else "OFFLINE"
-        trade_str = "TRADE ON" if a.get("trading_enabled", True) else "TRADE OFF (DIKUNCI BOS)"
-        acc_lines.append(
-            f"- {a['label']} (#{a['login']}): {status_str} | {trade_str} | Baki {a['balance']} {a['currency']} | Ekuiti {a['equity']} {a['currency']} | Floating PnL {a['floating_pnl']} {a['currency']} | Posisi Terbuka: {a['open_positions_count']}"
-        )
-
-    auto_d = live_context.get("auto_dispatch", {})
-    action_str = f"\n[TINDAKAN BARU DILAKSANAKAN OLEH SISTEM]: {action_note}\n" if action_note else ""
-
-    return f"""Anda ialah OMNIQUANT AI, pembantu kecerdasan buatan kuantitatif peribadi gaya JARVIS korporat untuk Bos (Tengku).
-Jawab dalam Bahasa Melayu yang maskulin, korporat, tegas, jelas, dan ringkas (maksimum 2 hingga 4 ayat pendek supaya lancar bila disebut dengan suara).
-JANGAN guna simbol markdown seperti bintang (*), pagar (#), atau jadual. Tulis ayat pertuturan terus.
-
-DATA PASARAN & AKAUN MT5 SEBENAR SAAT INI ({myt_now}):
-Pair Fokus Di Skrin: {active.get('symbol')} ({active.get('timeframe')}) @ Harga {quote.get('price')} (Spread {quote.get('spread_pips')} pips, ATR {quote.get('atr_pips')} pips)
-Signal Semasa {active.get('symbol')}: {sig.get('direction')} dengan keyakinan {sig.get('confidence')}% | Regime: {sig.get('regime')} | Entry {sig.get('entry')}, SL {sig.get('stop_loss')}, TP {sig.get('take_profit')}
-Indikator {active.get('symbol')}: RSI(14) = {ind.get('rsi14')}, MACD Hist = {ind.get('macd_hist')}, Tick Vol Z = {ind.get('vol_zscore')}, Hurst = {perf.get('hurst')}
-Monte Carlo & Corak Sejarah {active.get('symbol')}: Persamaan Sejarah {pm.get('avg_similarity_pct')}%, Kebarangkalian Naik (Bullish) {pm.get('bullish_prob_pct')}% vs Turun (Bearish) {pm.get('bearish_prob_pct')}%
-Status Auto-Trade (≥75%): {'AKTIF' if auto_d.get('enabled', True) else 'DIMATIKAN'}
-
-SENARAI SEMUA PAIR LIVE:
-{chr(10).join(matrix_lines)}
-
-STATUS AKAUN MT5 BOS SEKARANG:
-{chr(10).join(acc_lines)}
-{action_str}
-Jawab soalan Bos dengan tepat berdasarkan angka sebenar di atas. Jika Bos tanya soalan umum, strategi, risiko, atau apa sahaja topik lain, jawab dengan bijak dan profesional sebagai penasihat kuantitatif peribadi Bos."""
+    return (
+        base_persona
+        + f"Data Live MT5: Fokus {active.get('symbol')}({active.get('timeframe')})={quote.get('price')}, Signal={sig.get('direction')}({sig.get('confidence')}%), "
+        f"Regime={sig.get('regime')}, RSI={ind.get('rsi14')}, MonteCarlo Naik={pm.get('bullish_prob_pct')}%, SL={sig.get('stop_loss')}, TP={sig.get('take_profit')}. "
+        f"Semua Pair: {pairs_short}. Akaun: {accs_short}.{act_str}"
+    )
 
 
 def _local_fallback_jarvis_reply(question: str, live_context: Dict, action_note: Optional[str]) -> str:
-    """Instant <2ms deterministic Malaysian Malay JARVIS answer if external LLM is unreachable."""
     if action_note:
-        return f"Baik Bos. {action_note.replace('TELAH DILAKSANAKAN: ', '')}"
+        return f"Baik Bos. {action_note}"
 
-    low = question.lower()
-    active = live_context.get("active", {})
-    matrix = {m["symbol"]: m for m in live_context.get("matrix", [])}
-    accounts = live_context.get("synced_accounts", [])
-
-    # Account questions
-    if any(w in low for w in ("akaun", "baki", "ekuiti", "equity", "balance", "profit", "untung", "posisi")):
-        parts = []
-        for a in accounts[:2]:
-            t_state = "aktif berdagang" if a.get("trading_enabled", True) else "dikunci off"
-            parts.append(
-                f"{a['label']} mempunyai ekuiti {a['equity']:,.2f} {a['currency']} dengan {a['open_positions_count']} posisi terbuka dan status {t_state}"
-            )
-        return "Laporan akaun semasa Bos: " + ". Manakala ".join(parts) + "."
-
-    # Specific pair lookup
-    target_sym = active.get("symbol", "XAU/USD")
-    if "chf" in low or "swiss" in low:
-        target_sym = "USD/CHF"
-    elif "euro" in low or "eur" in low:
-        target_sym = "EUR/USD"
-    elif "gbp" in low or "pound" in low:
-        target_sym = "GBP/USD"
-    elif "jpy" in low or "yen" in low:
-        target_sym = "USD/JPY"
-    elif "emas" in low or "gold" in low or "xau" in low:
-        target_sym = "XAU/USD"
-
-    m = matrix.get(target_sym)
-    if m and target_sym != active.get("symbol"):
+    if not _is_trading_or_account_query(question):
         return (
-            f"Bos, untuk {target_sym} sekarang harga berada pada {m['price']} dalam fasa {m['regime']}. "
-            f"Isyarat semasa ialah {m['direction']} dengan keyakinan {m['confidence']} peratus dan bacaan R S I {m['rsi14']}."
+            "Maaf Bos, talian ke pelayan pengetahuan am sedang perlahan seketika. "
+            "Cuba tanya sekali lagi sebentar lagi, Bos."
         )
 
+    active = live_context.get("active", {})
     q = active.get("quote", {})
     s = active.get("signal", {})
     pm = active.get("pattern_matching", {})
     ind = active.get("indicators_latest", {})
     return (
-        f"Bos, {active.get('symbol')} pada rangka masa {active.get('timeframe')} kini didagangkan pada {q.get('price')}. "
-        f"Bacaan kuantitatif menunjukkan status {s.get('direction')} dengan keyakinan {s.get('confidence')} peratus dalam fasa {s.get('regime')}. "
-        f"R S I berada pada {ind.get('rsi14')} dan simulasi Monte Carlo memberi kebarangkalian naik {pm.get('bullish_prob_pct')} peratus."
+        f"Bos, {active.get('symbol')} pada rangka masa {active.get('timeframe')} kini berada pada {q.get('price')}. "
+        f"Isyarat semasa ialah {s.get('direction')} dengan keyakinan {s.get('confidence')} peratus dalam fasa {s.get('regime')}, "
+        f"R S I {ind.get('rsi14')}, dan kebarangkalian naik {pm.get('bullish_prob_pct')} peratus."
     )
 
 
@@ -227,27 +202,36 @@ async def generate_jarvis_response(
     action_note: Optional[str] = None,
 ) -> Tuple[str, Optional[str]]:
     """
-    Generates conversational Malay JARVIS reply + base64 MP3 neural voice audio.
+    Generates open-domain conversational Malay JARVIS reply + base64 MP3 neural voice audio.
     """
     settings = get_settings()
-    sys_prompt = _build_system_prompt(live_context, action_note)
+    is_market = _is_trading_or_account_query(user_message) or bool(action_note)
+    sys_prompt = _build_compact_system_prompt(live_context, is_market, action_note)
     reply_text: Optional[str] = None
 
-    trimmed_hist = [
-        {"role": m.get("role", "user"), "content": str(m.get("content", ""))[:400]}
-        for m in (history or [])[-6:]
-        if m.get("content")
-    ]
+    # Build recent conversational context snippet for multi-turn continuity
+    recent_turns = []
+    for m in (history or [])[-4:]:
+        role_lbl = "Bos" if m.get("role") == "user" else "JARVIS"
+        content_str = str(m.get("content", "")).strip()[:180]
+        if content_str:
+            recent_turns.append(f"{role_lbl}: {content_str}")
 
-    # Tier 1: Official Gemini API if key configured
+    full_user_prompt = (
+        ("\n".join(recent_turns) + f"\nBos: {user_message}\nJARVIS:")
+        if recent_turns
+        else user_message
+    )
+
+    # Tier 1: Official Gemini API if configured in .env
     if settings.gemini_api_key:
         try:
-            async with httpx.AsyncClient(timeout=7.0) as client:
+            async with httpx.AsyncClient(timeout=8.0) as client:
                 r = await client.post(
                     f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={settings.gemini_api_key}",
                     json={
                         "systemInstruction": {"parts": [{"text": sys_prompt}]},
-                        "contents": [{"role": "user", "parts": [{"text": user_message}]}],
+                        "contents": [{"role": "user", "parts": [{"text": full_user_prompt}]}],
                     },
                 )
                 if r.status_code == 200:
@@ -259,38 +243,25 @@ async def generate_jarvis_response(
         except Exception:
             pass
 
-    # Tier 2: Zero-key Free Cloud LLM (Pollinations root endpoint) -> answers ANY open-ended question!
+    # Tier 2: Working Free Generative LLM GET endpoint (answers ANY general or market question!)
     if not reply_text:
-        messages = [{"role": "system", "content": sys_prompt}] + trimmed_hist + [
-            {"role": "user", "content": user_message}
-        ]
+        encoded_q = urllib.parse.quote(full_user_prompt)
+        encoded_sys = urllib.parse.quote(sys_prompt)
+        seed = random.randint(1000, 999999)
+        url = f"https://text.pollinations.ai/{encoded_q}?model=openai&system={encoded_sys}&seed={seed}"
         try:
-            async with httpx.AsyncClient(timeout=6.0, follow_redirects=True) as client:
-                r = await client.post(
-                    "https://text.pollinations.ai/",
-                    json={
-                        "messages": messages,
-                        "model": "openai",
-                        "private": True,
-                    },
-                )
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
                 if r.status_code == 200:
-                    raw_txt = r.text.strip()
-                    if raw_txt.startswith("{"):
-                        import json as _json
-                        parsed = _json.loads(raw_txt)
-                        raw_txt = (
-                            parsed.get("choices", [{}])[0]
-                            .get("message", {})
-                            .get("content", "")
-                            .strip()
-                        )
-                    if raw_txt and len(raw_txt) > 5 and "<html" not in raw_txt.lower():
-                        reply_text = raw_txt
+                    txt = r.text.strip()
+                    if txt and len(txt) > 2 and "<html" not in txt.lower():
+                        # Strip accidental leading "JARVIS:" prefix if model echoed it
+                        txt = re.sub(r"^JARVIS\s*:\s*", "", txt, flags=re.IGNORECASE).strip()
+                        reply_text = txt
         except Exception:
             pass
 
-    # Tier 3: Guaranteed instant local Quant Brain fallback
+    # Tier 3: Local fallback
     if not reply_text:
         reply_text = _local_fallback_jarvis_reply(user_message, live_context, action_note)
 
