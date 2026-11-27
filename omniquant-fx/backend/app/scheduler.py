@@ -24,24 +24,84 @@ CRON_TELEMETRY: Dict[str, object] = {
 AUTO_DISPATCH_STATE: Dict[str, object] = {
     "enabled": True,
     "min_confidence": 75.0,
-    "cooldown_seconds": 720.0,  # 12 minutes per symbol anti-spam guard
-    "active_signals": {},       # clean_sym -> active Amaterasu signal payload
-    "last_fired_epoch": {},     # clean_sym -> epoch timestamp
+    "cooldown_seconds": 480.0,         # 8 minutes per symbol after confirmed MT5 execution
+    "unexecuted_retry_seconds": 60.0,  # Re-emit after 60s if no bridge executed yet
+    "active_signals": {},              # clean_sym -> active Amaterasu signal payload
+    "last_fired_epoch": {},            # clean_sym -> epoch timestamp
+    "executed_epochs": {},             # clean_sym -> last confirmed MT5 execution epoch
     "history": deque(maxlen=25),
+    "execution_acks": deque(maxlen=30),
 }
 
 _scheduler: BackgroundScheduler | None = None
 
 
-def get_active_auto_signals() -> List[Dict]:
+def get_active_auto_signals(login: str = "") -> List[Dict]:
     if not AUTO_DISPATCH_STATE.get("enabled", True):
         return []
     now_ep = time.time()
     active_map: Dict[str, Dict] = AUTO_DISPATCH_STATE["active_signals"]  # type: ignore
-    return [
-        sig for sig in active_map.values()
-        if float(sig.get("expires_epoch", 0)) > now_ep
-    ]
+    results: List[Dict] = []
+    for sig in active_map.values():
+        if float(sig.get("expires_epoch", 0)) <= now_ep:
+            continue
+        exec_by = sig.get("executed_by") or {}
+        if login and str(login) in exec_by:
+            continue
+        results.append(sig)
+    return results
+
+
+def ack_auto_signal(
+    sig_id: str,
+    login: str,
+    status: str,
+    symbol: str = "",
+    ticket: int = 0,
+    price: float = 0.0,
+    volume: float = 0.0,
+    reason: str = "",
+) -> Dict:
+    now_ep = time.time()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    clean_sym = symbol.replace("/", "").split(".")[0].upper()
+    ack_entry = {
+        "signal_id": sig_id,
+        "login": str(login),
+        "symbol": clean_sym,
+        "status": status.upper(),
+        "ticket": int(ticket or 0),
+        "price": float(price or 0.0),
+        "volume": float(volume or 0.0),
+        "reason": reason,
+        "timestamp": now_iso,
+        "epoch": now_ep,
+    }
+    acks_dq: Deque[Dict] = AUTO_DISPATCH_STATE["execution_acks"]  # type: ignore
+    acks_dq.appendleft(ack_entry)
+
+    active_map: Dict[str, Dict] = AUTO_DISPATCH_STATE["active_signals"]  # type: ignore
+    for sym_k, s_obj in active_map.items():
+        if s_obj.get("id") == sig_id:
+            clean_sym = sym_k
+            exec_by = s_obj.setdefault("executed_by", {})
+            if status.upper() == "EXECUTED":
+                exec_by[str(login)] = {
+                    "ticket": int(ticket or 0),
+                    "price": float(price or 0.0),
+                    "volume": float(volume or 0.0),
+                    "timestamp": now_iso,
+                }
+                s_obj["mt5_status"] = f"EXECUTED #{ticket}"
+            else:
+                s_obj["last_reject_reason"] = reason
+                s_obj["mt5_status"] = f"REJECTED: {reason[:48]}"
+
+    if status.upper() == "EXECUTED" and clean_sym:
+        exec_epochs: Dict[str, float] = AUTO_DISPATCH_STATE["executed_epochs"]  # type: ignore
+        exec_epochs[clean_sym] = now_ep
+
+    return {"ok": True, "ack": ack_entry}
 
 
 def toggle_auto_dispatch(enabled: bool | None = None) -> Dict:
@@ -54,6 +114,7 @@ def toggle_auto_dispatch(enabled: bool | None = None) -> Dict:
         "enabled": new_val,
         "min_confidence": AUTO_DISPATCH_STATE["min_confidence"],
         "history": list(AUTO_DISPATCH_STATE["history"])[:8],  # type: ignore
+        "execution_acks": list(AUTO_DISPATCH_STATE["execution_acks"])[:8],  # type: ignore
     }
 
 
@@ -157,8 +218,21 @@ def sync_all_pairs_and_signals(timeframe: str = "M5") -> Dict[str, object]:
             ):
                 clean_sym = symbol.replace("/", "")
                 last_map: Dict[str, float] = AUTO_DISPATCH_STATE["last_fired_epoch"]  # type: ignore
-                cooldown = float(AUTO_DISPATCH_STATE.get("cooldown_seconds", 720.0))
-                if (now_ep - last_map.get(clean_sym, 0.0)) >= cooldown:
+                exec_epochs: Dict[str, float] = AUTO_DISPATCH_STATE["executed_epochs"]  # type: ignore
+                active_map: Dict[str, Dict] = AUTO_DISPATCH_STATE["active_signals"]  # type: ignore
+                cooldown = float(AUTO_DISPATCH_STATE.get("cooldown_seconds", 480.0))
+                retry_sec = float(AUTO_DISPATCH_STATE.get("unexecuted_retry_seconds", 60.0))
+
+                last_exec_ep = exec_epochs.get(clean_sym, 0.0)
+                last_fire_ep = last_map.get(clean_sym, 0.0)
+                cur_active = active_map.get(clean_sym)
+                already_exec = bool(cur_active and cur_active.get("executed_by"))
+
+                # Enforce 8m anti-spam cooldown AFTER MT5 execution; otherwise re-emit every 60s so bridges never miss!
+                effective_wait = cooldown if (already_exec or (now_ep - last_exec_ep) < cooldown) else retry_sec
+                ref_epoch = max(last_exec_ep, last_fire_ep) if effective_wait == cooldown else last_fire_ep
+
+                if (now_ep - ref_epoch) >= effective_wait:
                     sig_id = f"OMNI-{clean_sym}-{timeframe}-{int(now_ep)}"
                     dispatch_payload = {
                         "id": sig_id,
@@ -178,9 +252,10 @@ def sync_all_pairs_and_signals(timeframe: str = "M5") -> Dict[str, object]:
                         "notes": f"OMNIQUANT {timeframe} Scalp ({sig['confidence']}%)",
                         "created_at": now_utc.isoformat(),
                         "created_epoch": now_ep,
-                        "expires_epoch": now_ep + 240.0,  # Valid for 4 minutes so stale signals never execute
+                        "expires_epoch": now_ep + 180.0,  # Valid for 3 minutes
+                        "executed_by": {},
+                        "mt5_status": "DISPATCHED",
                     }
-                    active_map: Dict[str, Dict] = AUTO_DISPATCH_STATE["active_signals"]  # type: ignore
                     hist_dq: Deque[Dict] = AUTO_DISPATCH_STATE["history"]  # type: ignore
                     active_map[clean_sym] = dispatch_payload
                     last_map[clean_sym] = now_ep

@@ -28,6 +28,7 @@ from app.quant.engine import analyze_pair
 from app.scheduler import (
     AUTO_DISPATCH_STATE,
     CRON_TELEMETRY,
+    ack_auto_signal,
     get_active_auto_signals,
     get_recent_persisted_signals,
     start_background_cron,
@@ -410,15 +411,41 @@ def get_omniquant_auto_signals(login: str = Query("", description="MT5 Account L
             "minConfidence": float(AUTO_DISPATCH_STATE.get("min_confidence", 75.0)),
             "activeSignals": [],
             "history": [],
+            "executionAcks": list(AUTO_DISPATCH_STATE.get("execution_acks", []))[:10],  # type: ignore
         }
 
     return {
         "enabled": bool(AUTO_DISPATCH_STATE.get("enabled", True)),
         "accountPaused": False,
         "minConfidence": float(AUTO_DISPATCH_STATE.get("min_confidence", 75.0)),
-        "activeSignals": get_active_auto_signals(),
+        "activeSignals": get_active_auto_signals(login),
         "history": list(AUTO_DISPATCH_STATE.get("history", []))[:10],  # type: ignore
+        "executionAcks": list(AUTO_DISPATCH_STATE.get("execution_acks", []))[:10],  # type: ignore
     }
+
+
+@app.post("/api/v1/auto-signals/ack")
+async def acknowledge_omniquant_auto_signal(request: Request):
+    """
+    Receives execution confirmation or rejection telemetry from Amaterasu X MT5 Bridges.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return {"ok": False}
+
+    res = ack_auto_signal(
+        sig_id=str(body.get("signal_id", "")),
+        login=str(body.get("login", "")),
+        status=str(body.get("status", "UNKNOWN")),
+        symbol=str(body.get("symbol", "")),
+        ticket=int(body.get("ticket", 0) or 0),
+        price=float(body.get("price", 0.0) or 0.0),
+        volume=float(body.get("volume", 0.0) or 0.0),
+        reason=str(body.get("reason", "")),
+    )
+    DASHBOARD_RAM_CACHE.clear()
+    return res
 
 
 @app.post("/api/v1/auto-trade/toggle")
@@ -563,6 +590,7 @@ def get_dashboard_payload(
             "min_confidence": float(AUTO_DISPATCH_STATE.get("min_confidence", 75.0)),
             "active_count": len(get_active_auto_signals()),
             "history": list(AUTO_DISPATCH_STATE.get("history", []))[:6],  # type: ignore
+            "execution_acks": list(AUTO_DISPATCH_STATE.get("execution_acks", []))[:6],  # type: ignore
         }
         return payload
 
@@ -708,6 +736,7 @@ def get_dashboard_payload(
             "min_confidence": float(AUTO_DISPATCH_STATE.get("min_confidence", 75.0)),
             "active_count": len(get_active_auto_signals()),
             "history": list(AUTO_DISPATCH_STATE.get("history", []))[:6],  # type: ignore
+            "execution_acks": list(AUTO_DISPATCH_STATE.get("execution_acks", []))[:6],  # type: ignore
         },
         "gatekeeper_logs": list(GATEKEEPER_AUDIT_LOG)[:8],
         "economic_calendar": {

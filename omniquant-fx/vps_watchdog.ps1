@@ -87,5 +87,31 @@ while ($true) {
         }
     }
 
+    # 4. Auto-Heal MT5 Bridges (Master 1 & Master 5) if stopped
+    $pyWin = $null
+    foreach ($pc in @(
+        "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\pythonw.exe",
+        "C:\Users\US\AppData\Local\Programs\Python\Python311\pythonw.exe",
+        "C:\Program Files\Python311\pythonw.exe"
+    )) {
+        if (Test-Path $pc) { $pyWin = $pc; break }
+    }
+    if ($pyWin) {
+        $allBridges = Get-WmiObject Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match "amaterasu_mt5_bridge\.py" }
+        foreach ($bDir in @("C:\AmaterasuX", "C:\AmaterasuX_Acc5")) {
+            $bScript = Join-Path $bDir "amaterasu_mt5_bridge.py"
+            if (Test-Path $bScript) {
+                $isUp = $false
+                foreach ($bp in $allBridges) {
+                    $exeCmd = [string]$bp.CommandLine
+                    if ($exeCmd -like "*$bDir*") { $isUp = $true; break }
+                }
+                if (-not $isUp) {
+                    Start-Process -FilePath $pyWin -ArgumentList "`"$bScript`"" -WorkingDirectory $bDir -WindowStyle Hidden
+                }
+            }
+        }
+    }
+
     Start-Sleep -Seconds 15
 }

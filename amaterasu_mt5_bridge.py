@@ -800,40 +800,49 @@ class AmaterasuBridge:
     def execute_order(self, signal, tp_target=1):
         symbol_raw = signal.get("symbol", "XAUUSD")
         symbol = self.resolve_symbol(symbol_raw)
+        is_omni_scalp = str(signal.get("id", "")).startswith("OMNI-")
+        self.last_order_reject_reason = ""
         
         # 0. WHITELIST GUARD: Hanya Pair Pilihan Bos (XAUUSD, USDCHF, EURUSD)
         allowed_pairs = self.config.get("allowed_pairs", ["XAUUSD", "USDCHF", "EURUSD"])
         clean_raw_sym = symbol_raw.split('.')[0].upper()
         if allowed_pairs and clean_raw_sym not in [p.upper() for p in allowed_pairs]:
+            self.last_order_reject_reason = f"PAIR_NOT_WHITELISTED:{clean_raw_sym}"
             print(f"{Colors.YELLOW}🛡️ [PAIR DITAPIS] Simbol #{clean_raw_sym} ditolak. Hanya {', '.join(allowed_pairs)} dibenarkan mengikut arahan bos.{Colors.RESET}")
             return None
 
-        # 0.0 ARAHAN MUTLAK BOS: DILARANG SAMA SEKALI MASUK ORDER SELAGI TIADA ARAHAN!
+        # 0.0 ARAHAN MUTLAK BOS: SUIS PER-AKAUN (Akaun 1 OFF, Akaun 5 ON)
         acc_chk = mt5.account_info()
         cur_login_str = str(acc_chk.login) if acc_chk else str(self.config.get("mt5_login", ""))
         def_acc_on = False if cur_login_str == "5100221532" else True
         if not getattr(self, "account_trading_enabled", def_acc_on):
+            self.last_order_reject_reason = f"ACCOUNT_OFF:{cur_login_str}"
             print(f"{Colors.RED}{Colors.BOLD}🛑 [AKAUN OFF - ARAHAN BOS] Akaun #{cur_login_str} sedang OFF! Order #{clean_raw_sym} ditahan sehingga arahan baharu.{Colors.RESET}")
             return None
-        pause_flags = [
-            os.path.join(BASE_DIR, "pause_trading.flag"),
-            r"C:\AmaterasuX\pause_trading.flag",
-            r"C:\AmaterasuX_Acc2\pause_trading.flag",
-            r"C:\AmaterasuX_Acc3\pause_trading.flag"
-        ]
-        if any(os.path.exists(p) for p in pause_flags):
-            print(f"{Colors.RED}{Colors.BOLD}🛑 [ARAHAN BOS AKTIF] Order #{clean_raw_sym} DISEKAT 100%! Sistem dikunci: Dilarang masuk order selagi tiada arahan Tengku Khairi!{Colors.RESET}")
+        local_pause_flag = os.path.join(BASE_DIR, "pause_trading.flag")
+        if (not is_omni_scalp) and os.path.exists(local_pause_flag):
+            self.last_order_reject_reason = "LOCAL_PAUSE_FLAG"
+            print(f"{Colors.RED}{Colors.BOLD}🛑 [ARAHAN BOS AKTIF] Order #{clean_raw_sym} DISEKAT 100%! Fail pause_trading.flag aktif bagi folder akaun ini.{Colors.RESET}")
             return None
 
-        # 0.1 CIRCUIT BREAKER: SASARAN KEUNTUNGAN AKAUN (+2,500 USC / +$25.00 USD)
+        # 0.1 CIRCUIT BREAKER: SASARAN KEUNTUNGAN AKAUN (+25% Sehari)
         if self.check_account_profit_target():
+            self.last_order_reject_reason = "DAILY_PROFIT_TARGET_REACHED"
             return None
 
-        # 0.2 ARAHAN TEGAS BOS: HARAMKAN TRADE PADA WAKTU BAHAYA MANIPULASI
-        is_dangerous, danger_reason = self.is_dangerous_market_hour()
-        if is_dangerous:
-            print(f"{Colors.YELLOW}🛑 [WAKTU BAHAYA DIHARAMKAN] Order #{clean_raw_sym} disekat: {danger_reason}{Colors.RESET}")
-            return None
+        # 0.2 WAKTU PASARAN: Bagi OMNIQUANT Scalp, hanya sekat jika pasaran Forex benar-benar tutup hujung minggu
+        if is_omni_scalp:
+            now_myt_chk = datetime.now(timezone(timedelta(hours=8)))
+            wk = now_myt_chk.weekday()
+            if (wk == 5 and now_myt_chk.hour >= 6) or wk == 6:
+                self.last_order_reject_reason = "WEEKEND_MARKET_CLOSED"
+                return None
+        else:
+            is_dangerous, danger_reason = self.is_dangerous_market_hour()
+            if is_dangerous:
+                self.last_order_reject_reason = f"DANGER_HOUR:{danger_reason[:36]}"
+                print(f"{Colors.YELLOW}🛑 [WAKTU BAHAYA DIHARAMKAN] Order #{clean_raw_sym} disekat: {danger_reason}{Colors.RESET}")
+                return None
         
         # Pastikan simbol aktif dalam MarketWatch
         mt5.symbol_select(symbol, True)
@@ -899,24 +908,32 @@ class AmaterasuBridge:
         tot_vol = sum(p.volume for p in all_pos_raw)
         is_acc5 = (str(getattr(self, "login", "")) == "5100242908")
         is_dragon = (str(getattr(self, "login", "")) == "5100221532")
-        default_max_lots = 1.00 if is_acc5 else (2.50 if is_dragon else (1.50 if getattr(self, "is_cent_account", True) else 0.30))
+        default_max_lots = 1.50 if is_acc5 else (2.50 if is_dragon else (1.50 if getattr(self, "is_cent_account", True) else 0.30))
         max_tot_vol = float(self.config.get("max_account_lots", default_max_lots))
-        default_max_pos = 12 if (is_acc5 or is_dragon) else 8
+        if is_acc5:
+            max_tot_vol = max(max_tot_vol, 1.50)
+        default_max_pos = 24 if (is_acc5 or is_dragon) else 8
         max_total_pos = int(self.config.get("max_account_positions", default_max_pos))
+        if is_acc5:
+            max_total_pos = max(max_total_pos, 24)
         if tot_vol >= max_tot_vol or len(all_pos_raw) >= max_total_pos:
+            self.last_order_reject_reason = f"MAX_EXPOSURE:{tot_vol:.2f}lot/{len(all_pos_raw)}pos"
             print(f"{Colors.RED}🛑 [MAX EXPOSURE GUARD] Jumlah lot akaun ({tot_vol:.2f} >= {max_tot_vol}) atau posisi ({len(all_pos_raw)} >= {max_total_pos}) telah mencapai had maksimum keselamatan akaun (Max {max_total_pos})! Menolak order baharu.{Colors.RESET}")
             return None
 
         # STRICT 1-SETUP PER SYMBOL:
         # 👑 KEDAULATAN MANUAL TENGKU KHAIRI: Hanya mengira posisi milik Bot AmaterasuX! Posisi manual tidak dihadkan.
-        # Mandat Tengku Khairi untuk Akaun 5 (#5100242908) & DRAGON (#5100221532): Had maksimum 10 order untuk XAUUSD!
-        default_gold_max = 10 if (is_acc5 or is_dragon) else 4
-        max_allowed_layers = int(self.config.get("max_gold_positions", default_gold_max)) if clean_raw_sym == "XAUUSD" else int(self.config.get("max_symbol_positions", 2))
+        default_gold_max = 16 if (is_acc5 or is_dragon) else 4
+        cfg_gold_max = int(self.config.get("max_gold_positions", default_gold_max))
+        if is_acc5:
+            cfg_gold_max = max(cfg_gold_max, 16)
+        max_allowed_layers = cfg_gold_max if clean_raw_sym == "XAUUSD" else int(self.config.get("max_symbol_positions", 4))
         existing_symbol_orders = [
             p for p in (mt5.positions_get() or [])
             if p.symbol.split('.')[0].upper() == clean_raw_sym and (p.magic == self.magic_number or (p.comment and p.comment.startswith(("AmaterasuX", "CoachAzwanDollarMaker"))))
         ]
         if len(existing_symbol_orders) >= max_allowed_layers:
+            self.last_order_reject_reason = f"SYMBOL_LAYER_LIMIT:{clean_raw_sym}={len(existing_symbol_orders)}"
             print(f"{Colors.YELLOW}🛡️ [SOP LAYER LIMIT] Simbol #{clean_raw_sym} sudah mempunyai {len(existing_symbol_orders)} posisi aktif bot (Maksimum {max_allowed_layers}). Menolak sebarang order tambahan bagi menjaga modal.{Colors.RESET}")
             return None
 
@@ -934,13 +951,14 @@ class AmaterasuBridge:
             )
             if is_opposing:
                 # Jika isyarat disahkan sebagai pusingan arah (Reversal / SAR)
-                is_reversal = (sig.get("reversal") is True or sig.get("flip") is True)
+                is_reversal = (signal.get("reversal") is True or signal.get("flip") is True)
                 if is_reversal:
                     print(f"{Colors.GREEN}🔄 [STOP-AND-REVERSE] Pasaran memecahkan struktur! Menutup posisi lama bot yang bertentangan dan memutar arah ke {order_type_str}!{Colors.RESET}")
                     for ep in all_sym_pos:
                         self.close_position_market(ep, "SAR-Reversal")
                     time.sleep(1)
                 else:
+                    self.last_order_reject_reason = f"ANTI_HEDGE_OPPOSING:{clean_raw_sym}"
                     print(f"{Colors.YELLOW}[ANTI-HEDGE] Menolak order {order_type_str} #{symbol} kerana sudah ada posisi bot bertentangan aktif di MT5. Menunggu pengesahan Reversal.{Colors.RESET}")
                     return None
 
@@ -1042,45 +1060,74 @@ class AmaterasuBridge:
                 sl_dist = min(max(abs(raw_sl - signal_entry), 0.0028 if not is_jpy else 0.28), 0.0032 if not is_jpy else 0.32) if raw_sl > 0 else (0.0028 if not is_jpy else 0.28)
 
         # PURE MARKET-STRUCTURE SL & TP BASED ON LIQUIDITY SWEEP (ARAHAN KHAS BOS):
-        # SL diletakkan selamat di luar jarum bucu liquidity sweep pasaran sebenar
-        rates_m15 = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M15, 0, 16)
-        if rates_m15 is not None and len(rates_m15) >= 4 and clean_raw_sym == "XAUUSD":
-            recent_high = max(float(r['high']) for r in rates_m15)
-            recent_low = min(float(r['low']) for r in rates_m15)
-            buffer = 2.0  # $2.00 (20 pips) penampan selamat melepasi puncak jarum sweep
+        broker_stops_pts = int(getattr(sym_info, "trade_stops_level", 0) or 0)
+        min_broker_dist = max((broker_stops_pts + 6) * point, abs(tick.ask - tick.bid) * 1.6)
 
-            if not is_buy: # SELL
-                # Letak SL tepat di atas jarum bucu liquidity sweep tertinggi
-                sl = round(max(recent_high + buffer, price + 5.5), digits)
-                # TP1 disasarkan ke arah lantai kecairan pembeli
-                tp = round(max(recent_low + 1.0, price - tp_dist), digits)
-            else: # BUY
-                # Letak SL tepat di bawah jarum bucu liquidity sweep terendah
-                sl = round(min(recent_low - buffer, price - 5.5), digits)
-                # TP1 disasarkan ke arah bumbung kecairan penjual
-                tp = round(min(recent_high - 1.0, price + tp_dist), digits)
+        if is_omni_scalp:
+            # Sasaran tepat M5 Scalp dari OMNIQUANT FX (1.5x ATR SL, 2.2x ATR TP2) dilaraskan pada harga tick broker semasa
+            raw_tp_d = abs(raw_tp - signal_entry) if raw_tp > 0 else 0.0
+            raw_sl_d = abs(raw_sl - signal_entry) if raw_sl > 0 else 0.0
+            if clean_raw_sym == "XAUUSD":
+                sl_dist = min(max(raw_sl_d if raw_sl_d > 0 else 4.5, max(3.5, min_broker_dist)), 10.5)
+                tp_dist = max(raw_tp_d if raw_tp_d > 0 else 4.5, max(2.8, min_broker_dist))
+            else:
+                is_jpy = "JPY" in clean_raw_sym
+                floor_sl = 0.15 if is_jpy else 0.0015
+                ceil_sl = 0.35 if is_jpy else 0.0035
+                floor_tp = 0.12 if is_jpy else 0.0012
+                sl_dist = min(max(raw_sl_d if raw_sl_d > 0 else floor_sl, max(floor_sl, min_broker_dist)), ceil_sl)
+                tp_dist = max(raw_tp_d if raw_tp_d > 0 else floor_tp, max(floor_tp, min_broker_dist))
 
-            print(f"{Colors.GREEN}🏛️ [MARKET STRUCTURE SL/TP] #{clean_raw_sym} {'SELL' if not is_buy else 'BUY'} @ {price:.2f} | SL Berasaskan Struktur: {sl:.2f} (Di luar bucu sweep) | Sasaran TP: {tp:.2f}{Colors.RESET}")
-        else:
             if is_buy:
                 tp = round(price + tp_dist, digits)
                 sl = round(price - sl_dist, digits)
             else:
                 tp = round(price - tp_dist, digits)
                 sl = round(price + sl_dist, digits)
+            print(f"{Colors.GREEN}⚡ [OMNIQUANT SCALP SL/TP] #{clean_raw_sym} {'BUY' if is_buy else 'SELL'} @ {price:.{digits}f} | SL: {sl:.{digits}f} | TP: {tp:.{digits}f}{Colors.RESET}")
+        else:
+            rates_m15 = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M15, 0, 16)
+            if rates_m15 is not None and len(rates_m15) >= 4 and clean_raw_sym == "XAUUSD":
+                recent_high = max(float(r['high']) for r in rates_m15)
+                recent_low = min(float(r['low']) for r in rates_m15)
+                buffer = 2.0  # $2.00 (20 pips) penampan selamat melepasi puncak jarum sweep
+
+                if not is_buy: # SELL
+                    sl = round(max(recent_high + buffer, price + 5.5), digits)
+                    cand_tp = max(recent_low + 1.0, price - tp_dist)
+                    if cand_tp >= (price - max(2.5, min_broker_dist)):
+                        cand_tp = price - max(tp_dist, 3.5, min_broker_dist)
+                    tp = round(cand_tp, digits)
+                else: # BUY
+                    sl = round(min(recent_low - buffer, price - 5.5), digits)
+                    cand_tp = min(recent_high - 1.0, price + tp_dist)
+                    if cand_tp <= (price + max(2.5, min_broker_dist)):
+                        cand_tp = price + max(tp_dist, 3.5, min_broker_dist)
+                    tp = round(cand_tp, digits)
+
+                print(f"{Colors.GREEN}🏛️ [MARKET STRUCTURE SL/TP] #{clean_raw_sym} {'SELL' if not is_buy else 'BUY'} @ {price:.2f} | SL Berasaskan Struktur: {sl:.2f} (Di luar bucu sweep) | Sasaran TP: {tp:.2f}{Colors.RESET}")
+            else:
+                if is_buy:
+                    tp = round(price + max(tp_dist, min_broker_dist), digits)
+                    sl = round(price - max(sl_dist, min_broker_dist), digits)
+                else:
+                    tp = round(price - max(tp_dist, min_broker_dist), digits)
+                    sl = round(price + max(sl_dist, min_broker_dist), digits)
 
         # STRICT ANTI-CHASING PUCUK/LANTAI GUARD:
-        # Penampan fleksibel: Emas ($4,040+) diberi ruang 120 pip ($12.00) waktu lonjakan pasaran
+        # Bagi OMNIQUANT Scalp, SL & TP dikira relatif kepada tick semasa broker (mengelak ralat perbezaan suapan broker)
         is_test_signal = bool(signal.get("isTest"))
         allowed_slip_pips = 120.0 if clean_raw_sym == "XAUUSD" else max(float(self.max_slippage_pips), 30.0)
         max_slip_dist = (allowed_slip_pips * 10 * point)
-        if not is_test_signal:
+        if (not is_test_signal) and (not is_omni_scalp):
             if is_buy and price > (signal_entry + max_slip_dist):
                 slip_pips = (price - signal_entry) / (10 * point)
+                self.last_order_reject_reason = f"ANTI_PUCUK:+{slip_pips:.1f}p"
                 print(f"{Colors.RED}🛑 [ANTI-PUCUK DITOLAK] Order BUY #{clean_raw_sym} disekat! Harga semasa ({price:.{digits}f}) telah melambung +{slip_pips:.1f} pips melepasi Entry Signal ({signal_entry:.{digits}f}). Dilarang beli di pucuk!{Colors.RESET}")
                 return None
             elif not is_buy and price < (signal_entry - max_slip_dist):
                 slip_pips = (signal_entry - price) / (10 * point)
+                self.last_order_reject_reason = f"ANTI_LANTAI:-{slip_pips:.1f}p"
                 print(f"{Colors.RED}🛑 [ANTI-LANTAI DITOLAK] Order SELL #{clean_raw_sym} disekat! Harga semasa ({price:.{digits}f}) telah menjunam -{slip_pips:.1f} pips di bawah Entry Signal ({signal_entry:.{digits}f}). Dilarang sell di lantai!{Colors.RESET}")
                 return None
 
@@ -1191,6 +1238,7 @@ class AmaterasuBridge:
         if not result or result.retcode != mt5.TRADE_RETCODE_DONE:
             err_code = result.retcode if result else mt5.last_error()
             err_comment = result.comment if result else ""
+            self.last_order_reject_reason = f"MT5_RET_{err_code}:{err_comment}"
             if err_code == 10018: # Market closed
                 now_t = time.time()
                 if (now_t - getattr(self, "last_market_closed_log", 0)) > 60:
@@ -1207,10 +1255,36 @@ class AmaterasuBridge:
             "symbol": symbol,
             "tp_level": tp_target,
             "entry_price": result.price,
+            "volume": result.volume,
             "sl": sl,
             "tp": tp,
             "signal_id": signal.get("id")
         }
+
+    def report_omniquant_ack(self, sig_id, status, symbol="", ticket=0, price=0.0, volume=0.0, reason=""):
+        """Hantar pengesahan eksekusi atau sebab penolakan MT5 terus ke pelayan OMNIQUANT FX (:8005)."""
+        if not str(sig_id or "").startswith("OMNI-"):
+            return
+        try:
+            omni_url = str(self.config.get("omniquant_url", "http://127.0.0.1:8005")).rstrip("/")
+            acc_chk = mt5.account_info()
+            my_login = str(acc_chk.login) if acc_chk else str(self.config.get("mt5_login", ""))
+            requests.post(
+                f"{omni_url}/api/v1/auto-signals/ack",
+                json={
+                    "signal_id": sig_id,
+                    "login": my_login,
+                    "symbol": symbol,
+                    "status": status,
+                    "ticket": int(ticket or 0),
+                    "price": float(price or 0.0),
+                    "volume": float(volume or 0.0),
+                    "reason": str(reason or ""),
+                },
+                timeout=2.5,
+            )
+        except Exception:
+            pass
 
     def verify_omniquant_gatekeeper(self, sig, clean_sym):
         """
@@ -1312,45 +1386,56 @@ class AmaterasuBridge:
         if allowed_pairs and clean_sym not in [p.upper() for p in allowed_pairs]:
             return
 
-        # 0.0 ARAHAN MUTLAK BOS: DILARANG SAMA SEKALI MASUK ORDER SELAGI TIADA ARAHAN!
+        is_omni_scalp = str(sig_id).startswith("OMNI-")
+
+        # 0.0 ARAHAN MUTLAK BOS: SUIS PER-AKAUN (Akaun 1 OFF, Akaun 5 ON)
         acc_chk = mt5.account_info()
         cur_login_str = str(acc_chk.login) if acc_chk else str(self.config.get("mt5_login", ""))
         def_acc_on = False if cur_login_str == "5100221532" else True
         if not getattr(self, "account_trading_enabled", def_acc_on):
-            print(f"{Colors.RED}{Colors.BOLD}🛑 [AKAUN OFF - ARAHAN BOS] Akaun #{cur_login_str} sedang OFF! Order #{clean_raw_sym} ditahan sehingga arahan baharu.{Colors.RESET}")
+            print(f"{Colors.RED}{Colors.BOLD}🛑 [AKAUN OFF - ARAHAN BOS] Akaun #{cur_login_str} sedang OFF! Order #{clean_sym} ditahan sehingga arahan baharu.{Colors.RESET}")
             return None
-        pause_flags = [
-            os.path.join(BASE_DIR, "pause_trading.flag"),
-            r"C:\AmaterasuX\pause_trading.flag",
-            r"C:\AmaterasuX_Acc2\pause_trading.flag",
-            r"C:\AmaterasuX_Acc3\pause_trading.flag"
-        ]
-        if any(os.path.exists(p) for p in pause_flags):
+        local_pause_flag = os.path.join(BASE_DIR, "pause_trading.flag")
+        if (not is_omni_scalp) and os.path.exists(local_pause_flag):
             now_t = time.time()
             if (now_t - getattr(self, "last_boss_pause_log", 0)) > 60:
                 self.last_boss_pause_log = now_t
-                print(f"{Colors.RED}{Colors.BOLD}🛑 [ARAHAN BOS AKTIF] Signal #{clean_sym} DITOLAK! Sistem dikunci ketat: Dilarang buka sebarang order selagi tiada arahan Tengku Khairi!{Colors.RESET}")
+                print(f"{Colors.RED}{Colors.BOLD}🛑 [ARAHAN BOS AKTIF] Signal #{clean_sym} DITOLAK! Fail pause_trading.flag aktif bagi folder akaun ini.{Colors.RESET}")
             return
 
-        # CIRCUIT BREAKER: SASARAN KEUNTUNGAN AKAUN (+2,500 USC / +$25.00 USD)
+        # CIRCUIT BREAKER: SASARAN KEUNTUNGAN AKAUN (+25% Sehari)
         if self.check_account_profit_target():
+            self.report_omniquant_ack(sig_id, "REJECTED", symbol=clean_sym, reason="DAILY_PROFIT_TARGET_REACHED")
             return
 
-        # ARAHAN TEGAS BOS: HARAMKAN TRADE PADA WAKTU BAHAYA MANIPULASI
-        is_dangerous, danger_reason = self.is_dangerous_market_hour()
-        if is_dangerous:
-            now_t = time.time()
-            if (now_t - getattr(self, "last_danger_log_time", 0)) > 60:
-                self.last_danger_log_time = now_t
-                print(f"{Colors.YELLOW}🛑 [WAKTU BAHAYA DIHARAMKAN] Signal #{clean_sym} ditolak: {danger_reason}{Colors.RESET}")
-            return
+        # WAKTU PASARAN: Bagi OMNIQUANT Scalp, hanya sekat jika pasaran Forex benar-benar tutup hujung minggu
+        if is_omni_scalp:
+            now_myt_chk = datetime.now(timezone(timedelta(hours=8)))
+            wk = now_myt_chk.weekday()
+            if (wk == 5 and now_myt_chk.hour >= 6) or wk == 6:
+                self.report_omniquant_ack(sig_id, "REJECTED", symbol=clean_sym, reason="WEEKEND_MARKET_CLOSED")
+                return
+        else:
+            is_dangerous, danger_reason = self.is_dangerous_market_hour()
+            if is_dangerous:
+                now_t = time.time()
+                if (now_t - getattr(self, "last_danger_log_time", 0)) > 60:
+                    self.last_danger_log_time = now_t
+                    print(f"{Colors.YELLOW}🛑 [WAKTU BAHAYA DIHARAMKAN] Signal #{clean_sym} ditolak: {danger_reason}{Colors.RESET}")
+                return
 
-        # OMNIQUANT FX QUANTITATIVE GATEKEEPER & NEWS SHIELD PRE-CHECK
+        # OMNIQUANT FX QUANTITATIVE GATEKEEPER PRE-CHECK
         if not self.verify_omniquant_gatekeeper(sig, clean_sym):
             return
 
         order_records = []
-        if self.execution_mode == "SPLIT_TP":
+        if is_omni_scalp:
+            # High-Frequency M5 Sniper Scalp: Buka 1 posisi bersih bersasarkan TP2 (~2.2x ATR) supaya tidak over-layer!
+            print(f"{Colors.CYAN}🎯 [OMNIQUANT SNIPER SCALP] Melaksanakan 1 Posisi Bersih #{clean_sym} {sig.get('type')} ({sig.get('confidence')}%)...{Colors.RESET}")
+            ord_sniper = self.execute_order(sig, tp_target=2)
+            if ord_sniper:
+                order_records.append(ord_sniper)
+        elif self.execution_mode == "SPLIT_TP":
             rounds = 3 if clean_sym == "XAUUSD" and int(self.config.get("max_gold_positions", 9)) >= 9 else 1
             total_layers = 3 * rounds
             print(f"{Colors.CYAN}[AMATERASU SOP] Membuka {total_layers} Layer #{clean_sym} (3x TP1, 3x TP2, 3x TP3 Runner)...{Colors.RESET}")
@@ -1383,9 +1468,20 @@ class AmaterasuBridge:
         if order_records:
             self.active_positions[sig_id] = order_records
             self.executed_signal_ids.add(sig_id)
+            first_ord = order_records[0]
+            self.report_omniquant_ack(
+                sig_id,
+                "EXECUTED",
+                symbol=clean_sym,
+                ticket=first_ord.get("ticket", 0),
+                price=first_ord.get("entry_price", 0.0),
+                volume=first_ord.get("volume", self.lot_size),
+            )
             print(f"{Colors.GREEN}✅ [ENTRY BERJAYA] Semua {len(order_records)} layer #{clean_sym} berjaya dibuka pada harga optimum!{Colors.RESET}")
         else:
-            print(f"{Colors.YELLOW}⚠️ [ENTRY DITANGGUHKAN] Order #{clean_sym} tidak dibuka. Sila semak sambungan broker atau pasaran.{Colors.RESET}")
+            rej_why = getattr(self, "last_order_reject_reason", "") or "BROKER_OR_GUARD_SKIPPED"
+            self.report_omniquant_ack(sig_id, "REJECTED", symbol=clean_sym, reason=rej_why)
+            print(f"{Colors.YELLOW}⚠️ [ENTRY DITANGGUHKAN] Order #{clean_sym} tidak dibuka ({rej_why}).{Colors.RESET}")
 
     def apply_breakeven_for_symbol(self, raw_symbol, sig_data=None):
         # ARAHAN BOS: SL & TP KEKAL STATIK 100%. DILARANG UBAH ATAU TUTUP AWAL!
@@ -1997,6 +2093,7 @@ class AmaterasuBridge:
             except Exception:
                 return None
 
+        boot_hash = get_local_hash()
         update_url = f"{self.server_url.rstrip('/')}/amaterasu_mt5_bridge.py"
         while self.running:
             try:
@@ -2004,11 +2101,12 @@ class AmaterasuBridge:
                 r = requests.get(update_url, timeout=10)
                 if r.status_code == 200 and len(r.text) > 10000:
                     remote_hash = hashlib.md5(r.content).hexdigest()
-                    local_hash = get_local_hash()
-                    if local_hash and remote_hash != local_hash:
-                        print(f"\n{Colors.GREEN}{Colors.BOLD}⚡ [OTA AUTO-SYNC] Kod pembetulan baharu dikesan dari pelayan! Mengemas kini secara automatik...{Colors.RESET}")
-                        with open(current_script, "wb") as f:
-                            f.write(r.content)
+                    disk_hash = get_local_hash()
+                    if (boot_hash and remote_hash != boot_hash) or (disk_hash and disk_hash != boot_hash):
+                        print(f"\n{Colors.GREEN}{Colors.BOLD}⚡ [OTA AUTO-SYNC] Kod pembetulan baharu dikesan! Mengemas kini & memulakan semula proses RAM...{Colors.RESET}")
+                        if remote_hash != disk_hash:
+                            with open(current_script, "wb") as f:
+                                f.write(r.content)
                         print(f"{Colors.GREEN}✅ [OTA AUTO-SYNC] Fail dikemaskini. Memulakan semula proses Bridge secara senyap...{Colors.RESET}")
                         # Auto safe restart on Windows (Handles spaces in C:\Program Files\Python311\python.exe flawlessly)
                         import subprocess
