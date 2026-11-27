@@ -186,6 +186,8 @@ async def add_static_cache_headers(request: Request, call_next):
     path = request.url.path
     if path.startswith("/_next/static/"):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif path in ("/", "/index.html"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     return response
 
 
