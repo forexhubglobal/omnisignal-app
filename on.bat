@@ -31,6 +31,8 @@ if (Test-Path $src) { ^
                         $c | Add-Member -NotePropertyName max_gold_positions -NotePropertyValue 16 -Force; ^
                         $c | Add-Member -NotePropertyName max_account_positions -NotePropertyValue 24 -Force; ^
                         $c | Add-Member -NotePropertyName max_account_lots -NotePropertyValue 1.50 -Force; ^
+                        $c | Add-Member -NotePropertyName daily_profit_target_pct -NotePropertyValue 25.0 -Force; ^
+                        $c | Add-Member -NotePropertyName daily_profit_target_usd -NotePropertyValue 1250.0 -Force; ^
                     } ^
                     [System.IO.File]::WriteAllText($cfgPath, (ConvertTo-Json $c -Depth 10)); ^
                 } catch {} ^

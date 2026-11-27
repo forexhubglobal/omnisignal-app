@@ -248,15 +248,21 @@ class AmaterasuBridge:
         
         if self.is_cent_account:
             default_usc = (starting_bal * (configured_target_pct / 100.0)) if starting_bal > 0 else 2500.0
-            self.account_profit_target_usc = float(self.config.get("daily_profit_target_usc", default_usc))
+            cfg_target_usc = float(self.config.get("daily_profit_target_usc", default_usc))
+            self.account_profit_target_usc = max(cfg_target_usc, default_usc)
             self.account_profit_target_usd = self.account_profit_target_usc / 100.0
             target_display = f"{self.account_profit_target_usc:,.0f} USC (${self.account_profit_target_usd:,.2f} USD | +{configured_target_pct:.0f}%)"
         else:
             default_usd = (starting_bal * (configured_target_pct / 100.0)) if starting_bal > 0 else 1250.0
-            self.account_profit_target_usd = float(self.config.get("daily_profit_target_usd", default_usd))
+            cfg_target_usd = float(self.config.get("daily_profit_target_usd", default_usd))
+            # Pastikan akaun Standard besar ($5K #5100242908) menggunakan sasaran sebenar 25% (~$1,125-$1,250), bukan cap $25 lama!
+            self.account_profit_target_usd = max(cfg_target_usd, default_usd)
+            if str(self.login) == "5100242908":
+                self.account_profit_target_usd = max(self.account_profit_target_usd, 1250.0)
             target_display = f"${self.account_profit_target_usd:,.2f} USD (+{configured_target_pct:.0f}%)"
         
         self.account_target_reached = False
+        self.realized_baseline_offset = 0.0
         self.session_baseline_equity = float(account.equity)
         self.last_target_log_time = 0
         print(f" • Circuit Breaker: Had Untung Harian {target_display} (Capai 25% Sehari Stop Trade)")
@@ -287,7 +293,8 @@ class AmaterasuBridge:
 
             positions = mt5.positions_get() or []
             floating = sum(p.profit for p in positions)
-            total_today_gain = realized_today + floating
+            offset = float(getattr(self, "realized_baseline_offset", 0.0) or 0.0)
+            total_today_gain = (realized_today - offset) + floating
 
             # Untung bersih harian dinilai daripada closed trading deals + floating (Deposit dikecualikan)
             effective_gain = total_today_gain
